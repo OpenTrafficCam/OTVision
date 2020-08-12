@@ -6,4 +6,4 @@ Check out the [documentation](https://docs.opentrafficcam.org/otvision) for deta
 
 We appreciate your support in the form of both code and comments. First, please have a look at the [contribute](https://docs.opentrafficcam.org/contribute) section of the OpenTrafficCam documentation.
 
-This software is licensed under the [GPL-3.0 License](LICENSE) 
+This software is licensed under the [GPL-3.0 License](LICENSE)
