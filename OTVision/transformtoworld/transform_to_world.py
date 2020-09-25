@@ -45,19 +45,18 @@ import pandas as pd
 
 
 # test paths
-TRAJ_PATH_TEST = r"C:\Users\Baerwolff\Desktop\Lenovo_Arbeit\2020-02-20_Validierungsmessung_Radeberg\DataFromSky_Tracks\Test_5min\viewer_exports"
-REFPTS_PATH_TEST = r"C:\Users\Baerwolff\Desktop\Lenovo_Arbeit\2020-02-20_Validierungsmessung_Radeberg\homography"
+TEST_DATA_FOLDER = r"..\\..\\tests\\data"
 
 
-def read_refpts_pixel_dialog(path_dialog_default=REFPTS_PATH_TEST):
+def read_refpts_pixel_dialog(default_folder=TEST_DATA_FOLDER):
     """User can select one file containing reference points in pixel coordinates in npy or csv format
     (generated with getRefPts.py) and they are read to a numpy array.
 
     Keyword arguments:
-    path_dialog_default -- Default path when opening the file browser
+    default_folder -- Default path when opening the file browser
     """
     try:
-        refpts_pixel_path = filedialog.askopenfilename(initialdir=path_dialog_default,
+        refpts_pixel_path = filedialog.askopenfilename(initialdir=default_folder,
                                               title="Select reference points in pixel coordinates (.txt or .npy)",
                                               filetypes=(("Numpy files", "*.npy"),
                                                          ("Text files", "*.txt"),
@@ -70,20 +69,20 @@ def read_refpts_pixel_dialog(path_dialog_default=REFPTS_PATH_TEST):
             refpts_pixel = np.loadtxt(refpts_pixel_path, dtype="i4", delimiter=";")
     except:
         print("Please try again")
-        return read_refpts_pixel_dialog(path_dialog_default)
+        return read_refpts_pixel_dialog(default_folder)
     return refpts_pixel
 
 
-def read_refpts_world_dialog(path_dialog_default=REFPTS_PATH_TEST):
+def read_refpts_world_dialog(default_folder=TEST_DATA_FOLDER):
     """User can select one file containing reference points in world coordinates in npy or csv format
     (generated with getRefPts.py) and they are read to a numpy array.
 
     Keyword arguments:
-    path_dialog_default -- Default path when opening the file browser
+    default_folder -- Default path when opening the file browser
     """
 
     try:
-        refpts_world_path = filedialog.askopenfilename(initialdir=path_dialog_default,
+        refpts_world_path = filedialog.askopenfilename(initialdir=default_folder,
                                               title="Select reference points in World coordinates (.txt or .npy)",
                                               filetypes=(("Numpy files", "*.npy"),
                                                          ("Text files", "*.txt"),
@@ -96,25 +95,25 @@ def read_refpts_world_dialog(path_dialog_default=REFPTS_PATH_TEST):
             refpts_world = np.loadtxt(refpts_world_path, delimiter=";")
     except:
         print("Please try again")
-        return read_refpts_world_dialog(path_dialog_default)
+        return read_refpts_world_dialog(default_folder)
     return refpts_world
 
 
-def choose_traj_pixel_dialog(path_dialog_default=TRAJ_PATH_TEST):
+def choose_traj_pixel_dialog(default_folder=TRAJ_PATH_TEST):
     """User can select one or multiple trajectory files in pkl or csv format.
 
     Keyword arguments:
-    path_dialog_default -- Default path when opening the file browser
+    default_folder -- Default path when opening the file browser
     """
     try:
-        traj_pixel_paths = filedialog.askopenfilenames(initialdir=path_dialog_default,
+        traj_pixel_paths = filedialog.askopenfilenames(initialdir=default_folder,
                                               title="Select converted DataFromSky trajectories in pixel coordinates (.npy)",
                                               filetypes=(("Python pickle files", "*.pkl"),
                                                          ("CSV files", "*.csv"),
                                                          ("All files", "*.*")))
     except:
         print("Please try again")
-        return read_traj_pixel_dialog(path_dialog_default)
+        return read_traj_pixel_dialog(default_folder)
     return traj_pixel_paths
 
 
