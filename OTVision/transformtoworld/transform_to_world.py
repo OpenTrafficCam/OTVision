@@ -31,7 +31,11 @@ REFPTS_PATH_TEST = r"C:\Users\Baerwolff\Desktop\Lenovo_Arbeit\2020-02-20_Validie
 
 def read_refpts_pixel_dialog(path_dialog_default=REFPTS_PATH_TEST):
     """User can select one file containing reference points in pixel coordinates in npy or csv format
-    (generated with getRefPts.py) and they are read to a numpy array"""
+    (generated with getRefPts.py) and they are read to a numpy array.
+
+    Keyword arguments:
+    path_dialog_default -- Default path when opening the file browser
+    """
     try:
         refpts_pixel_path = filedialog.askopenfilename(initialdir=path_dialog_default,
                                               title="Select reference points in pixel coordinates (.txt or .npy)",
@@ -52,7 +56,11 @@ def read_refpts_pixel_dialog(path_dialog_default=REFPTS_PATH_TEST):
 
 def read_refpts_world_dialog(path_dialog_default=REFPTS_PATH_TEST):
     """User can select one file containing reference points in world coordinates in npy or csv format
-    (generated with getRefPts.py) and they are read to a numpy array"""
+    (generated with getRefPts.py) and they are read to a numpy array.
+
+    Keyword arguments:
+    path_dialog_default -- Default path when opening the file browser
+    """
 
     try:
         refpts_world_path = filedialog.askopenfilename(initialdir=path_dialog_default,
@@ -73,7 +81,11 @@ def read_refpts_world_dialog(path_dialog_default=REFPTS_PATH_TEST):
 
 
 def choose_traj_pixel_dialog(path_dialog_default=TRAJ_PATH_TEST):
-    """User can select one or multiple trajectory files in pkl or csv format"""
+    """User can select one or multiple trajectory files in pkl or csv format.
+
+    Keyword arguments:
+    path_dialog_default -- Default path when opening the file browser
+    """
     try:
         traj_pixel_paths = filedialog.askopenfilenames(initialdir=path_dialog_default,
                                               title="Select converted DataFromSky trajectories in pixel coordinates (.npy)",
@@ -87,7 +99,11 @@ def choose_traj_pixel_dialog(path_dialog_default=TRAJ_PATH_TEST):
 
 
 def read_traj_pixel_dialog(traj_pixel_path):
-    """Read a single trajectory file in pkl or csv format (otc style) to a pandas dataframe"""
+    """Read a single trajectory file in pkl or csv format (otc style) to a pandas dataframe
+
+    Keyword arguments:
+    traj_pixel_path -- ?
+    """
     try:
         if traj_pixel_path.endswith(".pkl"):
             print(traj_pixel_path + " is a python pickle file")
@@ -103,9 +119,14 @@ def read_traj_pixel_dialog(traj_pixel_path):
 
 
 def calculate_homography_matrix(refpts_pixel, refpts_world):
-    """Calculatiing homography matrix using pixel and world coordinates of corresponding reference points"""
+    """Calculate homography matrix using pixel and world coordinates of corresponding reference points.
 
-    # Upshift both y and y world coordinates of reference points to next round 500m value (UTM is in meters)
+    Keyword arguments:
+    refpts_pixel -- reference points in pixel coordinates
+    refpts_world -- reference points in pixel coordinates
+    """
+
+    # Upshift both x and y world coordinates of reference points to next round 500m value (UTM is in meters)
     min = np.amin(refpts_world, axis=0)
     max = np.amax(refpts_world, axis=0)
     mean = np.divide(np.add(min, max), 2)
@@ -131,7 +152,14 @@ def calculate_homography_matrix(refpts_pixel, refpts_world):
 
 
 def convertPixelToWorld(traj_pixel, homography_matrix, refpts_world_upshifted_predecimal_pt1_1row, upshift_world):
-    """Convert trajectories from pixel to world coordinates using homography matrix"""
+    """Convert trajectories from pixel to world coordinates using homography matrix.
+
+    Keyword arguments:
+    traj_pixel -- Trajectory points in pixel coordinates
+    homography_matrix -- Homography matrix gathered from reference points in pixel and world coordinates
+    refpts_world_upshifted_predecimal_pt1_1row -- Thousands digits of reference points in world coorindates
+    upshift_world -- Formerly performed upshift of reference points coordinates
+    """
 
     # Transform pandas dataframe to numpy array, add 1 dimension and apply OpenCV´s perspective transformation
     traj_pixel_np = traj_pixel[['x', 'y']].to_numpy(dtype='float32')
@@ -152,8 +180,14 @@ def convertPixelToWorld(traj_pixel, homography_matrix, refpts_world_upshifted_pr
 
     return traj_world
 
+
 def save_traj_world(traj_pixel_path, traj_world):
-    """Save trajectories in world coordinates as python pickle files and csv files"""
+    """Save trajectories in world coordinates as python pickle files and csv files.
+
+    Keyword arguments:
+    traj_pixel_path -- Path of converted trajectories in pixel coordinates
+    traj_world -- Trajectories in world coordinates
+    """
 
     traj_world.to_csv(traj_pixel_path[:-4] + "World_decDot.csv", index=False, sep=";")
     traj_world.to_csv(traj_pixel_path[:-4] + "World_decComma.csv", index=False, sep=";", decimal=",")
