@@ -48,14 +48,18 @@ To Dos:
 - Save also homography as npy file?
 """
 
+import os
 import cv2
 from tkinter import filedialog
 import numpy as np
 import pandas as pd
 
 
-# test paths
-TEST_DATA_FOLDER = r"..\\..\\tests\\data"
+# Define relative path to test data (using os.path.dirname repeatedly)
+TEST_DATA_FOLDER = (
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    + r"\tests\data"
+)
 
 
 def read_refpts_pixel_dialog(default_folder=TEST_DATA_FOLDER):
@@ -168,7 +172,7 @@ def calculate_homography_matrix(refpts_pixel, refpts_world):
     refpts_world -- reference points in pixel coordinates
     """
 
-    # Upshift both x and y world coordinates of reference points to next round 500m 
+    # Upshift both x and y world coordinates of reference points to next round 500m
     # value (UTM is in meters)
     min = np.amin(refpts_world, axis=0)
     max = np.amax(refpts_world, axis=0)
@@ -300,4 +304,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
