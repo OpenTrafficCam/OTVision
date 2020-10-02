@@ -211,6 +211,32 @@ def calculate_homography_matrix(refpts_pixel, refpts_world):
         refpts_pixel, refpts_world_upshifted_disassembled, cv2.RANSAC, 3.0
     )  # RANSAC: Otulier/Inlier definieren??? # FEHLER:
     print(homography_matrix)
+    print(mask)
+
+    # Evaluate accuracy of homography matrix using reference points in world coords
+    refpts_pixel_tmp = np.array([refpts_pixel], dtype="float32")
+    refpts_world_upshifted_disassembled_transf_3d = cv2.perspectiveTransform(
+        refpts_pixel_tmp, homography_matrix
+    )
+    refpts_world_upshifted_disassembled_transf = np.squeeze(
+        refpts_world_upshifted_disassembled_transf_3d
+    )
+    eval_df = pd.DataFrame(
+        {
+            "x_ref": refpts_world_upshifted_disassembled[:, 0],
+            "y_ref": refpts_world_upshifted_disassembled[:, 1],
+            "x_transf": refpts_world_upshifted_disassembled_transf[:, 0],
+            "y_transf": refpts_world_upshifted_disassembled_transf[:, 1],
+        }
+    )
+    eval_df["x_delta"] = eval_df["x_transf"] - eval_df["x_ref"]
+    eval_df["y_delta"] = eval_df["y_transf"] - eval_df["y_ref"]
+    # Normalize error vectors using sentence of pythagoras
+    eval_df["delta"] = np.linalg.norm(eval_df[["x_delta", "y_delta"]].values, axis=1)
+    eval_df["delta_abs"] = eval_df["delta"].abs()
+    print("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
+    print("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+
     return homography_matrix, refpts_world_upshifted_predecimal_pt1_1row, upshift_world
 
 
