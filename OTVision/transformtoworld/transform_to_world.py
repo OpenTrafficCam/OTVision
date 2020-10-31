@@ -53,6 +53,7 @@ import cv2
 from tkinter import filedialog
 import numpy as np
 import pandas as pd
+import OTVision.transformtoworld.helpers as helpers
 
 
 # Define relative path to test data (using os.path.dirname repeatedly)
@@ -62,105 +63,60 @@ TEST_DATA_FOLDER = (
 )
 
 
-def read_refpts_pixel_dialog(default_folder=TEST_DATA_FOLDER):
-    """User can select one file containing reference points in pixel coordinates in npy
-    or csv format (generated with getRefPts.py) and they are read to a numpy array.
+def read_refpts_pixel(refpts_pixel_path):
+    """
+    Read reference points in pixel coordinates from npy or csv format to a numpy array.
 
     Keyword arguments:
-    default_folder -- Default path when opening the file browser
+    refpts_pixel_path -- Path to reference points file
     """
-    try:
-        refpts_pixel_path = filedialog.askopenfilename(
-            initialdir=default_folder,
-            title="Select reference points in pixel coordinates (.txt or .npy)",
-            filetypes=(
-                ("Numpy files", "*.npy"),
-                ("Text files", "*.txt"),
-                ("all files", "*.*"),
-            ),
-        )
-        if refpts_pixel_path.endswith(".npy"):
-            print(refpts_pixel_path + " is a numpy file")
-            refpts_pixel = np.load(refpts_pixel_path)
-        elif refpts_pixel_path.endswith(".txt"):
-            print(refpts_pixel_path + " is a text file")
-            refpts_pixel = np.loadtxt(refpts_pixel_path, dtype="i4", delimiter=";")
-    except:
-        print("Please try again")
-        return read_refpts_pixel_dialog(default_folder)
+    if refpts_pixel_path.endswith(".npy"):
+        print(refpts_pixel_path + " is a numpy file")
+        refpts_pixel = np.load(refpts_pixel_path)
+    elif refpts_pixel_path.endswith(".txt"):
+        print(refpts_pixel_path + " is a text file")
+        refpts_pixel = np.loadtxt(refpts_pixel_path, dtype="i4", delimiter=";")
+    else:
+        raise Exception("Wrong file type: refpts_pixel_path must be npy or txt")
+
     return refpts_pixel
 
 
-def read_refpts_world_dialog(default_folder=TEST_DATA_FOLDER):
-    """User can select one file containing reference points in world coordinates in npy
-    or csv format (generated with getRefPts.py) and they are read to a numpy array.
+def read_refpts_world(refpts_world_path):
+    """
+    Read reference points in world coordinates from npy or csv format to a numpy array.
 
     Keyword arguments:
-    default_folder -- Default path when opening the file browser
+    refpts_world_path -- Path to reference points file
     """
 
-    try:
-        refpts_world_path = filedialog.askopenfilename(
-            initialdir=default_folder,
-            title="Select reference points in World coordinates (.txt or .npy)",
-            filetypes=(
-                ("Numpy files", "*.npy"),
-                ("Text files", "*.txt"),
-                ("all files", "*.*"),
-            ),
-        )
-        if refpts_world_path.endswith(".npy"):
-            print(refpts_world_path + " is a numpy file")
-            refpts_world = np.load(refpts_world_path)
-        elif refpts_world_path.endswith(".txt"):
-            print(refpts_world_path + " is a text file")
-            refpts_world = np.loadtxt(refpts_world_path, delimiter=";")
-    except:
-        print("Please try again")
-        return read_refpts_world_dialog(default_folder)
+    if refpts_world_path.endswith(".npy"):
+        print(refpts_world_path + " is a numpy file")
+        refpts_world = np.load(refpts_world_path)
+    elif refpts_world_path.endswith(".txt"):
+        print(refpts_world_path + " is a text file")
+        refpts_world = np.loadtxt(refpts_world_path, delimiter=";")
+    else:
+        raise Exception("Wrong file type: refpts_world_path must be npy or txt")
+
     return refpts_world
-
-
-def choose_traj_pixel_dialog(default_folder=TEST_DATA_FOLDER):
-    """User can select one or multiple trajectory files in pkl or csv format.
-
-    Keyword arguments:
-    default_folder -- Default path when opening the file browser
-    """
-    try:
-        traj_pixel_paths = filedialog.askopenfilenames(
-            initialdir=default_folder,
-            title="Select DataFromSky trajectories in pixel coordinates (.npy)",
-            filetypes=(
-                ("Python pickle files", "*.pkl"),
-                ("CSV files", "*.csv"),
-                ("All files", "*.*"),
-            ),
-        )
-    except:
-        print("Please try again")
-        return read_traj_pixel_dialog(default_folder)
-    return traj_pixel_paths
 
 
 def read_traj_pixel_dialog(traj_pixel_path):
     """Read a single trajectory file in pkl or csv format (otc style) to a pandas dataframe
 
     Keyword arguments:
-    traj_pixel_path -- ?
+    traj_pixel_path -- Tath to trajectory file
     """
-    try:
-        if traj_pixel_path.endswith(".pkl"):
-            print(traj_pixel_path + " is a python pickle file")
-            traj_pixel = pd.read_pickle(traj_pixel_path)
-            print(traj_pixel)
-        elif traj_pixel_path.endswith(".csv"):
-            print(traj_pixel_path + " is a csv file")
-            traj_pixel = pd.read_csv(traj_pixel_path, delimiter=";", index_col=0)
-            print(traj_pixel)
-        return traj_pixel
-    except:
-        pass
+    if traj_pixel_path.endswith(".pkl"):
+        print(traj_pixel_path + " is a python pickle file")
+        traj_pixel = pd.read_pickle(traj_pixel_path)
+        print(traj_pixel)
+    elif traj_pixel_path.endswith(".csv"):
+        print(traj_pixel_path + " is a csv file")
+        traj_pixel = pd.read_csv(traj_pixel_path, delimiter=";", index_col=0)
+        print(traj_pixel)
+    return traj_pixel
 
 
 def calculate_homography_matrix(refpts_pixel, refpts_world):
@@ -329,4 +285,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    refpts_pixel_path, refpts_world_path = helpers.select_refpts_files()
+    traj_pixel_paths = helpers.select_traj_files()
+    main(refpts_pixel_path, refpts_world_path, traj_pixel_paths)
