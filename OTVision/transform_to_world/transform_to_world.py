@@ -50,7 +50,6 @@ To Dos:
 
 import os
 import cv2
-from tkinter import filedialog
 import numpy as np
 import pandas as pd
 import OTVision.transformtoworld.helpers as helpers
