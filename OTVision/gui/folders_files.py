@@ -57,19 +57,36 @@ def update_gui(window, folders, files, paths):
     window["-listbox_paths-"].Update(paths)
 
 
+def format_filetype(filetype):
+    """
+    check if _filetype_ is str and transform it
+
+    Args:
+        filetype: file extension with or without leading "." or "_"
+
+    Returns:
+        filetype: file extension with leading "." (except leading "_" was passed)
+    """
+    if type(filetype) is str:
+        if not filetype.startswith("_"):
+            if not filetype.startswith("."):
+                filetype = "." + filetype
+            filetype = filetype.lower()
+    else:
+        raise TypeError("filetype needs to be a str")
+    return filetype
+
+
 def main(
-    title="Select folders/files",
-    file_extensions=(("All files", "."),),
-    input_folders=[],
-    input_files=[],
+    title="Select folders/files", filetype="", input_folders=[], input_files=[],
 ):
     """
     Window for picking folders/files for further processing with OTVision tools
 
     Args:
         title: title of the window (default: "Select folders/files")
-        file_extensions: Tuple of tuple of file type and file extension
-        of the files to be selected (default: All files)
+        filetype ([str]): ending of the files to select.
+        (Preceding "_" prevents adding a '.'; default: All files)
         input_folders: list of pre-selected folders (default: empty list)
         input_files: list of pre-selected files (default: empty list)
 
@@ -77,6 +94,8 @@ def main(
         folders: list of selected folders
         files: list of selected files
     """
+    filetype = format_filetype(filetype)
+
     # Constants
     WIDTH_COL1 = 150
 
@@ -107,7 +126,7 @@ def main(
         key="-browse_files-",
         target="-dummy_input_files-",
         enable_events=True,
-        file_types=file_extensions,
+        file_types=(("", filetype),),
     )
     dummy_input_files = sg.Input(
         key="-dummy_input_files-", enable_events=True, visible=False
@@ -211,7 +230,7 @@ if __name__ == "__main__":
     print(
         main(
             title="Select images",
-            file_extensions=(("Images", ".jpg"), ("Images", ".png")),
+            filetype="",
             input_folders=["Input_Test_Folder"],
             input_files=["Input_Test_File.ending"],
         )
