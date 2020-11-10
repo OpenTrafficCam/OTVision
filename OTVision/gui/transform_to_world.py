@@ -20,6 +20,7 @@
 
 
 import PySimpleGUI as sg
+from gui import browse_folders_and_files
 
 
 def main():
@@ -33,42 +34,18 @@ def main():
 
     # GUI elements: Trajectories
     header_traj = sg.Text("Provide trajectories")
-    button_browse_traj = sg.Button("Browse trajectory files", key="-button_browse_traj-")
-    browse_traj_folder = sg.FolderBrowse(
-        "Add folder with trajectory files",
-        key="-browse_traj_folder-",
-        target="-dummy_input_traj_folder-",
-    )
-    dummy_input_traj_folder = sg.In(
-        size=(WIDTH_COL1, 1),
-        key="-dummy_input_traj_folder-",
-        enable_events=True,
-        visible=False,
-    )
-    """listbox_traj_paths = sg.Listbox(
-        values=traj_paths, size=(WIDTH_COL1, 20), key="-listbox_traj_paths-"
-    )
-    """
-    browse_traj_files = sg.FilesBrowse(
-        "Add single trajectory files",
-        key="-browse_traj_files-",
-        target="-dummy_input_traj_files-",
-        enable_events=True,
-    )
-    dummy_input_traj_files = sg.Input(
-        key="-dummy_input_traj_files-", enable_events=True, visible=False
+    button_browse_traj = sg.Button(
+        "Browse trajectory files", key="-button_browse_traj-"
     )
     text_traj_folders = sg.Text(
-        "0 folders selected.", key="-text_traj_folders-", size=(WIDTH_COL1, 1),
+        "Number of selected folders: " + str(len(traj_folders)),
+        key="-text_traj_folders-",
+        size=(WIDTH_COL1, 1),
     )
     text_traj_files = sg.Text(
-        "0 files selected.", key="-text_traj_files-", size=(WIDTH_COL1, 1),
-    )
-    button_show_traj_selection = sg.Button(
-        "Show selection", key="-button_show_traj_selection-"
-    )
-    button_clear_traj_selection = sg.Button(
-        "Clear selection", key="-button_clear_traj_selection-"
+        "Number of selected files: " + str(len(traj_files)),
+        key="-text_traj_files-",
+        size=(WIDTH_COL1, 1),
     )
 
     # GUI elemnts: Reference points
@@ -97,13 +74,6 @@ def main():
     layout = [
         [header_traj],
         [button_browse_traj],
-        [
-            browse_traj_folder,
-            browse_traj_files,
-            button_show_traj_selection,
-            button_clear_traj_selection,
-        ],
-        [dummy_input_traj_folder, dummy_input_traj_files],
         [text_traj_folders],
         [text_traj_files],
         [header_refpts],
@@ -128,7 +98,18 @@ def main():
         ):  # if user closes window or clicks cancel
             break
         if event == "-button_browse_traj-":
-            #OTVision.gui.browse_folders_and_files.py
+            traj_folders, traj_files = browse_folders_and_files.main(
+                title="Select trajectories",
+                filetype="json",
+                input_folders=traj_folders,
+                input_files=traj_files,
+            )
+            window["-text_traj_folders-"].Update(
+                "Number of selected folders: " + str(len(traj_folders))
+            )
+            window["-text_traj_files-"].Update(
+                "Number of selected trajectory files: " + str(len(traj_files))
+            )
         elif event == "-dummy_input_traj_folder-":
             traj_folders.append(values["-dummy_input_traj_folder-"])
             print("traj_folders" + str(traj_folders))
@@ -156,6 +137,7 @@ def main():
             window["-text_traj_files-"].Update("0 files selected.")
 
     window.close()
+
 
 # To Dos
 # - Code "clear selection" button, which lists traj_folders and traj_files
