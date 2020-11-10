@@ -230,14 +230,8 @@ if __name__ == "__main__":
     print(
         main(
             title="Select images",
-            filetype="",
+            filetype="png",
             input_folders=["Input_Test_Folder"],
             input_files=["Input_Test_File.ending"],
         )
     )
-
-
-# To Dos
-# - Code "clear selection" button, which lists folders and files
-#   and updates text
-# - Remove duplicates from lists folders and files instantly after browsing
