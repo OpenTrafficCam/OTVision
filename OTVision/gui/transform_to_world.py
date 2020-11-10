@@ -27,33 +27,47 @@ def main(project_folder=""):
     WIDTH_COL1 = 150
 
     # Lists
-    traj_paths = []
+    # traj_paths = []
+    traj_folders = []
+    traj_files = []
 
     # GUI elements: Trajectories
     header_traj = sg.Text("Provide trajectories")
-    browse_project_path = sg.FolderBrowse(
-        "Choose OTVision project folder", target="-input_project_path-"
+    browse_traj_folder = sg.FolderBrowse(
+        "Add folder with trajectory files",
+        key="-browse_traj_folder-",
+        target="-dummy_input_traj_folder-",
     )
-    input_project_path = sg.In(
-        project_folder,
+    dummy_input_traj_folder = sg.In(
         size=(WIDTH_COL1, 1),
-        key="-input_project_path-",
+        key="-dummy_input_traj_folder-",
         enable_events=True,
+        visible=False,
     )
-    listbox_traj_paths = sg.Listbox(
+    """listbox_traj_paths = sg.Listbox(
         values=traj_paths, size=(WIDTH_COL1, 20), key="-listbox_traj_paths-"
     )
-    browse_traj_paths = sg.FilesBrowse(
-        "Choose single trajectory files",
-        key="-button_traj_paths-",
-        target="-dummy_input_traj_paths-",
+    """
+    browse_traj_files = sg.FilesBrowse(
+        "Add single trajectory files",
+        key="-browse_traj_files-",
+        target="-dummy_input_traj_files-",
         enable_events=True,
     )
-    dummy_input_traj_paths = sg.Input(
-        key="-dummy_input_traj_paths-", enable_events=True, visible=False
+    dummy_input_traj_files = sg.Input(
+        key="-dummy_input_traj_files-", enable_events=True, visible=False
     )
-    text_traj_px = sg.Text(
-        "No trajectory files selected.", key="-text_traj_px-", size=(WIDTH_COL1, 1)
+    text_traj_folders = sg.Text(
+        "0 folders selected.", key="-text_traj_folders-", size=(WIDTH_COL1, 1),
+    )
+    text_traj_files = sg.Text(
+        "0 files selected.", key="-text_traj_files-", size=(WIDTH_COL1, 1),
+    )
+    button_show_traj_selection = sg.Button(
+        "Show selection", key="-button_show_traj_selection-"
+    )
+    button_clear_traj_selection = sg.Button(
+        "Clear selection", key="-button_clear_traj_selection-"
     )
 
     # GUI elemnts: Reference points
@@ -81,12 +95,15 @@ def main(project_folder=""):
     # All the stuff inside the window
     layout = [
         [header_traj],
-        [browse_project_path],
-        [input_project_path],
-        [sg.Text("or")],
-        [dummy_input_traj_paths, browse_traj_paths],
-        [listbox_traj_paths],
-        [text_traj_px],
+        [
+            browse_traj_folder,
+            browse_traj_files,
+            button_show_traj_selection,
+            button_clear_traj_selection,
+        ],
+        [dummy_input_traj_folder, dummy_input_traj_files],
+        [text_traj_folders],
+        [text_traj_files],
         [header_refpts],
         [button_click_refpts, dummy_input_refpts_path, browse_refpts_path],
         [button_back_to_otvision],
@@ -108,18 +125,35 @@ def main(project_folder=""):
             or event == "-button_back_to_otvision-"
         ):  # if user closes window or clicks cancel
             break
-        if event == "-dummy_input_traj_paths-":
-            traj_paths = values["-dummy_input_traj_paths-"].split(";")
-            window["-text_traj_px-"].Update(
-                str(len(traj_paths)) + " trajectory files are selected."
+        elif event == "-dummy_input_traj_folder-":
+            traj_folders.append(values["-dummy_input_traj_folder-"])
+            print("traj_folders" + str(traj_folders))
+            if len(traj_folders) == 1:
+                text_traj_folders_label = " folder selected."
+            else:
+                text_traj_folders_label = " folders selected."
+            window["-text_traj_folders-"].Update(
+                str(len(traj_folders)) + text_traj_folders_label
             )
-            print(traj_paths)
-            window["-listbox_traj_paths-"].Update(values=traj_paths)
-        elif event == "-input_project_path-":
-            window["-text_traj_px-"].Update(
-                "All trajectory files within the project "
-                + values["-input_project_path-"]
-                + " are selected."
+        elif event == "-dummy_input_traj_files-":
+            traj_files.extend(values["-dummy_input_traj_files-"].split(";"))
+            print("traj_files: " + str(traj_files))
+            if len(traj_files) == 1:
+                text_traj_files_label = " file selected."
+            else:
+                text_traj_files_label = " files selected."
+            window["-text_traj_files-"].Update(
+                str(len(traj_files)) + text_traj_files_label
             )
+        elif event == "-button_clear_selection-":
+            traj_folders = []
+            traj_files = []
+            window["-text_traj_folders-"].Update("0 folders selected.")
+            window["-text_traj_files-"].Update("0 files selected.")
 
     window.close()
+
+# To Dos
+# - Code "clear selection" button, which lists traj_folders and traj_files
+#   and updates text
+# - Remove duplicates from lists traj_folders and traj_files instantly after browsing
