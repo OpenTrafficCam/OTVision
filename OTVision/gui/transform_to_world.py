@@ -22,7 +22,7 @@
 import PySimpleGUI as sg
 
 
-def main(project_folder=""):
+def main():
     # Constants
     WIDTH_COL1 = 150
 
@@ -33,6 +33,7 @@ def main(project_folder=""):
 
     # GUI elements: Trajectories
     header_traj = sg.Text("Provide trajectories")
+    button_browse_traj = sg.Button("Browse trajectory files", key="-button_browse_traj-")
     browse_traj_folder = sg.FolderBrowse(
         "Add folder with trajectory files",
         key="-browse_traj_folder-",
@@ -95,6 +96,7 @@ def main(project_folder=""):
     # All the stuff inside the window
     layout = [
         [header_traj],
+        [button_browse_traj],
         [
             browse_traj_folder,
             browse_traj_files,
@@ -125,6 +127,8 @@ def main(project_folder=""):
             or event == "-button_back_to_otvision-"
         ):  # if user closes window or clicks cancel
             break
+        if event == "-button_browse_traj-":
+            #OTVision.gui.browse_folders_and_files.py
         elif event == "-dummy_input_traj_folder-":
             traj_folders.append(values["-dummy_input_traj_folder-"])
             print("traj_folders" + str(traj_folders))
