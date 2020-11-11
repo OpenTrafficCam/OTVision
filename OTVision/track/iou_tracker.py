@@ -7,10 +7,12 @@
 
 from time import time
 
-from track.util import load_mot, iou  # MB: Only change so far
+from track.util import load_mot, iou  # OTVision: Changed to meet our package structure
 
 
-def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min):
+def track_iou(
+    detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max
+):  # OTVision: Added t_miss_max
     """
     Simple IOU based tracker.
     See "High-Speed Tracking-by-Detection Without Using Image Information by E. Bochinski, V. Eiselein, T. Sikora" for
@@ -32,16 +34,18 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min):
 
     for frame_num, detections_frame in enumerate(detections, start=1):
         # apply low threshold to detections
-        dets = [det for det in detections_frame if det['score'] >= sigma_l]
+        dets = [det for det in detections_frame if det["score"] >= sigma_l]
 
         updated_tracks = []
         for track in tracks_active:
             if len(dets) > 0:
                 # get det with highest iou
-                best_match = max(dets, key=lambda x: iou(track['bboxes'][-1], x['bbox']))
-                if iou(track['bboxes'][-1], best_match['bbox']) >= sigma_iou:
-                    track['bboxes'].append(best_match['bbox'])
-                    track['max_score'] = max(track['max_score'], best_match['score'])
+                best_match = max(
+                    dets, key=lambda x: iou(track["bboxes"][-1], x["bbox"])
+                )
+                if iou(track["bboxes"][-1], best_match["bbox"]) >= sigma_iou:
+                    track["bboxes"].append(best_match["bbox"])
+                    track["max_score"] = max(track["max_score"], best_match["score"])
 
                     updated_tracks.append(track)
 
@@ -51,16 +55,26 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min):
             # if track was not updated
             if len(updated_tracks) == 0 or track is not updated_tracks[-1]:
                 # finish track when the conditions are met
-                if track['max_score'] >= sigma_h and len(track['bboxes']) >= t_min:
+                if track["max_score"] >= sigma_h and len(track["bboxes"]) >= t_min:
                     tracks_finished.append(track)
 
         # create new tracks
-        new_tracks = [{'bboxes': [det['bbox']], 'max_score': det['score'], 'start_frame': frame_num} for det in dets]
+        new_tracks = [
+            {
+                "bboxes": [det["bbox"]],
+                "max_score": det["score"],
+                "start_frame": frame_num,
+            }
+            for det in dets
+        ]
         tracks_active = updated_tracks + new_tracks
 
     # finish all remaining active tracks
-    tracks_finished += [track for track in tracks_active
-                        if track['max_score'] >= sigma_h and len(track['bboxes']) >= t_min]
+    tracks_finished += [
+        track
+        for track in tracks_active
+        if track["max_score"] >= sigma_h and len(track["bboxes"]) >= t_min
+    ]
 
     return tracks_finished
 
@@ -90,9 +104,15 @@ def track_iou_matlab_wrapper(detections, sigma_l, sigma_h, sigma_iou, t_min):
     id_ = 1
     out = []
     for track in tracks:
-        for i, bbox in enumerate(track['bboxes']):
-            out += [float(bbox[0]), float(bbox[1]), float(bbox[2] - bbox[0]), float(bbox[3] - bbox[1]),
-                    float(track['start_frame'] + i), float(id_)]
+        for i, bbox in enumerate(track["bboxes"]):
+            out += [
+                float(bbox[0]),
+                float(bbox[1]),
+                float(bbox[2] - bbox[0]),
+                float(bbox[3] - bbox[1]),
+                float(track["start_frame"] + i),
+                float(id_),
+            ]
         id_ += 1
 
     num_frames = len(dets)
