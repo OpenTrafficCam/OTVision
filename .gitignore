@@ -1,0 +1,15 @@
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb
+OTVision/__pycache__/__init__.cpython-37.pyc
+OTVision/__pycache__/__main__.cpython-37.pyc
+OTVision/gui/sketches_MB.pptx
+OTVision/gui/__pycache__/__init__.cpython-37.pyc
+OTVision/gui/__pycache__/browse_folders_and_files.cpython-37.pyc
+OTVision/gui/__pycache__/sg_otc_theme.cpython-37.pyc
+OTVision/gui/__pycache__/t2w.cpython-37.pyc
+OTVision/gui/__pycache__/t2wgui.cpython-37.pyc
+OTVision/gui/__pycache__/transform_to_world.cpython-37.pyc
+OTVision/transform_to_world/__pycache__/__init__.cpython-37.pyc
+OTVision/transform_to_world/__pycache__/__main__.cpython-37.pyc
+OTVision/transform_to_world/__pycache__/t2w.cpython-37.pyc
+OTVision/transform_to_world/__pycache__/t2wgui.cpython-37.pyc
