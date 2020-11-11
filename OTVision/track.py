@@ -25,7 +25,7 @@ from track import track
 
 if __name__ == "__main__":
     track.main(
-        r"C:\Users\Baerwolff\Desktop\code\OTCam\OTestdata\Mondercange_KP3_Cam1_2019-03-27_10-00to10-05.mkv_yolo-spp.json",
+        r"C:\Users\Baerwolff\Desktop\code\OTCam\OTestdata",
         track.config_track_default,
     )
     # C:\Users\Baerwolff\Desktop\code\OTCam\OTestdata
