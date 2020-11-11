@@ -13,8 +13,8 @@ _arg2_
 
 ### function
 1. first
-2. second
-3. third
+1. second
+1. third
 
 ### return
 _returnvar_
