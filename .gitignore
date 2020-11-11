@@ -13,3 +13,7 @@ OTVision/transform_to_world/__pycache__/__init__.cpython-37.pyc
 OTVision/transform_to_world/__pycache__/__main__.cpython-37.pyc
 OTVision/transform_to_world/__pycache__/t2w.cpython-37.pyc
 OTVision/transform_to_world/__pycache__/t2wgui.cpython-37.pyc
+OTVision/gui/__pycache__/track.cpython-37.pyc
+OTVision/track/__pycache__/__init__.cpython-37.pyc
+OTVision/track/__pycache__/iou_tracker.cpython-37.pyc
+OTVision/track/__pycache__/util.cpython-37.pyc
