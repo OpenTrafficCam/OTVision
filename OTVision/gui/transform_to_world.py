@@ -78,7 +78,8 @@ def main(sg_theme=OTC_THEME):
 
     # GUI elemnts: Reference points
     header_refpts = sg.Text(
-        "Step 2: Provide reference points in both pixel and world coordinates", font=BOLD
+        "Step 2: Provide reference points in both pixel and world coordinates",
+        font=BOLD,
     )
     input_refpts = sg.In(
         key="-input_refpts-", size=(WIDTH_COL1, 1), enable_events=True, visible=True,
@@ -94,7 +95,9 @@ def main(sg_theme=OTC_THEME):
     )
 
     # GUI elements: transform to world
-    header_transform = sg.Text("Step 3: Start transformation to world coordinates", font=BOLD)
+    header_transform = sg.Text(
+        "Step 3: Start transformation to world coordinates", font=BOLD
+    )
 
     # Video properties
     video = cv2.VideoCapture(
