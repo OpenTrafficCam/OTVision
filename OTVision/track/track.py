@@ -13,7 +13,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more objectsails.
+# GNU General Public License for more detectionsails.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
@@ -23,6 +23,7 @@ from track.iou_tracker_qp import track_iou
 from helpers.files import get_files
 import json
 import pathlib
+from datetime import datetime
 
 
 config_track_default = {
@@ -36,30 +37,30 @@ config_track_default = {
 }
 
 
-def read(objects_file):
+def read(detections_file):
     """
     docstring
     """
-    dir = pathlib.Path(objects_file).parent
-    filename = pathlib.Path(objects_file).stem.rsplit("_", 1)[0]
-    # objects_suffix = pathlib.Path(objects_file).stem.rsplit("_", 1)[1]
-    filetype = pathlib.Path(objects_file).suffix
+    dir = pathlib.Path(detections_file).parent
+    filename = pathlib.Path(detections_file).stem.rsplit("_", 1)[0]
+    # detections_suffix = pathlib.Path(detections_file).stem.rsplit("_", 1)[1]
+    filetype = pathlib.Path(detections_file).suffix
     if filetype == ".json":
-        with open(objects_file) as objects_file_json:
-            objects = json.load(objects_file_json)
+        with open(detections_file) as detections_file_json:
+            detections = json.load(detections_file_json)
     elif filetype == ".csv":
         pass  # todo?
     else:
         raise ValueError("Filetype " + filetype + " cannot be read")
-    return objects, dir, filename
+    return detections, dir, filename
 
 
-def track(objects, config_track=config_track_default):
+def track(detections, config_track=config_track_default):
     """
     docstring
     """
     tracks_px = track_iou(
-        objects,
+        detections,
         config_track["sigma_l"],
         config_track["sigma_h"],
         config_track["sigma_iou"],
@@ -88,12 +89,21 @@ def main(paths, config_track=config_track_default):
     docstring
     """
     filetype = "_yolo-" + config_track["yolo_mode"] + ".json"
-    objects_files = get_files(paths, filetype)
-    for objects_file in objects_files:
-        objects, dir, filename = read(objects_file)
-        tracks_px = track(objects)
+    detections_files = get_files(paths, filetype)
+    for detections_file in detections_files:
+        print(
+            datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            + ": New detections file: "
+            + detections_file
+        )
+        detections, dir, filename = read(detections_file)
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections read")
+        tracks_px = track(detections)
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections tracked")
         write(tracks_px, dir, filename, "_tracks-px", ".json")
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Tracks written")
 
 
 # To Dos:
+# - Improve memory management (MemoryError after two 2h detections)
 # - Perform logging by dedicated python package
