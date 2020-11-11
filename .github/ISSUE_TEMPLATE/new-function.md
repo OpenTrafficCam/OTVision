@@ -2,8 +2,8 @@
 name: New Function
 about: Concept for a new function.
 title: ''
-labels: ''
-assignees: frunika
+labels: enhancement
+assignees: ''
 
 ---
 
