@@ -7,7 +7,7 @@
 
 from time import time
 
-from util import load_mot, iou
+from track.util import load_mot, iou  # MB: Only change so far
 
 
 def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min):
