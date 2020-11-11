@@ -20,6 +20,7 @@
 
 import PySimpleGUI as sg
 from PySimpleGUI.PySimpleGUI import LISTBOX_SELECT_MODE_EXTENDED
+from gui.sg_otc_theme import OTC_ICON, OTC_THEME
 
 
 def drop_duplicates(list):
@@ -78,7 +79,11 @@ def format_filetype(filetype):
 
 
 def main(
-    title="Select folders/files", filetype="", input_folders=[], input_files=[],
+    title="Select folders/files",
+    filetype="",
+    input_folders=[],
+    input_files=[],
+    sg_theme=OTC_THEME,
 ):
     """
     Window for picking folders/files for further processing with OTVision tools
@@ -177,10 +182,7 @@ def main(
     ]
 
     # Create the Window
-    window = sg.Window(title, layout).Finalize()
-
-    # Make window fullscreen
-    window.Maximize()
+    window = sg.Window(title, layout, resizable=True, icon=OTC_ICON).Finalize()
 
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
