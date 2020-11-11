@@ -19,8 +19,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from gui import track
+# from gui import track
+from track import track_multi_det_files
 
 
 if __name__ == "__main__":
-    track.main()
+    track_multi_det_files(r"C:\Users\Baerwolff\Desktop\code\OTCam\OTestdata")
