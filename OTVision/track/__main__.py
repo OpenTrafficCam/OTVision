@@ -19,4 +19,63 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from track.iou_tracker import load_mot, iou
+from track.iou_tracker import track_iou
+from track.utils import load_mot, iou
+from helpers.files import get_files
+import json
+
+
+config_track = {
+    "yolo_mode": "spp",
+    "sigma_l": 0.1,
+    "sigma_h": 0.85,
+    "sigma_iou": 0.4,
+    "t_min": 12,
+    "save_age": 5,
+    "overwrite": True
+}
+
+
+def load_det(det_file):
+    """
+    docstring
+    """
+    if input_det_file.endswith(".json"):
+        pass
+    elif input_det_file.endswith(".csv"):
+        pass
+    return det, det_file_base
+
+
+def track_multi_det_files(paths):
+    """
+    docstring
+    """
+    det_files = get_files(paths, '_yolo.json')
+    for det_file in det_files:
+        det, det_file_base = load_det(det_file)
+        trackpx = track_single_det_file(det)
+        write_trackpx(trackpx, det_file_base + '_trajpx.json')
+
+
+def track_single_det_file(det_file):
+    """
+    docstring
+    """
+    det = load_det(det_file)
+    trackpx = track_iou(det)
+    write_trackpx(trackpx, det_file + '_trajpx.json')
+
+
+def write_trackpx_file(trackpx, output_track_file):
+    """
+    docstring
+    """
+    if output_track_file.endswith(".json"):
+        pass
+    elif output_track_file.endswith(".csv"):
+        pass
+
+
+# To Dos:
+# - Add logging by dedicated package
