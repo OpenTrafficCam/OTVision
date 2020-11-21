@@ -67,6 +67,16 @@ def get_files(paths, filetype):
     return sorted(list(files))
 
 
+def remove_dir(dir: str):
+    dir = Path(dir)
+    for path in dir.glob("*"):
+        if path.is_file():
+            path.unlink()
+        else:
+            remove_dir(path)
+    dir.rmdir()
+
+
 if __name__ == "__main__":
     paths = "D:/tmp/"
     # paths = ["D:/tmp/tmp1", "D:\\tmp\\tmp2"]
