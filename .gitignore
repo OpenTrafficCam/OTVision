@@ -14,3 +14,11 @@ OTVision/gui/~$sketches_MB.pptx
 OTVision/gui/sketches_MB.pptx
 OTVision/gui/__pycache__/browse_folders_and_files.cpython-37.pyc
 OTVision/gui/__pycache__/sg_otc_theme.cpython-37.pyc
+OTVision/gui/__pycache__/track.cpython-37.pyc
+OTVision/helpers/__pycache__/__init__.cpython-37.pyc
+OTVision/helpers/__pycache__/files.cpython-37.pyc
+OTVision/track/__pycache__/__init__.cpython-37.pyc
+OTVision/track/__pycache__/iou_tracker_qp.cpython-37.pyc
+OTVision/track/__pycache__/iou_tracker.cpython-37.pyc
+OTVision/track/__pycache__/track.cpython-37.pyc
+OTVision/track/__pycache__/util.cpython-37.pyc
