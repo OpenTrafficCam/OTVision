@@ -22,14 +22,14 @@
 from tkinter.font import BOLD
 import PySimpleGUI as sg
 from gui import browse_folders_and_files
-from gui.sg_otc_theme import OTC_ICON, OTC_BUTTON, OTC_THEME
+from gui.sg_otc_theme import OTC_ICON, OTC_BUTTON, OTC_THEME, OTC_FONT
 import cv2
 import time
 
 
 # Constants
 WIDTH_COL1 = 150
-
+sg.SetOptions(font=OTC_FONT)
 
 def create_window(OTC_ICON, layout):
     window_title = "Transform trajectories from pixel to world coordinates"

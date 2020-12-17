@@ -20,8 +20,11 @@
 
 import PySimpleGUI as sg
 from PySimpleGUI.PySimpleGUI import LISTBOX_SELECT_MODE_EXTENDED
-from gui.sg_otc_theme import OTC_ICON, OTC_THEME
+from gui.sg_otc_theme import OTC_ICON, OTC_BUTTON, OTC_THEME, OTC_FONT
 
+
+# Constants
+sg.SetOptions(font=OTC_FONT)
 
 def drop_duplicates(list):
     """
