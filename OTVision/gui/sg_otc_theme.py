@@ -41,7 +41,9 @@ OTC_THEME = sg.theme("OTC")
 
 
 # Official OTC font
-OTC_FONT = "Amatic SC 20"
+OTC_FONT = "Open Sans"
+OTC_FONTSIZE = 12
+# OTC_FONTTYPE = "bold"
 
 
 # More elements in OTC style 

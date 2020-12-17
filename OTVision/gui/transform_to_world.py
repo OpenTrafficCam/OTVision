@@ -22,14 +22,21 @@
 from tkinter.font import BOLD
 import PySimpleGUI as sg
 from gui import browse_folders_and_files
-from gui.sg_otc_theme import OTC_ICON, OTC_BUTTON, OTC_THEME, OTC_FONT
+from gui.sg_otc_theme import (
+    OTC_ICON,
+    OTC_BUTTON,
+    OTC_THEME,
+    OTC_FONT,
+    OTC_FONTSIZE,
+)
 import cv2
 import time
 
 
 # Constants
 WIDTH_COL1 = 150
-sg.SetOptions(font=OTC_FONT)
+sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
+
 
 def create_window(OTC_ICON, layout):
     window_title = "Transform trajectories from pixel to world coordinates"
@@ -61,7 +68,7 @@ def main(sg_theme=OTC_THEME):
     traj_files = []
 
     # GUI elements: Trajectories
-    header_traj = sg.Text("Step 1: Provide trajectories", font=BOLD)
+    header_traj = sg.Text("Step 1: Provide trajectories")
     button_browse_traj = sg.Button(
         "Browse trajectory files", key="-button_browse_traj-"
     )
@@ -79,7 +86,6 @@ def main(sg_theme=OTC_THEME):
     # GUI elemnts: Reference points
     header_refpts = sg.Text(
         "Step 2: Provide reference points in both pixel and world coordinates",
-        font=BOLD,
     )
     input_refpts = sg.In(
         key="-input_refpts-", size=(WIDTH_COL1, 1), enable_events=True, visible=True,
@@ -95,9 +101,7 @@ def main(sg_theme=OTC_THEME):
     )
 
     # GUI elements: transform to world
-    header_transform = sg.Text(
-        "Step 3: Start transformation to world coordinates", font=BOLD
-    )
+    header_transform = sg.Text("Step 3: Start transformation to world coordinates")
 
     # Video properties
     video = cv2.VideoCapture(
