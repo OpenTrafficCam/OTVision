@@ -18,8 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-from tkinter.font import BOLD
 import PySimpleGUI as sg
 from gui import browse_folders_and_files
 from gui.sg_otc_theme import (
