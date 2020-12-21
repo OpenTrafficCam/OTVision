@@ -36,35 +36,7 @@ WIDTH_COL1 = 150
 sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
 
 
-def create_window(OTC_ICON, layout):
-    window_title = "Transform trajectories from pixel to world coordinates"
-    window = (
-        sg.Window(window_title, icon=OTC_ICON, resizable=True)
-        .Layout(
-            [
-                [
-                    sg.Column(
-                        layout=layout,
-                        key="-column-",
-                        scrollable=True,
-                        vertical_scroll_only=False,
-                        expand_x=True,
-                        expand_y=True,
-                    )
-                ]
-            ]
-        )
-        .Finalize()
-    )
-    return window
-
-
-def main(sg_theme=OTC_THEME):
-    # Lists
-    # traj_paths = []
-    traj_folders = []
-    traj_files = []
-
+def create_layout(graph_video, slider_video, traj_folders, traj_files):
     # GUI elements: Trajectories
     header_traj = sg.Text("Step 1: Provide trajectories")
     button_browse_traj = sg.Button(
@@ -101,37 +73,18 @@ def main(sg_theme=OTC_THEME):
     # GUI elements: transform to world
     header_transform = sg.Text("Step 3: Start transformation to world coordinates")
 
-    # Video properties
-    video = cv2.VideoCapture(
-        r"C:\Users\Baerwolff\Desktop\Lenovo_Arbeit\2020-02-20_Validierungsmessung_Radeberg\raspberrypi_FR20_2020-02-20_11-30-00.flv"
-    )
-    video_width = video.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
-    video_height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
-    video_fps = video.get(cv2.CAP_PROP_FPS)
-    video_total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    a_id = None
-    play_video = False
-    ret = False
-    video_curr_frame = 0
-
     # Gui elements: Video player
-    callback_image = sg.Graph(
-        (video_width, video_height),
-        (0, video_height),
-        (video_width, 0),
-        key="-callback_image-",
+    input_video = sg.In(
+        key="-input_video-", size=(WIDTH_COL1, 1), enable_events=True, visible=True,
+    )
+    browse_video = sg.FileBrowse(
+        "Choose video",
+        key="-browse_video-",
+        target="-input_video-",
         enable_events=True,
-        drag_submits=True,
-        background_color="black",
     )
     button_play = sg.Button("Play", key="-button_play-")
     button_pause = sg.Button("Pause", key="-button_pause-")
-    slider_video = sg.Slider(
-        range=(0, video_total_frames),
-        size=(60, 10),
-        orientation="h",
-        key="-slider_video-",
-    )
 
     # GUI elements: Exit gui data
     button_back_to_otvision = sg.Button(
@@ -147,7 +100,8 @@ def main(sg_theme=OTC_THEME):
         [sg.Text("")],
         [header_refpts],
         [browse_refpts, input_refpts],
-        [callback_image],
+        [browse_video, input_video],
+        [graph_video],
         [button_play, button_pause],
         [slider_video],
         [filesaveas_refpts],
@@ -156,12 +110,138 @@ def main(sg_theme=OTC_THEME):
         [sg.Text("")],
         [button_back_to_otvision],
     ]
+    return layout
 
-    # Create the Window
-    window = create_window(OTC_ICON, layout)
+
+def create_window(OTC_ICON, layout, window_location=(0, 0), window_size=None):
+    window_title = "Transform trajectories from pixel to world coordinates"
+    window = (
+        sg.Window(window_title, icon=OTC_ICON, resizable=True, location=window_location)
+        .Layout(
+            [
+                [
+                    sg.Column(
+                        layout=layout,
+                        key="-column-",
+                        scrollable=True,
+                        vertical_scroll_only=False,
+                        expand_x=True,
+                        expand_y=True,
+                    )
+                ]
+            ]
+        )
+        .Finalize()
+    )
+    if window_size is None:
+        window.Maximize()
+    else:
+        window.Size = window_size
+    return window
+
+
+def create_graph_video(width=640, height=480):
+    graph_video = sg.Graph(
+        canvas_size=(width, height),
+        graph_bottom_left=(0, height),
+        graph_top_right=(width, 0),
+        key="-graph_video-",
+        enable_events=True,
+        drag_submits=True,
+        background_color="black",
+    )
+    return graph_video
+
+
+def create_slider_video(video_total_frames=0):
+    slider_video = sg.Slider(
+        range=(0, video_total_frames),
+        size=(60, 10),
+        orientation="h",
+        key="-slider_video-",
+    )
+    return slider_video
+
+
+def prepare_video(path, window, traj_folders, traj_files):
+
+    # Get video and properties with opencv
+    video = cv2.VideoCapture(path)
+    video_width = video.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
+    video_height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+    video_fps = video.get(cv2.CAP_PROP_FPS)
+    video_total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
+    a_id = None
+    video_play = False
+    ret = False
+    frame_no = 0
+
+    # Recreate pysimplegui window
+    graph_video = create_graph_video(video_width, video_height)
+    slider_video = create_slider_video(video_total_frames)
+    window_location = window.CurrentLocation()
+    window_size = window.Size
+    new_window = create_window(
+        OTC_ICON,
+        create_layout(graph_video, slider_video, traj_folders, traj_files),
+        window_location,
+        window_size,
+    )
+    window.close()
+
+    return (
+        video,
+        video_fps,
+        video_total_frames,
+        a_id,
+        video_play,
+        ret,
+        frame_no,
+        new_window,
+        graph_video,
+        slider_video,
+    )
+
+
+def update_graph_video(graph_video, frame):
+    # update_graph_video(frame)
+    imgbytes = cv2.imencode(".png", frame)[1].tobytes()
+    graph_video.delete_figure("all")  # delete previous image
+    graph_video.draw_image(data=imgbytes, location=(0, 0))  # draw new image
+    # graph_video.TKCanvas.tag_lower(a_id)  # move image to bottom
+    return imgbytes
+
+
+def main(sg_theme=OTC_THEME):
+    # Lists
+    # traj_paths = []
+    traj_folders = []
+    traj_files = []
+
+    # Get initial layout and create initial window
+    initial_graph_video = create_graph_video()
+    initial_slider_video = create_slider_video()
+    window = create_window(
+        OTC_ICON,
+        create_layout(
+            initial_graph_video, initial_slider_video, traj_folders, traj_files
+        ),
+    )
+
+    # Initialize own custom video settings
+    video_loaded = False
+    video_play = False
+    ret = None
+    frame = None
+    video = None
+    video_curr_frame = None
+    video_fps = None
+    graph_video = None
 
     # Event Loop to process "events" and get the "values" of the inputs
-    while video.isOpened():
+    while True:
+
+        # Gui stuff
         event, values = window.read(timeout=0)
         window["-column-"].expand(True, True)
         # screen_width, screen_height = window.get_screen_size()
@@ -171,31 +251,55 @@ def main(sg_theme=OTC_THEME):
             or event == "-button_back_to_otvision-"
         ):  # if user closes window or clicks cancel
             break
+        elif event == "-input_video-":  # If user loads new video
+            (
+                video,
+                video_fps,
+                video_total_frames,
+                a_id,
+                video_play,
+                ret,
+                frame,
+                window,
+                graph_video,
+                slider_video,
+            ) = prepare_video(values["-input_video-"], window, traj_folders, traj_files)
+            video_loaded = True
+
         # Video stuff
-        if event == "-button_play-":
-            play_video = True
-        elif event == "-button_pause-" or not ret:
-            play_video = False
-        if play_video:
-            ret, frame = video.read()
-            imgbytes = cv2.imencode(".png", frame)[1].tobytes()
-            if a_id:
-                window["-callback_image-"].delete_figure(a_id)  # delete previous image
-            a_id = window["-callback_image-"].draw_image(
-                data=imgbytes, location=(0, 0)
-            )  # draw new image
-            window["-callback_image-"].TKCanvas.tag_lower(a_id)  # move image to bottom
-            time.sleep(1 / video_fps)
-            # if someone moved the slider manually, the jump to that frame
-            if int(values["-slider_video-"]) != video_curr_frame - 1:
+        i_play = 0
+        i_slider = 0
+        if video_loaded:
+            if event == "-button_play-":
+                video_play = True
+            elif event == "-button_pause-" or not ret:
+                video_play = False
+            if video_play:
+                print("Play " + str(i_play))
+                i_play += 1
+                ret, frame = video.read()
+                update_graph_video(graph_video, frame)
+                time.sleep(1 / video_fps)
+                # video_curr_frame = int(values["-slider_video-"]) + 1
+            # if someone moved the slider manually: jump to that frame
+            if (
+                int(values["-slider_video-"])
+                != int(video.get(cv2.CAP_PROP_POS_FRAMES)) - 1
+            ):  # frame contains the image array, not the curr_frame!!!!
+                print("Cond1 " + str(int(values["-slider_video-"])))
+                print("Cond2 " + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                print("Slider " + str(i_slider))
+                i_slider += 1
+                ret, frame = video.read()
                 video_curr_frame = int(values["-slider_video-"])
                 video.set(cv2.CAP_PROP_POS_FRAMES, video_curr_frame)
+                update_graph_video(graph_video, frame)
             window["-slider_video-"].update(video_curr_frame)
             # video_curr_frame += 1
-        # Video callbacks
-        if event == "-callback_image-":
-            refpts_px_values = values["-callback_image-"]
-            window["-callback_image-"].draw_circle(
+            # Video callbacks
+        if event == "-graph_video-":
+            refpts_px_values = values["-graph_video-"]
+            window["-graph_video-"].draw_circle(
                 refpts_px_values, 5, fill_color="red", line_color="red"
             )
         # Other gui stuff
