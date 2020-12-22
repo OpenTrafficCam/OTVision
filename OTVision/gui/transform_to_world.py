@@ -29,6 +29,8 @@ from gui.sg_otc_theme import (
 )
 import cv2
 import time
+import datetime
+import pause
 
 
 # Constants
@@ -237,6 +239,8 @@ def main(sg_theme=OTC_THEME):
     video_curr_frame = None
     video_fps = None
     graph_video = None
+    wake_time = 0
+    cur_frame = 0
 
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
@@ -265,45 +269,7 @@ def main(sg_theme=OTC_THEME):
                 slider_video,
             ) = prepare_video(values["-input_video-"], window, traj_folders, traj_files)
             video_loaded = True
-
-        # Video stuff
-        i_play = 0
-        i_slider = 0
-        if video_loaded:
-            if event == "-button_play-":
-                video_play = True
-            elif event == "-button_pause-" or not ret:
-                video_play = False
-            if video_play:
-                print("Play " + str(i_play))
-                i_play += 1
-                ret, frame = video.read()
-                update_graph_video(graph_video, frame)
-                time.sleep(1 / video_fps)
-                # video_curr_frame = int(values["-slider_video-"]) + 1
-            # if someone moved the slider manually: jump to that frame
-            if (
-                int(values["-slider_video-"])
-                != int(video.get(cv2.CAP_PROP_POS_FRAMES)) - 1
-            ):  # frame contains the image array, not the curr_frame!!!!
-                print("Cond1 " + str(int(values["-slider_video-"])))
-                print("Cond2 " + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                print("Slider " + str(i_slider))
-                i_slider += 1
-                ret, frame = video.read()
-                video_curr_frame = int(values["-slider_video-"])
-                video.set(cv2.CAP_PROP_POS_FRAMES, video_curr_frame)
-                update_graph_video(graph_video, frame)
-            window["-slider_video-"].update(video_curr_frame)
-            # video_curr_frame += 1
-            # Video callbacks
-        if event == "-graph_video-":
-            refpts_px_values = values["-graph_video-"]
-            window["-graph_video-"].draw_circle(
-                refpts_px_values, 5, fill_color="red", line_color="red"
-            )
-        # Other gui stuff
-        if event == "-button_browse_traj-":
+        elif event == "-button_browse_traj-":
             traj_folders, traj_files = browse_folders_and_files.main(
                 title="Select trajectories",
                 filetype="_trackspx.json",
@@ -341,6 +307,95 @@ def main(sg_theme=OTC_THEME):
             traj_files = []
             window["-text_traj_folders-"].Update("0 folders selected.")
             window["-text_traj_files-"].Update("0 files selected.")
+
+        # Video stuff
+        if video_loaded:
+            # print(str(event))
+            print(
+                "Pos. 1 "
+                + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                + " vs. "
+                + str(int(values["-slider_video-"]))
+            )
+            if event == "-button_play-":
+                video_play = True
+            elif event == "-button_pause-" or not ret:
+                video_play = False
+                wake_time = 0
+            if video_play:
+                print(
+                    "Pos. 2a "
+                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                    + " vs. "
+                    + str(int(values["-slider_video-"]))
+                )
+                ret, frame = video.read()
+                print(
+                    "Pos. 2b "
+                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                    + " vs. "
+                    + str(int(values["-slider_video-"]))
+                )
+                update_graph_video(graph_video, frame)
+                # print("Videoframe " + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                if wake_time > 0:
+                    pause.until(wake_time)
+                wake_time = datetime.datetime.timestamp(datetime.datetime.now()) + (
+                    1 / 2  # video_fps
+                )
+                print(
+                    "Pos. 3 "
+                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                    + " vs. "
+                    + str(int(values["-slider_video-"]))
+                )
+                # cur_frame += 1
+                video_curr_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES)) + 1
+                print(
+                    "Pos. 4 "
+                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                    + " vs. "
+                    + str(int(values["-slider_video-"]))
+                )
+                window["-slider_video-"].update(video_curr_frame)
+                print(
+                    "Pos. 5 "
+                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                    + " vs. "
+                    + str(int(values["-slider_video-"]))
+                )
+                #  time_ms = int(round(time.time() * 1000))
+
+                # time.sleep(1 / video_fps)
+                # video_curr_frame = int(values["-slider_video-"]) + 1
+            # if someone moved the slider manually: jump to that frame
+            print(
+                "Pos. 2 "
+                + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                + " vs. "
+                + str(int(values["-slider_video-"]))
+            )
+            delta = (
+                int(video.get(cv2.CAP_PROP_POS_FRAMES))
+                - int(values["-slider_video-"])
+            )
+            print(delta)
+            if delta != 0:
+                print("Hello")
+                # frame contains the image array, not the curr_frame!!!!
+                # print("Slider Cond1 " + str(int(values["-slider_video-"])))
+                # print("Slider Cond2 " + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
+                video_curr_frame = int(values["-slider_video-"])
+                video.set(cv2.CAP_PROP_POS_FRAMES, video_curr_frame)
+                ret, frame = video.read()
+                update_graph_video(graph_video, frame)
+            # video_curr_frame += 1
+            # Video callbacks
+        """if event == "-graph_video-":
+            refpts_px_values = values["-graph_video-"]
+            window["-graph_video-"].draw_circle(
+                refpts_px_values, 5, fill_color="red", line_color="red"
+            )"""
 
     window.close()
 
