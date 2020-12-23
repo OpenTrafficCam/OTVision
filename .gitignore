@@ -9,3 +9,4 @@ OTVision/gui/__pycache__
 OTVision/helpers/__pycache__
 OTVision/__pycache__
 geckodriver.log
+.vscode/launch.json
