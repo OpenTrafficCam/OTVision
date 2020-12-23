@@ -28,7 +28,6 @@ from gui.sg_otc_theme import (
     OTC_FONTSIZE,
 )
 import cv2
-import time
 import datetime
 import pause
 
@@ -36,6 +35,21 @@ import pause
 # Constants
 WIDTH_COL1 = 150
 sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
+PLAYER_FPS = 10
+
+
+def log_videoplayer(pos, video, values):
+    print(
+        pos
+        + " Video: "
+        + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
+        + " vs. Slider: "
+        + str(int(values["-slider_video-"]) + 1)
+    )
+
+
+def now_msec():
+    return datetime.datetime.timestamp(datetime.datetime.now())
 
 
 def create_layout(graph_video, slider_video, traj_folders, traj_files):
@@ -87,6 +101,15 @@ def create_layout(graph_video, slider_video, traj_folders, traj_files):
     )
     button_play = sg.Button("Play", key="-button_play-")
     button_pause = sg.Button("Pause", key="-button_pause-")
+    text_speed = sg.Text("Speed x ")
+    spin_speed = sg.Spin(
+        values=["0.01", "0.1", "0.25", "0.5", "1", "2", "5", "10"],
+        initial_value="1",
+        key="-spin_speed-",
+        size=(5, 1),
+        enable_events=True,
+    )
+    text_video_time = sg.Text("--:--")
 
     # GUI elements: Exit gui data
     button_back_to_otvision = sg.Button(
@@ -104,7 +127,7 @@ def create_layout(graph_video, slider_video, traj_folders, traj_files):
         [browse_refpts, input_refpts],
         [browse_video, input_video],
         [graph_video],
-        [button_play, button_pause],
+        [button_play, button_pause, text_speed, spin_speed, text_video_time],
         [slider_video],
         [filesaveas_refpts],
         [sg.Text("")],
@@ -174,9 +197,9 @@ def prepare_video(path, window, traj_folders, traj_files):
     video_fps = video.get(cv2.CAP_PROP_FPS)
     video_total_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
     a_id = None
-    video_play = False
+    play_video = False
     ret = False
-    frame_no = 0
+    ret, frame = video.read()
 
     # Recreate pysimplegui window
     graph_video = create_graph_video(video_width, video_height)
@@ -196,9 +219,9 @@ def prepare_video(path, window, traj_folders, traj_files):
         video_fps,
         video_total_frames,
         a_id,
-        video_play,
+        play_video,
         ret,
-        frame_no,
+        frame,
         new_window,
         graph_video,
         slider_video,
@@ -207,9 +230,13 @@ def prepare_video(path, window, traj_folders, traj_files):
 
 def update_graph_video(graph_video, frame):
     # update_graph_video(frame)
+    print("9a:" + str(now_msec()))
     imgbytes = cv2.imencode(".png", frame)[1].tobytes()
+    print("9b:" + str(now_msec()))
     graph_video.delete_figure("all")  # delete previous image
+    print("9c:" + str(now_msec()))
     graph_video.draw_image(data=imgbytes, location=(0, 0))  # draw new image
+    print("9d:" + str(now_msec()))
     # graph_video.TKCanvas.tag_lower(a_id)  # move image to bottom
     return imgbytes
 
@@ -232,18 +259,19 @@ def main(sg_theme=OTC_THEME):
 
     # Initialize own custom video settings
     video_loaded = False
-    video_play = False
+    play_video = False
     ret = None
     frame = None
     video = None
-    video_curr_frame = None
     video_fps = None
     graph_video = None
-    wake_time = 0
-    cur_frame = 0
+    timestamp_last_frame = 0
+    playback_speed_factor = 1
+    set_frame_manually = False
 
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
+        print("1:" + str(now_msec()))
 
         # Gui stuff
         event, values = window.read(timeout=0)
@@ -255,20 +283,6 @@ def main(sg_theme=OTC_THEME):
             or event == "-button_back_to_otvision-"
         ):  # if user closes window or clicks cancel
             break
-        elif event == "-input_video-":  # If user loads new video
-            (
-                video,
-                video_fps,
-                video_total_frames,
-                a_id,
-                video_play,
-                ret,
-                frame,
-                window,
-                graph_video,
-                slider_video,
-            ) = prepare_video(values["-input_video-"], window, traj_folders, traj_files)
-            video_loaded = True
         elif event == "-button_browse_traj-":
             traj_folders, traj_files = browse_folders_and_files.main(
                 title="Select trajectories",
@@ -309,102 +323,103 @@ def main(sg_theme=OTC_THEME):
             window["-text_traj_files-"].Update("0 files selected.")
 
         # Video stuff
+        print("2:" + str(now_msec()))
+        if event == "-input_video-":  # If user loads new video
+            if values["-input_video-"] != "":
+                (
+                    video,
+                    video_fps,
+                    video_total_frames,
+                    a_id,
+                    play_video,
+                    ret,
+                    frame,
+                    window,
+                    graph_video,
+                    slider_video,
+                ) = prepare_video(
+                    values["-input_video-"], window, traj_folders, traj_files
+                )
+                update_graph_video(graph_video, frame)
+                video_loaded = True
         if video_loaded:
-            # print(str(event))
-            print(
-                "Pos. 1 "
-                + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                + " vs. "
-                + str(int(values["-slider_video-"]))
-            )
-            if event == "-button_play-":
-                video_play = True
-            elif event == "-button_pause-" or not ret:
-                video_play = False
-                wake_time = 0
-            if video_play:
-                print(
-                    "Pos. 2a "
-                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                    + " vs. "
-                    + str(int(values["-slider_video-"]))
-                )
-                ret, frame = video.read()
-                print(
-                    "Pos. 2b "
-                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                    + " vs. "
-                    + str(int(values["-slider_video-"]))
-                )
-                update_graph_video(graph_video, frame)
-                # print("Videoframe " + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                if wake_time > 0:
-                    pause.until(wake_time)
-                wake_time = datetime.datetime.timestamp(datetime.datetime.now()) + (
-                    1 / 2  # video_fps
-                )
-                print(
-                    "Pos. 3 "
-                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                    + " vs. "
-                    + str(int(values["-slider_video-"]))
-                )
-                # cur_frame += 1
-                video_curr_frame = int(video.get(cv2.CAP_PROP_POS_FRAMES)) + 1
-                print(
-                    "Pos. 4 "
-                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                    + " vs. "
-                    + str(int(values["-slider_video-"]))
-                )
-                window["-slider_video-"].update(video_curr_frame)
-                print(
-                    "Pos. 5 "
-                    + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                    + " vs. "
-                    + str(int(values["-slider_video-"]))
-                )
-                #  time_ms = int(round(time.time() * 1000))
 
-                # time.sleep(1 / video_fps)
-                # video_curr_frame = int(values["-slider_video-"]) + 1
-            # if someone moved the slider manually: jump to that frame
-            print(
-                "Pos. 2 "
-                + str(int(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                + " vs. "
-                + str(int(values["-slider_video-"]))
-            )
-            delta = (
-                int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                - int(values["-slider_video-"])
-            )
-            print(delta)
-            if delta != 0:
-                print("Hello")
-                # frame contains the image array, not the curr_frame!!!!
-                # print("Slider Cond1 " + str(int(values["-slider_video-"])))
-                # print("Slider Cond2 " + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
-                video_curr_frame = int(values["-slider_video-"])
-                video.set(cv2.CAP_PROP_POS_FRAMES, video_curr_frame)
+            print("3:" + str(now_msec()))
+            # Get current frame and slider position
+            frame_video = video.get(cv2.CAP_PROP_POS_FRAMES)
+            frame_slider = values["-slider_video-"] + 1
+
+            print("4:" + str(now_msec()))
+            # Get state of video player
+            if event == "-button_play-":
+                play_video = True
+            elif event == "-button_pause-" or not ret:
+                play_video = False
+                timestamp_current_frame = 0
+            if frame_video != frame_slider:
+                set_frame_manually = True
+            playback_speed_factor = float(values["-spin_speed-"])
+
+            # If a new frame has to be displayed
+            print("5:" + str(now_msec()))
+            if play_video or set_frame_manually:
+                # log_videoplayer("Pos. 1", video, values)
+                # Calculate next frame
+                if set_frame_manually:
+                    frame_video = frame_slider  # int(values["-slider_video-"]) + 1
+                    set_frame_manually = False
+                elif play_video:
+                    delta_frames = video_fps / PLAYER_FPS
+                    if playback_speed_factor < 0 or playback_speed_factor > 1:
+                        delta_frames = delta_frames * playback_speed_factor
+                    frame_video = frame_slider = frame_video + delta_frames
+                print("5a:" + str(now_msec()))
+                video.set(cv2.CAP_PROP_POS_FRAMES, frame_video - 1)
+                # log_videoplayer("Pos. 2", video, values)
+                print("5b:" + str(now_msec()))
+                window["-slider_video-"].update(frame_slider - 1)
+                # log_videoplayer("Pos. 3", video, values)
+
+                print("6:" + str(now_msec()))
+                # Retrieve current frame from video using opencv cap.read()
                 ret, frame = video.read()
-                update_graph_video(graph_video, frame)
-            # video_curr_frame += 1
-            # Video callbacks
-        """if event == "-graph_video-":
-            refpts_px_values = values["-graph_video-"]
-            window["-graph_video-"].draw_circle(
-                refpts_px_values, 5, fill_color="red", line_color="red"
-            )"""
+                if ret:
+                    print("7:" + str(now_msec()))
+                    # Define waiting time to show frame for displaying in correct speed
+                    if play_video:
+                        if playback_speed_factor > 0 and playback_speed_factor < 1:
+                            time_between_frames = 1 / (
+                                PLAYER_FPS * playback_speed_factor
+                            )
+                        else:
+                            time_between_frames = 1 / PLAYER_FPS
+                        timestamp_current_frame = (
+                            timestamp_last_frame + time_between_frames
+                        )
+                        if (
+                            timestamp_current_frame > 0
+                            and now_msec() < timestamp_current_frame
+                        ):
+                            pause.until(timestamp_current_frame)
+                        print("8:" + str(now_msec()))
+                    # log_videoplayer("Pos. 4", video, values)
+                    # Get timestamp of displaying current frame
+                    timestamp_last_frame = now_msec()
+                    print("9:" + str(now_msec()))
+                    # Display new frame
+                    update_graph_video(graph_video, frame)
+                    print("10:" + str(now_msec()))
 
     window.close()
 
 
 # To Dos:
 # - Rearange loop to enable Play, Pause and Slider simultaneously
-# - Load video automatically by file name of "[...]_trackspx.json"
+# - Load video automatically by file name of "[...]_trackspx.json"?
 #   or otherwise by browse button
+# - Show current video (or real?) time and total video time on slider
 # - Remove error when video runs out of frames
+# - Find and remove error of no more frames displaying after certain time (out of RAM?)
 # - Draw on every mouse click (everey now and then it doesnt work)
 # - Draw crosshair instead of circle
 # - Add embededding or popup for map
