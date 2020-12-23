@@ -22,10 +22,16 @@ import os
 import configparser
 
 
-# Constants
-APPDATA_ROAMING_FOLDER = os.getenv("APPDATA")
-USER_SETTINGS_REL_PATH = "OpenTrafficCam\\OTVision\\user_settings.ini"
-USER_SETTINGS_PATH = os.path.join(APPDATA_ROAMING_FOLDER, USER_SETTINGS_REL_PATH)
+def get_user_settings_path_appdata():
+    APPDATA_ROAMING_FOLDER = os.getenv("APPDATA")
+    USER_SETTINGS_REL_PATH = "OpenTrafficCam\\OTVision\\user_settings.ini"
+    USER_SETTINGS_PATH = os.path.join(APPDATA_ROAMING_FOLDER, USER_SETTINGS_REL_PATH)
+    return USER_SETTINGS_PATH
+
+
+def get_user_settings_path():
+    USER_SETTINGS_REL_PATH = "OTVision\\helpers\\user.conf"
+    return USER_SETTINGS_REL_PATH
 
 
 def write_user_settings(config):
@@ -37,6 +43,7 @@ def write_user_settings(config):
 
     Returns: No returns
     """
+    USER_SETTINGS_PATH = get_user_settings_path()
     with open(USER_SETTINGS_PATH, "w") as configfile:
         config.write(configfile)
 
@@ -50,6 +57,7 @@ def read_user_settings():
     Returns:
     config -- configparser element
     """
+    USER_SETTINGS_PATH = get_user_settings_path()
     config = configparser.ConfigParser()
     config.optionxform = lambda option: option
     config.read(USER_SETTINGS_PATH)
@@ -61,7 +69,6 @@ def read_user_settings():
 
 
 if __name__ == "__main__":
-    print("Path of user settings file: " + USER_SETTINGS_PATH)
     config = read_user_settings()
     print("Sections:")
     print(config.sections())
