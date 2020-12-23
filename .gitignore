@@ -23,4 +23,5 @@ OTVision/track/__pycache__/iou_tracker.cpython-37.pyc
 OTVision/track/__pycache__/track.cpython-37.pyc
 OTVision/track/__pycache__/util.cpython-37.pyc
 OTVision/helpers/__pycache__/config.cpython-37.pyc
-OTVision/helpers/user.conf
+OTVision/user.conf
+OTVision/__pycache__/config.cpython-37.pyc
