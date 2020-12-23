@@ -30,7 +30,7 @@ from gui.sg_otc_theme import (
 import cv2
 import datetime
 import pause
-import configparser
+from helpers import config
 import os
 
 
@@ -38,11 +38,11 @@ import os
 WIDTH_COL1 = 150
 sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
 PLAYER_FPS = 10
-USER_SETTINGS_PATH = r"OTVision/user_settings.ini"
-config = configparser.ConfigParser()
-config.optionxform = lambda option: option
-config.read(USER_SETTINGS_PATH)
-LAST_VIDEO_PATH = config["VIDEO_PLAYER"]["LAST_VIDEO_PATH"]
+otvision_user_settings = config.read_user_settings()
+try:
+    LAST_VIDEO_PATH = otvision_user_settings["PATHS"]["LAST_VIDEO_PATH"]
+except KeyError:
+    LAST_VIDEO_PATH = ""
 
 
 def log_videoplayer(pos, video, values):
@@ -358,11 +358,12 @@ def main(sg_theme=OTC_THEME):
                 )
                 update_graph_video(graph_video, frame)
                 video_loaded = True
-                # Save video path to user settings config file
+                # Save video path to user settings otvision_user_settings file
                 window["-input_video-"].update(values["-input_video-"])
-                config["VIDEO_PLAYER"]["LAST_VIDEO_PATH"] = values["-input_video-"]
-                with open(USER_SETTINGS_PATH, "w") as configfile:
-                    config.write(configfile)
+                otvision_user_settings["PATHS"]["LAST_VIDEO_PATH"] = values[
+                    "-input_video-"
+                ]
+                config.write_user_settings(otvision_user_settings)
                 use_initial_videopath = False
         if video_loaded:
 
