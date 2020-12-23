@@ -30,12 +30,19 @@ from gui.sg_otc_theme import (
 import cv2
 import datetime
 import pause
+import configparser
+import os
 
 
 # Constants
 WIDTH_COL1 = 150
 sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
 PLAYER_FPS = 10
+USER_SETTINGS_PATH = r"OTVision/user_settings.ini"
+config = configparser.ConfigParser()
+config.optionxform = lambda option: option
+config.read(USER_SETTINGS_PATH)
+LAST_VIDEO_PATH = config["VIDEO_PLAYER"]["LAST_VIDEO_PATH"]
 
 
 def log_videoplayer(pos, video, values):
@@ -91,7 +98,11 @@ def create_layout(graph_video, slider_video, traj_folders, traj_files):
 
     # Gui elements: Video player
     input_video = sg.In(
-        key="-input_video-", size=(WIDTH_COL1, 1), enable_events=True, visible=True,
+        LAST_VIDEO_PATH,
+        key="-input_video-",
+        size=(WIDTH_COL1, 1),
+        enable_events=True,
+        visible=True,
     )
     browse_video = sg.FileBrowse(
         "Choose video",
@@ -268,6 +279,10 @@ def main(sg_theme=OTC_THEME):
     timestamp_last_frame = 0
     playback_speed_factor = 1
     set_frame_manually = False
+    if os.path.isfile(LAST_VIDEO_PATH):
+        use_initial_videopath = True
+    else:
+        use_initial_videopath = False
 
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
@@ -275,7 +290,8 @@ def main(sg_theme=OTC_THEME):
 
         # Gui stuff
         event, values = window.read(timeout=0)
-        window["-column-"].expand(True, True)
+        # following line removed due to error, see https://stackoverflow.com/a/49862936
+        # window["-column-"].expand(True, True)
         # screen_width, screen_height = window.get_screen_size()
         if (
             event == sg.WIN_CLOSED
@@ -324,7 +340,7 @@ def main(sg_theme=OTC_THEME):
 
         # Video stuff
         print("2:" + str(now_msec()))
-        if event == "-input_video-":  # If user loads new video
+        if event == "-input_video-" or use_initial_videopath:  # If user loads new video
             if values["-input_video-"] != "":
                 (
                     video,
@@ -342,6 +358,12 @@ def main(sg_theme=OTC_THEME):
                 )
                 update_graph_video(graph_video, frame)
                 video_loaded = True
+                # Save video path to user settings config file
+                window["-input_video-"].update(values["-input_video-"])
+                config["VIDEO_PLAYER"]["LAST_VIDEO_PATH"] = values["-input_video-"]
+                with open(USER_SETTINGS_PATH, "w") as configfile:
+                    config.write(configfile)
+                use_initial_videopath = False
         if video_loaded:
 
             print("3:" + str(now_msec()))
@@ -410,6 +432,7 @@ def main(sg_theme=OTC_THEME):
                     update_graph_video(graph_video, frame)
                     print("10:" + str(now_msec()))
 
+    print("Huhu")
     window.close()
 
 
