@@ -30,7 +30,7 @@ from gui.sg_otc_theme import (
 import cv2
 import datetime
 import pause
-from helpers import config
+import config
 import os
 
 

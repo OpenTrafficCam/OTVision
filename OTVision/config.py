@@ -30,7 +30,7 @@ def get_user_settings_path_appdata():
 
 
 def get_user_settings_path():
-    USER_SETTINGS_REL_PATH = "OTVision\\helpers\\user.conf"
+    USER_SETTINGS_REL_PATH = "OTVision\\user.conf"
     return USER_SETTINGS_REL_PATH
 
 
