@@ -213,7 +213,7 @@ def prepare_video(path, window, traj_folders, traj_files):
     ret, frame = video.read()
 
     # Recreate pysimplegui window
-    graph_video = create_graph_video(video_width, video_height)
+    graph_video = create_graph_video(400, 300)
     slider_video = create_slider_video(video_total_frames)
     window_location = window.CurrentLocation()
     window_size = window.Size

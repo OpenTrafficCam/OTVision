@@ -23,13 +23,13 @@ import PySimpleGUI as sg
 
 # Add your new theme colors and settings
 sg.LOOK_AND_FEEL_TABLE["OTC"] = {
-    "BACKGROUND": "#37483e",
-    "TEXT": "#ffffff",
-    "INPUT": "#37483e",
-    "TEXT_INPUT": "#ffffff",
-    "SCROLL": "#c7e78b",
+    "BACKGROUND": "#ffffff",
+    "TEXT": "#000000",
+    "INPUT": "#ebebeb",
+    "TEXT_INPUT": "#000000",
+    "SCROLL": "#ebebeb",
     "BUTTON": ("#ffffff", "#37483e"),
-    "PROGRESS": ("#01826B", "#D0D0D0"),
+    "PROGRESS": ("#ffffff", "#37483e"),
     "BORDER": 1,
     "SLIDER_DEPTH": 0,
     "PROGRESS_DEPTH": 0,
