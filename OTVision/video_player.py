@@ -20,6 +20,7 @@
 
 
 from gui import video_player
+from gui import video_player_image
 
 
 if __name__ == "__main__":
