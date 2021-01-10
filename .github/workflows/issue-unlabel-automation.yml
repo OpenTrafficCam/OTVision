@@ -8,7 +8,7 @@ jobs:
   ToDo-List:
     runs-on: ubuntu-latest
     steps:
-      - name: Move bugs and features to ToDo-List
+      - name: Remove former bugs and features from ToDo-List
         uses: alex-page/github-project-automation-plus@v0.5.1
         if: |
           !contains(github.event.issue.labels.*.name, 'bug') &&
@@ -21,7 +21,7 @@ jobs:
   Wish-List:
     runs-on: ubuntu-latest
     steps:
-      - name: Move ideas to Wish-List
+      - name: Remove former ideas from Wish-List
         uses: alex-page/github-project-automation-plus@v0.5.1
         if: |
           !contains(github.event.issue.labels.*.name, 'idea')
@@ -33,7 +33,7 @@ jobs:
   Discussion:
     runs-on: ubuntu-latest
     steps:
-      - name: Move questions to Friday-Discussion
+      - name: Remove former questions from Friday-Discussion
         uses: alex-page/github-project-automation-plus@v0.5.1
         if: |
           !contains(github.event.issue.labels.*.name, 'question')
