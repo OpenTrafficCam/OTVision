@@ -96,6 +96,7 @@ def draw_shapes(shapes, window):
     color must be a string like 'red' or 'green'
     draw_text: text, location, color='black', font=None, angle=0, text_location=TEXT_LOCATION_CENTER
     """
+    # ToDo: Resize all shapes if necessary
     # TODO: Write shapes from dict to graph (in external function)
     for i in shapes:
         figure_id = None
