@@ -1,5 +1,12 @@
 .vscode/.ropeproject/config.py
 .vscode/.ropeproject/objectdb
+OTVision/user.conf
+OTVision/track/__pycache__
+OTVision/transform_to_world/__pycache__
+OTVision/gui/__pycache__
+OTVision/helpers/__pycache__
+OTVision/__pycache__
+geckodriver.log
 OTVision/__pycache__/__init__.cpython-37.pyc
 OTVision/__pycache__/__main__.cpython-37.pyc
 OTVision/gui/sketches_MB.pptx

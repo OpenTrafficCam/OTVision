@@ -17,3 +17,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+from gui import video_player
+from gui import video_player_image
+
+
+if __name__ == "__main__":
+    video_player.main()
