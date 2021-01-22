@@ -1,0 +1,41 @@
+name: Issue to Project
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  ToDo-List:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move bugs and features to ToDo-List
+        uses: alex-page/github-project-automation-plus@v0.5.1
+        if: |
+          contains(github.event.issue.labels.*.name, 'bug') ||
+          contains(github.event.issue.labels.*.name, 'feature')
+        with:
+          project: ToDo-List
+          column: To do
+          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
+  Wish-List:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move ideas to Wish-List
+        uses: alex-page/github-project-automation-plus@v0.5.1
+        if: |
+          contains(github.event.issue.labels.*.name, 'idea')
+        with:
+          project: Wish-List
+          column: ${{ github.event.repository.name }}
+          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
+  Discussion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move questions to Friday-Discussion
+        uses: alex-page/github-project-automation-plus@v0.5.1
+        if: |
+          contains(github.event.issue.labels.*.name, 'question')
+        with:
+          project: OTC Core Developer Friday-Meeting
+          column: neu
+          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
