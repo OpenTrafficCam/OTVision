@@ -1,0 +1,26 @@
+{
+    "gpl_license_header": {
+        "prefix": "gpl_add_head",
+        "body": [
+            "$LINE_COMMENT OTVision: ${1:Program Name and Function}",
+            "$LINE_COMMENT Copyright (C) $CURRENT_YEAR OpenTrafficCam Contributors",
+            "$LINE_COMMENT <https://github.com/OpenTrafficCam",
+            "$LINE_COMMENT <team@opentrafficcam.org>",
+            "$LINE_COMMENT",
+            "$LINE_COMMENT This program is free software: you can redistribute it and/or modify",
+            "$LINE_COMMENT it under the terms of the GNU General Public License as published by",
+            "$LINE_COMMENT the Free Software Foundation, either version 3 of the License, or",
+            "$LINE_COMMENT (at your option) any later version.",
+            "$LINE_COMMENT",
+            "$LINE_COMMENT This program is distributed in the hope that it will be useful,",
+            "$LINE_COMMENT but WITHOUT ANY WARRANTY; without even the implied warranty of",
+            "$LINE_COMMENT MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the",
+            "$LINE_COMMENT GNU General Public License for more details.",
+            "$LINE_COMMENT",
+            "$LINE_COMMENT You should have received a copy of the GNU General Public License",
+            "$LINE_COMMENT along with this program.  If not, see <https://www.gnu.org/licenses/>.",
+            "",
+        ],
+        "description": "Add GPLv3 license information in source code."
+    }
+}
