@@ -35,3 +35,5 @@ OTVision/gui/__pycache__/video_player.cpython-37.pyc
 OTVision/helpers/__pycache__/config.cpython-37.pyc
 .gitignore
 .vscode/launch.json
+.vscode/settings.json
+.vscode/settings.json
