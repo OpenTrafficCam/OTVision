@@ -96,7 +96,17 @@ def detect_yolov5(
         display_results_str = ""
 
     # Transfer classes to yolo class numbers
-    classes_dict = {"Person": 0, "Car": 2}
+    classes_dict = {
+        "Person": 0,
+        "Bicycle": 1,
+        "Car": 2,
+        "Motorcycle": 3,
+        "Bus": 5,
+        "Train": 6,
+        "Truck": 7,
+        "Traffic light": 9,
+        "Skateboard": 36
+    }
     classes_str = ""
     for i, class_ in enumerate(classes):
         print(class_)
