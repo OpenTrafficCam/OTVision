@@ -13,7 +13,7 @@ Clone this repository.
 To install all requirements, you have to use the PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/)
 
 ```bash
-pip install -r .\requirements.txt -f https://download.pytorch.org/whl/torch_stable.html
+pip install -r .\requirements.txt -f https://download.pytorch.org/whl/torch_stable.html --user
 ```
 
 ## License
