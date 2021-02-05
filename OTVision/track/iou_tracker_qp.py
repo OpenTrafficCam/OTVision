@@ -106,9 +106,9 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
                     "age": 0,
                 }
             )
-            """det["vehID"] = vehID
-            det["first"] = True
-            new_detections[frame_num]["classified"].append(det)"""
+            # det["vehID"] = vehID
+            # det["first"] = True
+            # new_detections[frame_num]["classified"].append(det)
         tracks_active = updated_tracks + saved_tracks + new_tracks
 
     # finish all remaining active tracks
@@ -125,13 +125,13 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
         track["max_label"] = pd.Series(track["labels"]).mode().iat[0]
 
     # detections = new_detections
-    """for frame_num in new_detections:
-        for det in new_detections[frame_num]["classified"]:
-            if det["vehID"] not in vehIDs_finished:
-                det["finished"] = False
-            else:
-                det["finished"] = True
-                # det['label'] = tracks[tracks['vehID'] == det['vehID']]['max_label']"""
+    # for frame_num in new_detections:
+    #     for det in new_detections[frame_num]["classified"]:
+    #         if det["vehID"] not in vehIDs_finished:
+    #             det["finished"] = False
+    #         else:
+    #             det["finished"] = True
+    #             det['label'] = tracks[tracks['vehID'] == det['vehID']]['max_label']
 
     return tracks_finished
     # return new_detections, tracks_finished
