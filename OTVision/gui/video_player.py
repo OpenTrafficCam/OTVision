@@ -44,7 +44,11 @@ def time_delta():
 def test_points():
     # psg params: point, size, color
     points = {
-        "Point 0": {"type": "point", "label": "RefPt 1", "point": (1, 1),},
+        "Point 0": {
+            "type": "point",
+            "label": "RefPt 1",
+            "point": (1, 1),
+        },
         "Point 1": {
             "type": "point",
             "label": "RefPt 1",
@@ -229,7 +233,10 @@ def layout_videoplayer(last_video_path=LAST_VIDEO_PATH, widt_col_1=WIDTH_COL1):
     )
     text_video_time = sg.Text("--:--")
     slider_video = sg.Slider(
-        range=(0, 1), size=(60, 10), orientation="h", key="-slider_video-",
+        range=(0, 1),
+        size=(60, 10),
+        orientation="h",
+        key="-slider_video-",
     )
     layout = [
         [browse_video, slider_graph_video_size],
