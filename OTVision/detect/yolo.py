@@ -34,11 +34,32 @@ def detect(
 
     results = model(files, size=size)
 
-    # all names of the labels
-    # results.names
-    # LOL i love opentrafficcam!!
+    # 'imgs'
+    # 'pred'
+    # 'names'
+    # 'xyxy'
+    # 'xywh'
+    # 'xyxyn'
+    # 'xywhn'
+    # 'n'
+
+    # 'display'
+    # 'print'
+    # 'show'
+    # 'save'
+    # 'render'
+    # 'tolist'
+
+    return results
 
 
 if __name__ == "__main__":
-    files = [r"D:\Downloads\bus.jpg", r"D:\Downloads\zidane.jpg"]
+    files = [
+        r"D:\git\OpenTrafficCam\OTVision\obj_train_data\frame_001000.PNG",
+        r"D:\git\OpenTrafficCam\OTVision\obj_train_data\frame_001020.PNG",
+    ]
+    weights = "yolov5s"
+    conf = 0.50
+    iou = 0.45
+    size = 640
     detect(files)
