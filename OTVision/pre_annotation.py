@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# TODO: docstrings in pre_annotation
 
 from pathlib import Path
 import shutil
@@ -72,6 +73,11 @@ def _writebbox(file, results):
             with open(txt, "a") as f:
                 f.write((line + "\n"))
         itensor += 1
+
+
+def _writecvatlabels(file, results):
+    # TODO: write cvat label data to file
+    pass
 
 
 def pre_annotation(file):

@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# TODO: docstrings in yolo
 
 import torch
 
@@ -55,8 +56,8 @@ def detect(
 
 if __name__ == "__main__":
     files = [
-        r"D:\git\OpenTrafficCam\OTVision\obj_train_data\frame_001000.PNG",
-        r"D:\git\OpenTrafficCam\OTVision\obj_train_data\frame_001020.PNG",
+        "OTVision/detect/frame_001000.PNG",
+        "OTVision/detect/frame_001020.PNG",
     ]
     weights = "yolov5s"
     conf = 0.50
