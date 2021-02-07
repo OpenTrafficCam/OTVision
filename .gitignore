@@ -37,5 +37,5 @@ OTVision/helpers/__pycache__/config.cpython-37.pyc
 .vscode/launch.json
 .vscode/settings.json
 .vscode/settings.json
-yolov5l.pt
-yolov5s.pt
+yolov5*.pt
+obj_train_data/*
