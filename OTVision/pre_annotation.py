@@ -17,32 +17,71 @@
 
 
 from pathlib import Path
-from zipfile import ZipFile
+import shutil
 
 from detect.yolo import detect
 
 
+def _pngfiles(file):
+    file = Path(file)
+    dir = file.with_suffix("")
+    pngfiles = dir.glob("obj_train_data/*.png")
+
+    return pngfiles
+
+
 def _unzip(file):
     file = Path(file)
-    yolozip = ZipFile(file)
-
     dir = file.with_suffix("")
-    yolozip.extractall(dir)
-
-    pngfiles = dir.glob("**/*.png")
+    shutil.unpack_archive(file, dir)
+    pngfiles = _pngfiles(file)
     files = [str(file) for file in pngfiles]
     return files
 
 
-def _writenames():
-    pass
+def _zip(file):
+    file = Path(file)
+    dir = file.with_suffix("")
+    newfile = dir.parent / (file.stem + "_annotated")
+    shutil.make_archive(newfile, "zip", root_dir=dir)
+    shutil.rmtree(dir)
 
 
-def _writebbox():
-    pass
+def _writenames(file, results):
+    file = Path(file)
+    dir = file.with_suffix("")
+    objnames = dir / "obj.names"
+    names = results.names
+    with open(objnames, "w") as f:
+        for name in names:
+            f.write((name + "\n"))
+
+
+def _writebbox(file, results):
+    pngfiles = _pngfiles(file)
+
+    itensor = 0
+    for png in pngfiles:
+        txt = png.with_suffix(".txt")
+        detections = results.xywhn[itensor].tolist()
+        for detection in detections:
+            x, y, w, h, conf, cls = detection
+            line = "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
+                x=x, y=y, w=w, h=h, cls=cls
+            )
+            with open(txt, "a") as f:
+                f.write((line + "\n"))
+        itensor += 1
+
+
+def pre_annotation(file):
+    files = _unzip(file)
+    results = detect(files, weights="yolov5x")
+    _writebbox(file, results)
+    _writenames(file, results)
+    _zip(file)
 
 
 if __name__ == "__main__":
-    file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_07_00_20_49-yolo 1.1.zip"
-    files = _unzip(file)
-    results = detect(files)
+    file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_07_22_06_05-yolo 1.1.zip"
+    pre_annotation(file)
