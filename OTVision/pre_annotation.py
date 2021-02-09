@@ -19,6 +19,7 @@
 
 from pathlib import Path
 import shutil
+import math
 
 from detect.yolo import detect
 
@@ -80,14 +81,16 @@ def _writecvatlabels(file, results):
     pass
 
 
-def pre_annotation(file):
+def pre_annotation(file, chunk_size):
     files = _unzip(file)
-    results = detect(files, weights="yolov5x")
-    _writebbox(file, results)
-    _writenames(file, results)
+    file_chunks = [files[i:i + chunk_size] for i in range(0, len(files), chunk_size)]
+    for f in file_chunks:
+        results = detect(f, weights="yolov5x")
+        _writebbox(file_chunks, results)
+        _writenames(file_chunks, results)
     _zip(file)
 
 
 if __name__ == "__main__":
-    file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_07_22_06_05-yolo 1.1.zip"
-    pre_annotation(file)
+    file = r"C:\Users\MichaelHeilig\Downloads\task_extract frames training (kp6)-2021_02_08_17_14_55-yolo 1.1.zip"
+    pre_annotation(file, 1200)
