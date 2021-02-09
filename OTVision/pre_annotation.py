@@ -19,7 +19,6 @@
 
 from pathlib import Path
 import shutil
-import math
 
 from detect.yolo import detect
 
@@ -49,11 +48,10 @@ def _zip(file):
     shutil.rmtree(dir)
 
 
-def _writenames(file, results):
+def _writenames(file, names):
     file = Path(file)
     dir = file.with_suffix("")
     objnames = dir / "obj.names"
-    names = results.names
     with open(objnames, "w") as f:
         for name in names:
             f.write((name + "\n"))
@@ -65,7 +63,7 @@ def _writebbox(file, results):
     itensor = 0
     for png in pngfiles:
         txt = png.with_suffix(".txt")
-        detections = results.xywhn[itensor].tolist()
+        detections = results[itensor].tolist()
         for detection in detections:
             x, y, w, h, conf, cls = detection
             line = "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
@@ -84,10 +82,13 @@ def _writecvatlabels(file, results):
 def pre_annotation(file, chunk_size):
     files = _unzip(file)
     file_chunks = [files[i:i + chunk_size] for i in range(0, len(files), chunk_size)]
+    det = []
     for f in file_chunks:
         results = detect(f, weights="yolov5x")
-        _writebbox(file_chunks, results)
-        _writenames(file_chunks, results)
+        for i in results.xywhn:
+            det.append(i)
+    _writebbox(file, det)
+    _writenames(file, results.names)
     _zip(file)
 
 
