@@ -40,9 +40,13 @@ def _unzip(file):
     return files
 
 
-def _zip(file):
+def _zip(file, pngs=False):
     file = Path(file)
     dir = file.with_suffix("")
+    if not pngs:
+        pngfiles = _pngfiles(file)
+        for pngfile in pngfiles:
+            pngfile.unlink()
     newfile = dir.parent / (file.stem + "_annotated")
     shutil.make_archive(newfile, "zip", root_dir=dir)
     shutil.rmtree(dir)
@@ -81,17 +85,16 @@ def _writecvatlabels(file, results):
 
 def pre_annotation(file, chunk_size):
     files = _unzip(file)
-    file_chunks = [files[i:i + chunk_size] for i in range(0, len(files), chunk_size)]
-    det = []
-    for f in file_chunks:
-        results = detect(f, weights="yolov5x")
-        for i in results.xywhn:
-            det.append(i)
-    _writebbox(file, det)
+    file_chunks = [files[i : i + chunk_size] for i in range(0, len(files), chunk_size)]
+    xywhn = []
+    for file_chunk in file_chunks:
+        results = detect(file_chunk, weights="yolov5s")
+        xywhn.extend(results.xywhn)
+    _writebbox(file, xywhn)
     _writenames(file, results.names)
-    _zip(file)
+    _zip(file, pngs=False)
 
 
 if __name__ == "__main__":
-    file = r"C:\Users\MichaelHeilig\Downloads\task_extract frames training (kp6)-2021_02_08_17_14_55-yolo 1.1.zip"
+    file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_07_22_06_05-yolo 1.1 (1).zip"
     pre_annotation(file, 1200)
