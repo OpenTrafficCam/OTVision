@@ -61,21 +61,19 @@ def _writenames(file, names):
             f.write((name + "\n"))
 
 
-def _writebbox(file, results):
+def _writebbox(file: str, xywhn: list):
     pngfiles = _pngfiles(file)
 
-    itensor = 0
     for png in pngfiles:
         txt = png.with_suffix(".txt")
-        detections = results[itensor].tolist()
-        for detection in detections:
-            x, y, w, h, conf, cls = detection
-            line = "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
-                x=x, y=y, w=w, h=h, cls=cls
-            )
-            with open(txt, "a") as f:
+        detections = xywhn.pop(0)
+        with open(txt, "a") as f:
+            for detection in detections:
+                x, y, w, h, conf, cls = detection
+                line = "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
+                    x=x, y=y, w=w, h=h, cls=cls
+                )
                 f.write((line + "\n"))
-        itensor += 1
 
 
 def _writecvatlabels(file, results):
@@ -85,16 +83,18 @@ def _writecvatlabels(file, results):
 
 def pre_annotation(file, chunk_size):
     files = _unzip(file)
-    file_chunks = [files[i : i + chunk_size] for i in range(0, len(files), chunk_size)]
-    xywhn = []
-    for file_chunk in file_chunks:
-        results = detect(file_chunk, weights="yolov5s")
-        xywhn.extend(results.xywhn)
+    xywhn, names = detect(files, weights="yolov5x", chunk_size=chunk_size)
     _writebbox(file, xywhn)
-    _writenames(file, results.names)
+    _writenames(file, names)
     _zip(file, pngs=False)
 
 
 if __name__ == "__main__":
-    file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_07_22_06_05-yolo 1.1 (1).zip"
-    pre_annotation(file, 1200)
+    from time import perf_counter
+
+    print("Starting")
+    file = r"E:\Downloads\task_mondercange kp3-2021_02_10_12_49_29-yolo 1.1.zip"
+    # file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_12_14_19_35-yolo 1.1.zip"
+    chunk_size = 100
+    pre_annotation(file, chunk_size)
+    print("Done in {0:0.2f} s".format(perf_counter()))
