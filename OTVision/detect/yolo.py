@@ -30,6 +30,9 @@ def detect(
 
     model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True)
 
+    if torch.cuda.is_available():
+        model.cuda()
+
     model.conf = conf
     model.iou = iou
 
