@@ -85,7 +85,11 @@ def _loadmodel(weights, conf, iou):
 
 
 def _createchunks(chunk_size, files):
-    if chunk_size == 0 or type(files) is str:
+    if type(files) is str:
+        file_chunks = [files]
+    elif _containsvideo(files):
+        file_chunks = files
+    elif chunk_size == 0:
         file_chunks = [files]
     else:
         chunk_starts = range(0, len(files), chunk_size)
@@ -93,7 +97,7 @@ def _createchunks(chunk_size, files):
     return file_chunks
 
 
-def _isvideo(file):
+def _containsvideo(file_chunks):
     vid_formats = [
         ".mov",
         ".avi",
@@ -104,8 +108,10 @@ def _isvideo(file):
         ".wmv",
         ".mkv",
     ]
-    if Path(file).suffix in vid_formats():
-        return True
+    if type(file_chunks[0]) is str:
+        file = Path(file_chunks[0])
+        if file.suffix in vid_formats:
+            return True
     return False
 
 
