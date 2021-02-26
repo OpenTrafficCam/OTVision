@@ -84,7 +84,7 @@ def _loadmodel(weights, conf, iou):
 
 
 def _createchunks(chunk_size, files):
-    if chunk_size == 0:
+    if chunk_size == 0 or type(files) is str:
         file_chunks = [files]
     else:
         chunk_starts = range(0, len(files), chunk_size)
