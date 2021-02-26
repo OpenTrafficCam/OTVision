@@ -17,6 +17,7 @@
 
 # TODO: docstrings in yolo
 
+from pathlib import Path
 import torch
 from time import perf_counter
 
@@ -43,7 +44,7 @@ def detect(
 
     t2 = perf_counter()
     duration = t2 - t1
-    fps = len(files) / duration
+    fps = len(xywhn) / duration
     print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, fps))
 
     names = results.names
@@ -133,7 +134,7 @@ def detect_df(
 
 
 if __name__ == "__main__":
-    files = r"E:\git\OpenTrafficCam\QuerCam13_2019-03-26_08-30-00.mkv"
+    files = "../../../QuerCam13_2019-03-26_08-30-00.mkv"
     weights = "yolov5s"
     conf = 0.50
     iou = 0.45
