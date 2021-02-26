@@ -30,30 +30,19 @@ def detect(
     chunk_size: int = 0,
 ):
 
-    if torch.cuda.is_available():
-        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cuda()
-    else:
-        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cpu()
+    model = _loadmodel(weights, conf, iou)
 
-    model.conf = conf
-    model.iou = iou
+    file_chunks = _createchunks(chunk_size, files)
 
-    print("Model loaded in {0:0.2f} s".format(perf_counter()))
+    t1 = perf_counter()
 
-    if chunk_size == 0:
-        file_chunks = [files]
-    else:
-        chunk_starts = range(0, len(files), chunk_size)
-        file_chunks = [files[i : i + chunk_size] for i in chunk_starts]
-
-    start = perf_counter()
     xywhn = []
-
     for file_chunk in file_chunks:
         results = model(file_chunk, size=size)
         xywhn.extend([i.tolist() for i in results.xywhn])
 
-    duration = perf_counter() - start
+    t2 = perf_counter()
+    duration = t2 - t1
     fps = len(files) / duration
     print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, fps))
 
@@ -76,6 +65,31 @@ def detect(
     # 'tolist'
 
     return xywhn, names
+
+
+def _loadmodel(weights, conf, iou):
+    t1 = perf_counter()
+
+    if torch.cuda.is_available():
+        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cuda()
+    else:
+        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cpu()
+
+    model.conf = conf
+    model.iou = iou
+
+    t2 = perf_counter()
+    print("Model loaded in {0:0.2f} s".format(t2 - t1))
+    return model
+
+
+def _createchunks(chunk_size, files):
+    if chunk_size == 0:
+        file_chunks = [files]
+    else:
+        chunk_starts = range(0, len(files), chunk_size)
+        file_chunks = [files[i : i + chunk_size] for i in chunk_starts]
+    return file_chunks
 
 
 def detect_df(
@@ -103,12 +117,10 @@ def detect_df(
 
 
 if __name__ == "__main__":
-    files = [
-        "OTVision/detect/frame_001000.PNG",
-        "OTVision/detect/frame_001020.PNG",
-    ]
+    files = r"E:\git\OpenTrafficCam\QuerCam13_2019-03-26_08-30-00.mkv"
     weights = "yolov5s"
     conf = 0.50
     iou = 0.45
     size = 640
-    detect(files)
+    chunk_size = 0
+    results = detect(files, weights, conf, iou, size, chunk_size)
