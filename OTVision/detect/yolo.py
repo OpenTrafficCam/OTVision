@@ -92,6 +92,22 @@ def _createchunks(chunk_size, files):
     return file_chunks
 
 
+def _isvideo(file):
+    vid_formats = [
+        ".mov",
+        ".avi",
+        ".mp4",
+        ".mpg",
+        ".mpeg",
+        ".m4v",
+        ".wmv",
+        ".mkv",
+    ]
+    if Path(file).suffix in vid_formats():
+        return True
+    return False
+
+
 def detect_df(
     files,
     weights: str = "yolov5s",
