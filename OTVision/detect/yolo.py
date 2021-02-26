@@ -54,6 +54,30 @@ def detect(
     return results
 
 
+def detect_df(
+    files,
+    weights: str = "yolov5s",
+    conf: float = 0.25,
+    iou: float = 0.45,
+    size: int = 640,
+):
+
+    results = detect(files, weights, conf, iou, size)
+
+    tensors = results.xywhn
+
+    for tensor in tensors:
+        tensor.tolist()
+
+        # Datenformat:
+        # Geopandas?
+        # | ix:filename | ix:frame | ix:detectionid | shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
+        # | ix:trackid | ix:filename | ix:frame | ix:detectionid | shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
+
+        # df["class"][""]
+        # df.loc[123,"video.mp4", 543, 4), "class"]
+
+
 if __name__ == "__main__":
     files = [
         "OTVision/detect/frame_001000.PNG",
