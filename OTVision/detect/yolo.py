@@ -18,6 +18,7 @@
 # TODO: docstrings in yolo
 
 import torch
+from time import perf_counter
 
 
 def detect(
@@ -26,14 +27,37 @@ def detect(
     conf: float = 0.25,
     iou: float = 0.45,
     size: int = 640,
+    chunk_size: int = 0,
 ):
 
-    model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True)
+    if torch.cuda.is_available():
+        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cuda()
+    else:
+        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cpu()
 
     model.conf = conf
     model.iou = iou
 
-    results = model(files, size=size)
+    print("Model loaded in {0:0.2f} s".format(perf_counter()))
+
+    if chunk_size == 0:
+        file_chunks = [files]
+    else:
+        chunk_starts = range(0, len(files), chunk_size)
+        file_chunks = [files[i : i + chunk_size] for i in chunk_starts]
+
+    start = perf_counter()
+    xywhn = []
+
+    for file_chunk in file_chunks:
+        results = model(file_chunk, size=size)
+        xywhn.extend([i.tolist() for i in results.xywhn])
+
+    duration = perf_counter() - start
+    fps = len(files) / duration
+    print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, fps))
+
+    names = results.names
 
     # 'imgs'
     # 'pred'
@@ -51,7 +75,7 @@ def detect(
     # 'render'
     # 'tolist'
 
-    return results
+    return xywhn, names
 
 
 def detect_df(
