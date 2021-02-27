@@ -18,8 +18,10 @@
 # TODO: docstrings in yolo
 
 from pathlib import Path
-import torch
 from time import perf_counter
+
+import torch
+from cv2 import VideoCapture
 
 
 def detect(
@@ -35,12 +37,22 @@ def detect(
 
     file_chunks = _createchunks(chunk_size, files)
 
-    t1 = perf_counter()
-
     xywhn = []
-    for file_chunk in file_chunks:
-        results = model(file_chunk, size=size)
-        xywhn.extend([i.tolist() for i in results.xywhn])
+    t1 = perf_counter()
+    if _containsvideo(file_chunks):
+        for file_chunk in file_chunks:
+            cap = VideoCapture(file_chunk)
+            y = True
+            while y:
+                y, img = cap.read()
+                img = img[:, :, ::-1]
+                results = model(img, size=size)
+                xywhn.extend([i.tolist() for i in results.xywhn])
+
+    else:
+        for file_chunk in file_chunks:
+            results = model(file_chunk, size=size)
+            xywhn.extend([i.tolist() for i in results.xywhn])
 
     t2 = perf_counter()
     duration = t2 - t1
@@ -117,7 +129,7 @@ def _containsvideo(file_chunks):
 
 def detect_df(
     files,
-    weights: str = "yolov5s",
+    weights: str = "yolov5x",
     conf: float = 0.25,
     iou: float = 0.45,
     size: int = 640,
