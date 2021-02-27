@@ -42,12 +42,26 @@ def detect(
     if _containsvideo(file_chunks):
         for file_chunk in file_chunks:
             cap = VideoCapture(file_chunk)
-            y = True
-            while y:
-                y, img = cap.read()
+            gotframe, img = cap.read()
+            while gotframe:
+                t_start = perf_counter()
                 img = img[:, :, ::-1]
+                t_trans = perf_counter()
                 results = model(img, size=size)
+                t_det = perf_counter()
                 xywhn.extend([i.tolist() for i in results.xywhn])
+                t_list = perf_counter()
+                gotframe, img = cap.read()
+                t_frame = perf_counter()
+                print(
+                    "trans: {0:0.4f}, det: {1:0.4f}, list: {2:0.4f}, frame: {3:0.4f}, fps:{4:0.1f}".format(
+                        t_trans - t_start,
+                        t_det - t_start,
+                        t_list - t_det,
+                        t_frame - t_list,
+                        1 / (t_frame - t_start),
+                    )
+                )
 
     else:
         for file_chunk in file_chunks:
