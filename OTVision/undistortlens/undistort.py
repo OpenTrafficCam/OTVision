@@ -5,7 +5,10 @@ import numpy as np
 
 #H:\06_OTCamera\OTCamera\OTCamera\data.txt
 
-path = "./OTVision"
+path = "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\"
+
+
+path2 = "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\undistortlens\\data.txt"
 
 
 # text_files = glob.glob(path + "/**/data.txt", recursive = True)
@@ -22,7 +25,7 @@ def load_params():
     D are distance coefficent
     funtion returns dictionary
     """
-    text_files = glob.glob(path+"/**/*.txt", recursive = True)
+    text_files = glob.glob(path2, recursive = True)
 
     cameraparams = text_files[0] 
 
@@ -53,7 +56,7 @@ def undistort_picture():
 
     #print(mtx, dist)
 
-    image_list = glob.glob(path + "/imagefolder/*.jpg", recursive = True)
+    image_list = glob.glob(path + "imagefolder\\*.jpg", recursive = True)
 
     i = 0
 
@@ -74,15 +77,22 @@ def undistort_picture():
         dst = dst[y:y+h, x:x+w]
 
         # saves undistorted pictures to path 
-        cv.imwrite(path+"/imagefolder_undistorted/preview{0}_undistorted.jpg".format(str(i)), dst)
+
+
+        cv.imwrite("H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\imagefolder_undistorted\\preview{0}_undistorted.jpg".format(str(i)), dst)
 
         i += 1
 
 # def undistort_video():
 
+#def undistort_trajectories():
+    # takesexisting trajectories from dataframe und undistorts those points
+
+    
+
 
 if __name__ == "__main__":
-    undistort_picture()
+    #undistort_picture()
 
 
 
