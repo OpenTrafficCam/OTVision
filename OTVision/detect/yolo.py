@@ -38,7 +38,7 @@ def detect(
 
     file_chunks = _createchunks(chunk_size, files)
 
-    xywhn = []
+    bboxes = []
     t1 = perf_counter()
     if _containsvideo(file_chunks):
         for file_chunk in file_chunks:
@@ -51,9 +51,9 @@ def detect(
                 results = model(img, size=size)
                 t_det = perf_counter()
                 if resulttype == "xywhn":
-                    xywhn.extend([i.tolist() for i in results.xywhn])
+                    bboxes.extend([i.tolist() for i in results.xywhn])
                 elif resulttype == "xyxy":
-                    xywhn.extend([i.tolist() for i in results.xyxy])
+                    bboxes.extend([i.tolist() for i in results.xyxy])
                 t_list = perf_counter()
                 gotframe, img = cap.read()
                 t_frame = perf_counter()
@@ -70,11 +70,11 @@ def detect(
     else:
         for file_chunk in file_chunks:
             results = model(file_chunk, size=size)
-            xywhn.extend([i.tolist() for i in results.xywhn])
+            bboxes.extend([i.tolist() for i in results.xywhn])
 
     t2 = perf_counter()
     duration = t2 - t1
-    fps = len(xywhn) / duration
+    fps = len(bboxes) / duration
     print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, fps))
 
     names = results.names
@@ -95,7 +95,7 @@ def detect(
     # 'render'
     # 'tolist'
 
-    return xywhn, names
+    return bboxes, names
 
 
 def _loadmodel(weights, conf, iou):
