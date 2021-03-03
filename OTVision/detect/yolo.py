@@ -31,6 +31,7 @@ def detect(
     iou: float = 0.45,
     size: int = 640,
     chunk_size: int = 0,
+    resulttype="xywhn",
 ):
 
     model = _loadmodel(weights, conf, iou)
@@ -49,7 +50,10 @@ def detect(
                 t_trans = perf_counter()
                 results = model(img, size=size)
                 t_det = perf_counter()
-                xywhn.extend([i.tolist() for i in results.xywhn])
+                if resulttype == "xywhn":
+                    xywhn.extend([i.tolist() for i in results.xywhn])
+                elif resulttype == "xyxy":
+                    xywhn.extend([i.tolist() for i in results.xyxy])
                 t_list = perf_counter()
                 gotframe, img = cap.read()
                 t_frame = perf_counter()
@@ -167,7 +171,7 @@ def detect_df(
 
 if __name__ == "__main__":
     files = "../../../QuerCam13_2019-03-26_08-30-00.mkv"
-    weights = "yolov5s"
+    weights = "yolov5x"
     conf = 0.50
     iou = 0.45
     size = 640
