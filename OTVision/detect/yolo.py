@@ -19,7 +19,6 @@
 
 from pathlib import Path
 from time import perf_counter
-import os
 import json
 
 import torch
@@ -33,7 +32,7 @@ def detect(
     iou: float = 0.45,
     size: int = 640,
     chunk_size: int = 0,
-    resulttype="xywhn",
+    bboxtype="xywhn",
 ):
     """[summary]
 
@@ -69,9 +68,9 @@ def detect(
                 t_trans = perf_counter()
                 results = model(img, size=size)
                 t_det = perf_counter()
-                if resulttype == "xywhn":
+                if bboxtype == "xywhn":
                     bboxes.extend([i.tolist() for i in results.xywhn])
-                elif resulttype == "xyxy":
+                elif bboxtype == "xyxy":
                     bboxes.extend([i.tolist() for i in results.xyxy])
                 t_list = perf_counter()
                 gotframe, img = cap.read()
@@ -91,9 +90,9 @@ def detect(
     else:
         for file_chunk in file_chunks:
             results = model(file_chunk, size=size)
-            if resulttype == "xywhn":
+            if bboxtype == "xywhn":
                 bboxes.extend([i.tolist() for i in results.xywhn])
-            elif resulttype == "xyxy":
+            elif bboxtype == "xyxy":
                 bboxes.extend([i.tolist() for i in results.xyxy])
 
     t2 = perf_counter()
@@ -193,7 +192,16 @@ def detect_df(
         # df.loc[123,"video.mp4", 543, 4), "class"]
 
 
-def save_bboxes(files, bboxes, names, style="json_iou"):
+def save_bboxes(files, bboxes=None, names=None, style="json_iou"):
+
+    files = Path(files)
+
+    if bboxes is None and names is None:
+        bboxes, names = detect(
+            files=files,
+            bboxtype="xyxy",
+        )
+
     detections_dict = {}
     for frame_no, frame in enumerate(bboxes):
         bbox_dict_list = []
@@ -212,26 +220,27 @@ def save_bboxes(files, bboxes, names, style="json_iou"):
             }
             bbox_dict_list.append(bbox_values_dict)
         detections_dict[str(frame_no + 1)] = {"classified": bbox_dict_list}
-    print(detections_dict)
-    filename = os.path.splitext(files)[0] + "_detections.json"
-    json.dump(detections_dict, open(filename, "w"))
+    filename = files.with_suffix(".detections.json")
+    with open(filename, "w") as f:
+        json.dump(detections_dict, f)
 
 
 if __name__ == "__main__":
-    root_path = Path(__file__).parent.parent.parent.absolute()
-    video_1 = root_path / r"tests/data/testvideo_1.mkv"
-    video_2 = root_path / r"tests/data/testvideo_2.mkv"
-    # files = [video_1.__str__(), video_2.__str__()]
-    files = video_1.__str__()
+    test_path = Path(__file__).parents[2] / "tests" / "data"
+    video_1 = str(test_path / "testvideo_1.mkv")
+    video_2 = str(test_path / "testvideo_2.mkv")
+    # files = [video_1, video_2]
+    files = video_1
 
     weights = "yolov5x"
     conf = 0.50
     iou = 0.45
     size = 640
     chunk_size = 0
+
     bboxes, names = detect(
         files=files,
-        resulttype="xyxy",
+        bboxtype="xyxy",
     )
     print(bboxes)
     save_bboxes(files, bboxes, names)
