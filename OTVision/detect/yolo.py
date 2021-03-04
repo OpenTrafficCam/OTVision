@@ -19,6 +19,8 @@
 
 from pathlib import Path
 from time import perf_counter
+import os
+import json
 
 import torch
 from cv2 import VideoCapture
@@ -33,6 +35,22 @@ def detect(
     chunk_size: int = 0,
     resulttype="xywhn",
 ):
+    """[summary]
+
+    Args:
+        files ([type]): Detect and classify bounding boxes in images/frames with YoloV5
+        weights (str, optional): [description]. Defaults to "yolov5s".
+        conf (float, optional): [description]. Defaults to 0.25.
+        iou (float, optional): [description]. Defaults to 0.45.
+        size (int, optional): [description]. Defaults to 640.
+        chunk_size (int, optional): [description]. Defaults to 0.
+        resulttype (str, optional): Reference for returend bbox ('xyxy', 'xywh',
+        'xyxyn', 'xywhn'. "n" stands for normalized coordinates of x and y in percent).
+        Defaults to "xywhn".
+
+    Returns:
+        [type]: [description]
+    """
 
     model = _loadmodel(weights, conf, iou)
 
@@ -44,6 +62,7 @@ def detect(
         for file_chunk in file_chunks:
             cap = VideoCapture(file_chunk)
             gotframe, img = cap.read()
+            frame_no = 0
             while gotframe:
                 t_start = perf_counter()
                 img = img[:, :, ::-1]
@@ -58,7 +77,8 @@ def detect(
                 gotframe, img = cap.read()
                 t_frame = perf_counter()
                 print(
-                    "trans: {0:0.4f}, det: {1:0.4f}, list: {2:0.4f}, frame: {3:0.4f}, fps:{4:0.1f}".format(
+                    "frame_no: {0:0.4f}, trans: {1:0.4f}, det: {2:0.4f}, list: {3:0.4f}, frame: {4:0.4f}, fps:{5:0.1f}".format(
+                        frame_no,
                         t_trans - t_start,
                         t_det - t_start,
                         t_list - t_det,
@@ -66,11 +86,15 @@ def detect(
                         1 / (t_frame - t_start),
                     )
                 )
+                frame_no += 1
 
     else:
         for file_chunk in file_chunks:
             results = model(file_chunk, size=size)
-            bboxes.extend([i.tolist() for i in results.xywhn])
+            if resulttype == "xywhn":
+                bboxes.extend([i.tolist() for i in results.xywhn])
+            elif resulttype == "xyxy":
+                bboxes.extend([i.tolist() for i in results.xyxy])
 
     t2 = perf_counter()
     duration = t2 - t1
@@ -169,11 +193,45 @@ def detect_df(
         # df.loc[123,"video.mp4", 543, 4), "class"]
 
 
+def save_bboxes(files, bboxes, names, style="json_iou"):
+    detections_dict = {}
+    for frame_no, frame in enumerate(bboxes):
+        bbox_dict_list = []
+        for bbox in frame:
+            bbox_values_dict = {
+                "label": names[int(bbox[5])],
+                "confidence": bbox[4],
+                "ymax": int(bbox[3]),
+                "xmax": int(bbox[2]),
+                "ymin": int(bbox[1]),
+                "xmin": int(bbox[0]),
+                "ymid": int(int(bbox[1]) + (int(bbox[3]) - int(bbox[1])) / 2),
+                "xmid": int(int(bbox[0]) + (int(bbox[2]) - int(bbox[0])) / 2),
+                "height": int(bbox[3]) - int(bbox[1]),
+                "width": int(bbox[2]) - int(bbox[0]),
+            }
+            bbox_dict_list.append(bbox_values_dict)
+        detections_dict[str(frame_no + 1)] = {"classified": bbox_dict_list}
+    print(detections_dict)
+    filename = os.path.splitext(files)[0] + "_detections.json"
+    json.dump(detections_dict, open(filename, "w"))
+
+
 if __name__ == "__main__":
-    files = "../../../QuerCam13_2019-03-26_08-30-00.mkv"
+    root_path = Path(__file__).parent.parent.parent.absolute()
+    video_1 = root_path / r"tests/data/testvideo_1.mkv"
+    video_2 = root_path / r"tests/data/testvideo_2.mkv"
+    # files = [video_1.__str__(), video_2.__str__()]
+    files = video_1.__str__()
+
     weights = "yolov5x"
     conf = 0.50
     iou = 0.45
     size = 640
     chunk_size = 0
-    results = detect(files, weights, conf, iou, size, chunk_size)
+    bboxes, names = detect(
+        files=files,
+        resulttype="xyxy",
+    )
+    print(bboxes)
+    save_bboxes(files, bboxes, names)
