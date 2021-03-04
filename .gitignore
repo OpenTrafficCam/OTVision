@@ -11,3 +11,4 @@ geckodriver.log
 .vscode/launch.json
 yolov5*.pt
 obj_train_data/*
+OTVision/detect/vissim_video.mp4
