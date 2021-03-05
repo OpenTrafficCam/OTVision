@@ -19,7 +19,6 @@
 
 from pathlib import Path
 from time import perf_counter
-import json
 
 import torch
 from cv2 import VideoCapture
@@ -27,35 +26,37 @@ from cv2 import VideoCapture
 
 def detect(
     files,
+    model=None,
     weights: str = "yolov5s",
     conf: float = 0.25,
     iou: float = 0.45,
     size: int = 640,
     chunk_size: int = 0,
-    bboxtype="xywhn",
+    normalized=True,
 ):
-    """[summary]
+    """Detect and classify bounding boxes in images/frames using YOLOv5
 
     Args:
-        files ([type]): Detect and classify bounding boxes in images/frames with YoloV5
+        files (str ot list of str): files to detect
+        model ()
         weights (str, optional): [description]. Defaults to "yolov5s".
         conf (float, optional): [description]. Defaults to 0.25.
         iou (float, optional): [description]. Defaults to 0.45.
         size (int, optional): [description]. Defaults to 640.
         chunk_size (int, optional): [description]. Defaults to 0.
-        resulttype (str, optional): Reference for returend bbox ('xyxy', 'xywh',
+        resulttype (str, optional): Reference for returned bbox ('xyxy', 'xywh',
         'xyxyn', 'xywhn'. "n" stands for normalized coordinates of x and y in percent).
         Defaults to "xywhn".
 
     Returns:
         [type]: [description]
     """
-
-    model = _loadmodel(weights, conf, iou)
+    if model is None:
+        model = loadmodel(weights, conf, iou)
 
     file_chunks = _createchunks(chunk_size, files)
 
-    bboxes = []
+    yolo_detections = []
     t1 = perf_counter()
     if _containsvideo(file_chunks):
         for file_chunk in file_chunks:
@@ -68,10 +69,10 @@ def detect(
                 t_trans = perf_counter()
                 results = model(img, size=size)
                 t_det = perf_counter()
-                if bboxtype == "xywhn":
-                    bboxes.extend([i.tolist() for i in results.xywhn])
-                elif bboxtype == "xyxy":
-                    bboxes.extend([i.tolist() for i in results.xyxy])
+                if normalized:
+                    yolo_detections.extend([i.tolist() for i in results.xywhn])
+                else:
+                    yolo_detections.extend([i.tolist() for i in results.xywh])
                 t_list = perf_counter()
                 gotframe, img = cap.read()
                 t_frame = perf_counter()
@@ -90,14 +91,14 @@ def detect(
     else:
         for file_chunk in file_chunks:
             results = model(file_chunk, size=size)
-            if bboxtype == "xywhn":
-                bboxes.extend([i.tolist() for i in results.xywhn])
-            elif bboxtype == "xyxy":
-                bboxes.extend([i.tolist() for i in results.xyxy])
+            if normalized:
+                yolo_detections.extend([i.tolist() for i in results.xywhn])
+            else:
+                yolo_detections.extend([i.tolist() for i in results.xywh])
 
     t2 = perf_counter()
     duration = t2 - t1
-    fps = len(bboxes) / duration
+    fps = len(yolo_detections) / duration
     print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, fps))
 
     names = results.names
@@ -118,10 +119,10 @@ def detect(
     # 'render'
     # 'tolist'
 
-    return bboxes, names
+    return yolo_detections, names
 
 
-def _loadmodel(weights, conf, iou):
+def loadmodel(weights, conf, iou):
     t1 = perf_counter()
 
     if torch.cuda.is_available():
@@ -135,6 +136,28 @@ def _loadmodel(weights, conf, iou):
     t2 = perf_counter()
     print("Model loaded in {0:0.2f} s".format(t2 - t1))
     return model
+
+
+def convert_detections(yolo_detections, names, det_config):
+    data = {}
+    for no, yolo_detection in enumerate(yolo_detections):
+        detection = []
+        for yolo_bbox in yolo_detection:
+            bbox = {
+                "class": names[int(yolo_bbox[5])],
+                "conf": yolo_bbox[4],
+                "x": yolo_bbox[0],
+                "y": yolo_bbox[1],
+                "w": yolo_bbox[2],
+                "h": yolo_bbox[3],
+            }
+            detection.append(bbox)
+        data[str(no + 1)] = {"classified": detection}
+    det_config["detector"] = "YOLOv5"
+    detections = {}
+    detections["det_config"] = det_config
+    detections["data"] = data
+    return detections
 
 
 def _createchunks(chunk_size, files):
@@ -192,39 +215,6 @@ def detect_df(
         # df.loc[123,"video.mp4", 543, 4), "class"]
 
 
-def save_bboxes(files, bboxes=None, names=None, style="json_iou"):
-
-    files = Path(files)
-
-    if bboxes is None and names is None:
-        bboxes, names = detect(
-            files=files,
-            bboxtype="xyxy",
-        )
-
-    detections_dict = {}
-    for frame_no, frame in enumerate(bboxes):
-        bbox_dict_list = []
-        for bbox in frame:
-            bbox_values_dict = {
-                "label": names[int(bbox[5])],
-                "confidence": bbox[4],
-                "ymax": int(bbox[3]),
-                "xmax": int(bbox[2]),
-                "ymin": int(bbox[1]),
-                "xmin": int(bbox[0]),
-                "ymid": int(int(bbox[1]) + (int(bbox[3]) - int(bbox[1])) / 2),
-                "xmid": int(int(bbox[0]) + (int(bbox[2]) - int(bbox[0])) / 2),
-                "height": int(bbox[3]) - int(bbox[1]),
-                "width": int(bbox[2]) - int(bbox[0]),
-            }
-            bbox_dict_list.append(bbox_values_dict)
-        detections_dict[str(frame_no + 1)] = {"classified": bbox_dict_list}
-    filename = files.with_suffix(".detections.json")
-    with open(filename, "w") as f:
-        json.dump(detections_dict, f)
-
-
 if __name__ == "__main__":
     test_path = Path(__file__).parents[2] / "tests" / "data"
     video_1 = str(test_path / "testvideo_1.mkv")
@@ -240,7 +230,7 @@ if __name__ == "__main__":
 
     bboxes, names = detect(
         files=files,
-        bboxtype="xyxy",
+        normalized="xyxy",
     )
     print(bboxes)
-    save_bboxes(files, bboxes, names)
+    main(files, bboxes, names)

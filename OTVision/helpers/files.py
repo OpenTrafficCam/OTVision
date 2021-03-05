@@ -66,7 +66,7 @@ def get_files(paths, filetype):
 
     return sorted(list(files))
 
-  
+
 def remove_dir(dir: str):
     dir = Path(dir)
     for path in dir.glob("*"):

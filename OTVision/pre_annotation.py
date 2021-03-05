@@ -20,7 +20,7 @@
 from pathlib import Path
 import shutil
 
-from detect.yolo import detect
+from detect.yolo import detect_xwhn
 
 
 def _pngfiles(file):
@@ -83,7 +83,7 @@ def _writecvatlabels(file, results):
 
 def pre_annotation(file, chunk_size):
     files = _unzip(file)
-    xywhn, names = detect(files, weights="yolov5x", chunk_size=chunk_size)
+    xywhn, names = detect_xwhn(files, weights="yolov5x", chunk_size=chunk_size)
     _writebbox(file, xywhn)
     _writenames(file, names)
     _zip(file, pngs=False)
