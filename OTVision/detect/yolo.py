@@ -32,21 +32,20 @@ def detect(
     iou: float = 0.45,
     size: int = 640,
     chunk_size: int = 0,
-    normalized=True,
+    normalized: bool = True,
 ):
     """Detect and classify bounding boxes in images/frames using YOLOv5
 
     Args:
-        files (str ot list of str): files to detect
-        model ()
-        weights (str, optional): [description]. Defaults to "yolov5s".
-        conf (float, optional): [description]. Defaults to 0.25.
-        iou (float, optional): [description]. Defaults to 0.45.
-        size (int, optional): [description]. Defaults to 640.
-        chunk_size (int, optional): [description]. Defaults to 0.
-        resulttype (str, optional): Reference for returned bbox ('xyxy', 'xywh',
-        'xyxyn', 'xywhn'. "n" stands for normalized coordinates of x and y in percent).
-        Defaults to "xywhn".
+        files (str ot list of str): files to detect.
+        model (yolo object): Yolo model to detect with.
+        weights (str, optional): Weigths, if no model passed. Defaults to "yolov5s".
+        conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
+        iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
+        size (int, optional): Frame size for detection. Defaults to 640.
+        chunk_size (int, optional): Number of files per detection chunk. Defaults to 0.
+        normalized (bool, optional): Coords in % of image/frame size (True) or pixels
+        (False). Defaults to True.
 
     Returns:
         [type]: [description]
@@ -191,6 +190,7 @@ def _containsvideo(file_chunks):
     return False
 
 
+# TODO: detect to df or gdf (geopandas)
 def detect_df(
     files,
     weights: str = "yolov5x",

@@ -28,15 +28,14 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
     more information.
 
     Args:
-         detections (list): list of detections per frame, usually generated
-         by util.load_mot
+         detections (dict): dict of detections in % of video size
          sigma_l (float): low detection threshold.
          sigma_h (float): high detection threshold.
          sigma_iou (float): IOU threshold.
          t_min (float): minimum track length in frames.
 
     Returns:
-        list: list of tracks.
+        list: list of tracks in % of video size.
     """
 
     tracks_active = []
