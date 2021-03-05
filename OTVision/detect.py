@@ -22,6 +22,6 @@ from pathlib import Path
 if __name__ == "__main__":
     test_path = Path(__file__).parents[1] / "tests" / "data"
     test_path = str(test_path)
-    det_config = {"weights": "yolov5x", "conf": 0.25, "iou": 0.45, "size": 640}
+    det_config = {"weights": "yolov5s", "conf": 0.25, "iou": 0.45, "size": 640}
 
     detect.main(test_path, "mkv", det_config)

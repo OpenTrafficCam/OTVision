@@ -25,11 +25,12 @@ from detect import yolo
 
 def main(paths, filetype, det_config={}):
     files = get_files(paths, filetype)
-    multiple_videos(files, **det_config)
+    multiple_videos(files, filetype, **det_config)
 
 
 def multiple_videos(
     files,
+    filetype,
     weights: str = "yolov5x",
     conf: float = 0.25,
     iou: float = 0.45,
@@ -45,7 +46,7 @@ def multiple_videos(
 
     for file in files:
 
-        yolo_detections, names = yolo.detect(
+        yolo_detections, names, width, height, fps, frames = yolo.detect(
             files=file,
             model=model,
             size=size,
@@ -53,7 +54,20 @@ def multiple_videos(
             normalized=True,
         )
 
-        detections = yolo.convert_detections(yolo_detections, names, det_config)
+        vid_config = {}
+        vid_config["file"] = str(Path(file).stem)
+        vid_config["filetype"] = filetype
+        vid_config["width"] = width
+        vid_config["height"] = height
+        vid_config["fps"] = fps
+        vid_config["frames"] = frames
+
+        detections = yolo.convert_detections(
+            yolo_detections, names, vid_config, det_config
+        )
+
+        print(detections)
+
         _save_detections(detections, file)
 
 

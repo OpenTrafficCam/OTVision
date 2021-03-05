@@ -68,6 +68,7 @@ def track(detections, trk_config=config_track_default):
     )
     trk_config["tracker"] = "IOU"
     tracks_px = {}
+    tracks_px["vid_config"] = detections["vid_config"]
     tracks_px["det_config"] = detections["det_config"]
     tracks_px["trk_config"] = trk_config
     tracks_px["data"] = data
