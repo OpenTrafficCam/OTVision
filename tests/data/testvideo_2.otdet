@@ -1,7 +1,7 @@
 {
     "vid_config": {
         "file": "testvideo_2",
-        "filetype": "mkv",
+        "filetype": ".mkv",
         "width": 800.0,
         "height": 600.0,
         "fps": 25.0,
@@ -12,6 +12,8 @@
         "conf": 0.25,
         "iou": 0.45,
         "size": 640,
+        "chunksize": 0,
+        "normalized": true,
         "detector": "YOLOv5"
     },
     "data": {
