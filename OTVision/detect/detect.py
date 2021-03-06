@@ -23,21 +23,31 @@ from helpers.files import get_files
 from detect import yolo
 
 
-def main(paths, filetype, det_config={}):
-    files = get_files(paths, filetype)
-    multiple_videos(files, filetype, **det_config)
+def main(paths, filetypes, det_config={}):
+    files = get_files(paths, filetypes)
+    multiple_videos(files, **det_config)
 
 
 def multiple_videos(
     files,
-    filetype,
     weights: str = "yolov5x",
     conf: float = 0.25,
     iou: float = 0.45,
     size: int = 640,
+    chunksize: int = 0,
+    normalized: bool = False,
 ):
 
-    det_config = {"weights": weights, "conf": conf, "iou": iou, "size": size}
+    print("normalized")
+    print(normalized)
+    det_config = {
+        "weights": weights,
+        "conf": conf,
+        "iou": iou,
+        "size": size,
+        "chunksize": chunksize,
+        "normalized": normalized,
+    }
 
     if type(files) is not list:
         files = [files]
@@ -50,13 +60,13 @@ def multiple_videos(
             files=file,
             model=model,
             size=size,
-            chunk_size=0,
-            normalized=True,
+            chunk_size=chunksize,
+            normalized=normalized,
         )
 
         vid_config = {}
         vid_config["file"] = str(Path(file).stem)
-        vid_config["filetype"] = filetype
+        vid_config["filetype"] = str(Path(file).suffix)
         vid_config["width"] = width
         vid_config["height"] = height
         vid_config["fps"] = fps
