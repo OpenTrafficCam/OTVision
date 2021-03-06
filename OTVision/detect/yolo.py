@@ -32,7 +32,7 @@ def detect(
     iou: float = 0.45,
     size: int = 640,
     chunk_size: int = 0,
-    normalized: bool = True,
+    normalized: bool = False,
 ):
     """Detect and classify bounding boxes in images/frames using YOLOv5
 
@@ -45,7 +45,7 @@ def detect(
         size (int, optional): Frame size for detection. Defaults to 640.
         chunk_size (int, optional): Number of files per detection chunk. Defaults to 0.
         normalized (bool, optional): Coords in % of image/frame size (True) or pixels
-        (False). Defaults to True.
+        (False). Defaults to False.
 
     Returns:
         [type]: [description]
