@@ -1,23 +1,16 @@
-# %%
 import cv2 as cv
 import glob
 import json
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
+import itertools
 
-# %%
 # H:\06_OTCamera\OTCamera\OTCamera\data.txt
 
 path = "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\"
 
 
 path2 = "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\undistortlens\\data.txt"
-
-
-# text_files = glob.glob(path + "/**/data.txt", recursive = True)
-
-
-# cameraparams = text_files[0]
 
 
 # loads dictionary with parameters from
@@ -80,7 +73,7 @@ def undistort_picture():
 
             # crop the image
             x, y, w, h = roi
-            dst = dst[y : y + h, x : x + w]
+            dst = dst[y: y + h, x: x + w]
 
             # saves undistorted pictures to path
 
@@ -92,16 +85,17 @@ def undistort_picture():
             )
 
             i += 1
-    except:
-
+    except KeyError:
         print("no pictures to undistort")
 
 
-def load_trajectories():
+def load_trajectories(x_res=800, y_res=600):
+    """ loads json file from tracking algorithm
+        converts relatives coordinates to absolut coordinates in px
+        calculates middle of bounding box
 
-    # loads dataframe with inconsistent column count and trajectoriepoints
-    x_res = 800
-    y_res = 600
+        returns array with points to undistort
+    """
 
     with open(
         "H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk", "r"
@@ -111,14 +105,29 @@ def load_trajectories():
     # extract ditcionary with frames from jsonfile
     frame_dict = detections["data"][0]
 
-    for key in frame_dict:
-        print(key, "->", frame_dict[key]["classified"])
+    bb_centerpoint_list = []
+
+    # calculates middle ob bb in px
+    for majorkey in frame_dict:
+        for subkey in frame_dict[majorkey]["classified"]:
+            subkey["x[px]"] = x_res * subkey["x"]
+            subkey["y[px]"] = y_res * subkey["y"]
+            subkey["x_mid"] = subkey["x[px]"] - (subkey["h"] * 0.5 * x_res)
+            subkey["y_mid"] = subkey["y[px]"] + (subkey["w"] * 0.5 * y_res)
+
+            bb_centerpoint_list.append([subkey["x_mid"], subkey["y_mid"]])
+
+    bb_centerpoint_arr = np.array(bb_centerpoint_list)
+
+    return bb_centerpoint_arr
 
 
 def undistort_trajectories():
     # takes existing trajectories from dataframe und undistorts those points
 
     params_dict = load_params()
+
+    bb_centerpoint_arr = load_trajectories()
 
     # load params from dictionary
     mtx = params_dict["K"]
@@ -130,14 +139,36 @@ def undistort_trajectories():
     mtx = np.array(matrix_list)
     dist = np.array(dist)
 
-    # gets array of undistorted xy coordinates
+    undistorted_points = cv.undistortPoints(bb_centerpoint_arr, mtx, dist)
 
-    # test = np.zeros((10,1,2), dtype=np.float32)
+    return undistorted_points
 
-    # xy_undistorted = cv.undistortPoints(test, mtx, dist)
+def validate_undistortion():
+    """function to validate undistortion of trafectories
+    """
+
+    undistorted_points = undistort_trajectories()
+
+    distorted_points = load_trajectories()
+
+    list1 = undistorted_points.tolist()
+ 
+    list1 = list(itertools.chain(*list1))
+
+    x ,y = zip(*list1)
+
+    plt.scatter(x ,y)
+    plt.show()
+
+    x ,y = zip(*distorted_points)
+
+    plt.scatter(x ,y)
+    plt.show()
 
 
 if __name__ == "__main__":
     # undistort_picture()
 
-    load_trajectories()
+    # undistort_trajectories()
+
+    validate_undistortion()
