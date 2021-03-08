@@ -99,30 +99,20 @@ def undistort_picture():
 
 def load_trajectories():
 
-    df = pd.DataFrame()
-
     # loads dataframe with inconsistent column count and trajectoriepoints
+    x_res = 800
+    y_res = 600
 
     with open(
-        "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\trajectories\\example_traj.csv",
-        "r",
-    ) as f:
+        "H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk", "r"
+    ) as json_file:
+        detections = json.load(json_file)
 
-        for line in f:
-            df = pd.concat(
-                [df, pd.DataFrame([tuple(line.strip().split(";"))])], ignore_index=True
-            )
+    # extract ditcionary with frames from jsonfile
+    frame_dict = detections["data"][0]
 
-    df = df.iloc[1:, 9:]
-
-    df_x = df.iloc[:, 1::5]
-
-    df_y = df.iloc[:, 2::5]
-
-    for i in range(10):
-        np.array(df.iloc[0:1, :])
-
-    # print(df_x, df_y)
+    for key in frame_dict:
+        print(key, "->", frame_dict[key]["classified"])
 
 
 def undistort_trajectories():
@@ -148,6 +138,6 @@ def undistort_trajectories():
 
 
 if __name__ == "__main__":
-    undistort_picture()
+    # undistort_picture()
 
-    # load_trajectories()
+    load_trajectories()
