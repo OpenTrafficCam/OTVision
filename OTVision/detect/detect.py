@@ -77,7 +77,6 @@ def multiple_videos(
         )
 
         print(detections)
-
         _save_detections(detections, file)
 
 
