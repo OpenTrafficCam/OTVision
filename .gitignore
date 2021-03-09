@@ -12,3 +12,7 @@ geckodriver.log
 yolov5*.pt
 obj_train_data/*
 OTVision/detect/vissim_video.mp4
+tests/data/testvideo_1.otdet
+tests/data/testvideo_1.ottrk
+tests/data/testvideo_2.otdet
+tests/data/testvideo_2.ottrk
