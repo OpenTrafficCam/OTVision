@@ -20,7 +20,7 @@
 
 
 from track.iou_tracker_qp import track_iou
-from helpers.files import get_files
+from helpers.files import get_files, denormalize
 import json
 from pathlib import Path
 from datetime import datetime
@@ -68,6 +68,7 @@ def track(detections, trk_config=config_track_default):
     )
     trk_config["tracker"] = "IOU"
     tracks_px = {}
+    tracks_px["vid_config"] = detections["vid_config"]
     tracks_px["det_config"] = detections["det_config"]
     tracks_px["trk_config"] = trk_config
     tracks_px["data"] = data
@@ -99,6 +100,8 @@ def main(paths, config_track=config_track_default):
         )
         detections, dir, filename = read(detections_file)
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections read")
+        detections = denormalize(detections)
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections denormalize")
         tracks_px = track(detections)
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections tracked")
         write(tracks_px, detections_file)

@@ -21,7 +21,7 @@ from pathlib import Path
 from time import perf_counter
 
 import torch
-from cv2 import VideoCapture
+from cv2 import VideoCapture, CAP_PROP_FPS
 
 
 def detect(
@@ -32,7 +32,7 @@ def detect(
     iou: float = 0.45,
     size: int = 640,
     chunk_size: int = 0,
-    normalized: bool = True,
+    normalized: bool = False,
 ):
     """Detect and classify bounding boxes in images/frames using YOLOv5
 
@@ -45,7 +45,7 @@ def detect(
         size (int, optional): Frame size for detection. Defaults to 640.
         chunk_size (int, optional): Number of files per detection chunk. Defaults to 0.
         normalized (bool, optional): Coords in % of image/frame size (True) or pixels
-        (False). Defaults to True.
+        (False). Defaults to False.
 
     Returns:
         [type]: [description]
@@ -86,6 +86,10 @@ def detect(
                     )
                 )
                 frame_no += 1
+            width = cap.get(3)  # float
+            height = cap.get(4)  # float
+            fps = cap.get(CAP_PROP_FPS)  # float
+            frames = cap.get(7)  # float
 
     else:
         for file_chunk in file_chunks:
@@ -97,8 +101,8 @@ def detect(
 
     t2 = perf_counter()
     duration = t2 - t1
-    fps = len(yolo_detections) / duration
-    print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, fps))
+    det_fps = len(yolo_detections) / duration
+    print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
 
     names = results.names
 
@@ -118,7 +122,7 @@ def detect(
     # 'render'
     # 'tolist'
 
-    return yolo_detections, names
+    return yolo_detections, names, width, height, fps, frames
 
 
 def loadmodel(weights, conf, iou):
@@ -137,7 +141,7 @@ def loadmodel(weights, conf, iou):
     return model
 
 
-def convert_detections(yolo_detections, names, det_config):
+def convert_detections(yolo_detections, names, vid_config, det_config):
     data = {}
     for no, yolo_detection in enumerate(yolo_detections):
         detection = []
@@ -154,6 +158,7 @@ def convert_detections(yolo_detections, names, det_config):
         data[str(no + 1)] = {"classified": detection}
     det_config["detector"] = "YOLOv5"
     detections = {}
+    detections["vid_config"] = vid_config
     detections["det_config"] = det_config
     detections["data"] = data
     return detections

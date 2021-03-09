@@ -23,8 +23,8 @@ from helpers.files import get_files
 from detect import yolo
 
 
-def main(paths, filetype, det_config={}):
-    files = get_files(paths, filetype)
+def main(paths, filetypes, det_config={}):
+    files = get_files(paths, filetypes)
     multiple_videos(files, **det_config)
 
 
@@ -34,9 +34,20 @@ def multiple_videos(
     conf: float = 0.25,
     iou: float = 0.45,
     size: int = 640,
+    chunksize: int = 0,
+    normalized: bool = False,
 ):
 
-    det_config = {"weights": weights, "conf": conf, "iou": iou, "size": size}
+    print("normalized")
+    print(normalized)
+    det_config = {
+        "weights": weights,
+        "conf": conf,
+        "iou": iou,
+        "size": size,
+        "chunksize": chunksize,
+        "normalized": normalized,
+    }
 
     if type(files) is not list:
         files = [files]
@@ -45,15 +56,27 @@ def multiple_videos(
 
     for file in files:
 
-        yolo_detections, names = yolo.detect(
+        yolo_detections, names, width, height, fps, frames = yolo.detect(
             files=file,
             model=model,
             size=size,
-            chunk_size=0,
-            normalized=True,
+            chunk_size=chunksize,
+            normalized=normalized,
         )
 
-        detections = yolo.convert_detections(yolo_detections, names, det_config)
+        vid_config = {}
+        vid_config["file"] = str(Path(file).stem)
+        vid_config["filetype"] = str(Path(file).suffix)
+        vid_config["width"] = width
+        vid_config["height"] = height
+        vid_config["fps"] = fps
+        vid_config["frames"] = frames
+
+        detections = yolo.convert_detections(
+            yolo_detections, names, vid_config, det_config
+        )
+
+        print(detections)
         _save_detections(detections, file)
 
 
