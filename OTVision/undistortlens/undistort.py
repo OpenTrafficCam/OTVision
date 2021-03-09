@@ -4,6 +4,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
+from pathlib import Path
 
 # H:\06_OTCamera\OTCamera\OTCamera\data.txt
 
@@ -73,7 +74,7 @@ def undistort_picture():
 
             # crop the image
             x, y, w, h = roi
-            dst = dst[y: y + h, x: x + w]
+            dst = dst[y : y + h, x : x + w]
 
             # saves undistorted pictures to path
 
@@ -89,17 +90,44 @@ def undistort_picture():
         print("no pictures to undistort")
 
 
-def load_trajectories(x_res=800, y_res=600):
-    """ loads json file from tracking algorithm
-        converts relatives coordinates to absolut coordinates in px
-        calculates middle of bounding box
+def get_resolution(file):
+    """loads json file from tracking algorithm
+    if x and y are normalized function returns height and width as integer
+    if not, xy-resolution is 1
+    this is necessary to calculate the absolute xy coordinates
 
-        returns array with points to undistort
+    takes filepath of tracking data
+
+    returns resolution as height and with or 1
     """
 
-    with open(
-        "H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk", "r"
-    ) as json_file:
+    with open(file, "r") as json_file:
+        detections = json.load(json_file)
+
+    # returns bool
+    normalized = detections["det_config"]["normalized"]
+
+    if normalized:
+        x_res = int(detections["vid_config"]["height"])
+        y_res = int(detections["vid_config"]["width"])
+    else:
+        x_res = 1
+        y_res = 1
+
+    return x_res, y_res
+
+
+def load_trajectories(file):
+    """loads json file from tracking algorithm
+    converts relatives coordinates to absolut coordinates
+    in px by using a given resolution
+    calculates middle of bounding box
+
+    returns array with points to undistort
+    """
+    x_res, y_res = get_resolution(file)
+
+    with open(file, "r") as json_file:
         detections = json.load(json_file)
 
     # extract ditcionary with frames from jsonfile
@@ -107,13 +135,12 @@ def load_trajectories(x_res=800, y_res=600):
 
     bb_centerpoint_list = []
 
-    # calculates middle ob bb in px
+    # calculates middle ob bb in px// to do list comprehension
     for majorkey in frame_dict:
         for subkey in frame_dict[majorkey]["classified"]:
-            subkey["x[px]"] = x_res * subkey["x"]
-            subkey["y[px]"] = y_res * subkey["y"]
-            subkey["x_mid"] = subkey["x[px]"] - (subkey["h"] * 0.5 * x_res)
-            subkey["y_mid"] = subkey["y[px]"] + (subkey["w"] * 0.5 * y_res)
+            # converts relative x and y coordinates to px coordinates
+            subkey["x_mid"] = x_res * subkey["x"]
+            subkey["y_mid"] = y_res * subkey["y"]
 
             bb_centerpoint_list.append([subkey["x_mid"], subkey["y_mid"]])
 
@@ -122,12 +149,21 @@ def load_trajectories(x_res=800, y_res=600):
     return bb_centerpoint_arr
 
 
-def undistort_trajectories():
+def undistort_trajectories(file):
+    """function to undistort trajectories from filepath file
+    load params with the load_params function
+    uses numpy array of bbox center coodinates, cameramatrix and distcoefficant
+    as argument for the cv.undistort function
+
+    returns numpy array of undistorted bbox coordinates
+
+    """
+
     # takes existing trajectories from dataframe und undistorts those points
 
     params_dict = load_params()
 
-    bb_centerpoint_arr = load_trajectories()
+    bb_centerpoint_arr = load_trajectories(file)
 
     # load params from dictionary
     mtx = params_dict["K"]
@@ -143,32 +179,51 @@ def undistort_trajectories():
 
     return undistorted_points
 
-def validate_undistortion():
-    """function to validate undistortion of trafectories
-    """
 
-    undistorted_points = undistort_trajectories()
+def validate_undistortion(file):
+    """function to validate undistortion of trajectories
+    creates to scatterplots from undistorted und distorted point set"""
 
-    distorted_points = load_trajectories()
+    undistorted_points = undistort_trajectories(file)
 
-    list1 = undistorted_points.tolist()
- 
-    list1 = list(itertools.chain(*list1))
+    distorted_points = load_trajectories(file)
 
-    x ,y = zip(*list1)
+    undistored_point_list = undistorted_points.tolist()
 
-    plt.scatter(x ,y)
+    undistored_point_list = list(itertools.chain(*undistored_point_list))
+
+    x, y = zip(*undistored_point_list)
+
+    plt.scatter(x, y)
     plt.show()
 
-    x ,y = zip(*distorted_points)
+    x, y = zip(*distorted_points)
 
-    plt.scatter(x ,y)
+    plt.scatter(x, y)
     plt.show()
+
+
+# def save_trajectories():
 
 
 if __name__ == "__main__":
+    test_path = Path(__file__).parents[1] / "tests" / "data"
+    test_path = str(test_path)
+
     # undistort_picture()
 
-    # undistort_trajectories()
+    # undistort_trajectories(
+    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    # )
 
-    validate_undistortion()
+    # load_trajectories(
+    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    # )
+
+    # validate_undistortion(
+    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    # )
+
+    # get_resolution(
+    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    # )
