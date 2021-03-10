@@ -41,13 +41,13 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
     tracks_finished = []
     vehID = 0
     vehIDs_finished = []
-    new_detections = {}
+    # new_detections = {}
 
     for frame_num in detections:
         detections_frame = detections[frame_num]["classified"]
         # apply low threshold to detections
         dets = [det for det in detections_frame if det["confidence"] >= sigma_l]
-        new_detections[frame_num] = {"classified": []}
+        # new_detections[frame_num] = {"classified": []}
         updated_tracks = []
         saved_tracks = []
         for track in tracks_active:
@@ -71,23 +71,19 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
 
                     # remove best matching detection from detections
                     del dets[dets.index(best_match)]
-                    best_match["vehID"] = track["vehID"]
+                    """best_match["vehID"] = track["vehID"]
                     best_match["first"] = False
-                    new_detections[frame_num]["classified"].append(best_match)
+                    new_detections[frame_num]["classified"].append(best_match)"""
 
             # if track was not updated
             if len(updated_tracks) == 0 or track is not updated_tracks[-1]:
                 # finish track when the conditions are met
                 if track["age"] < t_miss_max:
-                    track["frames"].append(track["frames"][-1])
-                    track["bboxes"].append(track["bboxes"][-1])
-                    track["center"].append(track["center"][-1])
-                    track["confidences"].append(track["confidences"][-1])
-                    track["labels"].append(track["labels"][-1])
                     track["age"] += 1
                     saved_tracks.append(track)
-                elif track["max_confidence"] >= sigma_h and len(track["frames"]) >= (
-                    t_min + track["age"]
+                elif (
+                    track["max_confidence"] >= sigma_h 
+                    and track["frames"][-1] - track["frames"][0] >= t_min
                 ):
                     tracks_finished.append(track)
                     vehIDs_finished.append(track["vehID"])
@@ -110,31 +106,35 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
                     "age": 0,
                 }
             )
-            det["vehID"] = vehID
-            det["first"] = True
-            new_detections[frame_num]["classified"].append(det)
+            # det["vehID"] = vehID
+            # det["first"] = True
+            # new_detections[frame_num]["classified"].append(det)
         tracks_active = updated_tracks + saved_tracks + new_tracks
 
     # finish all remaining active tracks
     tracks_finished += [
         track
         for track in tracks_active
-        if track["max_confidence"] >= sigma_h and len(track["bboxes"]) >= t_min
+        if (
+            track["max_confidence"] >= sigma_h 
+            and track["frames"][-1] - track["frames"][0] >= t_min
+        )
     ]
 
     for track in tracks_finished:
-        track["max_label"] = max(track["labels"], key=track["labels"].count)
+        track["max_label"] = pd.Series(track["labels"]).mode().iat[0]
 
     # detections = new_detections
-    for frame_num in new_detections:
-        for det in new_detections[frame_num]["classified"]:
-            if det["vehID"] not in vehIDs_finished:
-                det["finished"] = False
-            else:
-                det["finished"] = True
-                # det['label'] = tracks[tracks['vehID'] == det['vehID']]['max_label']
+    # for frame_num in new_detections:
+    #     for det in new_detections[frame_num]["classified"]:
+    #         if det["vehID"] not in vehIDs_finished:
+    #             det["finished"] = False
+    #         else:
+    #             det["finished"] = True
+    #             det['label'] = tracks[tracks['vehID'] == det['vehID']]['max_label']
 
-    return new_detections, tracks_finished
+    return tracks_finished
+    # return new_detections, tracks_finished
 
 
 # %%
