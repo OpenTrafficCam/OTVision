@@ -8,21 +8,23 @@ from pathlib import Path
 
 # H:\06_OTCamera\OTCamera\OTCamera\data.txt
 
-path = "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\"
+imagepath = "OTVision\\imagefolder"
 
 
-path2 = "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\undistortlens\\data.txt"
+parameterpath = "OTVision\\undistortlens\\data.txt"
 
 
 # loads dictionary with parameters from
-def load_params():
+
+
+def load_params(parameter_textfile=parameterpath):
     """Loads data.txt - file with the distinct camera parameters K and D
 
     K is the cameramatrix
     D are distance coefficent
     funtion returns dictionary
     """
-    text_files = glob.glob(path2, recursive=True)
+    text_files = glob.glob(parameter_textfile, recursive=True)
 
     cameraparams = text_files[0]
 
@@ -36,9 +38,10 @@ def load_params():
 
 
 # function to undistort pictures
-def undistort_picture():
+def undistort_picture(imagefolder=imagepath):
     """ takes params and undistorts a list of images"""
 
+    # loads dictionary
     params_dict = load_params()
 
     # load params from dictionary
@@ -53,7 +56,7 @@ def undistort_picture():
 
     # print(mtx, dist)
 
-    image_list = glob.glob(path + "imagefolder\\*.jpg", recursive=True)
+    image_list = glob.glob(imagefolder + "\\*.jpg", recursive=True)
 
     i = 0
 
@@ -79,7 +82,7 @@ def undistort_picture():
             # saves undistorted pictures to path
 
             cv.imwrite(
-                "H:\\06_OTCamera\\OTVision\\OTVision\\OTVision\\imagefolder_undistorted\\preview{0}_undistorted.jpg".format(
+                "OTVision\\imagefolder_undistorted\\preview{0}_undistorted.jpg".format(
                     str(i)
                 ),
                 dst,
@@ -90,7 +93,7 @@ def undistort_picture():
         print("no pictures to undistort")
 
 
-def get_resolution(file):
+def get_resolution(trackingfilepath, trackingfile):
     """loads json file from tracking algorithm
     if x and y are normalized function returns height and width as integer
     if not, xy-resolution is 1
@@ -101,7 +104,7 @@ def get_resolution(file):
     returns resolution as height and with or 1
     """
 
-    with open(file, "r") as json_file:
+    with open(trackingfilepath + trackingfile, "r") as json_file:
         detections = json.load(json_file)
 
     # returns bool
@@ -117,17 +120,17 @@ def get_resolution(file):
     return x_res, y_res
 
 
-def load_trajectories(file):
+def load_trajectories(trackingfilepath, trackingfile):
     """loads json file from tracking algorithm
     converts relatives coordinates to absolut coordinates
     in px by using a given resolution
-    calculates middle of bounding box
+    appends and converts a list of xy corrdinates for the cv.undistortpointsfunction
 
     returns array with points to undistort
     """
-    x_res, y_res = get_resolution(file)
+    x_res, y_res = get_resolution(trackingfilepath, trackingfile)
 
-    with open(file, "r") as json_file:
+    with open(trackingfilepath + trackingfile, "r") as json_file:
         detections = json.load(json_file)
 
     # extract ditcionary with frames from jsonfile
@@ -139,17 +142,27 @@ def load_trajectories(file):
     for majorkey in frame_dict:
         for subkey in frame_dict[majorkey]["classified"]:
             # converts relative x and y coordinates to px coordinates
-            subkey["x_mid"] = x_res * subkey["x"]
-            subkey["y_mid"] = y_res * subkey["y"]
+            if x_res != 1 & y_res != 1:
+                subkey["x_abs"] = x_res * subkey["x"]
+                subkey["y_abs"] = y_res * subkey["y"]
 
-            bb_centerpoint_list.append([subkey["x_mid"], subkey["y_mid"]])
+                bb_centerpoint_list.append([subkey["x_abs"], subkey["y_abs"]])
+            else:
+                bb_centerpoint_list.append([subkey["x"], subkey["y"]])
 
     bb_centerpoint_arr = np.array(bb_centerpoint_list)
+
+    dump_path = trackingfilepath + "undistorted_" + trackingfile
+
+    to_json = json.dumps(frame_dict, indent=4)
+
+    x = open(dump_path, "w")
+    x.write(to_json)
 
     return bb_centerpoint_arr
 
 
-def undistort_trajectories(file):
+def undistort_trajectories(trackingfilepath, trackingfile):
     """function to undistort trajectories from filepath file
     load params with the load_params function
     uses numpy array of bbox center coodinates, cameramatrix and distcoefficant
@@ -163,7 +176,7 @@ def undistort_trajectories(file):
 
     params_dict = load_params()
 
-    bb_centerpoint_arr = load_trajectories(file)
+    bb_centerpoint_arr = load_trajectories(trackingfilepath, trackingfile)
 
     # load params from dictionary
     mtx = params_dict["K"]
@@ -180,13 +193,13 @@ def undistort_trajectories(file):
     return undistorted_points
 
 
-def validate_undistortion(file):
+def validate_undistortion(trackingfilepath, trackingfile):
     """function to validate undistortion of trajectories
     creates to scatterplots from undistorted und distorted point set"""
 
-    undistorted_points = undistort_trajectories(file)
+    undistorted_points = undistort_trajectories(trackingfilepath, trackingfile)
 
-    distorted_points = load_trajectories(file)
+    distorted_points = load_trajectories(trackingfilepath, trackingfile)
 
     undistored_point_list = undistorted_points.tolist()
 
@@ -207,23 +220,26 @@ def validate_undistortion(file):
 
 
 if __name__ == "__main__":
+    # PROBLEM: DRUCKT EIN OTVISION ZU VIEL!!
     test_path = Path(__file__).parents[1] / "tests" / "data"
     test_path = str(test_path)
+
+    test_path = "tests\\data\\"
+
+    testfile = "testvideo_2.ottrk"
 
     # undistort_picture()
 
     # undistort_trajectories(
-    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    #     trackingfilepath="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
     # )
 
     # load_trajectories(
-    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    #     trackingfilepath="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
     # )
 
-    # validate_undistortion(
-    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
-    # )
+    validate_undistortion(test_path, testfile)
 
     # get_resolution(
-    #     file="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
+    #     trackingfilepath="H:\\06_OTCamera\\OTVision\\OTVision\\tests\\data\\testvideo_2.ottrk"
     # )
