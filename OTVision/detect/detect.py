@@ -1,4 +1,8 @@
-# Copyright (C) 2021 OpenTrafficCam Contributors
+"""
+Module to call yolov5/detect.py with arguments
+"""
+
+# Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #
@@ -14,6 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 import json
 from pathlib import Path
