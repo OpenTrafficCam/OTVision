@@ -42,7 +42,7 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
     tracks_finished = []
     vehID = 0
     vehIDs_finished = []
-    new_detections = {}
+    # new_detections = {}
 
     for frame_num in detections:
         detections_frame = detections[frame_num]["classified"]
@@ -70,9 +70,9 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
 
                     # remove best matching detection from detections
                     del dets[dets.index(best_match)]
-                    best_match["vehID"] = track["vehID"]
+                    """best_match["vehID"] = track["vehID"]
                     best_match["first"] = False
-                    new_detections[frame_num]["classified"].append(best_match)
+                    new_detections[frame_num]["classified"].append(best_match)"""
 
             # if track was not updated
             if len(updated_tracks) == 0 or track is not updated_tracks[-1]:
@@ -109,9 +109,9 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
                     "age": 0,
                 }
             )
-            det["vehID"] = vehID
-            det["first"] = True
-            new_detections[frame_num]["classified"].append(det)
+            # det["vehID"] = vehID
+            # det["first"] = True
+            # new_detections[frame_num]["classified"].append(det)
         tracks_active = updated_tracks + saved_tracks + new_tracks
 
     # finish all remaining active tracks
@@ -134,6 +134,3 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
                 # det['class'] = tracks[tracks['vehID'] == det['vehID']]['max_class']
 
     return new_detections, tracks_finished
-
-
-# %%
