@@ -2,7 +2,6 @@
 Module to call yolov5/detect.py with arguments
 """
 
-
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -15,152 +14,83 @@ Module to call yolov5/detect.py with arguments
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more detectionsails.
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import torch
-import os
-import pathlib
+import json
+from pathlib import Path
+
+from helpers.files import get_files
+
+from detect import yolo
 
 
-def detect_yolov5(
-    input_path,
-    output_folder,
-    output_subfolder="run",
-    overwrite=False,
-    classes=[],
-    detect_path=None,
-    weights="yolov5s.pt",
-    download_all_weights_again=False,
-    confidence_threshold=0.25,
-    iou_threshold=0.45,
-    inference_size=640,
-    augment=False,
-    save_txt=True,
-    save_conf=True,
-    display_results=False,
+def main(paths, filetypes, det_config={}):
+    files = get_files(paths, filetypes)
+    multiple_videos(files, **det_config)
+
+
+def multiple_videos(
+    files,
+    weights: str = "yolov5x",
+    conf: float = 0.25,
+    iou: float = 0.45,
+    size: int = 640,
+    chunksize: int = 0,
+    normalized: bool = False,
 ):
-    """[Perform detection in images, videos or streams using yolov5]
 
-    Args:
-        input_path (str): [folder or file or URL of input image(s) or videos(s)]
-        output_folder (str): [folder where subfolders with results will be stored]
-        output_subfolder (str, optional): [Output folder path]. Defaults to "run".
-        overwrite (bool, optional): [Overwrite output folder ]. Defaults to False.
-        classes (list, optional): [List of classes to detect]. Defaults to [].
-        detect_path (str, optional): [path to yolov5/detect.py]. Defaults to None
-        weights (str, optional): [weights file to use]. Defaults to "yolov5s.pt".
-        download_all_weights_again (bool, optional): [Just in case]. Defaults to False.
-        confidence_threshold (float, optional): [Can be left low]. Defaults to 0.25.
-        iou_threshold (float, optional): [We have to try it out]. Defaults to 0.45.
-        inference_size (int, optional): [Image downsizing]. Defaults to 640.
-        augment (bool, optional): [Have to read in paper about this]. Defaults to False.
-        save_txt (bool, optional): [Whether or not to save labels?]. Defaults to True.
-        save_conf (bool, optional): [Save confidences with labels?]. Defaults to True.
-        display_results (bool, optional): [Doesnt work by now]. Defaults to False.
-    """
-
-    # Construct path to detect.py if none was given
-    if detect_path is None:
-        OpenTrafficCam_path = pathlib.Path(__file__).parents[3]
-        detect_path = os.fspath(OpenTrafficCam_path) + r"\yolov5\detect.py"
-    print("Path to yolov5/detect.py: " + detect_path)
-
-    # Convert arguments to yolov5 inference format
-    if download_all_weights_again:
-        download_all_weights_again_str = " --update "
-    else:
-        download_all_weights_again_str = ""
-    if augment:
-        augment_str = " --augment "
-    else:
-        augment_str = ""
-    if overwrite:
-        overwrite_str = " --exist-ok "
-    else:
-        overwrite_str = ""
-    if save_txt:  # !Bug: Saves single text for every frame
-        save_txt_str = " --save-txt "
-    else:
-        save_txt_str = ""
-    if save_conf:
-        save_conf_str = " --save-conf "
-    else:
-        save_conf_str = ""
-    if display_results:
-        display_results_str = " --view-img "
-    else:
-        display_results_str = ""
-
-    # Transfer classes to yolo class numbers
-    classes_dict = {
-        "Person": 0,
-        "Bicycle": 1,
-        "Car": 2,
-        "Motorcycle": 3,
-        "Bus": 5,
-        "Train": 6,
-        "Truck": 7,
-        "Traffic light": 9,
-        "Skateboard": 36
+    print("normalized")
+    print(normalized)
+    det_config = {
+        "weights": weights,
+        "conf": conf,
+        "iou": iou,
+        "size": size,
+        "chunksize": chunksize,
+        "normalized": normalized,
     }
-    classes_str = ""
-    for i, class_ in enumerate(classes):
-        print(class_)
-        if i == 0:
-            classes_str += " --classes"
-        classes_str += " " + str(classes_dict.get(class_))
 
-    # Inform about usage of GPU no. or CPU
-    print(
-        "Setup complete. Using torch %s %s"
-        % (
-            torch.__version__,
-            torch.cuda.get_device_properties(0) if torch.cuda.is_available() else "CPU",
+    if type(files) is not list:
+        files = [files]
+
+    model = yolo.loadmodel(weights, conf, iou)
+
+    for file in files:
+
+        yolo_detections, names, width, height, fps, frames = yolo.detect(
+            files=file,
+            model=model,
+            size=size,
+            chunk_size=chunksize,
+            normalized=normalized,
         )
-    )
 
-    # Call the detect.py module in yolov5 package with custom arguments
-    os.system(
-        "python "
-        + detect_path
-        + classes_str
-        + " --weights "
-        + weights
-        + download_all_weights_again_str
-        + " --img-size "
-        + str(inference_size)
-        + " --conf "
-        + str(confidence_threshold)
-        + " --iou-thres "
-        + str(iou_threshold)
-        + augment_str
-        + " --source "
-        + input_path
-        + " --project "
-        + output_folder
-        + " --name "
-        + output_subfolder
-        + overwrite_str
-        + save_txt_str
-        + save_conf_str
-        + display_results_str
-    )
+        vid_config = {}
+        vid_config["file"] = str(Path(file).stem)
+        vid_config["filetype"] = str(Path(file).suffix)
+        vid_config["width"] = width
+        vid_config["height"] = height
+        vid_config["fps"] = fps
+        vid_config["frames"] = frames
+
+        detections = yolo.convert_detections(
+            yolo_detections, names, vid_config, det_config
+        )
+
+        print(detections)
+        _save_detections(detections, file)
+
+
+def _save_detections(detections, file):
+    file = Path(file)
+    filename = file.with_suffix(".otdet")
+    with open(filename, "w") as f:
+        json.dump(detections, f, indent=4)
 
 
 if __name__ == "__main__":
-    input_path = r"C:\Users\Baerwolff\Desktop\Lenovo_Arbeit\2021-01-23_yolov5\videos"
-    output_folder = r"C:\Users\Baerwolff\Desktop\Lenovo_Arbeit\2021-01-23_yolov5\videos"
-    output_subfolder = "detections"
-    weights = "yolov5s.pt"
-    classes = ["Person", "Car"]
-    detect_yolov5(
-        input_path=input_path,
-        output_folder=output_folder,
-        output_subfolder=output_subfolder,
-        weights=weights,
-        classes=classes,
-    )
+    det_config = {"weights": "yolov5x", "conf": 0.25, "iou": 0.45, "size": 640}

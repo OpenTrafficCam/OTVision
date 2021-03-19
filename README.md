@@ -6,4 +6,16 @@ Check out the [documentation](https://docs.opentrafficcam.org/otvision) for deta
 
 We appreciate your support in the form of both code and comments. First, please have a look at the [contribute](https://docs.opentrafficcam.org/contribute) section of the OpenTrafficCam documentation.
 
+## Installation
+
+Clone this repository.
+
+To install all requirements, you have to use the PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/)
+
+```bash
+pip install -r .\requirements.txt -f https://download.pytorch.org/whl/torch_stable.html --user
+```
+
+## License
+
 This software is licensed under the [GPL-3.0 License](LICENSE)

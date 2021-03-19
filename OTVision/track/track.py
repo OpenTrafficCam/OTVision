@@ -20,12 +20,12 @@
 
 
 from track.iou_tracker_qp import track_iou
-from helpers.files import get_files
+from helpers.files import get_files, denormalize
 import json
-import pathlib
+from pathlib import Path
 from datetime import datetime
 
-
+# TODO:Change structure and naming to according to detect
 config_track_default = {
     "yolo_mode": "spp",
     "sigma_l": 0.1,
@@ -41,54 +41,56 @@ def read(detections_file):
     """
     docstring
     """
-    dir = pathlib.Path(detections_file).parent
-    filename = pathlib.Path(detections_file).stem.rsplit("_", 1)[0]
-    # detections_suffix = pathlib.Path(detections_file).stem.rsplit("_", 1)[1]
-    filetype = pathlib.Path(detections_file).suffix
-    if filetype == ".json":
-        with open(detections_file) as detections_file_json:
-            detections = json.load(detections_file_json)
-    elif filetype == ".csv":
-        pass  # todo?
+    dir = Path(detections_file).parent
+    filename = Path(detections_file).stem.rsplit("_", 1)[0]
+    # detections_suffix = Path(detections_file).stem.rsplit("_", 1)[1]
+    filetype = Path(detections_file).suffix
+    if filetype == ".otdet":
+        with open(detections_file) as f:
+            detections = json.load(f)
     else:
-        raise ValueError("Filetype " + filetype + " cannot be read")
+        raise ValueError("Filetype " + filetype + " cannot be read, has to be .otdet")
     return detections, dir, filename
 
 
-def track(detections, config_track=config_track_default):
+def track(detections, trk_config=config_track_default):
     """
     docstring
     """
-    tracks_px = track_iou(
-        detections,
-        config_track["sigma_l"],
-        config_track["sigma_h"],
-        config_track["sigma_iou"],
-        config_track["t_min"],
-        config_track["save_age"],
+
+    data = track_iou(
+        detections["data"],
+        trk_config["sigma_l"],
+        trk_config["sigma_h"],
+        trk_config["sigma_iou"],
+        trk_config["t_min"],
+        trk_config["save_age"],
     )
+    trk_config["tracker"] = "IOU"
+    tracks_px = {}
+    tracks_px["vid_config"] = detections["vid_config"]
+    tracks_px["det_config"] = detections["det_config"]
+    tracks_px["trk_config"] = trk_config
+    tracks_px["data"] = data
+
     return tracks_px
 
 
-def write(tracks_px, dir, filename, suffix, filetype):
+def write(tracks_px, file):
     """
     docstring
     """
-    if filetype == ".json":
-        file = pathlib.Path(dir, filename + suffix + filetype)
-        with open(file, "w") as tracks_px_file_json:
-            json.dump(tracks_px, tracks_px_file_json)
-    elif filetype == "pkl":
-        pass  # todo?
-    elif filetype == "csv":
-        pass  # todo?
+    file = Path(file)
+    filename = file.with_suffix(".ottrk")
+    with open(filename, "w") as f:
+        json.dump(tracks_px, f, indent=4)
 
 
 def main(paths, config_track=config_track_default):
     """
     docstring
     """
-    filetype = "_yolo-" + config_track["yolo_mode"] + ".json"
+    filetype = ".otdet"
     detections_files = get_files(paths, filetype)
     for detections_file in detections_files:
         print(
@@ -98,9 +100,11 @@ def main(paths, config_track=config_track_default):
         )
         detections, dir, filename = read(detections_file)
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections read")
+        detections = denormalize(detections)
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections denormalize")
         tracks_px = track(detections)
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections tracked")
-        write(tracks_px, dir, filename, "_tracks-px", ".json")
+        write(tracks_px, detections_file)
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Tracks written")
 
 

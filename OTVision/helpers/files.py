@@ -19,7 +19,7 @@
 from pathlib import Path
 
 
-def get_files(paths, filetype):
+def get_files(paths, filetypes):
     """
     Generates a list of files ending with filename based on filenames or the recursive
     contend of folders.
@@ -44,21 +44,25 @@ def get_files(paths, filetype):
         raise TypeError("Paths needs to be str or list of str")
 
     # check if _filename_ is str and transform it
-    if type(filetype) is str:
-        if not filetype.startswith("_"):
-            if not filetype.startswith("."):
-                filetype = "." + filetype
-            filetype = filetype.lower()
-    else:
-        raise TypeError("filetype needs to be a str")
+    if type(filetypes) is not list:
+        filetypes = [filetypes]
+    for filetype in filetypes:
+        if type(filetype) is str:
+            if not filetype.startswith("_"):
+                if not filetype.startswith("."):
+                    filetype = "." + filetype
+                filetype = filetype.lower()
+        else:
+            raise TypeError("filetype needs to be a str")
 
     # add all files to a single list _files_
     for path in pathlist:
         path = Path(path)
         if path.is_file():
             file = str(path)
-            if file.endswith(filetype):
-                files.add(file)
+            for filetype in filetypes:
+                if file.endswith(filetype):
+                    files.add(file)
         elif path.is_dir():
             for file in path.glob("**/*" + filetype):
                 file = str(file)
@@ -66,7 +70,7 @@ def get_files(paths, filetype):
 
     return sorted(list(files))
 
-  
+
 def remove_dir(dir: str):
     dir = Path(dir)
     for path in dir.glob("*"):
@@ -75,6 +79,47 @@ def remove_dir(dir: str):
         else:
             remove_dir(path)
     dir.rmdir()
+
+
+def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+    if otdict["det_config"]["normalized"]:
+        direction = "denormalize"
+        otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
+        otdict["det_config"]["normalized"] = False
+        print("Dict denormalized!")
+    else:
+        print("Dict was not normalized!")
+    return otdict
+
+
+def normalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+    if not otdict["det_config"]["normalized"]:
+        direction = "normalize"
+        otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
+        otdict["det_config"]["normalized"] = True
+        print("Dict normalized!")
+    else:
+        print("Dict was already normalized!")
+    return otdict
+
+
+def _normal_transformation(otdict, direction, keys_width, keys_height):
+    width = otdict["vid_config"]["width"]
+    height = otdict["vid_config"]["height"]
+    for detection in otdict["data"]:
+        for bbox in otdict["data"][detection]["classified"]:
+            for key in bbox:
+                if key in keys_width:
+                    if direction == "normalize":
+                        bbox[key] = bbox[key] / width
+                    elif direction == "denormalize":
+                        bbox[key] = bbox[key] * width
+                elif key in keys_height:
+                    if direction == "normalize":
+                        bbox[key] = bbox[key] / height
+                    elif direction == "denormalize":
+                        bbox[key] = bbox[key] * height
+    return otdict
 
 
 if __name__ == "__main__":
