@@ -6,7 +6,7 @@
 # Written by Erik Bochinski
 # ---------------------------------------------------------
 
-from track.util import iou
+from track.iou_util import iou
 
 
 def make_bbox(obj):

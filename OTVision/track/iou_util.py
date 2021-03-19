@@ -10,20 +10,27 @@ import csv
 import os
 
 
-visdrone_classes = {'car': 4, 'bus': 9, 'truck': 6, 'pedestrian': 1, 'van': 5}
+visdrone_classes = {"car": 4, "bus": 9, "truck": 6, "pedestrian": 1, "van": 5}
 
 
-def load_mot(detections, nms_overlap_thresh=None, with_classes=True, nms_per_class=False):
+def load_mot(
+    detections, nms_overlap_thresh=None, with_classes=True, nms_per_class=False
+):
     """
-    Loads detections stored in a mot-challenge like formatted CSV or numpy array (fieldNames = ['frame', 'id', 'x', 'y',
-    'w', 'h', 'score']).
+    Loads detections stored in a mot-challenge like formatted CSV or numpy array
+    (fieldNames = ['frame', 'id', 'x', 'y', 'w', 'h', 'score']).
 
     Args:
-        detections (str, numpy.ndarray): path to csv file containing the detections or numpy array containing them.
-        nms_overlap_thresh (float, optional): perform non-maximum suppression on the input detections with this thrshold.
-                                              no nms is performed if this parameter is not specified.
-        with_classes (bool, optional): indicates if the detections have classes or not. set to false for motchallange.
-        nms_per_class (bool, optional): perform non-maximum suppression for each class separately
+        detections (str, numpy.ndarray): path to csv file containing the detections or
+        numpy array containing them.
+        nms_overlap_thresh (float, optional): perform non-maximum suppression on the
+        input detections with this thrshold.
+                                              no nms is performed if this parameter is
+                                              not specified.
+        with_classes (bool, optional): indicates if the detections have classes or not.
+        set to false for motchallange.
+        nms_per_class (bool, optional): perform non-maximum suppression for each class
+        separately
 
     Returns:
         list: list containing the detections for each frame.
@@ -33,17 +40,19 @@ def load_mot(detections, nms_overlap_thresh=None, with_classes=True, nms_per_cla
 
     data = []
     if type(detections) is str:
-        raw = np.genfromtxt(detections, delimiter=',', dtype=np.float32)
+        raw = np.genfromtxt(detections, delimiter=",", dtype=np.float32)
         if np.isnan(raw).all():
-            raw = np.genfromtxt(detections, delimiter=' ', dtype=np.float32)
+            raw = np.genfromtxt(detections, delimiter=" ", dtype=np.float32)
 
     else:
         # assume it is an array
-        assert isinstance(detections, np.ndarray), "only numpy arrays or *.csv paths are supported as detections."
+        assert isinstance(
+            detections, np.ndarray
+        ), "only numpy arrays or *.csv paths are supported as detections."
         raw = detections.astype(np.float32)
 
     end_frame = int(np.max(raw[:, 0]))
-    for i in range(1, end_frame+1):
+    for i in range(1, end_frame + 1):
         idx = raw[:, 0] == i
         bbox = raw[idx, 2:6]
         bbox[:, 2:4] += bbox[:, 0:2]  # x1, y1, w, h -> x1, y1, x2, y2
@@ -57,16 +66,18 @@ def load_mot(detections, nms_overlap_thresh=None, with_classes=True, nms_per_cla
             scores_filtered = None
             classes_filtered = None
             for coi in visdrone_classes:
-                cids = classes==visdrone_classes[coi]
+                cids = classes == visdrone_classes[coi]
                 if nms_per_class and nms_overlap_thresh:
-                    bbox_tmp, scores_tmp = nms(bbox[cids], scores[cids], nms_overlap_thresh)
+                    bbox_tmp, scores_tmp = nms(
+                        bbox[cids], scores[cids], nms_overlap_thresh
+                    )
                 else:
                     bbox_tmp, scores_tmp = bbox[cids], scores[cids]
 
                 if bbox_filtered is None:
                     bbox_filtered = bbox_tmp
                     scores_filtered = scores_tmp
-                    classes_filtered = [coi]*bbox_filtered.shape[0]
+                    classes_filtered = [coi] * bbox_filtered.shape[0]
                 elif len(bbox_tmp) > 0:
                     bbox_filtered = np.vstack((bbox_filtered, bbox_tmp))
                     scores_filtered = np.hstack((scores_filtered, scores_tmp))
@@ -78,14 +89,16 @@ def load_mot(detections, nms_overlap_thresh=None, with_classes=True, nms_per_cla
                 classes = classes_filtered
 
             if nms_per_class is False and nms_overlap_thresh:
-                bbox, scores, classes = nms(bbox, scores, nms_overlap_thresh, np.array(classes))
+                bbox, scores, classes = nms(
+                    bbox, scores, nms_overlap_thresh, np.array(classes)
+                )
 
         else:
-            classes = ['pedestrian']*bbox.shape[0]
+            classes = ["pedestrian"] * bbox.shape[0]
 
         dets = []
         for bb, s, c in zip(bbox, scores, classes):
-            dets.append({'bbox': (bb[0], bb[1], bb[2], bb[3]), 'score': s, 'class': c})
+            dets.append({"bbox": (bb[0], bb[1], bb[2], bb[3]), "score": s, "class": c})
         data.append(dets)
 
     return data
@@ -127,7 +140,7 @@ def nms(boxes, scores, overlapThresh, classes=None):
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
     y2 = boxes[:, 3]
-    #score = boxes[:, 4]
+    # score = boxes[:, 4]
     # compute the area of the bounding boxes and sort the bounding
     # boxes by the bottom-right y-coordinate of the bounding box
     area = (x2 - x1 + 1) * (y2 - y1 + 1)
@@ -158,8 +171,9 @@ def nms(boxes, scores, overlapThresh, classes=None):
         overlap = (w * h) / area[idxs[:last]]
 
         # delete all indexes from the index list that have
-        idxs = np.delete(idxs, np.concatenate(([last],
-                                               np.where(overlap > overlapThresh)[0])))
+        idxs = np.delete(
+            idxs, np.concatenate(([last], np.where(overlap > overlapThresh)[0]))
+        )
 
     if classes is not None:
         return boxes[pick], scores[pick], classes[pick]
@@ -167,7 +181,7 @@ def nms(boxes, scores, overlapThresh, classes=None):
         return boxes[pick], scores[pick]
 
 
-def save_to_csv(out_path, tracks, fmt='motchallenge'):
+def save_to_csv(out_path, tracks, fmt="motchallenge"):
     """
     Saves tracks to a CSV file.
 
@@ -177,32 +191,45 @@ def save_to_csv(out_path, tracks, fmt='motchallenge'):
     """
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as ofile:
-        if fmt == 'motchallenge':
-            field_names = ['frame', 'id', 'x', 'y', 'w', 'h', 'score', 'wx', 'wy', 'wz']
-        elif fmt == 'visdrone':
-            field_names = ['frame', 'id', 'x', 'y', 'w', 'h', 'score', 'object_category', 'truncation', 'occlusion']
+        if fmt == "motchallenge":
+            field_names = ["frame", "id", "x", "y", "w", "h", "score", "wx", "wy", "wz"]
+        elif fmt == "visdrone":
+            field_names = [
+                "frame",
+                "id",
+                "x",
+                "y",
+                "w",
+                "h",
+                "score",
+                "object_category",
+                "truncation",
+                "occlusion",
+            ]
         else:
             raise ValueError("unknown format type '{}'".format(fmt))
 
         odict = csv.DictWriter(ofile, field_names)
         id_ = 1
         for track in tracks:
-            for i, bbox in enumerate(track['bboxes']):
-                row = {'id': id_,
-                       'frame': track['start_frame'] + i,
-                       'x': bbox[0]+1,
-                       'y': bbox[1]+1,
-                       'w': bbox[2] - bbox[0],
-                       'h': bbox[3] - bbox[1],
-                       'score': track['max_score']}
-                if fmt == 'motchallenge':
-                    row['wx'] = -1
-                    row['wy'] = -1
-                    row['wz'] = -1
-                elif fmt == 'visdrone':
-                    row['object_category'] = visdrone_classes[track['class']]
-                    row['truncation'] = -1
-                    row['occlusion'] = -1
+            for i, bbox in enumerate(track["bboxes"]):
+                row = {
+                    "id": id_,
+                    "frame": track["start_frame"] + i,
+                    "x": bbox[0] + 1,
+                    "y": bbox[1] + 1,
+                    "w": bbox[2] - bbox[0],
+                    "h": bbox[3] - bbox[1],
+                    "score": track["max_score"],
+                }
+                if fmt == "motchallenge":
+                    row["wx"] = -1
+                    row["wy"] = -1
+                    row["wz"] = -1
+                elif fmt == "visdrone":
+                    row["object_category"] = visdrone_classes[track["class"]]
+                    row["truncation"] = -1
+                    row["occlusion"] = -1
                 else:
                     raise ValueError("unknown format type '{}'".format(fmt))
 

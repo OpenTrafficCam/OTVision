@@ -19,7 +19,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from track.iou_tracker_qp import track_iou
+from track.iou import track_iou
 from helpers.files import get_files, denormalize
 import json
 from pathlib import Path
