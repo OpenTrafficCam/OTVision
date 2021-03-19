@@ -19,10 +19,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import PySimpleGUI as sg
-from gui import browse_folders_and_files
+from gui.helpers import browse_folders_and_files
 from gui.helpers.sg_otc_theme import (
     OTC_ICON,
-    OTC_BUTTON,
     OTC_THEME,
     OTC_FONT,
     OTC_FONTSIZE,
@@ -124,7 +123,7 @@ def create_layout(graph_video, slider_video, traj_folders, traj_files):
 
     # GUI elements: Exit gui data
     button_back_to_otvision = sg.Button(
-        "", key="-button_back_to_otvision-", image_data=OTC_BUTTON, border_width=0,
+        "", key="-button_back_to_otvision-", image_data=OTC_ICON, border_width=0,
     )
 
     # All the stuff inside the window

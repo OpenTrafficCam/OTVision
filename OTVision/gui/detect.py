@@ -1,4 +1,4 @@
-# OTVision: Python module to detect bounding boxes in images or frames of videos
+# OTVision: Python gui to detect bounding boxes in images or frames of videos
 # using deep learning algorithms like YOLOv5.
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
@@ -19,10 +19,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from PySimpleGUI.PySimpleGUI import DEFAULT_TEXT_JUSTIFICATION, Text
-from gui import browse_folders_and_files
+from gui.helpers import browse_folders_and_files
 from gui.helpers.sg_otc_theme import (
     OTC_ICON,
-    OTC_BUTTON,
     OTC_THEME,
     OTC_FONT,
     OTC_FONTSIZE,
@@ -53,13 +52,14 @@ def main(sg_theme=OTC_THEME):
     # Get initial layout and create initial window
     layout, text_status_detect = create_layout(folders, files, total_files)
     window = sg.Window(
-        title="OTVision: detect",
+        title="OTVision: Detect",
         layout=layout,
         icon=OTC_ICON,
         location=(0, 0),
         resizable=True,
         finalize=True,
     )
+    window.maximize()
     # window = create_window(
     #     OTC_ICON,
     #     create_layout(folders, files, total_files),
@@ -70,9 +70,7 @@ def main(sg_theme=OTC_THEME):
         event, values = window.read(timeout=0)
         # Close Gui
         if (
-            event == sg.WIN_CLOSED
-            or event == "Cancel"
-            or event == "-button_back_to_otvision-"
+            event == sg.WIN_CLOSED or event == "Cancel" or event == "-BUTTONBACKTOHOME-"
         ):  # if user closes window or clicks cancel
             break
         # Folders and files
@@ -217,11 +215,20 @@ def create_layout(folders, files, total_files):
     # GUI elements: Detections
     # TODO
 
+    # GUI elements: Back to home
+    ButtonBackToHome = sg.Button(
+        "",
+        key="-BUTTONBACKTOHOME-",
+        image_data=OTC_ICON,
+        border_width=0,
+    )
+
     # Put GUI elemnts in a layout
     layout = [
         [frame_folders_files],
         [frame_det_config],
         [frame_detect],
+        [ButtonBackToHome]
     ]
 
     return layout, text_status_detect

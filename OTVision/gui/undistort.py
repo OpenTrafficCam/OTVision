@@ -1,4 +1,4 @@
-# OTVision: Python module to build a gui for OTVision.
+# OTVision: Python gui to correct trajectories for lens distortion
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from gui import __main__
 
-# TODO: Add real gui window for OTVision
+def main():
+    print("Hello from undistort")
+
 
 if __name__ == "__main__":
-    __main__.main()
+    pass
