@@ -62,29 +62,32 @@ def update_gui(window, folders, files, paths):
     window["-listbox_paths-"].Update(paths)
 
 
-def format_filetype(filetype):
+def format_filetypes(filetypes):
     """
-    check if _filetype_ is str and transform it
+    check if _filetypes_ is list of str and transform it
 
     Args:
-        filetype: file extension with or without leading "." or "_"
+        filetypes: list of file extension with or without leading "." or "_"
 
     Returns:
-        filetype: file extension with leading "." (except leading "_" was passed)
+        filetypes: file extension with leading "." (except leading "_" was passed)
     """
-    if type(filetype) is str:
-        if not filetype.startswith("_"):
-            if not filetype.startswith("."):
-                filetype = "." + filetype
-            filetype = filetype.lower()
-    else:
-        raise TypeError("filetype needs to be a str")
-    return filetype
+    if type(filetypes) is not list:
+        filetypes = [filetypes]
+    for filetype in filetypes:
+        if type(filetype) is str:
+            if not filetype.startswith("_"):
+                if not filetype.startswith("."):
+                    filetype = "." + filetype
+                filetype = filetype.lower()
+        else:
+            raise TypeError("filetype needs to be a str")
+    return filetypes
 
 
 def main(
     title="Select folders/files",
-    filetype="",
+    filetypes=[],
     input_folders=[],
     input_files=[],
     sg_theme=OTC_THEME,
@@ -94,7 +97,7 @@ def main(
 
     Args:
         title: title of the window (default: "Select folders/files")
-        filetype ([str]): ending of the files to select.
+        filetypes ([str]): ending of the files to select.
         (Preceding "_" prevents adding a '.'; default: All files)
         input_folders: list of pre-selected folders (default: empty list)
         input_files: list of pre-selected files (default: empty list)
@@ -103,7 +106,7 @@ def main(
         folders: list of selected folders
         files: list of selected files
     """
-    filetype = format_filetype(filetype)
+    filetypes = format_filetypes(filetypes)
 
     # Constants
     WIDTH_COL1 = 150
@@ -122,7 +125,9 @@ def main(
 
     # GUI elements ADD
     browse_folder = sg.FolderBrowse(
-        "Add folder", key="-browse_folder-", target="-dummy_input_folder-",
+        "Add folder",
+        key="-browse_folder-",
+        target="-dummy_input_folder-",
     )
     dummy_input_folder = sg.In(
         size=(WIDTH_COL1, 1),
@@ -135,7 +140,7 @@ def main(
         key="-browse_files-",
         target="-dummy_input_files-",
         enable_events=True,
-        file_types=(("", filetype),),
+        file_types=(("", filetypes),),
     )
     dummy_input_files = sg.Input(
         key="-dummy_input_files-", enable_events=True, visible=False
@@ -236,7 +241,7 @@ if __name__ == "__main__":
     print(
         main(
             title="Select images",
-            filetype="png",
+            filetypes="png",
             input_folders=["Input_Test_Folder"],
             input_files=["Input_Test_File.ending"],
         )

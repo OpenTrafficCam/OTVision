@@ -1,5 +1,4 @@
-# OTVision: Python module to calculate homography matrix from reference
-# points and transform trajectory points from pixel into world coordinates.
+# OTVision: Python module to build a gui for OTVision.
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -18,17 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from gui import detect, track
 
-# from gui import track
-from track import track
-from pathlib import Path
-
+# TODO: Add real gui window for OTVision
 
 if __name__ == "__main__":
-    test_path = Path(__file__).parents[1] / "tests" / "data"
-    test_path = str(test_path)
-
-    track.main(
-        test_path,
-        track.config_track_default,
-    )
+    detect.main()
