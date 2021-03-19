@@ -20,7 +20,7 @@
 
 from PySimpleGUI.PySimpleGUI import DEFAULT_TEXT_JUSTIFICATION, Text
 from gui import browse_folders_and_files
-from gui.sg_otc_theme import (
+from gui.helpers.sg_otc_theme import (
     OTC_ICON,
     OTC_BUTTON,
     OTC_THEME,

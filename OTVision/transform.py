@@ -19,8 +19,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from gui import transform_to_world
+from gui import transform
 
 
 if __name__ == "__main__":
-    transform_to_world.main()
+    transform.main()
