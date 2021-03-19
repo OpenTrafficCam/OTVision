@@ -10,12 +10,17 @@ from track.util import iou
 
 
 def make_bbox(obj):
-    bbox = (obj["x"], obj["y"], obj["x"] + obj["w"], obj["y"] + obj["h"])
+    bbox = (
+        obj["x"] - obj["w"] / 2,
+        obj["y"] - obj["h"] / 2,
+        obj["x"] + obj["w"] / 2,
+        obj["y"] + obj["h"] / 2,
+    )
     return bbox
 
 
 def center(obj):
-    center = (obj["x"] + obj["w"] / 2, obj["y"] + obj["h"] / 2)
+    center = (obj["x"], obj["y"])
 
     return center
 
@@ -42,7 +47,7 @@ def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
     tracks_finished = []
     vehID = 0
     vehIDs_finished = []
-    # new_detections = {}
+    new_detections = {}
 
     for frame_num in detections:
         detections_frame = detections[frame_num]["classified"]
