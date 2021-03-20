@@ -1,6 +1,40 @@
 import re
 import os
 from pathlib import Path
+from helpers.files import get_files
+
+
+def main(
+    paths,
+    output_filetype: str = None,
+    input_fps: float = None,
+    output_fps: float = None,
+    overwrite: bool = True,
+):
+    """Converts multiple h264-based videos into other formats and/or other frame rates.
+
+    Args:
+        paths ([type]): [description]
+        output_filetype (str, optional): [description]. Defaults to None.
+        input_fps (float, optional): [description]. Defaults to None.
+        output_fps (float, optional): [description]. Defaults to None.
+        overwrite (bool, optional): [description]. Defaults to True.
+    """
+
+    vid_filetypes = [
+        ".mov",
+        ".avi",
+        ".mp4",
+        ".mpg",
+        ".mpeg",
+        ".m4v",
+        ".wmv",
+        ".mkv",
+        ".h264",
+    ]
+    video_files = get_files(paths, vid_filetypes)
+    for video_file in video_files:
+        convert(video_file, output_filetype, input_fps, output_fps, overwrite)
 
 
 def convert(
@@ -10,6 +44,26 @@ def convert(
     output_fps: float = None,
     overwrite: bool = True,
 ):
+    """Converts h264-based videos into other formats and/or other frame rates. Also
+    input frame rates can be given. If input video file is raw h264 and no input frame
+    rate is given it tries to read "FR" from filename and otherwise sets default frame
+    rate of 25.
+
+    Args:
+        input_video (str): [description]
+        output_filetype (str, optional): [description]. Defaults to ".avi".
+        input_fps (float, optional): [description]. Defaults to None.
+        output_fps (float, optional): [description]. Defaults to None.
+        overwrite (bool, optional): [description]. Defaults to True.
+
+    Raises:
+        TypeError: [description]
+        TypeError: [description]
+
+    Returns:
+        [type]: [description]
+    """
+
     FFMPEG_PATH = Path(__file__).parents[0] / r"ffmpeg.exe"
     DEFAULT_FPS = 25.0
     input_path = Path(input_video)
