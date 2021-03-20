@@ -90,8 +90,8 @@ def main(paths, config_track=config_track_default):
     """
     docstring
     """
-    filetype = ".otdet"
-    detections_files = get_files(paths, filetype)
+    filetypes = ".otdet"
+    detections_files = get_files(paths, filetypes)
     for detections_file in detections_files:
         print(
             datetime.now().strftime("%d/%m/%Y %H:%M:%S")
