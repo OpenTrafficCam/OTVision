@@ -1,5 +1,4 @@
-# OTVision: Python module to read and write configuration dict from and to ".conf" file
-# using configparser.
+# OTVision: Python module to read and write configuration dict
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -20,20 +19,43 @@
 
 from pathlib import Path
 import configparser
+import json
 
 
-def get_path(config_type="default"):
-    config_path = Path(__file__).parents[0] / f"{config_type}.conf"
+def read(config_name: str = "user"):
+    # TODO: Also read default.otconf and compare to fill up missing stuff in user config
+    config_path = get_path(config_name=config_name)
+    if config_path.suffix == ".otconf":
+        if not config_path.is_file():
+            print(f"{config_name}.otconf doesnt exist, load default.otconf instead")
+            config_path = get_path(config_name="default")
+            if not config_path.is_file():
+                raise FileNotFoundError()
+        with open(str(config_path)) as f:
+            config = json.load(f)
+        return config
+    else:
+        raise ValueError("Filetype for configuratuin has to be .otconf")
+
+
+def write(config: dict, config_name: str = "user"):
+    config_path = get_path(config_name=config_name)
+    if config_name == "default":
+        answer = input("Sure you wanna overwrite default.otconf? [y/n]")
+        if answer != "y":
+            print("Configuration not saved, default.otconf not overwritten")
+            return None
+        print("default.otconf overwritten")
+    with open(str(config_path), "w") as f:
+        json.dump(config, f, indent=4)
+
+
+def get_path(config_name="default"):
+    config_path = Path(__file__).parents[0] / f"{config_name}.otconf"
     return config_path
 
 
-def write_dict(config_dict: dict, config_type: str="defaulttest"):
-    """[summary]
-
-    Args:
-        config_dict (dict): [description]
-        config_type (str, optional): "default" or "user". Defaults to "default".
-    """
+def write_configparser(config_dict: dict, config_type: str = "defaulttest"):
     config_path = get_path(config_type=config_type)
     if config_path.is_file():
         overwrite = True
@@ -54,7 +76,7 @@ def write_dict(config_dict: dict, config_type: str="defaulttest"):
         print(f"{config_type} conf file created")
 
 
-def read_dict(config_type: str = "default"):
+def read_configparser(config_type: str = "default"):
     """read configuration dict from ".conf" file using configparser
 
     Args:
@@ -64,7 +86,7 @@ def read_dict(config_type: str = "default"):
         FileNotFoundError: If config file of given type does not exist
 
     Returns:
-        dict: 
+        dict:
     """
     config_path = get_path(config_type=config_type)
     if config_path.is_file():
@@ -83,6 +105,6 @@ def read_dict(config_type: str = "default"):
 
 
 if __name__ == "__main__":
-    config_dict = read_dict()
+    config_dict = read()
     print(f"Config dict: {config_dict}")
-    write_dict(config_dict)
+    write(config_dict, config_name="user")

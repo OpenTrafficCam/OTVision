@@ -33,21 +33,16 @@ import PySimpleGUI as sg
 from pathlib import Path
 
 
-# Constants
-WIDTH_COL1 = 150
-sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
-otvision_user_settings = config.read_user_settings()
-try:
-    LAST_VIDEO_PATH = otvision_user_settings["PATHS"]["LAST_VIDEO_PATH"]
-except KeyError:
-    LAST_VIDEO_PATH = ""
-
-
 def main(sg_theme=OTC_THEME):
     folders = []
     files = []
     total_files = []
     filetypes = [".mov", ".avi", ".mp4", ".mpg", ".mpeg", ".m4v", ".wmv", ".mkv"]
+
+    # Config
+    CONFIG_DICT = config.read()
+    LAST_FOLDER = CONFIG_DICT["LAST PATHS"]["FOLDER"]
+    sg.SetOptions(font=(CONFIG_DICT["GUI"]["FONT"], CONFIG_DICT["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
     layout, text_status_detect = create_layout(folders, files, total_files)
@@ -228,7 +223,7 @@ def create_layout(folders, files, total_files):
         [frame_folders_files],
         [frame_det_config],
         [frame_detect],
-        [ButtonBackToHome]
+        [ButtonBackToHome],
     ]
 
     return layout, text_status_detect
