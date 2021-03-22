@@ -51,8 +51,12 @@
             "OVERWRTIE": true
         }
     },
-    "UNDISTORT": {},
-    "TRANSFORM": {},
+    "UNDISTORT": {
+        "OVERWRITE": false
+    },
+    "TRANSFORM": {
+        "OVERWRITE": false
+    },
     "GUI": {
         "FONT": "Open Sans",
         "FONTSIZE": 12,
