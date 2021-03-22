@@ -1,4 +1,4 @@
-# OTVision: Python gui to convert videos from h264 to other formats
+# OTVision: Python gui to convert h264 based videos to other formats and frame rates
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -18,8 +18,79 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-def main():
-    print("Hello from convert")
+import PySimpleGUI as sg
+from PySimpleGUI.PySimpleGUI import DEFAULT_TEXT_JUSTIFICATION, Text
+from pathlib import Path
+
+from gui.helpers import browse_folders_and_files
+from gui.helpers.sg_otc_theme import (
+    OTC_ICON,
+    OTC_THEME,
+)
+import config
+from convert.convert import main as convert
+
+
+def main(sg_theme=OTC_THEME):
+    folders = []
+    files = []
+    total_files = []
+    CONFIG_DICT = config.read()
+    LAST_FOLDER = CONFIG_DICT["LAST PATHS"]["FOLDER"]
+    sg.SetOptions(font=(CONFIG_DICT["GUI"]["FONT"], CONFIG_DICT["GUI"]["FONTSIZE"]))
+    WINDOW_LOCATION = (
+        CONFIG_DICT["GUI"]["WINDOW"]["LOCATION_X"],
+        CONFIG_DICT["GUI"]["WINDOW"]["LOCATION_Y"],
+    )
+
+    # Get initial layout and create initial window
+    layout, text_status_detect = create_layout(folders, files, total_files, CONFIG_DICT)
+    window = sg.Window(
+        title="OTVision: Detect",
+        layout=layout,
+        icon=OTC_ICON,
+        location=WINDOW_LOCATION,
+        resizable=True,
+        finalize=True,
+    )
+    window.maximize()
+
+    # Event Loop to process "events" and get the "values" of the inputs
+    while True:
+        event, values = window.read(timeout=0)
+        # Close Gui
+        if (
+            event == sg.WIN_CLOSED or event == "Cancel" or event == "-BUTTONBACKTOHOME-"
+        ):  # if user closes window or clicks cancel
+            break
+
+    window.close()
+
+
+def create_layout(CONFIG_DICT):
+    # Defaults
+    DEFAULT_OUTPUT_FILETYPE = CONFIG_DICT["CONVERT"]["OUTPUT_FILETYPE"]
+    VID_FILETYPES = CONFIG_DICT["FILETYPES"]["VID"].append(".h264")
+    DEFAULT_FPS = CONFIG_DICT["CONVERT"]["FPS"]
+    DEFAULT_OVERWRITE = CONFIG_DICT["CONVERT"]["OVERWRITE"]
+
+    # Gui elements
+    button_browse_folders_files = sg.Button(
+        "Browse files and/or folders", key="-button_browse_folders_files-"
+    )
+    input_fps = sg.In(DEFAULT_FPS, enable_events=True)
+    drop_output_filetype = sg.Drop(
+        [VID_FILETYPES], default_value=DEFAULT_OUTPUT_FILETYPE
+    )
+    check_overwrite = sg.Check("Overwrite", default=DEFAULT_OVERWRITE)
+
+    # Create layout
+    layout = [
+        [button_browse_folders_files],
+        [drop_output_filetype, input_fps, check_overwrite],
+    ]
+
+    return layout
 
 
 if __name__ == "__main__":
