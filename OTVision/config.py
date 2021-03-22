@@ -1,5 +1,5 @@
-# OTVision: Python module to calculate homography matrix from reference
-# points and transform trajectory points from pixel into world coordinates.
+# OTVision: Python module to read and write configuration dict from and to ".conf" file
+# using configparser.
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -18,60 +18,71 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
+from pathlib import Path
 import configparser
 
 
-def get_user_settings_path_appdata():
-    APPDATA_ROAMING_FOLDER = os.getenv("APPDATA")
-    USER_SETTINGS_REL_PATH = "OpenTrafficCam\\OTVision\\user_settings.ini"
-    USER_SETTINGS_PATH = os.path.join(APPDATA_ROAMING_FOLDER, USER_SETTINGS_REL_PATH)
-    return USER_SETTINGS_PATH
+def get_path(config_type="default"):
+    config_path = Path(__file__).parents[0] / f"{config_type}.conf"
+    return config_path
 
 
-def get_user_settings_path():
-    USER_SETTINGS_REL_PATH = "OTVision\\user.conf"
-    return USER_SETTINGS_REL_PATH
-
-
-def write_user_settings(config):
-    """
-    Function to read user settings
+def write_dict(config_dict: dict, config_type: str="defaulttest"):
+    """[summary]
 
     Args:
-    config -- configparser element
-
-    Returns: No returns
+        config_dict (dict): [description]
+        config_type (str, optional): "default" or "user". Defaults to "default".
     """
-    USER_SETTINGS_PATH = get_user_settings_path()
-    with open(USER_SETTINGS_PATH, "w") as configfile:
+    config_path = get_path(config_type=config_type)
+    if config_path.is_file():
+        overwrite = True
+    config = configparser.ConfigParser()
+    try:
+        for section, subdict in config_dict.items:
+            config[section] = {}
+            for key, value in subdict.items:
+                config[section][key] = str(value)
+    except TypeError("write_dict needs nested dict of configuration"):
+        return None
+    # Write configuration dict to ".conf" file using configparser
+    with open(str(config_path), "w") as configfile:
         config.write(configfile)
+    if overwrite:
+        print(f"{config_type} conf file overwritten")
+    else:
+        print(f"{config_type} conf file created")
 
 
-def read_user_settings():
-    """
-    Function to write user settings
+def read_dict(config_type: str = "default"):
+    """read configuration dict from ".conf" file using configparser
 
-    Args: No args
+    Args:
+        config_type (str, optional): [description]. Defaults to "default".
+
+    Raises:
+        FileNotFoundError: If config file of given type does not exist
 
     Returns:
-    config -- configparser element
+        dict: 
     """
-    USER_SETTINGS_PATH = get_user_settings_path()
-    config = configparser.ConfigParser()
-    config.optionxform = lambda option: option
-    config.read(USER_SETTINGS_PATH)
-    # if os.path.isfile(USER_SETTINGS_PATH):
-    if not config.has_section("PATHS"):
-        config.add_section("PATHS")
-        write_user_settings(config)
-    return config
+    config_path = get_path(config_type=config_type)
+    if config_path.is_file():
+        config = configparser.ConfigParser()
+        config.optionxform = lambda option: option
+        config.read(str(config_path))
+        return config._sections
+    elif config_type != "default":
+        config = configparser.ConfigParser()
+        config.optionxform = lambda option: option
+        config.read(str(get_path(config_type="default")))
+        print(f"{config_type} conf file doesnt exist, default conf file loaded instead")
+        return config._sections
+    else:
+        raise FileNotFoundError("No config file exists")
 
 
 if __name__ == "__main__":
-    config = read_user_settings()
-    print("Sections:")
-    print(config.sections())
-    print("Key-Value pairs:")
-    for section in config.sections():
-        print(dict(config[section]))
+    config_dict = read_dict()
+    print(f"Config dict: {config_dict}")
+    write_dict(config_dict)
