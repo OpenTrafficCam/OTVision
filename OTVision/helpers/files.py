@@ -22,7 +22,7 @@ from pathlib import Path
 def get_files(paths, filetypes):
     """
     Generates a list of files ending with filename based on filenames or the recursive
-    contend of folders.
+    content of folders.
 
     Args:
         paths ([str or list of str]): where to find the files
