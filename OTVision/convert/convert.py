@@ -20,6 +20,9 @@ def main(
         output_fps (float, optional): [description]. Defaults to None.
         overwrite (bool, optional): [description]. Defaults to True.
     """
+    
+    # TODO: Check and if necessary download fflpeg.exe, see
+    # https://github.com/OpenTrafficCam/OTVision/blob/frunika/issue28/OTVision/importer
 
     vid_filetypes = [
         ".mov",
