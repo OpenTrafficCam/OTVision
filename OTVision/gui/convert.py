@@ -37,10 +37,6 @@ def main(sg_theme=OTC_THEME):
     total_files = []
     LAST_FOLDER = CONFIG["LAST PATHS"]["FOLDER"]
     sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
-    WINDOW_LOCATION = (
-        CONFIG["GUI"]["WINDOW"]["LOCATION_X"],
-        CONFIG["GUI"]["WINDOW"]["LOCATION_Y"],
-    )
 
     # Get initial layout and create initial window
     layout, text_status_detect = create_layout(folders, files, total_files, CONFIG)
@@ -48,7 +44,10 @@ def main(sg_theme=OTC_THEME):
         title="OTVision: Detect",
         layout=layout,
         icon=OTC_ICON,
-        location=WINDOW_LOCATION,
+        location=(
+            CONFIG["GUI"]["WINDOW"]["LOCATION_X"],
+            CONFIG["GUI"]["WINDOW"]["LOCATION_Y"],
+        ),
         resizable=True,
         finalize=True,
     )
@@ -67,21 +66,16 @@ def main(sg_theme=OTC_THEME):
 
 
 def create_layout(CONFIG):
-    # Defaults
-    DEFAULT_OUTPUT_FILETYPE = CONFIG["CONVERT"]["OUTPUT_FILETYPE"]
-    VID_FILETYPES = CONFIG["FILETYPES"]["VID"].append(".h264")
-    DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
-    DEFAULT_OVERWRITE = CONFIG["CONVERT"]["OVERWRITE"]
-
     # Gui elements
     button_browse_folders_files = sg.Button(
         "Browse files and/or folders", key="-button_browse_folders_files-"
     )
-    input_fps = sg.In(DEFAULT_FPS, enable_events=True)
+    input_fps = sg.In(CONFIG["CONVERT"]["FPS"], enable_events=True)
     drop_output_filetype = sg.Drop(
-        [VID_FILETYPES], default_value=DEFAULT_OUTPUT_FILETYPE
+        [CONFIG["FILETYPES"]["VID"].append(".h264")],
+        default_value=CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     )
-    check_overwrite = sg.Check("Overwrite", default=DEFAULT_OVERWRITE)
+    check_overwrite = sg.Check("Overwrite", default=CONFIG["CONVERT"]["OVERWRITE"])
 
     # Create layout
     layout = [
