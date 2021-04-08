@@ -27,7 +27,7 @@ from gui.helpers.sg_otc_theme import (
     OTC_ICON,
     OTC_THEME,
 )
-import config
+from config import CONFIG
 from convert.convert import main as convert
 
 
@@ -35,16 +35,15 @@ def main(sg_theme=OTC_THEME):
     folders = []
     files = []
     total_files = []
-    CONFIG_DICT = config.read()
-    LAST_FOLDER = CONFIG_DICT["LAST PATHS"]["FOLDER"]
-    sg.SetOptions(font=(CONFIG_DICT["GUI"]["FONT"], CONFIG_DICT["GUI"]["FONTSIZE"]))
+    LAST_FOLDER = CONFIG["LAST PATHS"]["FOLDER"]
+    sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
     WINDOW_LOCATION = (
-        CONFIG_DICT["GUI"]["WINDOW"]["LOCATION_X"],
-        CONFIG_DICT["GUI"]["WINDOW"]["LOCATION_Y"],
+        CONFIG["GUI"]["WINDOW"]["LOCATION_X"],
+        CONFIG["GUI"]["WINDOW"]["LOCATION_Y"],
     )
 
     # Get initial layout and create initial window
-    layout, text_status_detect = create_layout(folders, files, total_files, CONFIG_DICT)
+    layout, text_status_detect = create_layout(folders, files, total_files, CONFIG)
     window = sg.Window(
         title="OTVision: Detect",
         layout=layout,
@@ -67,12 +66,12 @@ def main(sg_theme=OTC_THEME):
     window.close()
 
 
-def create_layout(CONFIG_DICT):
+def create_layout(CONFIG):
     # Defaults
-    DEFAULT_OUTPUT_FILETYPE = CONFIG_DICT["CONVERT"]["OUTPUT_FILETYPE"]
-    VID_FILETYPES = CONFIG_DICT["FILETYPES"]["VID"].append(".h264")
-    DEFAULT_FPS = CONFIG_DICT["CONVERT"]["FPS"]
-    DEFAULT_OVERWRITE = CONFIG_DICT["CONVERT"]["OVERWRITE"]
+    DEFAULT_OUTPUT_FILETYPE = CONFIG["CONVERT"]["OUTPUT_FILETYPE"]
+    VID_FILETYPES = CONFIG["FILETYPES"]["VID"].append(".h264")
+    DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
+    DEFAULT_OVERWRITE = CONFIG["CONVERT"]["OVERWRITE"]
 
     # Gui elements
     button_browse_folders_files = sg.Button(
