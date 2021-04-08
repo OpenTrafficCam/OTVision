@@ -24,7 +24,7 @@ import json
 
 config = {}
 
-
+# FILETYPES
 config["FILETYPES"]["VID"] = [
     ".mov",
     ".avi",
@@ -35,7 +35,9 @@ config["FILETYPES"]["VID"] = [
     ".wmv",
     ".mkv",
 ]
+config["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 
+# LAST PATHS
 config["LAST PATHS"]["FOLDER"] = None
 config["LAST PATHS"]["VIDEO"] = None
 config["LAST PATHS"]["DETECTIONS"] = None
@@ -43,12 +45,12 @@ config["LAST PATHS"]["TRACKS"] = None
 config["LAST PATHS"]["CALIBRATION"] = None
 config["LAST PATHS"]["REFPTS"] = None
 
-
+# CONVERT
 config["CONVERT"]["OUTPUT_FILETYPE"] = ".avi"
 config["CONVERT"]["FPS"] = 25.0
 config["CONVERT"]["OVERWRITE"] = True
 
-
+# DETECT
 config["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
 config["DETECT"]["YOLO"]["CONF"] = 0.25
 config["DETECT"]["YOLO"]["IOU"] = 0.45
@@ -57,13 +59,13 @@ config["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
 config["DETECT"]["YOLO"]["NORMALIZED"] = False
 config["DETECT"]["YOLO"]["OVERWRTIE"] = True
 
-
+# UNDISTORT
 config["UNDISTORT"]["OVERWRTIE"] = False
 
-
+# TRANSFORM
 config["TRANSFORM"]["OVERWRTIE"] = False
 
-
+# GUI
 config["GUI"]["FONT"] = "Open Sans"
 config["GUI"]["FONTSIZE"] = 12
 config["GUI"]["WINDOW"]["LOCATION_X"] = 0
@@ -103,56 +105,7 @@ def get_path(config_name="default"):
     return config_path
 
 
-def write_configparser(config_dict: dict, config_type: str = "defaulttest"):
-    config_path = get_path(config_type=config_type)
-    if config_path.is_file():
-        overwrite = True
-    config = configparser.ConfigParser()
-    try:
-        for section, subdict in config_dict.items:
-            config[section] = {}
-            for key, value in subdict.items:
-                config[section][key] = str(value)
-    except TypeError("write_dict needs nested dict of configuration"):
-        return None
-    # Write configuration dict to ".conf" file using configparser
-    with open(str(config_path), "w") as configfile:
-        config.write(configfile)
-    if overwrite:
-        print(f"{config_type} conf file overwritten")
-    else:
-        print(f"{config_type} conf file created")
-
-
-def read_configparser(config_type: str = "default"):
-    """read configuration dict from ".conf" file using configparser
-
-    Args:
-        config_type (str, optional): [description]. Defaults to "default".
-
-    Raises:
-        FileNotFoundError: If config file of given type does not exist
-
-    Returns:
-        dict:
-    """
-    config_path = get_path(config_type=config_type)
-    if config_path.is_file():
-        config = configparser.ConfigParser()
-        config.optionxform = lambda option: option
-        config.read(str(config_path))
-        return config._sections
-    elif config_type != "default":
-        config = configparser.ConfigParser()
-        config.optionxform = lambda option: option
-        config.read(str(get_path(config_type="default")))
-        print(f"{config_type} conf file doesnt exist, default conf file loaded instead")
-        return config._sections
-    else:
-        raise FileNotFoundError("No config file exists")
-
-
 if __name__ == "__main__":
-    config_dict = read()
-    print(f"Config dict: {config_dict}")
-    write(config_dict, config_name="user")
+    # config_dict = _read()
+    # print(f"Config dict: {config_dict}")
+    # _write(config_dict, config_name="user")
