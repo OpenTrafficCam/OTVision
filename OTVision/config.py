@@ -22,8 +22,56 @@ import configparser
 import json
 
 
-def read(config_name: str = "user"):
-    # TODO: Also read default.otconf and compare to fill up missing stuff in user config
+config = {}
+
+
+config["FILETYPES"]["VID"] = [
+    ".mov",
+    ".avi",
+    ".mp4",
+    ".mpg",
+    ".mpeg",
+    ".m4v",
+    ".wmv",
+    ".mkv",
+]
+
+config["LAST PATHS"]["FOLDER"] = None
+config["LAST PATHS"]["VIDEO"] = None
+config["LAST PATHS"]["DETECTIONS"] = None
+config["LAST PATHS"]["TRACKS"] = None
+config["LAST PATHS"]["CALIBRATION"] = None
+config["LAST PATHS"]["REFPTS"] = None
+
+
+config["CONVERT"]["OUTPUT_FILETYPE"] = ".avi"
+config["CONVERT"]["FPS"] = 25.0
+config["CONVERT"]["OVERWRITE"] = True
+
+
+config["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
+config["DETECT"]["YOLO"]["CONF"] = 0.25
+config["DETECT"]["YOLO"]["IOU"] = 0.45
+config["DETECT"]["YOLO"]["SIZE"] = 640
+config["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
+config["DETECT"]["YOLO"]["NORMALIZED"] = False
+config["DETECT"]["YOLO"]["OVERWRTIE"] = True
+
+
+config["UNDISTORT"]["OVERWRTIE"] = False
+
+
+config["TRANSFORM"]["OVERWRTIE"] = False
+
+
+config["GUI"]["FONT"] = "Open Sans"
+config["GUI"]["FONTSIZE"] = 12
+config["GUI"]["WINDOW"]["LOCATION_X"] = 0
+config["GUI"]["WINDOW"]["LOCATION_Y"] = 0
+
+
+# TODO: #72 Overwrite default config with user config from user.conf (json file)
+def _read(config_name: str = "user"):
     config_path = get_path(config_name=config_name)
     if config_path.suffix == ".otconf":
         if not config_path.is_file():
@@ -38,7 +86,7 @@ def read(config_name: str = "user"):
         raise ValueError("Filetype for configuratuin has to be .otconf")
 
 
-def write(config: dict, config_name: str = "user"):
+def _write(config: dict, config_name: str = "user"):
     config_path = get_path(config_name=config_name)
     if config_name == "default":
         answer = input("Sure you wanna overwrite default.otconf? [y/n]")
