@@ -21,10 +21,11 @@ from pathlib import Path
 import json
 
 
-config = {}
+CONFIG = {}
 
 # FILETYPES
-config["FILETYPES"]["VID"] = [
+CONFIG["FILETYPES"] = {}
+CONFIG["FILETYPES"]["VID"] = [
     ".mov",
     ".avi",
     ".mp4",
@@ -34,41 +35,49 @@ config["FILETYPES"]["VID"] = [
     ".wmv",
     ".mkv",
 ]
-config["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
+CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 
 # LAST PATHS
-config["LAST PATHS"]["FOLDER"] = None
-config["LAST PATHS"]["VIDEO"] = None
-config["LAST PATHS"]["DETECTIONS"] = None
-config["LAST PATHS"]["TRACKS"] = None
-config["LAST PATHS"]["CALIBRATION"] = None
-config["LAST PATHS"]["REFPTS"] = None
+CONFIG["LAST PATHS"] = {}
+CONFIG["LAST PATHS"]["FOLDER"] = None
+CONFIG["LAST PATHS"]["VIDEO"] = None
+CONFIG["LAST PATHS"]["DETECTIONS"] = None
+CONFIG["LAST PATHS"]["TRACKS"] = None
+CONFIG["LAST PATHS"]["CALIBRATION"] = None
+CONFIG["LAST PATHS"]["REFPTS"] = None
 
 # CONVERT
-config["CONVERT"]["OUTPUT_FILETYPE"] = ".avi"
-config["CONVERT"]["FPS"] = 25.0
-config["CONVERT"]["OVERWRITE"] = True
+CONFIG["CONVERT"] = {}
+CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".avi"
+CONFIG["CONVERT"]["FPS"] = 25.0
+CONFIG["CONVERT"]["OVERWRITE"] = True
 
 # DETECT
-config["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
-config["DETECT"]["YOLO"]["CONF"] = 0.25
-config["DETECT"]["YOLO"]["IOU"] = 0.45
-config["DETECT"]["YOLO"]["SIZE"] = 640
-config["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
-config["DETECT"]["YOLO"]["NORMALIZED"] = False
-config["DETECT"]["YOLO"]["OVERWRTIE"] = True
+CONFIG["DETECT"] = {}
+CONFIG["DETECT"]["YOLO"] = {}
+CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
+CONFIG["DETECT"]["YOLO"]["CONF"] = 0.25
+CONFIG["DETECT"]["YOLO"]["IOU"] = 0.45
+CONFIG["DETECT"]["YOLO"]["SIZE"] = 640
+CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
+CONFIG["DETECT"]["YOLO"]["NORMALIZED"] = False
+CONFIG["DETECT"]["YOLO"]["OVERWRTIE"] = True
 
 # UNDISTORT
-config["UNDISTORT"]["OVERWRTIE"] = False
+CONFIG["UNDISTORT"] = {}
+CONFIG["UNDISTORT"]["OVERWRTIE"] = False
 
 # TRANSFORM
-config["TRANSFORM"]["OVERWRTIE"] = False
+CONFIG["TRANSFORM"] = {}
+CONFIG["TRANSFORM"]["OVERWRTIE"] = False
 
 # GUI
-config["GUI"]["FONT"] = "Open Sans"
-config["GUI"]["FONTSIZE"] = 12
-config["GUI"]["WINDOW"]["LOCATION_X"] = 0
-config["GUI"]["WINDOW"]["LOCATION_Y"] = 0
+CONFIG["GUI"] = {}
+CONFIG["GUI"]["FONT"] = "Open Sans"
+CONFIG["GUI"]["FONTSIZE"] = 12
+CONFIG["GUI"]["WINDOW"] = {}
+CONFIG["GUI"]["WINDOW"]["LOCATION_X"] = 0
+CONFIG["GUI"]["WINDOW"]["LOCATION_Y"] = 0
 
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)
