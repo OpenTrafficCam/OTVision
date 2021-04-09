@@ -19,6 +19,10 @@
 
 from pathlib import Path
 import json
+from helpers.files import _get_testdatafolder
+
+
+TESTDATAFOLDER = _get_testdatafolder()
 
 
 CONFIG = {}
@@ -39,12 +43,12 @@ CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 
 # LAST PATHS
 CONFIG["LAST PATHS"] = {}
-CONFIG["LAST PATHS"]["FOLDER"] = None
-CONFIG["LAST PATHS"]["VIDEO"] = None
-CONFIG["LAST PATHS"]["DETECTIONS"] = None
-CONFIG["LAST PATHS"]["TRACKS"] = None
-CONFIG["LAST PATHS"]["CALIBRATION"] = None
-CONFIG["LAST PATHS"]["REFPTS"] = None
+CONFIG["LAST PATHS"]["FOLDERS"] = [TESTDATAFOLDER]
+CONFIG["LAST PATHS"]["VIDEOS"] = [None]
+CONFIG["LAST PATHS"]["DETECTIONS"] = [None]
+CONFIG["LAST PATHS"]["TRACKS"] = [None]
+CONFIG["LAST PATHS"]["CALIBRATIONS"] = [None]
+CONFIG["LAST PATHS"]["REFPTS"] = [None]
 
 # CONVERT
 CONFIG["CONVERT"] = {}

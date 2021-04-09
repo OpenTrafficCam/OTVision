@@ -122,6 +122,11 @@ def _normal_transformation(otdict, direction, keys_width, keys_height):
     return otdict
 
 
+def _get_testdatafolder():
+    testdatafolder = str(Path(__file__).parents[2] / r"tests/data")
+    return str(testdatafolder)
+
+
 if __name__ == "__main__":
     paths = "D:/tmp/"
     # paths = ["D:/tmp/tmp1", "D:\\tmp\\tmp2"]
@@ -136,3 +141,4 @@ if __name__ == "__main__":
     files = get_files(paths, filetype)
     for file in files:
         print(file)
+    print(_get_testdatafolder())
