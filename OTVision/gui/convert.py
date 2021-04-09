@@ -33,11 +33,11 @@ from helpers.files import get_files
 
 
 def main(sg_theme=OTC_THEME):
-    folders = CONFIG["LAST PATHS"]["FOLDER"]
-    single_files = CONFIG["LAST PATHS"]["VIDEO"]
+    folders = CONFIG["LAST PATHS"]["FOLDERS"]
+    single_files = CONFIG["LAST PATHS"]["VIDEOS"]
     files = get_files(
         paths=[*folders, *single_files],
-        filetypes=CONFIG["FILETYPES"]["VID"].append(".h264"),
+        filetypes=[*CONFIG["FILETYPES"]["VID"], ".h264"],
     )
     sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
