@@ -29,7 +29,7 @@ from gui.helpers.sg_otc_theme import (
 )
 from config import CONFIG
 from convert.convert import main as convert
-from helpers import get_files
+from helpers.files import get_files
 
 
 def main(sg_theme=OTC_THEME):
