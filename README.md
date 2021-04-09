@@ -4,6 +4,6 @@ OTVision is a core module of the [OpenTrafficCam framework](https://github.com/O
 
 Check out the [documentation](https://opentrafficcam.org/otvision) for detailed instructions on how to install and use OTVision.
 
-We appreciate your support in the form of both code and comments. First, please have a look at the [contribute](https://docs.opentrafficcam.org/contribute) section of the OpenTrafficCam documentation.
+We appreciate your support in the form of both code and comments. First, please have a look at the [contribute](https://opentrafficcam.org/contribute) section of the OpenTrafficCam documentation.
 
 This software is licensed under the [GPL-3.0 License](LICENSE)
