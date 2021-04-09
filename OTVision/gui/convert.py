@@ -29,17 +29,20 @@ from gui.helpers.sg_otc_theme import (
 )
 from config import CONFIG
 from convert.convert import main as convert
+from helpers import get_files
 
 
 def main(sg_theme=OTC_THEME):
-    folders = []
-    files = []
-    total_files = []
-    LAST_FOLDER = CONFIG["LAST PATHS"]["FOLDER"]
+    folders = CONFIG["LAST PATHS"]["FOLDER"]
+    single_files = CONFIG["LAST PATHS"]["VIDEO"]
+    files = get_files(
+        paths=[*folders, *single_files],
+        filetypes=CONFIG["FILETYPES"]["VID"].append(".h264"),
+    )
     sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
-    layout, text_status_detect = create_layout(folders, files, total_files, CONFIG)
+    layout, text_status_detect = create_layout(files)
     window = sg.Window(
         title="OTVision: Detect",
         layout=layout,
@@ -65,7 +68,7 @@ def main(sg_theme=OTC_THEME):
     window.close()
 
 
-def create_layout(CONFIG):
+def create_layout(files):
     # Gui elements
     button_browse_folders_files = sg.Button(
         "Browse files and/or folders", key="-button_browse_folders_files-"
