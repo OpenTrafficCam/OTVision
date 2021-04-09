@@ -26,7 +26,7 @@ def get_files(paths, filetypes):
 
     Args:
         paths ([str or list of str]): where to find the files
-        filetype ([str]): ending of the files to find. Preceding "_" prevents adding a '.'
+        filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
 
     Returns:
         [list]: [list of filenames as str]
