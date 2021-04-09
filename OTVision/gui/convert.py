@@ -42,7 +42,7 @@ def main(sg_theme=OTC_THEME):
     sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
-    layout, text_status_detect = create_layout(files)
+    layout = create_layout(files)
     window = sg.Window(
         title="OTVision: Detect",
         layout=layout,
