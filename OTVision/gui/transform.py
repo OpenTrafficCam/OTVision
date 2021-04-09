@@ -19,6 +19,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import PySimpleGUI as sg
+from config import CONFIG
 from gui.helpers import browse_folders_and_files
 from gui.helpers.sg_otc_theme import (
     OTC_ICON,
@@ -29,7 +30,6 @@ from gui.helpers.sg_otc_theme import (
 import cv2
 import datetime
 import pause
-import config
 import os
 
 
@@ -37,9 +37,8 @@ import os
 WIDTH_COL1 = 150
 sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
 PLAYER_FPS = 10
-otvision_user_settings = config.read_user_settings()
 try:
-    LAST_VIDEO_PATH = otvision_user_settings["PATHS"]["LAST_VIDEO_PATH"]
+    LAST_VIDEO_PATH = CONFIG["PATHS"]["LAST_VIDEO_PATH"]
 except KeyError:
     LAST_VIDEO_PATH = ""
 
@@ -357,12 +356,6 @@ def main(sg_theme=OTC_THEME):
                 )
                 update_graph_video(graph_video, frame)
                 video_loaded = True
-                # Save video path to user settings otvision_user_settings file
-                window["-input_video-"].update(values["-input_video-"])
-                otvision_user_settings["PATHS"]["LAST_VIDEO_PATH"] = values[
-                    "-input_video-"
-                ]
-                config.write_user_settings(otvision_user_settings)
                 use_initial_videopath = False
         if video_loaded:
 
