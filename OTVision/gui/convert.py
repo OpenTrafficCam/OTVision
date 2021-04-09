@@ -22,11 +22,12 @@ import PySimpleGUI as sg
 from PySimpleGUI.PySimpleGUI import DEFAULT_TEXT_JUSTIFICATION, Text
 from pathlib import Path
 
-from gui.helpers import browse_folders_and_files
+from gui.helpers.browse_folders_and_files import main as browse_folders_and_files
 from gui.helpers.sg_otc_theme import (
     OTC_ICON,
     OTC_THEME,
 )
+from gui.helpers import layout_snippets
 from config import CONFIG
 from convert.convert import main as convert
 from helpers.files import get_files
@@ -44,7 +45,7 @@ def main(sg_theme=OTC_THEME):
     # Get initial layout and create initial window
     layout = create_layout(files)
     window = sg.Window(
-        title="OTVision: Detect",
+        title="OTVision: Convert",
         layout=layout,
         icon=OTC_ICON,
         location=(
@@ -64,27 +65,56 @@ def main(sg_theme=OTC_THEME):
             event == sg.WIN_CLOSED or event == "Cancel" or event == "-BUTTONBACKTOHOME-"
         ):  # if user closes window or clicks cancel
             break
+        # Folders and files
+        if event == "-button_browse_folders_files-":
+            # TODO: Maybe decide for only file list
+            folders, single_files = browse_folders_and_files(
+                "Select video files for format conversion",
+                filetypes=[*CONFIG["FILETYPES"]["VID"], ".h264"],
+                input_files=single_files,
+                input_folders=folders,
+            )
 
     window.close()
 
 
 def create_layout(files):
-    # Gui elements
-    button_browse_folders_files = sg.Button(
-        "Browse files and/or folders", key="-button_browse_folders_files-"
+    # GUI elements: Choose videos
+    frame_folders_files = layout_snippets._frame_folders_files(
+        title="Step 1: Choose videos or images", files=files
     )
-    input_fps = sg.In(CONFIG["CONVERT"]["FPS"], enable_events=True)
+
+    # GUI elements: Set parameters
     drop_output_filetype = sg.Drop(
-        [CONFIG["FILETYPES"]["VID"].append(".h264")],
+        [*CONFIG["FILETYPES"]["VID"], ".h264"],
         default_value=CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
+        key="-drop_output_filetype-",
     )
-    check_overwrite = sg.Check("Overwrite", default=CONFIG["CONVERT"]["OVERWRITE"])
+    check_fps_from_input_video = sg.Check("", default=True)
+    in_input_fps = sg.In(
+        CONFIG["CONVERT"]["FPS"], key="-in_input_fps-", enable_events=True
+    )
+    in_output_fps = sg.In(
+        CONFIG["CONVERT"]["FPS"], key="-in_output_fps-", enable_events=True
+    )
+    check_overwrite = sg.Check("", default=CONFIG["CONVERT"]["OVERWRITE"])
+    frame_parameters = sg.Frame(
+        "Step 2: Set parameters",
+        [
+            [sg.T("Output filetype:"), drop_output_filetype],
+            [check_fps_from_input_video, sg.T("Try using framerate from input video")],
+            [sg.T("Input framerate:"), in_input_fps],
+            [sg.T("Output framerate:"), in_output_fps],
+            [check_overwrite, sg.T("Overwrite existing videos")],
+        ]
+    )
+
+    # Gui elements: Convert
+    button_convert = sg.B("Convert!", key="-button_convert-")
+    frame_convert = sg.Frame("Step 3: Start conversion", [[button_convert]])
 
     # Create layout
-    layout = [
-        [button_browse_folders_files],
-        [drop_output_filetype, input_fps, check_overwrite],
-    ]
+    layout = [[frame_folders_files], [frame_parameters], [frame_convert]]
 
     return layout
 

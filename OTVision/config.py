@@ -82,6 +82,7 @@ CONFIG["GUI"]["FONTSIZE"] = 12
 CONFIG["GUI"]["WINDOW"] = {}
 CONFIG["GUI"]["WINDOW"]["LOCATION_X"] = 0
 CONFIG["GUI"]["WINDOW"]["LOCATION_Y"] = 0
+CONFIG["GUI"]["COLWIDTH"] = 50
 
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)
