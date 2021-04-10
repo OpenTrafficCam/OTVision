@@ -1,7 +1,15 @@
 import re
 import os
 from pathlib import Path
-from helpers.files import get_files
+import subprocess
+from urllib.request import urlretrieve
+
+# import py7zr
+# from pyunpack import Archive
+# from patoolib import extract_archive
+from zipfile import ZipFile
+from config import CONFIG
+from helpers.files import get_files, remove_dir
 
 
 def main(
@@ -20,9 +28,6 @@ def main(
         output_fps (float, optional): [description]. Defaults to None.
         overwrite (bool, optional): [description]. Defaults to True.
     """
-    
-    # TODO: Check and if necessary download fflpeg.exe, see
-    # https://github.com/OpenTrafficCam/OTVision/blob/frunika/issue28/OTVision/importer
 
     vid_filetypes = [
         ".mov",
@@ -67,8 +72,9 @@ def convert(
         [type]: [description]
     """
 
-    FFMPEG_PATH = Path(__file__).parents[0] / r"ffmpeg.exe"
-    DEFAULT_FPS = 25.0
+    FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
+    check_ffmpeg()
+    DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
     input_path = Path(input_video)
     input_filename = input_path.stem
     input_filetype = input_path.suffix
@@ -124,6 +130,53 @@ def convert(
         raise TypeError("Output video filetype is not supported")
     elif output_filetype in vid_filetypes:
         raise TypeError("Input video filetype is not supported")
+
+
+def check_ffmpeg():
+    """Checks, if ffmpeg is available, otherwise downloads it.
+    Args:
+        ffmpeg_path (str): path, where to save ffmpeg
+    """
+    try:
+        subprocess.call(CONFIG["CONVERT"]["FFMPEG_PATH"])
+    except FileNotFoundError:
+        download_ffmpeg()
+
+
+def download_ffmpeg():
+    """Download ffmpeg to a specific path.
+    Args:
+        ffmpeg_path (str): path to ffmpeg.exe
+    """
+    FFMPEG_DIR = str(Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0])
+    os.mkdir(str(Path(FFMPEG_DIR) / "tmp"))
+    FFMPEG_ZIP = str(Path(FFMPEG_DIR) / "tmp" / r"ffmpeg.zip")
+    FFMPEG_ZIP_DIR = str(Path(FFMPEG_ZIP).parents[0])
+    try:
+        urlretrieve(CONFIG["CONVERT"]["FFMPEG_URL"], FFMPEG_ZIP)
+        print("Successfully downloaded ffmpeg zip archive.")
+    except Exception as inst:
+        print(inst)
+        print("Can't download ffmpeg zip archive. Please download manually.")
+    else:
+        try:
+            with ZipFile(FFMPEG_ZIP, "r") as zip:
+                for name in zip.namelist():
+                    if Path(name).name == r"ffmpeg.exe":
+                        zip_exe_path_part = name
+                zip.extract(
+                    member=zip_exe_path_part,
+                    path=FFMPEG_ZIP_DIR,
+                )
+            os.rename(
+                str(Path(FFMPEG_ZIP_DIR) / zip_exe_path_part),
+                str(Path(FFMPEG_DIR) / "ffmpeg.exe"),
+            )
+            remove_dir(dir=FFMPEG_ZIP_DIR)
+            print("Successfully extracted ffmpeg.exe from ffmpeg zip archive.")
+        except Exception as inst:
+            print(inst)
+            print("Can't extract ffmpeg.exe, please extract manual.")
 
 
 if __name__ == "__main__":

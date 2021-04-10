@@ -52,6 +52,12 @@ CONFIG["LAST PATHS"]["REFPTS"] = []
 
 # CONVERT
 CONFIG["CONVERT"] = {}
+CONFIG["CONVERT"][
+    "FFMPEG_URL"
+] = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+CONFIG["CONVERT"]["FFMPEG_PATH"] = str(
+    Path(__file__).parents[0] / r"convert" / r"ffmpeg.exe"
+)
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".avi"
 CONFIG["CONVERT"]["FPS"] = 25.0
 CONFIG["CONVERT"]["OVERWRITE"] = True
