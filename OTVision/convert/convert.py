@@ -14,7 +14,7 @@ from helpers.files import get_files, remove_dir
 
 def main(
     paths,
-    output_filetype: str = None,
+    output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = None,
     output_fps: float = None,
     overwrite: bool = True,
@@ -47,7 +47,7 @@ def main(
 
 def convert(
     input_video: str,
-    output_filetype: str = ".avi",
+    output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = None,
     output_fps: float = None,
     overwrite: bool = True,
@@ -78,6 +78,7 @@ def convert(
     input_path = Path(input_video)
     input_filename = input_path.stem
     input_filetype = input_path.suffix
+    print(output_filetype)
     output_path = input_path.with_suffix(output_filetype)
     if not overwrite and output_path.is_file:
         return None
