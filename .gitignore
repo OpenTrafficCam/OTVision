@@ -20,3 +20,4 @@ tests/data/testvideo_FR20_2020-02-20_12-00-00.avi
 tests/data/testvideo_FR20_2020-02-20_12-00-00.h264
 tests/data/testvideo_1.avi
 tests/data/testvideo_FR20_2020-02-20_12-00-00.mp4
+OTVision/convert/ffmpeg.exe
