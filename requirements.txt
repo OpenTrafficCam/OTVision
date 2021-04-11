@@ -6,9 +6,8 @@ pandas
 
 # gui ----------------------------------------
 PySimpleGUI
-opencv-python>=4.1.2
+# opencv-python>=4.1.2
 Pillow
-decord
 
 # helpers --------------------------------------
 pause
@@ -18,5 +17,6 @@ opencv-python
 pillow
 pyYAML
 tqdm
+-f https://download.pytorch.org/whl/torch_stable.html
 torch>=1.7.1+cu110
 torchvision>=0.8.2+cu110
