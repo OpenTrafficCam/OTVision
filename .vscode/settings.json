@@ -6,5 +6,6 @@
     "python.analysis.extraPaths": [
         "./OTVision"
     ],
-    "python.languageServer": "Pylance"
+    "python.languageServer": "Pylance",
+    "python.pythonPath": "venv\\Scripts\\python.exe"
 }
