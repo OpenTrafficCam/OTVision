@@ -61,9 +61,7 @@ def main(sg_theme=OTC_THEME):
     while True:
         event, values = window.read(timeout=0)
         # Close Gui
-        if (
-            event == sg.WIN_CLOSED or event == "Cancel" or event == "-BUTTONBACKTOHOME-"
-        ):  # if user closes window or clicks cancel
+        if event in [sg.WIN_CLOSED, "Cancel", "-BUTTONBACKTOHOME-"]:
             break
         # Folders and files
         if event == "-button_browse_folders_files-":
@@ -106,7 +104,7 @@ def create_layout(files):
             [sg.T("Input framerate:"), in_input_fps],
             [sg.T("Output framerate:"), in_output_fps],
             [check_overwrite, sg.T("Overwrite existing videos")],
-        ]
+        ],
     )
 
     # Gui elements: Convert

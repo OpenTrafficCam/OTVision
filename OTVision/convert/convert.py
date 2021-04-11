@@ -68,9 +68,7 @@ def convert(
         [type]: [description]
     """
 
-    FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
     check_ffmpeg()
-    DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
     input_path = Path(input_video)
     input_filename = input_path.stem
     input_filetype = input_path.suffix
@@ -90,6 +88,7 @@ def convert(
         ".h264",
     ]
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
+        DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
         if input_filetype == ".h264" and input_fps is None:
             try:
                 # Get input fps frome filename
@@ -101,10 +100,7 @@ def convert(
         print(f"Output fps: {output_fps}")
 
         # Create ffmpeg command
-        if input_fps is not None:
-            input_fps_cmd = f"-framerate {input_fps}"
-        else:
-            input_fps_cmd = ""
+        input_fps_cmd = f"-framerate {input_fps}" if input_fps is not None else ""
         if output_fps is not None:
             output_fps_cmd = f"-r {output_fps}"
             copy_cmd = ""
@@ -118,6 +114,7 @@ def convert(
         # Output file
         ffmpeg_cmd_out = f"-y {output_path}"
         # Concat and run ffmpeg command
+        FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
         ffmpeg_cmd = (
             f"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_filter} {ffmpeg_cmd_out}"
         )

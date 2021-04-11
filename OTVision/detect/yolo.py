@@ -178,18 +178,18 @@ def _createchunks(chunk_size, files):
 
 
 def _containsvideo(file_chunks):
-    vid_formats = [
-        ".mov",
-        ".avi",
-        ".mp4",
-        ".mpg",
-        ".mpeg",
-        ".m4v",
-        ".wmv",
-        ".mkv",
-    ]
     if type(file_chunks[0]) is str:
         file = Path(file_chunks[0])
+        vid_formats = [
+            ".mov",
+            ".avi",
+            ".mp4",
+            ".mpg",
+            ".mpeg",
+            ".m4v",
+            ".wmv",
+            ".mkv",
+        ]
         if file.suffix in vid_formats:
             return True
     return False

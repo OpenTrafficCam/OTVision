@@ -41,7 +41,7 @@ def multiple_videos(
     size: int = 640,
     chunksize: int = 0,
     normalized: bool = False,
-):
+):  # sourcery skip: merge-dict-assign
 
     print("normalized")
     print(normalized)
