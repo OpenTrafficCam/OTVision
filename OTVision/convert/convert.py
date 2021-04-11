@@ -164,11 +164,10 @@ def download_ffmpeg():
             with ZipFile(FFMPEG_ZIP, "r") as zip:
                 for name in zip.namelist():
                     if Path(name).name == r"ffmpeg.exe":
-                        zip_exe_path_part = name
-                zip.extract(
-                    member=zip_exe_path_part,
-                    path=FFMPEG_ZIP_DIR,
-                )
+                        zip.extract(
+                            member=name,
+                            path=FFMPEG_ZIP_DIR,
+                        )
             os.rename(
                 str(Path(FFMPEG_ZIP_DIR) / zip_exe_path_part),
                 str(Path(FFMPEG_DIR) / "ffmpeg.exe"),
