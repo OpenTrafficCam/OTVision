@@ -3,10 +3,6 @@ import os
 from pathlib import Path
 import subprocess
 from urllib.request import urlretrieve
-
-# import py7zr
-# from pyunpack import Archive
-# from patoolib import extract_archive
 from zipfile import ZipFile
 from config import CONFIG
 from helpers.files import get_files, remove_dir
