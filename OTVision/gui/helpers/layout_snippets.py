@@ -23,7 +23,7 @@ from config import CONFIG
 
 
 def _frame_folders_files(
-    title="Choose folders or files", files=[], width=CONFIG["GUI"]["COLWIDTH"]
+    title="Choose folders or files", files=[], width=CONFIG["GUI"]["FRAMEWIDTH"]
 ):
     button_browse_folders_files = sg.Button(
         "Browse files and/or folders", key="-button_browse_folders_files-"
@@ -31,13 +31,15 @@ def _frame_folders_files(
     text_files = sg.Text(
         "Number of selected files: " + str(len(files)),
         key="-text_files-",
-        size=(width, 1),
     )
     frame_folders_files = sg.Frame(
         title=title,
         layout=[
+            [sg.Text("", size=(width, 1))],
             [button_browse_folders_files],
             [text_files],
+            [sg.Text("", size=(width, 1))],
         ],
+        element_justification="center",
     )
     return frame_folders_files
