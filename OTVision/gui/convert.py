@@ -44,7 +44,7 @@ def main(sg_theme=OTC_THEME):
     window = sg.Window(
         title="OTVision: Convert",
         layout=layout,
-        icon=OTC_ICON,
+        icon=CONFIG["GUI"]["OTC ICON"],
         location=(
             CONFIG["GUI"]["WINDOW"]["LOCATION_X"],
             CONFIG["GUI"]["WINDOW"]["LOCATION_Y"],
@@ -86,6 +86,7 @@ def main(sg_theme=OTC_THEME):
                     overwrite=values["-check_overwrite-"],
                 )
                 window["-progress_convert-"].update(current_count=i + 1, max=len(files))
+            sg.popup("Job done!", title="Job done!", icon=CONFIG["GUI"]["OTC ICON"])
         # Folders and files
         files = frame_folders_files.process_events(event, values, files)
         window["-progress_convert-"].update(current_count=0, max=len(files))
@@ -126,15 +127,15 @@ def create_layout(files):
         enable_events=True,
         size=(width_c2, 10),
     )
-    text_output_fps = sg.T(
-        "Output framerate", justification="right", size=(width_c1, 1)
-    )
-    in_output_fps = sg.In(
-        CONFIG["CONVERT"]["FPS"],
-        key="-in_output_fps-",
-        enable_events=True,
-        size=(width_c2, 10),
-    )
+    # text_output_fps = sg.T(
+    #     "Output framerate", justification="right", size=(width_c1, 1)
+    # )
+    # in_output_fps = sg.In(
+    #     CONFIG["CONVERT"]["FPS"],
+    #     key="-in_output_fps-",
+    #     enable_events=True,
+    #     size=(width_c2, 10),
+    # )
     text_overwrite = sg.T(
         "Overwrite existing videos",
         justification="right",
