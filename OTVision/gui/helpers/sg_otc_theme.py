@@ -30,7 +30,7 @@ sg.LOOK_AND_FEEL_TABLE["OTC"] = {
     "TEXT_INPUT": "#000000",
     "SCROLL": "#ebebeb",
     "BUTTON": ("#ffffff", "#37483e"),
-    "PROGRESS": ("#ffffff", "#37483e"),
+    "PROGRESS": ("#37483e", "#adadad"),
     "BORDER": 1,
     "SLIDER_DEPTH": 0,
     "PROGRESS_DEPTH": 0,

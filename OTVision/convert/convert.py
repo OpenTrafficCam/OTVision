@@ -13,6 +13,7 @@ def main(
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = None,
     output_fps: float = None,
+    fps_from_filename: bool = True,
     overwrite: bool = True,
 ):
     """Converts multiple h264-based videos into other formats and/or other frame rates.
@@ -25,20 +26,16 @@ def main(
         overwrite (bool, optional): [description]. Defaults to True.
     """
 
-    vid_filetypes = [
-        ".mov",
-        ".avi",
-        ".mp4",
-        ".mpg",
-        ".mpeg",
-        ".m4v",
-        ".wmv",
-        ".mkv",
-        ".h264",
-    ]
-    video_files = get_files(paths, vid_filetypes)
-    for video_file in video_files:
-        convert(video_file, output_filetype, input_fps, output_fps, overwrite)
+    h264_files = get_files(paths, "h.264")
+    for h264_file in h264_files:
+        convert(
+            h264_file,
+            output_filetype,
+            input_fps,
+            output_fps,
+            fps_from_filename,
+            overwrite,
+        )
 
 
 def convert(
@@ -46,6 +43,7 @@ def convert(
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = None,
     output_fps: float = None,
+    fps_from_filename: bool = True,
     overwrite: bool = True,
 ):
     """Converts h264-based videos into other formats and/or other frame rates. Also
@@ -68,6 +66,7 @@ def convert(
         [type]: [description]
     """
 
+    print("Hello")
     check_ffmpeg()
     input_path = Path(input_video)
     input_filename = input_path.stem
@@ -89,12 +88,14 @@ def convert(
     ]
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
         DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
-        if input_filetype == ".h264" and input_fps is None:
+        if fps_from_filename:
             try:
                 # Get input fps frome filename
                 input_fps = float(re.search("_FR(.*?)_", input_filename).group(1))
             except AttributeError("Frame rate not found in filename"):
-                input_fps = DEFAULT_FPS
+                pass
+        elif input_fps is None:
+            input_fps = DEFAULT_FPS
 
         print(f"Input fps: {input_fps}")
         print(f"Output fps: {output_fps}")
@@ -157,12 +158,15 @@ def download_ffmpeg():
             with ZipFile(FFMPEG_ZIP, "r") as zip:
                 for name in zip.namelist():
                     if Path(name).name == r"ffmpeg.exe":
+                        print("next: Extract")
                         zip.extract(
                             member=name,
                             path=FFMPEG_ZIP_DIR,
                         )
+                        ffmpeg_exe = Path(name)
+                        break
             os.rename(
-                str(Path(FFMPEG_ZIP_DIR) / zip_exe_path_part),
+                str(Path(FFMPEG_ZIP_DIR) / str(ffmpeg_exe)),
                 str(Path(FFMPEG_DIR) / "ffmpeg.exe"),
             )
             remove_dir(dir=FFMPEG_ZIP_DIR)
