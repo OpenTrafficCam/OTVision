@@ -74,36 +74,10 @@ class OTFrameFoldersFiles(sg.Frame):
         self.text_files.Update("Number of selected files: " + str(len(files)))
         self.listbox_files.Update(["(...)" + file[-80:] for file in files])
 
-    def format_filetypes(filetypes):
-        """
-        check if _filetypes_ is list of str and transform it
-
-        Args:
-            filetypes: list of file extension with or without leading "." or "_"
-
-        Returns:
-            filetypes: file extension with leading "." (except leading "_" was passed)
-        """
-        if type(filetypes) is not list:
-            filetypes = [filetypes]
-        for filetype in filetypes:
-            if type(filetype) is str:
-                if not filetype.startswith("_"):
-                    if not filetype.startswith("."):
-                        filetype = "." + filetype
-                    filetype = filetype.lower()
-            else:
-                raise TypeError("filetype needs to be a str")
-        return filetypes
-
     def layout(self, files):
 
         # Constants
         WIDTH_COL1 = CONFIG["GUI"]["FRAMEWIDTH"] - 2
-
-        # Create new lists of files
-        # ("new list = old list" would not copy old list,
-        # instead just changes reference to the list)
         # files = CONFIG["LAST FILES"]
         self.selected_files = []
 
@@ -141,7 +115,7 @@ class OTFrameFoldersFiles(sg.Frame):
             "Number of selected files: " + str(len(files)),
             key="-text_files-",
             size=(WIDTH_COL1, 1),
-            justification="center"
+            justification="center",
         )
 
         # GUI elements REMOVE
@@ -182,22 +156,14 @@ class OTFrameFoldersFiles(sg.Frame):
                 )
             )
             files = self.drop_duplicates(files)
-        # elif event == "-dummy_input_files-" and values["-dummy_input_files-"] != "":
-        #     files.extend(
-        #         get_files(
-        #             paths=values[event].split(";"),
-        #             filetypes=self.filetype,
-        #         )
-        #     )
-        #     files = self.drop_duplicates(files)
         elif event == "-button_remove_all-":
             files = []
-        elif event == "-listbox_files-":
-            self.selected_files = values["-listbox_files-"]
-        elif event == "-button_keep_selection-":
-            files = [i for i in files if i in self.selected_files]
-        elif event == "-button_remove_selection-":
-            files = [i for i in files if i not in self.selected_files]
+        # elif event == "-listbox_files-":
+        #     self.selected_files = values["-listbox_files-"]
+        # elif event == "-button_keep_selection-":
+        #     files = [i for i in files if i in self.selected_files]
+        # elif event == "-button_remove_selection-":
+        #     files = [i for i in files if i not in self.selected_files]
         self.update(files, values)
         return files
 
