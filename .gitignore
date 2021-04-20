@@ -12,13 +12,6 @@ geckodriver.log
 yolov5*.pt
 obj_train_data/*
 OTVision/detect/vissim_video.mp4
-tests/data/testvideo_1.otdet
-tests/data/testvideo_1.ottrk
-tests/data/testvideo_2.otdet
-tests/data/testvideo_2.ottrk
-tests/data/testvideo_FR20_2020-02-20_12-00-00.avi
-tests/data/testvideo_FR20_2020-02-20_12-00-00.h264
-tests/data/testvideo_1.avi
-tests/data/testvideo_FR20_2020-02-20_12-00-00.mp4
 OTVision/convert/ffmpeg.exe
 venv/
+tests/
