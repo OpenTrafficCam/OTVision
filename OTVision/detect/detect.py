@@ -22,66 +22,42 @@ Module to call yolov5/detect.py with arguments
 
 import json
 from pathlib import Path
-
+from config import CONFIG
 from helpers.files import get_files
-
 from detect import yolo
 
 
-def main(paths, filetypes, det_config={}):
-    files = get_files(paths, filetypes)
-    multiple_videos(files, **det_config)
+# def main(paths, filetypes, det_config={}):
+#     files = get_files(paths, filetypes)
+#     multiple_videos(files, **det_config)
 
 
-def multiple_videos(
+def main(
     files,
-    weights: str = "yolov5x",
-    conf: float = 0.25,
-    iou: float = 0.45,
-    size: int = 640,
-    chunksize: int = 0,
-    normalized: bool = False,
+    filetype: str = ".mp4",
+    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
+    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
+    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
+    size: int = CONFIG["DETECT"]["YOLO"]["SIZE"],
+    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
+    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
 ):  # sourcery skip: merge-dict-assign
 
-    print("normalized")
-    print(normalized)
-    det_config = {
-        "weights": weights,
-        "conf": conf,
-        "iou": iou,
-        "size": size,
-        "chunksize": chunksize,
-        "normalized": normalized,
-    }
+    # if type(files) is not list:
+    #     files = [files]
 
-    if type(files) is not list:
-        files = [files]
+    files = get_files(paths=files, filetypes=CONFIG["FILETYPES"]["VID"])
 
     model = yolo.loadmodel(weights, conf, iou)
 
     for file in files:
-
-        yolo_detections, names, width, height, fps, frames = yolo.detect(
-            files=file,
+        detections = yolo.detect(
+            file=file,
             model=model,
             size=size,
-            chunk_size=chunksize,
+            chunksize=chunksize,
             normalized=normalized,
         )
-
-        vid_config = {}
-        vid_config["file"] = str(Path(file).stem)
-        vid_config["filetype"] = str(Path(file).suffix)
-        vid_config["width"] = width
-        vid_config["height"] = height
-        vid_config["fps"] = fps
-        vid_config["frames"] = frames
-
-        detections = yolo.convert_detections(
-            yolo_detections, names, vid_config, det_config
-        )
-
-        print(detections)
         _save_detections(detections, file)
 
 

@@ -31,4 +31,4 @@ if __name__ == "__main__":
         "normalized": False,
     }
 
-    detect.main(test_path, "mkv", det_config)
+    detect.main(test_path, ".mkv", **det_config)

@@ -19,21 +19,21 @@
 
 from pathlib import Path
 from time import perf_counter
-
 import torch
 from cv2 import VideoCapture, CAP_PROP_FPS
+from config import CONFIG
 
 
 def detect(
-    files,
+    file,
     model=None,
-    weights: str = "yolov5s",
-    conf: float = 0.25,
-    iou: float = 0.45,
-    size: int = 640,
-    chunk_size: int = 0,
-    normalized: bool = False,
-):
+    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
+    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
+    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
+    size: int = CONFIG["DETECT"]["YOLO"]["SIZE"],
+    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
+    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+):  # sourcery skip: inline-immediately-returned-variable
     """Detect and classify bounding boxes in images/frames using YOLOv5
 
     Args:
@@ -43,7 +43,7 @@ def detect(
         conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
         iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
         size (int, optional): Frame size for detection. Defaults to 640.
-        chunk_size (int, optional): Number of files per detection chunk. Defaults to 0.
+        chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
         normalized (bool, optional): Coords in % of image/frame size (True) or pixels
         (False). Defaults to False.
 
@@ -53,7 +53,7 @@ def detect(
     if model is None:
         model = loadmodel(weights, conf, iou)
 
-    file_chunks = _createchunks(chunk_size, files)
+    file_chunks = _createchunks(chunksize, file)
 
     yolo_detections = []
     t1 = perf_counter()
@@ -122,7 +122,12 @@ def detect(
     # 'render'
     # 'tolist'
 
-    return yolo_detections, names, width, height, fps, frames
+    # TODO: #74 Refactor this and detect into a main()
+    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
+    vid_config = _get_vidconfig(file, width, height, fps, frames)
+    detections = _convert_detections(yolo_detections, names, vid_config, det_config)
+
+    return detections
 
 
 def loadmodel(weights, conf, iou):
@@ -141,7 +146,30 @@ def loadmodel(weights, conf, iou):
     return model
 
 
-def convert_detections(yolo_detections, names, vid_config, det_config):
+def _get_vidconfig(file, width, height, fps, frames):
+    return {
+        "file": str(Path(file).stem),
+        "filetype": str(Path(file).suffix),
+        "width": width,
+        "height": height,
+        "fps": fps,
+        "frames": frames,
+    }
+
+
+def _get_det_config(weights, conf, iou, size, chunksize, normalized):
+    return {
+        "detector": "YOLOv5",
+        "weights": weights,
+        "conf": conf,
+        "iou": iou,
+        "size": size,
+        "chunksize": chunksize,
+        "normalized": normalized,
+    }
+
+
+def _convert_detections(yolo_detections, names, vid_config, det_config):
     data = {}
     for no, yolo_detection in enumerate(yolo_detections):
         detection = []
@@ -156,25 +184,19 @@ def convert_detections(yolo_detections, names, vid_config, det_config):
             }
             detection.append(bbox)
         data[str(no + 1)] = {"classified": detection}
-    det_config["detector"] = "YOLOv5"
-    detections = {}
-    detections["vid_config"] = vid_config
-    detections["det_config"] = det_config
-    detections["data"] = data
-    return detections
+    return {"vid_config": vid_config, "det_config": det_config, "data": data}
 
 
-def _createchunks(chunk_size, files):
+def _createchunks(chunksize, files):
     if type(files) is str:
-        file_chunks = [files]
+        return [files]
     elif _containsvideo(files):
-        file_chunks = files
-    elif chunk_size == 0:
-        file_chunks = [files]
+        return files
+    elif chunksize == 0:
+        return [files]
     else:
-        chunk_starts = range(0, len(files), chunk_size)
-        file_chunks = [files[i : i + chunk_size] for i in chunk_starts]
-    return file_chunks
+        chunk_starts = range(0, len(files), chunksize)
+        return [files[i : i + chunksize] for i in chunk_starts]
 
 
 def _containsvideo(file_chunks):
@@ -231,7 +253,7 @@ if __name__ == "__main__":
     conf = 0.50
     iou = 0.45
     size = 640
-    chunk_size = 0
+    chunksize = 0
 
     bboxes, names = detect(
         files=files,
