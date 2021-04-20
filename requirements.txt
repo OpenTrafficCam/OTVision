@@ -13,10 +13,13 @@ Pillow
 pause
 
 # yolo ---------------------------------------
+requests  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\models\common.py", line 7, in <module>
+matplotlib  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\metrics.py", line 5, in <module>
+seaborn  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\plots.py", line 15, in <module>
 opencv-python
 pillow
 pyYAML
 tqdm
 -f https://download.pytorch.org/whl/torch_stable.html
-torch>=1.7.1+cu110
-torchvision>=0.8.2+cu110
+torch==1.7.1+cu110
+torchvision==0.8.2+cu110
