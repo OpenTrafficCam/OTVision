@@ -26,7 +26,7 @@ from gui.helpers.sg_otc_theme import (
     OTC_FONT,
     OTC_FONTSIZE,
 )
-import config
+from config import CONFIG
 from detect.detect import main as detect
 
 import PySimpleGUI as sg
@@ -40,9 +40,7 @@ def main(sg_theme=OTC_THEME):
     filetypes = [".mov", ".avi", ".mp4", ".mpg", ".mpeg", ".m4v", ".wmv", ".mkv"]
 
     # Config
-    CONFIG_DICT = config.read()
-    LAST_FOLDER = CONFIG_DICT["LAST PATHS"]["FOLDER"]
-    sg.SetOptions(font=(CONFIG_DICT["GUI"]["FONT"], CONFIG_DICT["GUI"]["FONTSIZE"]))
+    sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
     layout, text_status_detect = create_layout(folders, files, total_files)
