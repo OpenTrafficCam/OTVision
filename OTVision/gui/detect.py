@@ -18,241 +18,226 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from PySimpleGUI.PySimpleGUI import DEFAULT_TEXT_JUSTIFICATION, Text
-from gui.helpers import browse_folders_and_files
-from gui.helpers.sg_otc_theme import (
-    OTC_ICON,
-    OTC_THEME,
-    OTC_FONT,
-    OTC_FONTSIZE,
-)
-from config import CONFIG
-from detect.detect import main as detect
-
 import PySimpleGUI as sg
-from pathlib import Path
+from config import CONFIG
+from gui.helpers.frames import OTFrameFoldersFiles
+from gui.helpers.windows import OTSubpackageWindow
+from gui.helpers.texts import OTTextSpacer
+from gui.helpers import otc_theme
+from detect import yolo, detect
+from helpers.files import get_files
 
 
-def main(sg_theme=OTC_THEME):
-    folders = []
-    files = []
-    total_files = []
-    filetypes = [".mov", ".avi", ".mp4", ".mpg", ".mpeg", ".m4v", ".wmv", ".mkv"]
+def main(paths=None, debug=True):
 
-    # Config
-    sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
+    # Initial configuration
+    if debug:
+        paths = CONFIG["TESTDATAFOLDER"]
+        paths = get_files(
+            paths=paths,
+            filetypes=CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
+        )
+    elif not paths:
+        paths = CONFIG["LAST PATHS"]["VIDEOS"]
+    files = get_files(
+        paths=paths,
+        filetypes=CONFIG["FILETYPES"]["VID"],
+    )
+    # sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
-    layout, text_status_detect = create_layout(folders, files, total_files)
-    window = sg.Window(
-        title="OTVision: Detect",
-        layout=layout,
-        icon=OTC_ICON,
-        location=(0, 0),
-        resizable=True,
-        finalize=True,
-    )
-    window.maximize()
-    # window = create_window(
-    #     OTC_ICON,
-    #     create_layout(folders, files, total_files),
-    # )
+    layout, frame_folders_files = create_layout(files)
+    window = OTSubpackageWindow(title="OTVision: Convert", layout=layout)
+    frame_folders_files.listbox_files.expand(expand_x=True)
+    window["-progress_detect-"].update_bar(0)
 
-    # Event Loop to process "events" and get the "values" of the inputs
-    while True:
-        event, values = window.read(timeout=0)
-        # Close Gui
-        if (
-            event == sg.WIN_CLOSED or event == "Cancel" or event == "-BUTTONBACKTOHOME-"
-        ):  # if user closes window or clicks cancel
-            break
-        # Folders and files
-        elif event == "-button_browse_folders_files-":
-            folders, files = browse_folders_and_files.main(
-                title="Select videos",
-                filetypes=filetypes,
-                input_folders=folders,
-                input_files=files,
-            )
-            window["-text_folders-"].Update(
-                "Number of selected folders: " + str(len(folders))
-            )
-            window["-text_files-"].Update(
-                "Number of selected files: " + str(len(files))
-            )
-        # Detector parameterization
-        # TODOs: get_otvision_defaults, get_user_defaults, set_user_defaults
-        # Detection
-        elif event == "-button_detect-":
-            paths = folders + files
-            if len(paths) > 0:
-                text_status_detect.Update("Detection is running!")
-                det_config = {
-                    "weights": values["-optionmenu_weights-"],
-                    "conf": values["-slider_conf-"],
-                    "iou": values["-slider_iou-"],
-                    "size": int(values["-slider_size-"]),
-                    "chunksize": int(values["-slider_chunksize-"]),
-                    "normalized": values["-checkbox_normalized-"],
-                }
-                detect(paths, filetypes, det_config)
-                text_status_detect.Update("Detection was successful!")
-            else:
-                text_status_detect.Update("No folders or files to detect!")
-
+    # Call function to process events
+    show_window = True
+    while show_window:
+        show_window, files = process_events(window, files, frame_folders_files)
     window.close()
 
 
-def create_layout(folders, files, total_files):
+def create_layout(files):
+
     # GUI elements: Choose videos
-    size_col1 = (20, 5)
-    size_col2 = (10, 5)
-    button_browse_folders_files = sg.Button(
-        "Browse files and/or folders", key="-button_browse_folders_files-"
-    )
-    text_folders = sg.Text(
-        "Number of selected folders: " + str(len(folders)),
-        key="-text_folders-",
-        size=(WIDTH_COL1, 1),
-    )
-    text_files = sg.Text(
-        "Number of selected files: " + str(len(files)),
-        key="-text_files-",
-        size=(WIDTH_COL1, 1),
-    )
-    frame_folders_files = sg.Frame(
-        "Step 1: Choose videos or images",
-        layout=[
-            [button_browse_folders_files],
-            [text_folders],
-            [text_files],
-        ],
+    frame_folders_files = OTFrameFoldersFiles(
+        default_filetype=".mp4", filetypes=CONFIG["FILETYPES"]["VID"], files=files
     )
 
-    # GUI elements: Detection model and parameters
-    size_col = 20
-    size_row1 = (size_col, 1)
-    size_row2 = (size_col, 10)
-    optionmenu_weights = sg.OptionMenu(
-        values=("yolov5s", "yolov5m", "yolov5l", "yolov5x"),
-        default_value="yolov5x",
-        size=size_row2,
-        key="-optionmenu_weights-",
+    # GUI elements: Detection weights and parameters
+    width_c1 = int(CONFIG["GUI"]["FRAMEWIDTH"] / 2)
+    width_c2 = 10
+    slider_height = 10
+    text_weights = sg.T(
+        "Weights",
+        justification="right",
+        size=(width_c1, 1),
+    )
+    drop_weights = sg.DropDown(
+        values=CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"],
+        default_value=CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
+        key="-drop_weights-",
+        enable_events=True,
+    )
+    text_conf = sg.T(
+        "Confidence",
+        justification="right",
+        size=(width_c1, 1),
     )
     slider_conf = sg.Slider(
         range=(0, 1),
         resolution=0.01,
         orientation="h",
-        size=size_row2,
-        default_value=0.25,
+        size=(width_c2, slider_height),
+        default_value=CONFIG["DETECT"]["YOLO"]["CONF"],
         key="-slider_conf-",
+    )
+    text_iou = sg.T(
+        "IOU",
+        justification="right",
+        size=(width_c1, 1),
     )
     slider_iou = sg.Slider(
         range=(0, 1),
         resolution=0.01,
         orientation="h",
-        size=size_row2,
-        default_value=0.45,
+        size=(width_c2, slider_height),
+        default_value=CONFIG["DETECT"]["YOLO"]["IOU"],
         key="-slider_iou-",
     )
-    slider_size = sg.Slider(
+    text_imgsize = sg.T(
+        "Image size",
+        justification="right",
+        size=(width_c1, 1),
+    )
+    slider_imgsize = sg.Slider(
         range=(500, 1000),
+        resolution=10,
         orientation="h",
-        size=size_row2,
-        default_value=640,
-        key="-slider_size-",
+        size=(width_c2, slider_height),
+        default_value=CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
+        key="-slider_imgsize-",
+    )
+    text_chunksize = sg.T(
+        "Chunk size",
+        justification="right",
+        size=(width_c1, 1),
     )
     slider_chunksize = sg.Slider(
         range=(0, 20),
         orientation="h",
-        size=size_row2,
-        default_value=0,
+        size=(width_c2, slider_height),
+        default_value=CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
         key="-slider_chunksize-",
     )
-    checkbox_normalized = sg.Checkbox(
-        text="", size=(10, 1), default=False, key="-checkbox_normalized-"
+    text_normalized = sg.T(
+        "Normalized",
+        justification="right",
+        size=(width_c1, 1),
     )
-    frame_det_config = sg.Frame(
-        "Step 2: Parametrize detector",
-        layout=[
-            [
-                sg.Frame("Weights", [[optionmenu_weights]]),
-                sg.Frame("Confidence", [[slider_conf]]),
-                sg.Frame("IOU", [[slider_iou]]),
-                sg.Frame("Size", [[slider_size]]),
-                sg.Frame("Chunksize", [[slider_chunksize]]),
-                sg.Frame("Normalized", [[checkbox_normalized]]),
-            ]
+    check_normalized = sg.Check(
+        text="",
+        default=CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+        key="-check_normalized-",
+    )
+    text_overwrite = sg.T(
+        "Overwrite",
+        justification="right",
+        size=(width_c1, 1),
+    )
+    check_overwrite = sg.Check(
+        text="",
+        default=CONFIG["DETECT"]["YOLO"]["OVERWRITE"],
+        key="-check_overwrite-",
+    )
+    frame_parameters = sg.Frame(
+        "Step 2: Set parameters",
+        [
+            [OTTextSpacer()],
+            [text_weights, drop_weights],
+            [text_conf, slider_conf],
+            [text_iou, slider_iou],
+            [text_imgsize, slider_imgsize],
+            [text_chunksize, slider_chunksize],
+            [text_normalized, check_normalized],
+            [text_overwrite, check_overwrite],
+            [OTTextSpacer()],
         ],
+        size=(100, 10),
     )
 
     # GUI elements: Detect
-    size_col1 = (30, 1)
-    size_col2 = (20, 5)
-    button_detect = sg.Button("Detect", size=size_col1, key="-button_detect-")
-    text_status_detect = sg.Text(
-        "Hit the button to start detection!",
-        enable_events=True,
-        key="-text_status_detect-",
-    )
-    progressbar_detect = sg.ProgressBar(
-        max_value=total_files,
-        orientation="h",
-        size=size_col1,
-        key="-progressbar_detect-",
+    button_detect = sg.B("Detect!", key="-button_detect-")
+    progress_detect = sg.ProgressBar(
+        max_value=len(files),
+        size=(CONFIG["GUI"]["FRAMEWIDTH"] / 2, 20),
+        key="-progress_detect-",
     )
     frame_detect = sg.Frame(
-        title="Step 3: Start detection", layout=[[button_detect], [text_status_detect]]
+        title="Step 3: Start detection",
+        layout=[[OTTextSpacer()], [button_detect], [progress_detect], [OTTextSpacer()]],
+        element_justification="center",
     )
 
-    # GUI elements: Detections
-    # TODO
-
-    # GUI elements: Back to home
-    ButtonBackToHome = sg.Button(
-        "",
-        key="-BUTTONBACKTOHOME-",
-        image_data=OTC_ICON,
-        border_width=0,
+    # Put layout together
+    col_all = sg.Column(
+        [[frame_folders_files], [frame_parameters], [frame_detect]],
+        scrollable=True,
+        expand_y=True,
     )
+    layout = [[col_all]]
 
-    # Put GUI elemnts in a layout
-    layout = [
-        [frame_folders_files],
-        [frame_det_config],
-        [frame_detect],
-        [ButtonBackToHome],
-    ]
-
-    return layout, text_status_detect
+    return layout, frame_folders_files
 
 
-def create_window(OTC_ICON, layout, window_location=(0, 0), window_size=None):
-    window_title = "OTVision: Detect"
-    window = (
-        sg.Window(window_title, icon=OTC_ICON, resizable=True, location=window_location)
-        .Layout(
-            [
-                [
-                    sg.Column(
-                        layout=layout,
-                        key="-column-",
-                        scrollable=True,
-                        vertical_scroll_only=False,
-                        expand_x=True,
-                        expand_y=True,
-                    )
-                ]
-            ]
+def process_events(window, files, frame_folders_files):
+    """Event Loop to process "events" and get the "values" of the inputs
+
+    Args:
+        window: Window of subpackage
+        files: Current file list
+        frame_folders_files: Instance of gui.helpers.frames.OTFrameFoldersFiles
+
+    Returns:
+        show_window: False if window should be closed after this loop
+    """
+
+    event, values = window.read()
+    print(event)
+
+    # Close Gui
+    if event in [sg.WIN_CLOSED, "Cancel", "-BUTTONBACKTOHOME-"]:
+        return False, files
+
+    # Set parameters
+    elif event == "-button_detect-":
+        model = yolo.loadmodel(
+            weights=values["-drop_weights-"],
+            conf=values["-slider_conf-"],
+            iou=values["-slider_iou-"],
         )
-        .Finalize()
-    )
-    if window_size is None:
-        window.Maximize()
-    else:
-        window.Size = window_size
-    return window
+        for i, file in enumerate(files):
+            detections = yolo.detect(
+                file=file,
+                model=model,
+                weights=values["-drop_weights-"],
+                conf=values["-slider_conf-"],
+                iou=values["-slider_iou-"],
+                size=values["-slider_imgsize-"],
+                chunksize=values["-slider_chunksize-"],
+                normalized=values["-check_normalized-"],
+            )
+            detect.save_detections(
+                detections=detections,
+                infile=file,
+                overwrite=values["-check_overwrite-"],
+            )
+            window["-progress_detect-"].update(current_count=i + 1, max=len(files))
+        sg.popup("Job done!", title="Job done!", icon=CONFIG["GUI"]["OTC ICON"])
 
+    # Folders and files
+    files = frame_folders_files.process_events(event, values, files)
+    window["-progress_detect-"].update(current_count=0, max=len(files))
 
-def process_events():
-    pass
+    return True, files
