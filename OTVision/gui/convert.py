@@ -19,87 +19,50 @@
 
 
 import PySimpleGUI as sg
-from gui.helpers.frames import OTFrameFoldersFiles
-from gui.helpers.texts import OTTextSpacer
-from gui.helpers.sg_otc_theme import (
-    OTC_ICON,
-    OTC_THEME,
-)
 from config import CONFIG
+from gui.helpers.frames import OTFrameFoldersFiles
+from gui.helpers.windows import OTSubpackageWindow
+from gui.helpers.texts import OTTextSpacer
+from gui.helpers import otc_theme
 from convert.convert import convert
 from helpers.files import get_files
 
 
-def main(sg_theme=OTC_THEME):
-    folders = CONFIG["LAST PATHS"]["FOLDERS"]
-    single_files = CONFIG["LAST PATHS"]["VIDEOS"]
+def main(paths=None, debug=True):
+
+    # Initial configuration
+    if debug:
+        paths = CONFIG["TESTDATAFOLDER"]
+        paths = get_files(
+            paths=paths,
+            filetypes=".h264",
+        )
+    elif not paths:
+        paths = CONFIG["LAST PATHS"]["VIDEOS"]
     files = get_files(
-        paths=[*folders, *single_files],
-        filetypes=[*CONFIG["FILETYPES"]["VID"], ".h264"],
+        paths=paths,
+        filetypes=".h264",
     )
-    sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
+    print(files)
+    # sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
     layout, frame_folders_files = create_layout(files)
-    window = sg.Window(
-        title="OTVision: Convert",
-        layout=layout,
-        icon=CONFIG["GUI"]["OTC ICON"],
-        location=(
-            CONFIG["GUI"]["WINDOW"]["LOCATION_X"],
-            CONFIG["GUI"]["WINDOW"]["LOCATION_Y"],
-        ),
-        element_justification="center",
-        resizable=True,
-        finalize=True,
-    )
-    window.maximize()
+    window = OTSubpackageWindow(title="OTVision: Convert", layout=layout)
     frame_folders_files.listbox_files.expand(expand_x=True)
     window["-progress_convert-"].update_bar(0)
 
-    # Event Loop to process "events" and get the "values" of the inputs
-    while True:
-        event, values = window.read()
-        print(event)
-        # Close Gui
-        if event in [sg.WIN_CLOSED, "Cancel", "-BUTTONBACKTOHOME-"]:
-            break
-        # Set parameters (no actions required for now)
-        elif event == "-drop_output_filetype-":
-            pass
-        elif event == "-check_fps_from_filename-":
-            pass
-        elif event == "-in_input_fps-":
-            pass
-        elif event == "-in_output_fps-":
-            pass
-        elif event == "-check_overwrite-":
-            pass
-        elif event == "-button_convert-":
-            for i, file in enumerate(files):
-                convert(
-                    input_video=file,
-                    output_filetype=values["-drop_output_filetype-"],
-                    input_fps=values["-in_input_fps-"],
-                    # output_fps=values["-in_output_fps-"],
-                    fps_from_filename=values["-check_fps_from_filename-"],
-                    overwrite=values["-check_overwrite-"],
-                )
-                window["-progress_convert-"].update(current_count=i + 1, max=len(files))
-            sg.popup("Job done!", title="Job done!", icon=CONFIG["GUI"]["OTC ICON"])
-        # Folders and files
-        files = frame_folders_files.process_events(event, values, files)
-        window["-progress_convert-"].update(current_count=0, max=len(files))
-
+    # Call function to process events
+    show_window = True
+    while show_window:
+        show_window, files = process_events(window, files, frame_folders_files)
     window.close()
 
 
 def create_layout(files):
 
     # GUI elements: Choose videos
-    vid_filetypes = CONFIG["FILETYPES"]["VID"]
-    vid_filetypes.append(".h264")
-    frame_folders_files = OTFrameFoldersFiles(filetype=".h264")
+    frame_folders_files = OTFrameFoldersFiles(default_filetype=".h264", files=files)
 
     # GUI elements: Set parameters
     width_c1 = int(CONFIG["GUI"]["FRAMEWIDTH"] / 2)
@@ -158,7 +121,7 @@ def create_layout(files):
         size=(100, 10),
     )
 
-    # Gui elements: Convert
+    # GUI elements: Convert
     button_convert = sg.B("Convert!", key="-button_convert-")
     progress_convert = sg.ProgressBar(
         max_value=len(files),
@@ -168,7 +131,7 @@ def create_layout(files):
     )
     frame_convert = sg.Frame(
         "Step 3: Start conversion",
-        [
+        layout=[
             [OTTextSpacer()],
             [button_convert],
             [progress_convert],
@@ -186,3 +149,43 @@ def create_layout(files):
     layout = [[col_all]]
 
     return layout, frame_folders_files
+
+
+def process_events(window, files, frame_folders_files):
+    """Event Loop to process "events" and get the "values" of the inputs
+
+    Args:
+        window: Window of subpackage
+        files: Current file list
+        frame_folders_files: Instance of gui.helpers.frames.OTFrameFoldersFiles
+
+    Returns:
+        show_window: False if window should be closed after this loop
+    """
+
+    event, values = window.read()
+    print(event)
+
+    # Close Gui
+    if event in [sg.WIN_CLOSED, "Cancel", "-BUTTONBACKTOHOME-"]:
+        return False, files
+
+    # Set parameters
+    elif event == "-button_convert-":
+        for i, file in enumerate(files):
+            convert(
+                input_video=file,
+                output_filetype=values["-drop_output_filetype-"],
+                input_fps=values["-in_input_fps-"],
+                # output_fps=values["-in_output_fps-"],
+                fps_from_filename=values["-check_fps_from_filename-"],
+                overwrite=values["-check_overwrite-"],
+            )
+            window["-progress_convert-"].update(current_count=i + 1, max=len(files))
+        sg.popup("Job done!", title="Job done!", icon=CONFIG["GUI"]["OTC ICON"])
+
+    # Folders and files
+    files = frame_folders_files.process_events(event, values, files)
+    window["-progress_convert-"].update(current_count=0, max=len(files))
+
+    return True, files
