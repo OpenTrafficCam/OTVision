@@ -27,20 +27,25 @@ from gui.helpers.texts import OTTextSpacer
 class OTFrameFoldersFiles(sg.Frame):
     def __init__(
         self,
-        filetype,
+        default_filetype,
+        filetypes=None,
         title="Step 1: Browse folders and files",
         files=[],
         width=80,
         # width=CONFIG["GUI"]["FRAMEWIDTH"],
     ):
-        self.filetype = filetype
+        self.filetype = default_filetype
+        if isinstance(filetypes, list) and default_filetype not in filetypes:
+            self.filetypes = [default_filetype, *filetypes]
+        else:
+            self.filetypes = filetypes
+        print(files)
         super().__init__(
             title=title,
-            layout=self.layout(files),
+            layout=self.get_layout(files),
             size=(width, 50),
             element_justification="center",
         )
-        print(self.Size)
 
     def drop_duplicates(self, list):
         """
@@ -58,7 +63,7 @@ class OTFrameFoldersFiles(sg.Frame):
                 cleaned_list.append(i)
         return cleaned_list
 
-    def update(self, files, values):
+    def update(self, files):
         """
         Updates elements of the folders/files picker gui below
 
@@ -74,7 +79,7 @@ class OTFrameFoldersFiles(sg.Frame):
         self.text_files.Update("Number of selected files: " + str(len(files)))
         self.listbox_files.Update(["(...)" + file[-80:] for file in files])
 
-    def layout(self, files):
+    def get_layout(self, files):
 
         # Constants
         WIDTH_COL1 = CONFIG["GUI"]["FRAMEWIDTH"] - 2
@@ -82,6 +87,14 @@ class OTFrameFoldersFiles(sg.Frame):
         self.selected_files = []
 
         # GUI elements ADD
+        if isinstance(self.filetypes, list):
+            self.text_filetype = sg.Text("Filetype")
+            self.drop_filetype = sg.DropDown(
+                values=self.filetypes,
+                default_value=self.filetype,
+                key="-drop_filetype-",
+                enable_events=True,
+            )
         self.browse_folder = sg.FolderBrowse(
             "Add folder", key="-browse_folder-", target="-dummy_input_folder-"
         )
@@ -105,7 +118,7 @@ class OTFrameFoldersFiles(sg.Frame):
         # GUI elements STATUS
         self.text_listbox_files = sg.Text("Selected files:")
         self.listbox_files = sg.Listbox(
-            values=files,
+            values=["(...)" + file[-80:] for file in files],
             size=(WIDTH_COL1, 8),
             key="-listbox_files-",
             enable_events=True,
@@ -127,11 +140,27 @@ class OTFrameFoldersFiles(sg.Frame):
         # )
         self.button_remove_all = sg.Button("Remove all", key="-button_remove_all-")
 
+        # Build first row conditionally
+        if isinstance(self.filetypes, list):
+            conditional_row = [
+                self.text_filetype,
+                self.drop_filetype,
+                self.browse_folder,
+                self.browse_files,
+                self.button_remove_all,
+            ]
+        else:
+            conditional_row = [
+                self.browse_folder,
+                self.browse_files,
+                self.button_remove_all,
+            ]
+
         # All the stuff inside the window
         layout = [
             [OTTextSpacer()],
             [self.dummy_input_folder, self.dummy_input_files],
-            [self.browse_folder, self.browse_files, self.button_remove_all],
+            conditional_row,
             [self.text_listbox_files],
             [self.listbox_files],
             [self.text_files],
@@ -158,13 +187,15 @@ class OTFrameFoldersFiles(sg.Frame):
             files = self.drop_duplicates(files)
         elif event == "-button_remove_all-":
             files = []
+        elif event == "-drop_filetype-":
+            self.filetype = values[event]
         # elif event == "-listbox_files-":
         #     self.selected_files = values["-listbox_files-"]
         # elif event == "-button_keep_selection-":
         #     files = [i for i in files if i in self.selected_files]
         # elif event == "-button_remove_selection-":
         #     files = [i for i in files if i not in self.selected_files]
-        self.update(files, values)
+        self.update(files)
         return files
 
 
