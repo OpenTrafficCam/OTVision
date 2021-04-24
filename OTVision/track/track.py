@@ -19,11 +19,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from track.iou import track_iou
-from helpers.files import get_files, denormalize
 import json
 from pathlib import Path
 from datetime import datetime
+from config import CONFIG
+from track.iou import track_iou
+from helpers.files import get_files, denormalize
 
 # TODO:Change structure and naming to according to detect
 config_track_default = {
@@ -76,7 +77,8 @@ def track(detections, trk_config=config_track_default):
     return tracks_px
 
 
-def write(tracks_px, file):
+# TODO: Implement overwrite as in detect, maybe refactor?
+def write(tracks_px, file, overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"]):
     """
     docstring
     """

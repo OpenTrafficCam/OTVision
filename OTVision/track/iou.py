@@ -6,6 +6,7 @@
 # Written by Erik Bochinski
 # ---------------------------------------------------------
 
+from config import CONFIG
 from track.iou_util import iou
 
 
@@ -25,7 +26,14 @@ def center(obj):
     return center
 
 
-def track_iou(detections, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max):
+def track_iou(
+    detections,
+    sigma_l=CONFIG["TRACK"]["IOU"]["SIGMA_L"],
+    sigma_h=CONFIG["TRACK"]["IOU"]["SIGMA_H"],
+    sigma_iou=CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
+    t_min=CONFIG["TRACK"]["IOU"]["T_MIN"],
+    t_miss_max=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+):
     """
     Simple IOU based tracker.
     See "High-Speed Tracking-by-Detection Without Using Image Information
