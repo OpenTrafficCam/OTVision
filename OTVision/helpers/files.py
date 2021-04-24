@@ -33,17 +33,14 @@ def get_files(paths, filetypes):
     """
 
     files = set()
-    pathlist = []
 
-    # check, if _paths_ is a list or str
-    if type(paths) is list:
-        pathlist.extend(paths)
-    elif type(paths) is str:
-        pathlist.append(paths)
-    else:
+    # Check, if paths is a str or a list
+    if type(paths) is str:
+        paths = [paths]
+    elif type(paths) is not list:
         raise TypeError("Paths needs to be str or list of str")
 
-    # check if _filename_ is str and transform it
+    # Check if filetypse is str or a list and transform it
     if type(filetypes) is not list:
         filetypes = [filetypes]
     for filetype in filetypes:
@@ -53,10 +50,10 @@ def get_files(paths, filetypes):
                     filetype = "." + filetype
                 filetype = filetype.lower()
         else:
-            raise TypeError("filetype needs to be a str")
+            raise TypeError("Filetype needs to be a str or a list of str")
 
     # add all files to a single list _files_
-    for path in pathlist:
+    for path in paths:
         path = Path(path)
         if path.is_file():
             file = str(path)
@@ -67,6 +64,8 @@ def get_files(paths, filetypes):
             for file in path.glob("**/*" + filetype):
                 file = str(file)
                 files.add(file)
+        else:
+            raise TypeError("Paths needs to be a path as a str or a list of str")
 
     return sorted(list(files))
 
