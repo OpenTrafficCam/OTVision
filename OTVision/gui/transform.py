@@ -21,12 +21,7 @@
 import PySimpleGUI as sg
 from config import CONFIG
 from gui.helpers import browse_folders_and_files
-from gui.helpers.sg_otc_theme import (
-    OTC_ICON,
-    OTC_THEME,
-    OTC_FONT,
-    OTC_FONTSIZE,
-)
+from gui.helpers import otc_theme
 import cv2
 import datetime
 import pause
@@ -35,7 +30,6 @@ import os
 
 # Constants
 WIDTH_COL1 = 150
-sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
 PLAYER_FPS = 10
 try:
     LAST_VIDEO_PATH = CONFIG["LAST PATHS"]["VIDEOS"]
@@ -79,7 +73,10 @@ def create_layout(graph_video, slider_video, traj_folders, traj_files):
         "Step 2: Provide reference points in both pixel and world coordinates",
     )
     input_refpts = sg.In(
-        key="-input_refpts-", size=(WIDTH_COL1, 1), enable_events=True, visible=True,
+        key="-input_refpts-",
+        size=(WIDTH_COL1, 1),
+        enable_events=True,
+        visible=True,
     )
     browse_refpts = sg.FileBrowse(
         "Choose existing reference points",
@@ -122,7 +119,10 @@ def create_layout(graph_video, slider_video, traj_folders, traj_files):
 
     # GUI elements: Exit gui data
     button_back_to_otvision = sg.Button(
-        "", key="-button_back_to_otvision-", image_data=OTC_ICON, border_width=0,
+        "",
+        key="-button_back_to_otvision-",
+        image_data=CONFIG["GUI"]["OTC ICON"],
+        border_width=0,
     )
 
     # All the stuff inside the window
@@ -250,7 +250,7 @@ def update_graph_video(graph_video, frame):
     return imgbytes
 
 
-def main(sg_theme=OTC_THEME):
+def main():
     # Lists
     # traj_paths = []
     traj_folders = []

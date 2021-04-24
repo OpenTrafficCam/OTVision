@@ -19,15 +19,9 @@
 
 
 import PySimpleGUI as sg
+from config import CONFIG
 from gui import convert, detect, track, undistort, transform
-from gui.helpers.sg_otc_theme import (
-    OTC_ICON,
-    OTC_THEME,
-    OTC_FONT,
-    OTC_FONTSIZE,
-)
-
-sg.SetOptions(font=(OTC_FONT, OTC_FONTSIZE))
+from gui.helpers import otc_theme
 
 
 def main():
@@ -116,7 +110,7 @@ def main():
         "OTVision: Home",
         layout,
         element_justification="center",
-        icon=OTC_ICON,
+        icon=CONFIG["GUI"]["OTC ICON"],
         location=(0, 0),
         resizable=True,
         finalize=True,
