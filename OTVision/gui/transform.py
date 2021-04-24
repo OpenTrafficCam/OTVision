@@ -20,7 +20,6 @@
 
 import PySimpleGUI as sg
 from config import CONFIG
-from gui.helpers import browse_folders_and_files
 from gui.helpers import otc_theme
 import cv2
 import datetime
