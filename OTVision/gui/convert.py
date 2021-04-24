@@ -44,7 +44,6 @@ def main(paths=None, debug=True):
         filetypes=".h264",
     )
     print(files)
-    # sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
     layout, frame_folders_files = create_layout(files)

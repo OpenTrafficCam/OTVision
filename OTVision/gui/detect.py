@@ -43,11 +43,10 @@ def main(paths=None, debug=True):
         paths=paths,
         filetypes=CONFIG["FILETYPES"]["VID"],
     )
-    # sg.SetOptions(font=(CONFIG["GUI"]["FONT"], CONFIG["GUI"]["FONTSIZE"]))
 
     # Get initial layout and create initial window
     layout, frame_folders_files = create_layout(files)
-    window = OTSubpackageWindow(title="OTVision: Convert", layout=layout)
+    window = OTSubpackageWindow(title="OTVision: Detect", layout=layout)
     frame_folders_files.listbox_files.expand(expand_x=True)
     window["-progress_detect-"].update_bar(0)
 
