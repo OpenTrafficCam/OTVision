@@ -38,7 +38,7 @@ def main(
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
-    size: int = CONFIG["DETECT"]["YOLO"]["SIZE"],
+    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
 ):  # sourcery skip: merge-dict-assign
@@ -58,14 +58,23 @@ def main(
             chunksize=chunksize,
             normalized=normalized,
         )
-        _save_detections(detections, file)
+        save_detections(detections, file)
 
 
-def _save_detections(detections, file):
-    file = Path(file)
-    filename = file.with_suffix(".otdet")
-    with open(filename, "w") as f:
-        json.dump(detections, f, indent=4)
+def save_detections(
+    detections, infile, overwrite=CONFIG["DETECT"]["YOLO"]["OVERWRITE"]
+):
+    if overwrite or not get_files(infile, CONFIG["FILETYPES"]["DETECT"]):
+        infile_path = Path(infile)
+        outfile = str(infile_path.with_suffix(CONFIG["FILETYPES"]["DETECT"]))
+        with open(outfile, "w") as f:
+            json.dump(detections, f, indent=4)
+        if overwrite:
+            print("Detections file overwritten")
+        else:
+            print("Detections file saved")
+    else:
+        print("Detections file already exists, was not overwritten")
 
 
 if __name__ == "__main__":
