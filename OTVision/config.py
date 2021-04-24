@@ -19,13 +19,14 @@
 
 from pathlib import Path
 import json
+import PySimpleGUI as sg
 from helpers.files import _get_testdatafolder
 
 
-TESTDATAFOLDER = _get_testdatafolder()
-
-
 CONFIG = {}
+
+# TESTDATAFOLDER
+CONFIG["TESTDATAFOLDER"] = _get_testdatafolder()
 
 # FILETYPES
 CONFIG["FILETYPES"] = {}
@@ -40,10 +41,10 @@ CONFIG["FILETYPES"]["VID"] = [
     ".mkv",
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
+CONFIG["FILETYPES"]["DETECT"] = ".otdet"
 
 # LAST PATHS
 CONFIG["LAST PATHS"] = {}
-CONFIG["LAST PATHS"]["FOLDERS"] = [TESTDATAFOLDER]
 CONFIG["LAST PATHS"]["VIDEOS"] = []
 CONFIG["LAST PATHS"]["DETECTIONS"] = []
 CONFIG["LAST PATHS"]["TRACKS"] = []
@@ -66,12 +67,18 @@ CONFIG["CONVERT"]["OVERWRITE"] = True
 CONFIG["DETECT"] = {}
 CONFIG["DETECT"]["YOLO"] = {}
 CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
+CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
+    "yolov5s",
+    "yolov5m",
+    "yolov5l",
+    "yolov5x",
+]
 CONFIG["DETECT"]["YOLO"]["CONF"] = 0.25
 CONFIG["DETECT"]["YOLO"]["IOU"] = 0.45
-CONFIG["DETECT"]["YOLO"]["SIZE"] = 640
+CONFIG["DETECT"]["YOLO"]["IMGSIZE"] = 640
 CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
 CONFIG["DETECT"]["YOLO"]["NORMALIZED"] = False
-CONFIG["DETECT"]["YOLO"]["OVERWRTIE"] = True
+CONFIG["DETECT"]["YOLO"]["OVERWRITE"] = True
 
 # UNDISTORT
 CONFIG["UNDISTORT"] = {}
