@@ -19,8 +19,10 @@
 
 from pathlib import Path
 import shutil
+import os
+import progressbar
 
-from detect.yolo import detect_xwhn
+from detect.yolo import detect
 
 
 def _pngfiles(file):
@@ -29,6 +31,13 @@ def _pngfiles(file):
     pngfiles = dir.glob("obj_train_data/*.png")
 
     return pngfiles
+
+
+def _fileList(file, suffix):
+    file = Path(file)
+    dir = file.with_suffix("")
+    files = dir.glob("*.{}".format(suffix))
+    return [str(file) for file in files]
 
 
 def _unzip(file):
@@ -81,20 +90,30 @@ def _writecvatlabels(file, results):
     pass
 
 
-def pre_annotation(file, chunk_size):
+def _pre_annotation(file, chunk_size):
     files = _unzip(file)
-    xywhn, names = detect_xwhn(files, weights="yolov5x", chunk_size=chunk_size)
+    xywhn, names = detect(
+        files, weights="yolov5x", chunksize=chunk_size, normalized=True
+    )
     _writebbox(file, xywhn)
     _writenames(file, names)
     _zip(file, pngs=False)
+
+
+def check_isfile(file, chunk_size):
+    if os.path.isfile(file):
+        _pre_annotation(file, chunk_size)
+    elif os.path.isdir(file):
+        zipFiles = _fileList(file, "zip")
+        for file in progressbar.progressbar(zipFiles):
+            _pre_annotation(file, chunk_size)
 
 
 if __name__ == "__main__":
     from time import perf_counter
 
     print("Starting")
-    file = r"E:\Downloads\task_mondercange kp3-2021_02_10_12_49_29-yolo 1.1.zip"
-    # file = r"E:\Downloads\task_quercam13_2019-03-26_08-30-00-2021_02_12_14_19_35-yolo 1.1.zip"
+    path = r"C:\Users\MichaelHeilig\Downloads\annotation_data\task_wolfartsweierer straße #9-2021_05_05_14_38_18-yolo 1.1.zip"
     chunk_size = 100
-    pre_annotation(file, chunk_size)
+    check_isfile(path, chunk_size)
     print("Done in {0:0.2f} s".format(perf_counter()))

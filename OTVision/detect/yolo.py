@@ -123,9 +123,12 @@ def detect(
     # 'tolist'
 
     # TODO: #74 Refactor this and detect into a main()
-    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-    vid_config = _get_vidconfig(file, width, height, fps, frames)
-    detections = _convert_detections(yolo_detections, names, vid_config, det_config)
+    if _containsvideo(file_chunks):
+        det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
+        vid_config = _get_vidconfig(file, width, height, fps, frames)
+        detections = _convert_detections(yolo_detections, names, vid_config, det_config)
+    else:
+        detections = [yolo_detections, names]
 
     return detections
 
