@@ -59,7 +59,7 @@ def track(detections, trk_config=config_track_default):
     docstring
     """
 
-    data = track_iou(
+    new_detections, tracks_finished, vehIDs_finished = track_iou(
         detections["data"],
         trk_config["sigma_l"],
         trk_config["sigma_h"],
@@ -72,18 +72,18 @@ def track(detections, trk_config=config_track_default):
     tracks_px["vid_config"] = detections["vid_config"]
     tracks_px["det_config"] = detections["det_config"]
     tracks_px["trk_config"] = trk_config
-    tracks_px["data"] = data
+    tracks_px["data"] = new_detections
 
     return tracks_px
 
 
 # TODO: Implement overwrite as in detect, maybe refactor?
-def write(tracks_px, file, overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"]):
+def write(tracks_px, detfile, overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"]):
     """
     docstring
     """
-    file = Path(file)
-    filename = file.with_suffix(".ottrk")
+    detfile = Path(detfile)
+    filename = detfile.with_suffix(".ottrk")
     with open(filename, "w") as f:
         json.dump(tracks_px, f, indent=4)
 
