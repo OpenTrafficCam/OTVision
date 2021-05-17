@@ -206,19 +206,21 @@ def process_events(window, files, frame_folders_files):
 
     # Set parameters
     elif event == "-button_track-":
+        trk_config = {}
+        trk_config["sigma_l"] = values["-slider_sigma_l-"]
+        trk_config["sigma_h"] = values["-slider_sigma_h-"]
+        trk_config["sigma_iou"] = values["-slider_sigma_iou-"]
+        trk_config["t_min"] = values["-slider_t_min-"]
+        trk_config["save_age"] = values["-slider_t_miss_max-"]
         for i, file in enumerate(files):
+            detections, fir, filename = track.read(file)
             # ?: Which return, "new_detections" or "tracks_finished!?
-            tracks_px = iou.track_iou(
-                file=file,
-                sigma_l=values["-slider_sigma_l-"],
-                sigma_h=values["-slider_sigma_h-"],
-                sigma_iou=values["-slider_sigma_iou-"],
-                t_min=values["-slider_t_min-"],
-                t_miss_max=values["-slider_t_miss_max-"],
+            tracks_px = track.track(
+                detections=detections, trk_config=trk_config
             )
             track.write(
                 tracks_px=tracks_px,
-                infile=file,
+                detfile=file,
                 overwrite=values["-check_overwrite-"],
             )
             window["-progress_track-"].update(current_count=i + 1, max=len(files))
