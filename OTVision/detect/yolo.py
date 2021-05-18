@@ -175,6 +175,7 @@ def _get_det_config(weights, conf, iou, size, chunksize, normalized):
 def _convert_detections(yolo_detections, names, vid_config, det_config):
     data = {}
     for no, yolo_detection in enumerate(yolo_detections):
+        # TODO: #81 Detections: Nested dict instead of dict of lists of dicts
         detection = []
         for yolo_bbox in yolo_detection:
             bbox = {
