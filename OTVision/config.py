@@ -42,6 +42,8 @@ CONFIG["FILETYPES"]["VID"] = [
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 CONFIG["FILETYPES"]["DETECT"] = ".otdet"
+CONFIG["FILETYPES"]["TRACK"] = [".ottrk", ".gpkg"]
+CONFIG["FILETYPES"]["TRANSFORM"] = ".otrfp"
 
 # LAST PATHS
 CONFIG["LAST PATHS"] = {}

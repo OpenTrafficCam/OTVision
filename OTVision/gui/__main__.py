@@ -20,7 +20,7 @@
 
 import PySimpleGUI as sg
 from config import CONFIG
-from gui import convert, detect, track, undistort, transform
+from gui import convert, detect, track, undistort  #, transform
 from gui.helpers import otc_theme
 
 
