@@ -61,7 +61,7 @@ def track_iou(
         detections_frame = detections[frame_num]["classified"]
         # apply low threshold to detections
         dets = [det for det in detections_frame if det["conf"] >= sigma_l]
-        new_detections[frame_num] = {"classified": []}
+        new_detections[frame_num] = {}
         updated_tracks = []
         saved_tracks = []
         for track in tracks_active:
@@ -83,9 +83,9 @@ def track_iou(
 
                     # remove best matching detection from detections
                     del dets[dets.index(best_match)]
-                    best_match["vehID"] = track["vehID"]
+                    # best_match["vehID"] = track["vehID"]
                     best_match["first"] = False
-                    new_detections[frame_num]["classified"].append(best_match)
+                    new_detections[frame_num][track["vehID"]] = best_match
 
             # if track was not updated
             if len(updated_tracks) == 0 or track is not updated_tracks[-1]:
@@ -118,9 +118,9 @@ def track_iou(
                     "age": 0,
                 }
             )
-            det["vehID"] = vehID
+            # det["vehID"] = vehID
             det["first"] = True
-            new_detections[frame_num]["classified"].append(det)
+            new_detections[frame_num][vehID] = det
         tracks_active = updated_tracks + saved_tracks + new_tracks
 
     # finish all remaining active tracks
@@ -135,15 +135,16 @@ def track_iou(
 
     for track in tracks_finished:
         track["max_class"] = pd.Series(track["class"]).mode().iat[0]
-
     detections = new_detections
-    for frame_num in new_detections:
-        for det in new_detections[frame_num]["classified"]:
-            if det["vehID"] not in vehIDs_finished:
+    # TODO: #82 Use dict comprehensions in track_iou
+    for frame_num, frame_det in new_detections.items():
+        for vehID, det in frame_det.items():
+            if vehID not in vehIDs_finished:
                 det["finished"] = False
             else:
                 det["finished"] = True
                 # det["label"] = tracks[tracks["vehID"] == det["vehID"]]["max_label"]
 
     # return tracks_finished
+    # TODO: #83 Remove unnessecary code (e.g. for tracks_finished) from track_iou
     return new_detections, tracks_finished, vehIDs_finished
