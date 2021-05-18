@@ -22,6 +22,8 @@
 import json
 from pathlib import Path
 from datetime import datetime
+import pandas as pd
+import geopandas as gpd
 from config import CONFIG
 from track.iou import track_iou
 from helpers.files import get_files, denormalize
@@ -82,10 +84,31 @@ def write(tracks_px, detfile, overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"]):
     """
     docstring
     """
-    detfile = Path(detfile)
-    filename = detfile.with_suffix(".ottrk")
-    with open(filename, "w") as f:
+
+    # Write to json
+    with open(Path(detfile).with_suffix(".ottrk"), "w") as f:
         json.dump(tracks_px, f, indent=4)
+
+    # Convert to geodataframe and write to gpkg
+    get_geodataframe(tracks_px).to_file(
+        Path(detfile).with_suffix(".otgpkg"), driver="GPKG"
+    )
+
+
+def get_geodataframe(tracks_px):
+    df_trajectories = pd.DataFrame.from_dict(
+        {
+            (frame_nr, det_nr): tracks_px["data"][frame_nr][det_nr]
+            for frame_nr in tracks_px["data"].keys()
+            for det_nr in tracks_px["data"][frame_nr].keys()
+        },
+        orient="index",
+    ).rename_axis(("frame", "ID"))
+    gdf_trajectories = gpd.GeoDataFrame(
+        df_trajectories,
+        geometry=gpd.points_from_xy(df_trajectories.x, df_trajectories.y),
+    )
+    return gdf_trajectories
 
 
 def main(paths, config_track=config_track_default):
