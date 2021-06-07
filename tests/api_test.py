@@ -1,25 +1,21 @@
-# %%
-# Add OTVision to path
 from pathlib import Path
 import sys
 
-otvision_path = str(Path(__file__).parents[1] / "OTVision")
-print(otvision_path)
-sys.path.insert(1, otvision_path)
+try:
+    testsPath = Path(__file__).parent.resolve()
+    otvision_path = testsPath.parent.joinpath("OTVision")
+    sys.path.append(str(otvision_path))
 
-# %%
-# Get test data folder
-from config import CONFIG
+    from config import CONFIG
+    from track import track, iou
+
+except Exception as e:
+    print(str(e))
+    sys.exit("Could not import required OTVision modules")
 
 testdatafolder = CONFIG["TESTDATAFOLDER"]
-testdatafolder
+detections_file = testsPath.joinpath("data/Testvideo_FR20_Cars-Cyclist.otdet")
 
-# %%
-# track
-from track import track, iou
-
-detections_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.otdet")
-# detections_file = r"V:\Stud_Arbeiten\DA_Kollascheck\relevante Videos\Radeberg\raspberrypi_FR20_2020-02-20_12-00-00.otdet"
 detections, dir, filename = track.read(detections_file)
 new_detections, tracks_finished, vehIDs_finished = iou.track_iou(
     detections["data"], t_min=0, sigma_h=0.5
