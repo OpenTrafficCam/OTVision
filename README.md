@@ -14,9 +14,21 @@ We appreciate your support in the form of both code and comments. First, please 
 
 ## Installation
 
+### Windows
 1. Clone this repository
-2. Klick on .\OTVision\Install.bat (a venv will be created and packages from requirements.txt will be installed including PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/))
-3. Klick on .\OTVision\OTVision.bat (venv will be activated and OTVision gui will be started)
+2. Click on .\OTVision\Install.bat (a venv will be created and packages from requirements.txt will be installed including PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/))
+3. To start `OTVision`, click on .\OTVision\OTVision.bat (venv will be activated and OTVision gui will be started)
+
+### Linux
+1. Clone this repository
+2. Open the cloned folder in your terminal and type `./OTVision/install.sh`, which will create a virtual environment in a folder named `venv`.
+3. To start the graphical user interface of OTVision, activate the virtual environment and run `OTVision/gui.py` by typing
+```sh
+    source venv/bin/activate
+    cd OTVision
+    python gui.py
+```
+
 
 ## License
 
