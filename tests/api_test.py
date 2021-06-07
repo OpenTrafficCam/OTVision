@@ -18,7 +18,7 @@ testdatafolder = CONFIG["TESTDATAFOLDER"]
 testdatafilename = "Testvideo_FR20_Cars-Cyclist"
 detections_file = Path(testdatafolder).joinpath(testdatafilename)
 
-detections, dir, filename = track.read(detections_file.with_suffix(".otdet"))
+detections, _, _ = track.read(detections_file.with_suffix(".otdet"))
 new_detections, tracks_finished, vehIDs_finished = iou.track_iou(
     detections["data"], t_min=0, sigma_h=0.5
 )
