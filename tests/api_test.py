@@ -29,9 +29,6 @@ new_detections, tracks_finished, vehIDs_finished = iou.track_iou(
 new_detections = {"data": new_detections}
 track.write(new_detections, Path(detections_file).with_suffix(".ottrk"))
 
-tracks_file = Path(detections_file).with_suffix(".ottrk")
-track.write(new_detections, tracks_file)
-
 tracks_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.ottrk")
 print(tracks_file)
 with open(tracks_file) as f:
