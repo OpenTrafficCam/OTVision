@@ -16,20 +16,22 @@ except Exception as e:
 
 testdatafolder = CONFIG["TESTDATAFOLDER"]
 testdatafilename = "Testvideo_FR20_Cars-Cyclist"
-detections_file = Path(testdatafolder).joinpath(testdatafilename)
 
-detections, _, _ = track.read(detections_file.with_suffix(".otdet"))
-new_detections, tracks_finished, vehIDs_finished = iou.track_iou(
-    detections["data"], t_min=0, sigma_h=0.5
+detections_file_in = (Path(testdatafolder) / testdatafilename).with_suffix(".otdet")
+detections_file_out = (Path(testdatafolder) / testdatafilename).with_suffix(".ottrk")
+
+detections_in, _, _ = track.read(detections_file_in)
+detections_out, tracks_finished, vehIDs_finished = iou.track_iou(
+    detections_in["data"], t_min=0, sigma_h=0.5
 )
 
 # TODO: This should probably be fixed otherwise, such that the output
 #       data of track_iou is harmonized with the input of track.write()
 #       and that wrapping of new_detections into a data field is obsolete
-new_detections = {"data": new_detections}
-track.write(new_detections, Path(detections_file).with_suffix(".ottrk"))
+detections_out = {"data": detections_out}
+track.write(detections_out, detections_file_out)
 
-tracks_file = str(Path(detections_file).with_suffix(".ottrk"))
+tracks_file = str(detections_file_out)
 with open(tracks_file) as f:
     tracks = json.load(f)
     frames = tracks["data"].keys()
