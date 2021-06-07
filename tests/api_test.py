@@ -34,15 +34,3 @@ print(tracks_file)
 with open(tracks_file) as f:
     tracks = json.load(f)
 print(tracks["data"].keys())
-
-# %%
-def get_three_names():
-    name1 = "Alex"
-    name2 = "Betty"
-    name3 = "Caden"
-    return name1, name2, name3
-names = get_three_names()
-print(names)
-print(type(names))
-
-# %%
