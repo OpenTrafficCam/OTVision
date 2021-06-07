@@ -1,5 +1,6 @@
-from pathlib import Path
 import sys
+import json
+from pathlib import Path
 
 try:
     testsPath = Path(__file__).parent.resolve()
@@ -42,9 +43,6 @@ CONFIG["TRACK"]["IOU"]
 # %%
 tracks_file = Path(detections_file).with_suffix(".ottrk")
 track.write(new_detections, tracks_file)
-
-# %%
-import json
 
 tracks_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.ottrk")
 print(tracks_file)
