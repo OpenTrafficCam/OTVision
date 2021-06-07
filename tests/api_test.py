@@ -30,7 +30,8 @@ new_detections = {"data": new_detections}
 track.write(new_detections, Path(detections_file).with_suffix(".ottrk"))
 
 tracks_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.ottrk")
-print(tracks_file)
 with open(tracks_file) as f:
     tracks = json.load(f)
-print(tracks["data"].keys())
+    frames = tracks["data"].keys()
+    print("Successfully read in {} frames with indices: {}"
+          .format(len(frames), ' '.join(frames)))
