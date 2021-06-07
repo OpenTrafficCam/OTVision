@@ -29,7 +29,7 @@ new_detections, tracks_finished, vehIDs_finished = iou.track_iou(
 new_detections = {"data": new_detections}
 track.write(new_detections, Path(detections_file).with_suffix(".ottrk"))
 
-tracks_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.ottrk")
+tracks_file = str(Path(detections_file).with_suffix(".ottrk"))
 with open(tracks_file) as f:
     tracks = json.load(f)
     frames = tracks["data"].keys()
