@@ -45,7 +45,6 @@ track.write(new_detections, tracks_file)
 
 # %%
 import json
-from pathlib import Path
 
 tracks_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.ottrk")
 print(tracks_file)
