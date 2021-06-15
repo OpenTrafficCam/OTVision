@@ -14,3 +14,4 @@ obj_train_data/*
 OTVision/detect/vissim_video.mp4
 OTVision/convert/ffmpeg.exe
 venv/
+.DS_Store
