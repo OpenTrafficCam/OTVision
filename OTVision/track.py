@@ -25,6 +25,4 @@ from config import CONFIG
 
 
 if __name__ == "__main__":
-    track.main(
-        paths=CONFIG["TESTDATAFOLDER"],
-    )
+    track.main()
