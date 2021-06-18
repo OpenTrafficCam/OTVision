@@ -25,6 +25,7 @@ from datetime import datetime
 import logging
 import pandas as pd
 import geopandas as gpd
+from shapely.geometry import LineString, Point
 from config import CONFIG
 from track.iou import track_iou
 from helpers.files import get_files, denormalize
@@ -124,6 +125,27 @@ def get_geodataframe_from_framewise_tracks(tracks_px):
         df_trajectories,
         geometry=gpd.points_from_xy(df_trajectories.x, df_trajectories.y),
     )
+
+    # aggregate these points with the GrouBy
+    # gdf_trajectories = (
+    #     (gdf_trajectories.swaplevel().sort_index())
+    #     .groupby(["ID"])
+    #     .agg(
+    #         {
+    #             "class": pd.Series.mode,
+    #             "conf": "max",
+    #             "geometry": pd.Series.apply(
+    #                 self=gdf_trajectories["geometry"],
+    #                 # BUG: #97 Cannot convert Point to list
+    #                 func=lambda x: LineString(x.tolist()),
+    #             ),
+    #         }
+    #     )  # ["geometry"]
+    #    .size()  # apply(lambda x: LineString(x.tolist()))
+    # )
+    # gdf_trajectories = gpd.GeoDataFrame(gdf_trajectories, geometry="geometry")
+    print(gdf_trajectories)
+
     return gdf_trajectories
 
 
