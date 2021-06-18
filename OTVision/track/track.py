@@ -22,6 +22,7 @@
 import json
 from pathlib import Path
 from datetime import datetime
+import logging
 import pandas as pd
 import geopandas as gpd
 from config import CONFIG
@@ -61,7 +62,7 @@ def track(detections, trk_config=config_track_default):
     docstring
     """
 
-    new_detections, tracks_finished, vehIDs_finished = track_iou(
+    new_detections, trajectories_geojson, vehIDs_finished = track_iou(
         detections["data"],
         trk_config["sigma_l"],
         trk_config["sigma_h"],
@@ -76,26 +77,41 @@ def track(detections, trk_config=config_track_default):
     tracks_px["trk_config"] = trk_config
     tracks_px["data"] = new_detections
 
-    return tracks_px
+    return tracks_px, trajectories_geojson
 
 
 # TODO: Implement overwrite as in detect, maybe refactor?
-def write(tracks_px, detfile, overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"]):
+def write(
+    tracks_px,
+    trajectories_geojson,
+    detfile,
+    overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"],
+):
     """
     docstring
     """
 
-    # Write to json
+    # TODO: #96 Make writing each filetype optional (list of filetypes as parameter)
+    # Write JSON
     with open(Path(detfile).with_suffix(".ottrk"), "w") as f:
         json.dump(tracks_px, f, indent=4)
+    logging.info("JSON written")
 
-    # Convert to geodataframe and write to gpkg
-    get_geodataframe(tracks_px).to_file(
-        Path(detfile).with_suffix(".otgpkg"), driver="GPKG"
+    # Write GeoJSON
+    # TODO: #95 Add metadata to GeoJSON (and GPKG)
+    with open(Path(detfile).with_suffix(".GeoJSON"), "w") as f:
+        json.dump(trajectories_geojson, f, indent=4)
+    logging.info("GeoJSON written")
+
+    # Convert to geodataframe and write GPKG
+    get_geodataframe_from_framewise_tracks(tracks_px).to_file(
+        Path(detfile).with_suffix(".gpkg"), driver="GPKG"
     )
+    logging.info("GPKG written")
 
 
-def get_geodataframe(tracks_px):
+def get_geodataframe_from_framewise_tracks(tracks_px):
+    # TODO: #93 Create LineString GeoDataFrame from Point GeoDataFrame
     df_trajectories = pd.DataFrame.from_dict(
         {
             (frame_nr, det_nr): tracks_px["data"][frame_nr][det_nr]
@@ -111,26 +127,33 @@ def get_geodataframe(tracks_px):
     return gdf_trajectories
 
 
-def main(paths, config_track=config_track_default):
+def get_geodataframe_from_trackwise_tracks(trajectories_px):
+    # TODO: #94 Directly create LineString GeoDataFrame
+    df_trajectories = pd.DataFrame(trajectories_px)
+    df_trajectories = df_trajectories.df.drop(["frames", "bboxes", "conf"], axis=1)
+    # gdf_trajectories = gpd.GeoDataFrame(
+    #     df_trajectories,
+    #     geometry=gpd.points_from_xy(df_trajectories.x, df_trajectories.y),
+    # )
+    return df_trajectories  # gdf_trajectories
+
+
+def main(paths=CONFIG["TESTDATAFOLDER"], config_track=config_track_default):
     """
     docstring
     """
     filetypes = ".otdet"
     detections_files = get_files(paths, filetypes)
     for detections_file in detections_files:
-        print(
-            datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + ": New detections file: "
-            + detections_file
-        )
+        logging.info(f"New detections file: {detections_file}")
         detections, dir, filename = read(detections_file)
-        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections read")
+        logging.info("detections read")
         detections = denormalize(detections)
-        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections denormalize")
-        tracks_px = track(detections)
-        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": detections tracked")
-        write(tracks_px, detections_file)
-        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Tracks written")
+        logging.info("detections denormalized")
+        tracks_px, trajectories_geojson = track(detections)
+        logging.info("detections tracked")
+        write(tracks_px, trajectories_geojson, detections_file)
+        logging.info("Tracking finished")
 
 
 # To Dos:
