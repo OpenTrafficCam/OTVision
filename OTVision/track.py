@@ -21,7 +21,6 @@
 
 # from gui import track
 from track import track
-from config import CONFIG
 
 
 if __name__ == "__main__":
