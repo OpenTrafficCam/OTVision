@@ -27,8 +27,9 @@ if __name__ == "__main__":
         "conf": 0.25,
         "iou": 0.45,
         "size": 640,
-        "chunksize": 0,
+        "chunksize": 5,
         "normalized": False,
     }
-
-    detect.main(test_path, ".mkv", **det_config)
+    # detect.main(test_path, ".mp4", **det_config)
+    detection = detect.Detection(".mp4", **det_config)
+    detection.main(test_path)
