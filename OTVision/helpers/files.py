@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
+import logging
 
 
 def get_files(paths, filetypes):
@@ -86,9 +87,9 @@ def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
         direction = "denormalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
         otdict["det_config"]["normalized"] = False
-        print("Dict denormalized!")
+        logging.info("Dict denormalized!")
     else:
-        print("Dict was not normalized!")
+        logging.info("Dict was not normalized!")
     return otdict
 
 
@@ -97,9 +98,9 @@ def normalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
         direction = "normalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
         otdict["det_config"]["normalized"] = True
-        print("Dict normalized!")
+        logging.info("Dict normalized!")
     else:
-        print("Dict was already normalized!")
+        logging.info("Dict was already normalized!")
     return otdict
 
 

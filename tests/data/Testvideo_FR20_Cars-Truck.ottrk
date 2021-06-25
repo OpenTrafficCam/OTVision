@@ -17,11 +17,13 @@
         "normalized": false
     },
     "trk_config": {
-        "sigma_l": 0.25,
-        "sigma_h": 0.8,
-        "sigma_iou": 0.3,
-        "t_min": 5.0,
-        "save_age": 10.0,
+        "yolo_mode": "spp",
+        "sigma_l": 0.1,
+        "sigma_h": 0.85,
+        "sigma_iou": 0.4,
+        "t_min": 12,
+        "save_age": 5,
+        "overwrite": true,
         "tracker": "IOU"
     },
     "data": {
@@ -1102,7 +1104,7 @@
                 "w": 28.907730102539062,
                 "h": 28.50102996826172,
                 "first": true,
-                "finished": false
+                "finished": true
             }
         },
         "16": {
@@ -1184,7 +1186,7 @@
                 "w": 29.82860565185547,
                 "h": 29.591903686523438,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "17": {
@@ -1266,7 +1268,7 @@
                 "w": 41.21083068847656,
                 "h": 30.11951446533203,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "18": {
@@ -1348,7 +1350,7 @@
                 "w": 49.178794860839844,
                 "h": 30.73236083984375,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "19": {
@@ -1430,7 +1432,7 @@
                 "w": 50.049957275390625,
                 "h": 29.972511291503906,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "20": {
@@ -1512,7 +1514,7 @@
                 "w": 51.70625305175781,
                 "h": 30.039390563964844,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "21": {
@@ -1594,7 +1596,7 @@
                 "w": 54.26329803466797,
                 "h": 30.401229858398438,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "22": {
@@ -1676,7 +1678,7 @@
                 "w": 53.717193603515625,
                 "h": 29.67121124267578,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "23": {
@@ -1758,7 +1760,7 @@
                 "w": 53.843017578125,
                 "h": 29.5574951171875,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "24": {
@@ -1840,7 +1842,7 @@
                 "w": 52.95092010498047,
                 "h": 30.16199493408203,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "25": {
@@ -1922,7 +1924,7 @@
                 "w": 53.08662414550781,
                 "h": 29.235458374023438,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "26": {
@@ -2004,7 +2006,7 @@
                 "w": 52.404685974121094,
                 "h": 29.55028533935547,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "27": {
@@ -2086,7 +2088,7 @@
                 "w": 52.252540588378906,
                 "h": 29.60277557373047,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "28": {
@@ -2168,7 +2170,7 @@
                 "w": 52.29205322265625,
                 "h": 29.445877075195312,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "29": {
@@ -2250,7 +2252,7 @@
                 "w": 54.076438903808594,
                 "h": 29.565353393554688,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "30": {
@@ -2332,7 +2334,7 @@
                 "w": 52.09111785888672,
                 "h": 29.856124877929688,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "31": {
@@ -2414,7 +2416,7 @@
                 "w": 49.009422302246094,
                 "h": 30.407943725585938,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "32": {
@@ -2496,7 +2498,7 @@
                 "w": 43.81963348388672,
                 "h": 29.484291076660156,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "33": {
@@ -2578,7 +2580,7 @@
                 "w": 43.68659973144531,
                 "h": 29.291091918945312,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "34": {
@@ -2660,7 +2662,7 @@
                 "w": 46.26056671142578,
                 "h": 28.647003173828125,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "35": {
@@ -2742,7 +2744,7 @@
                 "w": 41.16209411621094,
                 "h": 27.39629364013672,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "36": {
@@ -2824,7 +2826,7 @@
                 "w": 31.538963317871094,
                 "h": 27.615570068359375,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "37": {
@@ -2906,7 +2908,7 @@
                 "w": 30.883750915527344,
                 "h": 27.085494995117188,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "38": {
@@ -2988,7 +2990,7 @@
                 "w": 26.978744506835938,
                 "h": 26.92967987060547,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "39": {
@@ -3070,7 +3072,7 @@
                 "w": 26.26165771484375,
                 "h": 26.781829833984375,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "40": {
@@ -3152,7 +3154,7 @@
                 "w": 22.157577514648438,
                 "h": 27.347389221191406,
                 "first": false,
-                "finished": false
+                "finished": true
             },
             "9": {
                 "class": "car",
@@ -3244,7 +3246,7 @@
                 "w": 42.49906539916992,
                 "h": 31.745132446289062,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "42": {
@@ -3326,7 +3328,7 @@
                 "w": 40.00779342651367,
                 "h": 33.236045837402344,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "43": {
@@ -3408,7 +3410,7 @@
                 "w": 38.26420974731445,
                 "h": 33.6641845703125,
                 "first": false,
-                "finished": false
+                "finished": true
             }
         },
         "44": {
@@ -3554,14 +3556,14 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.3253752887248993,
                 "x": 54.759742736816406,
                 "y": 90.25144958496094,
                 "w": 54.469024658203125,
                 "h": 41.153053283691406,
-                "first": false,
+                "first": true,
                 "finished": false
             }
         },
@@ -3636,7 +3638,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.3907177150249481,
                 "x": 54.37712097167969,
@@ -3708,7 +3710,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.42778876423835754,
                 "x": 53.67662048339844,
@@ -3780,7 +3782,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.5220019817352295,
                 "x": 50.85730743408203,
@@ -3852,7 +3854,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.5457276105880737,
                 "x": 50.58591842651367,
@@ -3934,7 +3936,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.5761305093765259,
                 "x": 48.43986129760742,
@@ -4006,7 +4008,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.5492766499519348,
                 "x": 48.47901153564453,
@@ -4078,7 +4080,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.5680987238883972,
                 "x": 46.210601806640625,
@@ -4140,7 +4142,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.5965224504470825,
                 "x": 44.5286750793457,
@@ -4202,7 +4204,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6385077834129333,
                 "x": 43.16050338745117,
@@ -4264,7 +4266,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6378597021102905,
                 "x": 41.72475814819336,
@@ -4326,7 +4328,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6433433294296265,
                 "x": 41.299495697021484,
@@ -4388,7 +4390,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6314356327056885,
                 "x": 40.95968246459961,
@@ -4450,7 +4452,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6194378137588501,
                 "x": 40.833168029785156,
@@ -4512,7 +4514,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6181054711341858,
                 "x": 39.96539306640625,
@@ -4574,7 +4576,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "10": {
                 "class": "car",
                 "conf": 0.6195297837257385,
                 "x": 41.0719108581543,

@@ -8,22 +8,10 @@ print(otvision_path)
 sys.path.insert(1, otvision_path)
 
 # %%
-# Get test data folder
-from config import CONFIG
-
-testdatafolder = CONFIG["TESTDATAFOLDER"]
-testdatafolder
-
-# %%
 # track
-from track import track, iou
+from track import track
 
-detections_file = str(Path(testdatafolder) / "Testvideo_FR20_Cars-Cyclist.otdet")
-# detections_file = r"V:\Stud_Arbeiten\DA_Kollascheck\relevante Videos\Radeberg\raspberrypi_FR20_2020-02-20_12-00-00.otdet"
-detections, dir, filename = track.read(detections_file)
-new_detections, tracks_finished, vehIDs_finished = iou.track_iou(
-    detections["data"], t_min=0, sigma_h=0.5
-)
+track.main()
 
 # %%
 track.write(new_detections, Path(detections_file).with_suffix(".ottrk"))

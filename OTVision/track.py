@@ -21,14 +21,7 @@
 
 # from gui import track
 from track import track
-from pathlib import Path
 
 
 if __name__ == "__main__":
-    test_path = Path(__file__).parents[1] / "tests" / "data"
-    test_path = str(test_path)
-
-    track.main(
-        test_path,
-        track.config_track_default,
-    )
+    track.main()

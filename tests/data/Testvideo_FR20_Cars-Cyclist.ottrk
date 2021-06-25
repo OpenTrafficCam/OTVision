@@ -17,11 +17,13 @@
         "normalized": false
     },
     "trk_config": {
-        "sigma_l": 0.25,
-        "sigma_h": 0.8,
-        "sigma_iou": 0.3,
-        "t_min": 5.0,
-        "save_age": 10.0,
+        "yolo_mode": "spp",
+        "sigma_l": 0.1,
+        "sigma_h": 0.85,
+        "sigma_iou": 0.4,
+        "t_min": 12,
+        "save_age": 5,
+        "overwrite": true,
         "tracker": "IOU"
     },
     "data": {
@@ -394,14 +396,14 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.29509085416793823,
                 "x": 155.97274780273438,
                 "y": 181.08197021484375,
                 "w": 24.512374877929688,
                 "h": 44.15531921386719,
-                "first": false,
+                "first": true,
                 "finished": false
             }
         },
@@ -466,7 +468,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.31857430934906006,
                 "x": 157.42440795898438,
@@ -538,7 +540,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.2978553771972656,
                 "x": 159.06777954101562,
@@ -620,7 +622,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.30990278720855713,
                 "x": 159.43983459472656,
@@ -702,7 +704,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.3955325484275818,
                 "x": 164.83602905273438,
@@ -784,7 +786,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.3878675103187561,
                 "x": 166.28939819335938,
@@ -804,7 +806,7 @@
                 "first": false,
                 "finished": false
             },
-            "9": {
+            "10": {
                 "class": "motorcycle",
                 "conf": 0.29802536964416504,
                 "x": 164.12925720214844,
@@ -876,7 +878,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.3624562621116638,
                 "x": 169.13558959960938,
@@ -958,7 +960,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.520770251750946,
                 "x": 172.320068359375,
@@ -1040,7 +1042,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.48439496755599976,
                 "x": 175.03909301757812,
@@ -1122,7 +1124,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.4215664565563202,
                 "x": 177.28036499023438,
@@ -1204,7 +1206,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.26835331320762634,
                 "x": 179.6416015625,
@@ -1286,7 +1288,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5395097136497498,
                 "x": 184.33767700195312,
@@ -1368,7 +1370,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5368698835372925,
                 "x": 186.436767578125,
@@ -1450,7 +1452,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.4759137034416199,
                 "x": 189.24119567871094,
@@ -1532,7 +1534,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.4342897832393646,
                 "x": 192.54953002929688,
@@ -1552,7 +1554,7 @@
                 "first": false,
                 "finished": false
             },
-            "10": {
+            "11": {
                 "class": "motorcycle",
                 "conf": 0.29142072796821594,
                 "x": 190.93666076660156,
@@ -1624,7 +1626,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.44585663080215454,
                 "x": 194.95713806152344,
@@ -1644,7 +1646,7 @@
                 "first": false,
                 "finished": false
             },
-            "10": {
+            "11": {
                 "class": "motorcycle",
                 "conf": 0.41148048639297485,
                 "x": 194.6373291015625,
@@ -1706,7 +1708,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "motorcycle",
                 "conf": 0.4470002353191376,
                 "x": 197.71546936035156,
@@ -1726,7 +1728,7 @@
                 "first": false,
                 "finished": false
             },
-            "10": {
+            "11": {
                 "class": "bicycle",
                 "conf": 0.4496705234050751,
                 "x": 198.111572265625,
@@ -1788,7 +1790,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.38786351680755615,
                 "x": 201.94219970703125,
@@ -1850,7 +1852,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5643102526664734,
                 "x": 208.21353149414062,
@@ -1932,7 +1934,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5224539041519165,
                 "x": 211.81884765625,
@@ -2014,7 +2016,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.4712733328342438,
                 "x": 215.0263214111328,
@@ -2034,7 +2036,7 @@
                 "first": false,
                 "finished": false
             },
-            "11": {
+            "12": {
                 "class": "motorcycle",
                 "conf": 0.3910282552242279,
                 "x": 215.8101806640625,
@@ -2096,7 +2098,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5744143128395081,
                 "x": 219.05487060546875,
@@ -2168,7 +2170,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5996803045272827,
                 "x": 223.78045654296875,
@@ -2240,7 +2242,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5678583383560181,
                 "x": 227.77633666992188,
@@ -2302,7 +2304,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.4194895923137665,
                 "x": 232.87234497070312,
@@ -2322,14 +2324,14 @@
                 "first": false,
                 "finished": false
             },
-            "11": {
+            "13": {
                 "class": "motorcycle",
                 "conf": 0.28834185004234314,
                 "x": 232.6763153076172,
                 "y": 226.65695190429688,
                 "w": 42.6177978515625,
                 "h": 73.345458984375,
-                "first": false,
+                "first": true,
                 "finished": false
             }
         },
@@ -2384,23 +2386,13 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.4049641489982605,
                 "x": 237.1690673828125,
                 "y": 234.07638549804688,
                 "w": 43.36395263671875,
                 "h": 67.61933898925781,
-                "first": false,
-                "finished": false
-            },
-            "11": {
-                "class": "motorcycle",
-                "conf": 0.3866276741027832,
-                "x": 238.17491149902344,
-                "y": 235.5906982421875,
-                "w": 44.532684326171875,
-                "h": 64.55401611328125,
                 "first": false,
                 "finished": false
             },
@@ -2411,6 +2403,16 @@
                 "y": 81.1721420288086,
                 "w": 88.95767211914062,
                 "h": 37.97178649902344,
+                "first": false,
+                "finished": false
+            },
+            "13": {
+                "class": "motorcycle",
+                "conf": 0.3866276741027832,
+                "x": 238.17491149902344,
+                "y": 235.5906982421875,
+                "w": 44.532684326171875,
+                "h": 64.55401611328125,
                 "first": false,
                 "finished": false
             }
@@ -2466,7 +2468,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.6295816898345947,
                 "x": 242.59933471679688,
@@ -2548,7 +2550,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7126967310905457,
                 "x": 248.60052490234375,
@@ -2630,7 +2632,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.746734619140625,
                 "x": 254.71923828125,
@@ -2702,7 +2704,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7220909595489502,
                 "x": 260.3101501464844,
@@ -2774,7 +2776,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.5714341402053833,
                 "x": 266.1925048828125,
@@ -2794,7 +2796,7 @@
                 "first": false,
                 "finished": false
             },
-            "12": {
+            "14": {
                 "class": "person",
                 "conf": 0.2984277307987213,
                 "x": 265.4491882324219,
@@ -2856,7 +2858,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "person",
                 "conf": 0.265679270029068,
                 "x": 271.8173828125,
@@ -2876,7 +2878,7 @@
                 "first": false,
                 "finished": false
             },
-            "12": {
+            "14": {
                 "class": "bicycle",
                 "conf": 0.4725928008556366,
                 "x": 273.13458251953125,
@@ -2886,7 +2888,7 @@
                 "first": false,
                 "finished": false
             },
-            "13": {
+            "15": {
                 "class": "motorcycle",
                 "conf": 0.5012860298156738,
                 "x": 273.89898681640625,
@@ -2948,7 +2950,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "motorcycle",
                 "conf": 0.41141703724861145,
                 "x": 279.31793212890625,
@@ -2968,7 +2970,7 @@
                 "first": false,
                 "finished": false
             },
-            "12": {
+            "14": {
                 "class": "bicycle",
                 "conf": 0.6210276484489441,
                 "x": 279.40728759765625,
@@ -3030,7 +3032,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.6136298179626465,
                 "x": 286.6832580566406,
@@ -3112,7 +3114,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7040880918502808,
                 "x": 294.215087890625,
@@ -3194,7 +3196,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "motorcycle",
                 "conf": 0.35306960344314575,
                 "x": 300.17889404296875,
@@ -3214,7 +3216,7 @@
                 "first": false,
                 "finished": false
             },
-            "14": {
+            "16": {
                 "class": "bicycle",
                 "conf": 0.49414190649986267,
                 "x": 300.85443115234375,
@@ -3276,7 +3278,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7367845177650452,
                 "x": 310.0129089355469,
@@ -3348,7 +3350,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7004225254058838,
                 "x": 316.9661865234375,
@@ -3430,7 +3432,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7268257141113281,
                 "x": 325.05419921875,
@@ -3512,7 +3514,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7589212656021118,
                 "x": 333.47589111328125,
@@ -3584,7 +3586,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7618998885154724,
                 "x": 343.9066162109375,
@@ -3656,7 +3658,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.754841685295105,
                 "x": 353.03106689453125,
@@ -3728,7 +3730,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7938859462738037,
                 "x": 366.1656494140625,
@@ -3758,7 +3760,7 @@
                 "first": false,
                 "finished": false
             },
-            "15": {
+            "17": {
                 "class": "person",
                 "conf": 0.32401639223098755,
                 "x": 365.64971923828125,
@@ -3820,7 +3822,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "motorcycle",
                 "conf": 0.2814118564128876,
                 "x": 377.9337158203125,
@@ -3840,7 +3842,7 @@
                 "first": false,
                 "finished": false
             },
-            "15": {
+            "17": {
                 "class": "person",
                 "conf": 0.33063095808029175,
                 "x": 379.17962646484375,
@@ -3850,7 +3852,7 @@
                 "first": false,
                 "finished": false
             },
-            "16": {
+            "18": {
                 "class": "bicycle",
                 "conf": 0.7520068883895874,
                 "x": 379.45343017578125,
@@ -3912,7 +3914,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.8385322690010071,
                 "x": 393.75164794921875,
@@ -3984,7 +3986,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.78407222032547,
                 "x": 407.85394287109375,
@@ -4056,7 +4058,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.8163087964057922,
                 "x": 424.0255432128906,
@@ -4128,7 +4130,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7489938735961914,
                 "x": 441.56195068359375,
@@ -4200,7 +4202,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7963370084762573,
                 "x": 458.56707763671875,
@@ -4272,7 +4274,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7343096137046814,
                 "x": 478.85748291015625,
@@ -4344,7 +4346,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "person",
                 "conf": 0.3281325697898865,
                 "x": 500.86041259765625,
@@ -4364,7 +4366,7 @@
                 "first": false,
                 "finished": false
             },
-            "17": {
+            "19": {
                 "class": "bicycle",
                 "conf": 0.7197623252868652,
                 "x": 501.2770080566406,
@@ -4426,7 +4428,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "person",
                 "conf": 0.30110758543014526,
                 "x": 524.0716552734375,
@@ -4446,17 +4448,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
-                "class": "truck",
-                "conf": 0.25401362776756287,
-                "x": 421.7337646484375,
-                "y": 81.09010314941406,
-                "w": 90.58013916015625,
-                "h": 37.64337921142578,
-                "first": false,
-                "finished": false
-            },
-            "17": {
+            "19": {
                 "class": "bicycle",
                 "conf": 0.713077962398529,
                 "x": 524.490478515625,
@@ -4466,7 +4458,7 @@
                 "first": false,
                 "finished": false
             },
-            "18": {
+            "20": {
                 "class": "motorcycle",
                 "conf": 0.38184717297554016,
                 "x": 523.6358642578125,
@@ -4476,13 +4468,23 @@
                 "first": true,
                 "finished": false
             },
-            "19": {
+            "21": {
                 "class": "backpack",
                 "conf": 0.28126198053359985,
                 "x": 501.41558837890625,
                 "y": 318.696533203125,
                 "w": 36.861663818359375,
                 "h": 37.321868896484375,
+                "first": true,
+                "finished": false
+            },
+            "22": {
+                "class": "truck",
+                "conf": 0.25401362776756287,
+                "x": 421.7337646484375,
+                "y": 81.09010314941406,
+                "w": 90.58013916015625,
+                "h": 37.64337921142578,
                 "first": true,
                 "finished": false
             }
@@ -4538,7 +4540,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "motorcycle",
                 "conf": 0.3162449300289154,
                 "x": 544.0677490234375,
@@ -4558,17 +4560,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
-                "class": "truck",
-                "conf": 0.2598673701286316,
-                "x": 421.89617919921875,
-                "y": 81.06423950195312,
-                "w": 90.14083862304688,
-                "h": 37.702598571777344,
-                "first": false,
-                "finished": false
-            },
-            "17": {
+            "19": {
                 "class": "bicycle",
                 "conf": 0.6542744040489197,
                 "x": 547.333251953125,
@@ -4578,7 +4570,17 @@
                 "first": false,
                 "finished": false
             },
-            "20": {
+            "22": {
+                "class": "truck",
+                "conf": 0.2598673701286316,
+                "x": 421.89617919921875,
+                "y": 81.06423950195312,
+                "w": 90.14083862304688,
+                "h": 37.702598571777344,
+                "first": false,
+                "finished": false
+            },
+            "23": {
                 "class": "backpack",
                 "conf": 0.4186480939388275,
                 "x": 527.6422119140625,
@@ -4640,7 +4642,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.747340977191925,
                 "x": 573.0286865234375,
@@ -4660,7 +4662,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "22": {
                 "class": "truck",
                 "conf": 0.2652682363986969,
                 "x": 421.8074951171875,
@@ -4722,7 +4724,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.8139462471008301,
                 "x": 603.1159057617188,
@@ -4732,7 +4734,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "22": {
                 "class": "truck",
                 "conf": 0.2647644579410553,
                 "x": 421.77880859375,
@@ -4742,7 +4744,7 @@
                 "first": false,
                 "finished": false
             },
-            "21": {
+            "24": {
                 "class": "backpack",
                 "conf": 0.4142830967903137,
                 "x": 584.117431640625,
@@ -4774,16 +4776,6 @@
                 "first": false,
                 "finished": false
             },
-            "3": {
-                "class": "person",
-                "conf": 0.622170090675354,
-                "x": 640.1907348632812,
-                "y": 394.8218994140625,
-                "w": 85.6856689453125,
-                "h": 117.14126586914062,
-                "first": false,
-                "finished": false
-            },
             "6": {
                 "class": "car",
                 "conf": 0.44320306181907654,
@@ -4804,7 +4796,7 @@
                 "first": false,
                 "finished": false
             },
-            "5": {
+            "9": {
                 "class": "bicycle",
                 "conf": 0.7716273665428162,
                 "x": 635.788818359375,
@@ -4814,7 +4806,7 @@
                 "first": false,
                 "finished": false
             },
-            "8": {
+            "22": {
                 "class": "truck",
                 "conf": 0.26219162344932556,
                 "x": 421.717041015625,
@@ -4834,7 +4826,17 @@
                 "first": false,
                 "finished": false
             },
-            "22": {
+            "25": {
+                "class": "person",
+                "conf": 0.622170090675354,
+                "x": 640.1907348632812,
+                "y": 394.8218994140625,
+                "w": 85.6856689453125,
+                "h": 117.14126586914062,
+                "first": true,
+                "finished": false
+            },
+            "26": {
                 "class": "backpack",
                 "conf": 0.28459444642066956,
                 "x": 614.5323486328125,

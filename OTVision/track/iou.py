@@ -52,7 +52,8 @@ def track_iou(
     """
 
     tracks_active = []
-    tracks_finished = []
+    # tracks_finished = []
+    tracks_geojson = {"type": "FeatureCollection", "features": []}
     vehID = 0
     vehIDs_finished = []
     new_detections = {}
@@ -97,8 +98,22 @@ def track_iou(
                     track["max_conf"] >= sigma_h
                     and track["frames"][-1] - track["frames"][0] >= t_min
                 ):
-                    tracks_finished.append(track)
+                    # tracks_finished.append(track)
                     vehIDs_finished.append(track["vehID"])
+                    tracks_geojson["features"].append(
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": track["center"],
+                            },
+                            "properties": {
+                                "max_conf": track["max_conf"],
+                                "ID": track["vehID"],
+                                "start_frame": track["frames"][0],
+                            },
+                        }
+                    )
         # TODO: Alter der Tracks
         # create new tracks
         new_tracks = []
@@ -124,8 +139,27 @@ def track_iou(
         tracks_active = updated_tracks + saved_tracks + new_tracks
 
     # finish all remaining active tracks
-    tracks_finished += [
-        track
+    # tracks_finished += [
+    #     track
+    #     for track in tracks_active
+    #     if (
+    #         track["max_conf"] >= sigma_h
+    #         and track["frames"][-1] - track["frames"][0] >= t_min
+    #     )
+    # ]
+    tracks_geojson["features"] += [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": track["center"],
+            },
+            "properties": {
+                "max_conf": track["max_conf"],
+                "ID": track["vehID"],
+                "start_frame": track["frames"][0],
+            },
+        }
         for track in tracks_active
         if (
             track["max_conf"] >= sigma_h
@@ -133,8 +167,12 @@ def track_iou(
         )
     ]
 
-    for track in tracks_finished:
-        track["max_class"] = pd.Series(track["class"]).mode().iat[0]
+    # for track in tracks_finished:
+    #     track["max_class"] = pd.Series(track["class"]).mode().iat[0]
+    for track_geojson in tracks_geojson["features"]:
+        track_geojson["properties"]["max_class"] = (
+            pd.Series(track["class"]).mode().iat[0]
+        )
     detections = new_detections
     # TODO: #82 Use dict comprehensions in track_iou
     for frame_num, frame_det in new_detections.items():
@@ -147,4 +185,8 @@ def track_iou(
 
     # return tracks_finished
     # TODO: #83 Remove unnessecary code (e.g. for tracks_finished) from track_iou
-    return new_detections, tracks_finished, vehIDs_finished
+    return (
+        new_detections,
+        tracks_geojson,
+        vehIDs_finished,
+    )
