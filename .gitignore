@@ -1,20 +1,9 @@
 # OTVision
-.vscode/.ropeproject/config.py
-.vscode/.ropeproject/objectdb
 OTVision/user.conf
-OTVision/track/__pycache__
-OTVision/transform_to_world/__pycache__
-OTVision/gui/__pycache__
-OTVision/helpers/__pycache__
-*/__pycache__
-geckodriver.log
-*.pyc
-.vscode/launch.json
 yolov5*.pt
 obj_train_data/*
-OTVision/detect/vissim_video.mp4
-OTVision/convert/ffmpeg.exe
-venv/
+*.mp4
+*/ffmpeg.exe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -164,7 +153,6 @@ out/
 local.properties
 
 # OS generated files #
-.DS_Store
 .DS_Store?
 ehthumbs.db
 Icon?
