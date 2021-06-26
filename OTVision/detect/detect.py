@@ -71,7 +71,7 @@ class Detection:
         if _isVideo(pathToVideo):
             cap = VideoCapture(pathToVideo)
             batch_no = 0
-
+            #TODO while gotframe
             while True:
                 gotFrame, imgBatch = self._getBatchOfFrames(cap)
                 t_start = perf_counter()
@@ -110,7 +110,6 @@ class Detection:
             height = cap.get(4)  # float
             fps = cap.get(CAP_PROP_FPS)  # float
             frames = cap.get(7)  # floa
-            width = cap.get
         # TODO: inference file chunks that are not in video format
 
         t2 = perf_counter()
