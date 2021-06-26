@@ -30,6 +30,4 @@ if __name__ == "__main__":
         "chunksize": 5,
         "normalized": False,
     }
-    # detect.main(test_path, ".mp4", **det_config)
-    detection = detect.Detection(".mp4", **det_config)
-    detection.main(test_path)
+    detect.main(test_path, ".mp4", **det_config)
