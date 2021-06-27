@@ -3,7 +3,7 @@ OTVision/user.conf
 yolov5*.pt
 obj_train_data/*
 *.mp4
-*/ffmpeg.exe
+*ffmpeg.exe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
