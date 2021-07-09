@@ -32,9 +32,14 @@ from detect import yolo
 #     files = get_files(paths, filetypes)
 #     multiple_videos(files, **det_config)
 
+
 def main(
     files,
-    filetype: str = ".mp4",
+    # should default be CONFIG["FILETYPES"]["VID"]?
+    #  allowing only one filetype or multiple? e.g. different video formats
+    # TODO: Specify what filetypes are allowed, e.g. img and videos
+    # filetype: str = ".mp4",
+    filetypes: list = CONFIG["FILETYPES"]["VID"],
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
@@ -48,17 +53,58 @@ def main(
 
     model = yolo.loadmodel(weights, conf, iou)
 
-    filePaths = get_files(paths=files, filetypes=CONFIG["FILETYPES"]["VID"])
+    file_paths = get_files(paths=files, filetypes=filetypes)
 
-    for path in filePaths:
-        detections = yolo.detectInBatches(
-            pathToFile=path,
+    # split file paths to two groups -> videos | images
+    # only when accepting multiple filetypes
+    video_paths, frame_paths = _extract_video_paths(file_paths)
+
+    frame_chunks = _create_chunks(frame_paths, chunksize)
+
+    for path in video_paths:
+        detections_videos = yolo.detect_video(
+            file_path=path,
             model=model,
+            weights=weights,
+            conf=conf,
+            iou=iou,
             size=size,
             chunksize=chunksize,
-            normalized=normalized
+            normalized=normalized,
         )
-        save_detections(detections, path)
+        save_detections(detections_videos, path)
+
+    detections_chunks = yolo.detect_chunks(
+        file_chunks=frame_chunks,
+        model=model,
+        weights=weights,
+        conf=conf,
+        iou=iou,
+        size=size,
+        chunksize=chunksize,
+        normalized=normalized,
+    )
+
+    # save_detections(detections_chunks, files)
+
+
+def _extract_video_paths(file_paths):
+    video_paths, other_paths = [], []
+
+    for path in file_paths:
+        if yolo.is_video(path):
+            video_paths.append(path)
+        else:
+            other_paths.append(path)
+    return video_paths, other_paths
+
+
+def _create_chunks(file_paths, chunksize):
+    if chunksize == 0:
+        return file_paths
+    else:
+        chunk_starts = range(0, len(file_paths), chunksize)
+        return [file_paths[i : i + chunksize] for i in chunk_starts]
 
 
 def save_detections(

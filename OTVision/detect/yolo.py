@@ -133,6 +133,182 @@ def detect(
     return detections
 
 
+class NoVideoException(Exception):
+    pass
+
+
+class VideoFoundException(Exception):
+    pass
+
+
+def detect_video(
+    file_path,
+    model=None,
+    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
+    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
+    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
+    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
+    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
+    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+):
+    if model is None:
+        model = loadmodel(weights, conf, iou)
+
+    yolo_detections = []
+    t1 = perf_counter()
+
+    if not is_video(file_path):
+        raise NoVideoException("The file: {} is not a video!".format(file_path))
+
+    cap = VideoCapture(file_path)
+    batch_no = 0
+    # TODO while gotframe
+    # what happens when gotframe false -> while loop never executed when while got_frame:
+    # we are working in batches
+    while True:
+        got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
+        t_start = perf_counter()
+
+        # What purpose does this transformation have
+        transformedBatch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
+
+        if not img_batch:
+            break
+
+        t_trans = perf_counter()
+
+        results = model(transformedBatch, size)
+
+        t_det = perf_counter()
+
+        _add_detection_results(yolo_detections, results, normalized)
+
+        t_list = perf_counter()
+        t_batch = perf_counter()
+
+        _print_batch_performances_stats(
+            batch_no, t_start, t_trans, t_det, t_list, t_batch
+        )
+        batch_no += 1
+
+        width = cap.get(3)  # float
+        height = cap.get(4)  # float
+        fps = cap.get(CAP_PROP_FPS)  # float
+        frames = cap.get(7)  # float
+
+        if not got_frame:
+            break
+
+    t2 = perf_counter()
+    duration = t2 - t1
+    det_fps = len(yolo_detections) / duration
+    _print_overall_performance_stats(duration, det_fps)
+
+    names = results.names
+
+    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
+    vid_config = _get_vidconfig(file_path, width, height, fps, frames)
+    detections = _convert_detections(yolo_detections, names, vid_config, det_config)
+
+    """     if is_video(path_to_file):
+            det_config = _get_det_config(
+                weights, conf, iou, size, chunksize, normalized
+            )
+            vid_config = _get_vidconfig(path_to_file, width, height, fps, frames)
+            detections = _convert_detections(
+                yolo_detections, names, vid_config, det_config
+            )
+        else:
+            detections = [yolo_detections, names] """
+
+    return detections
+
+
+def detect_chunks(
+    file_chunks,
+    model=None,
+    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
+    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
+    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
+    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
+    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],  # TODO: not needed
+    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+):
+    yolo_detections = []
+
+    if not file_chunks:
+        return yolo_detections
+
+    if model is None:
+        model = loadmodel(weights, conf, iou)
+
+    t1 = perf_counter()
+
+    if _containsvideo(file_chunks):
+        raise VideoFoundException(
+            "List of paths given to detect_chunks function shouldn't contain any videos"
+        )
+    for chunk in file_chunks:
+        results = model(chunk, size=size)
+        _add_detection_results(yolo_detections, results, normalized)
+
+    t2 = perf_counter()
+    duration = t2 - t1
+    det_fps = len(yolo_detections) / duration
+    _print_overall_performance_stats(duration, det_fps)
+
+    names = results.names
+
+    detections = [yolo_detections, names]
+    return detections
+
+
+# TODO: Where should this class be? Helper class?
+def is_video(pathToVideo):
+    video_formats = CONFIG["FILETYPES"]["VID"]
+    videoFile = Path(pathToVideo)
+
+    if videoFile.suffix in video_formats:
+        return True
+    else:
+        return False
+
+
+def _get_batch_of_frames(cap, batchSize):
+    batch = []
+    for frame in range(0, batchSize):
+        gotFrame, img = cap.read()
+        if gotFrame:
+            batch.append(img)
+        else:
+            break
+    return gotFrame, batch
+
+
+def _print_overall_performance_stats(duration, det_fps):
+    print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
+
+
+def _print_batch_performances_stats(batch_no, t_start, t_trans, t_det, t_list, t_batch):
+    print(
+        "batch_no: {0:0.4f}, trans: {1:0.4f}, det: {2:0.4f}, list: {3:0.4f}, batch: {4:0.4f}, fps:{5:0.1f}".format(
+            batch_no,
+            t_trans - t_start,
+            t_det - t_start,
+            t_list - t_det,
+            t_batch - t_list,
+            1 / (t_batch - t_start),
+        )
+    )
+
+
+def _add_detection_results(detections, results, normalized):
+    if normalized:
+        detections.extend([i.tolist() for i in results.xywhn])
+    else:
+        detections.extend([i.tolist() for i in results.xywh])
+
+
 def loadmodel(weights, conf, iou):
     t1 = perf_counter()
 
@@ -204,6 +380,9 @@ def _createchunks(chunksize, files):
 
 
 def _containsvideo(file_chunks):
+    if len(file_chunks) == 0:
+        return False
+
     if type(file_chunks[0]) is str:
         file = Path(file_chunks[0])
         vid_formats = [
@@ -244,123 +423,6 @@ def detect_df(
 
         # df["class"][""]
         # df.loc[123,"video.mp4", 543, 4), "class"]
-
-
-def detectInBatches(
-    pathToFile,
-    model=None,
-    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
-    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
-    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
-    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
-    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
-    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-):
-    if model is None:
-        model = loadmodel(weights, conf, iou)
-
-    yolo_detections = []
-    t1 = perf_counter()
-
-    if _isVideo(pathToFile):
-        cap = VideoCapture(pathToFile)
-        batch_no = 0
-        # TODO while gotframe
-        while True:
-            gotFrame, imgBatch = _getBatchOfFrames(cap, chunksize)
-            t_start = perf_counter()
-
-            # What purpose does this transformation have
-            transformedBatch = list(map(lambda frame: frame[:, :, ::-1], imgBatch))
-
-            if len(imgBatch) == 0:
-                break
-
-            t_trans = perf_counter()
-
-            results = model(transformedBatch, size)
-
-            t_det = perf_counter()
-
-            if normalized:
-                yolo_detections.extend([i.tolist() for i in results.xywhn])
-            else:
-                yolo_detections.extend([i.tolist() for i in results.xywh])
-
-            t_list = perf_counter()
-            t_batch = perf_counter()
-
-            _printBatchPerformanceStats(batch_no, t_start, t_trans, t_det,
-                                        t_list, t_batch)
-            batch_no += 1
-
-            if not gotFrame:
-                break
-
-            width = cap.get(3)  # float
-            height = cap.get(4)  # float
-            fps = cap.get(CAP_PROP_FPS)  # float
-            frames = cap.get(7)  # floa
-        # TODO: inference file chunks that are not in video format
-
-        t2 = perf_counter()
-        duration = t2 - t1
-        det_fps = len(yolo_detections) / duration
-        _printOverallPerformanceStats(duration, det_fps)
-
-        names = results.names
-
-        if _isVideo(pathToFile):
-            # TODO: accessing private methods!
-            det_config = _get_det_config(weights, conf, iou, size, chunksize,
-                                         normalized)
-            vid_config = _get_vidconfig(pathToFile, width, height, fps, frames)
-            detections = _convert_detections(yolo_detections, names, vid_config,
-                                             det_config)
-        else:
-            detections = [yolo_detections, names]
-
-        return detections
-
-
-def _isVideo(pathToVideo):
-    video_formats = CONFIG["FILETYPES"]["VID"]
-    videoFile = Path(pathToVideo)
-
-    for format in video_formats:
-        if videoFile.suffix in video_formats:
-            return True
-        else:
-            return False
-
-
-def _getBatchOfFrames(cap, batchSize):
-    batch = []
-    for frame in range(0, batchSize):
-        gotFrame, img = cap.read()
-        if gotFrame:
-            batch.append(img)
-        else:
-            break
-    return gotFrame, batch
-
-
-def _printOverallPerformanceStats(duration, det_fps):
-    print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
-
-
-def _printBatchPerformanceStats(batch_no, t_start, t_trans, t_det, t_list, t_batch):
-    print(
-        "batch_no: {0:0.4f}, trans: {1:0.4f}, det: {2:0.4f}, list: {3:0.4f}, batch: {4:0.4f}, fps:{5:0.1f}"
-        .format(
-            batch_no,
-            t_trans - t_start,
-            t_det - t_start,
-            t_list - t_det,
-            t_batch - t_list,
-            1 / (t_batch - t_start),
-        )
-    )
 
 
 if __name__ == "__main__":
