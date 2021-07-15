@@ -165,19 +165,21 @@ def detect_video(
     # TODO while gotframe
     # what happens when gotframe false -> while loop never executed when while got_frame:
     # we are working in batches
-    while True:
+    got_frame = True
+    while got_frame:
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
-        t_start = perf_counter()
-
-        # What purpose does this transformation have
-        transformedBatch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
 
         if not img_batch:
             break
 
+        t_start = perf_counter()
+
+        # What purpose does this transformation have
+        transformed_batch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
+
         t_trans = perf_counter()
 
-        results = model(transformedBatch, size)
+        results = model(transformed_batch, size)
 
         t_det = perf_counter()
 
@@ -195,9 +197,6 @@ def detect_video(
         height = cap.get(4)  # float
         fps = cap.get(CAP_PROP_FPS)  # float
         frames = cap.get(7)  # float
-
-        if not got_frame:
-            break
 
     t2 = perf_counter()
     duration = t2 - t1
