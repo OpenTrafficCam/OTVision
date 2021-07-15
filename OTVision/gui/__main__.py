@@ -21,7 +21,6 @@
 import PySimpleGUI as sg
 from config import CONFIG
 from gui import convert_view, detect_view, track_view, undistort_view, transform_view
-from gui.helpers import otc_theme
 
 
 def main():
