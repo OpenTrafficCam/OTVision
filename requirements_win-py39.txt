@@ -1,0 +1,29 @@
+# pip install -r requirements.txt
+
+# data ---------------------------------------
+numpy==1.19.5
+pandas==1.2.2
+
+# gui ----------------------------------------
+PySimpleGUI==4.34.0
+# opencv-python>=4.1.2
+Pillow
+
+# helpers --------------------------------------
+pause
+
+# yolo ---------------------------------------
+requests==2.25.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\models\common.py", line 7, in <module>
+matplotlib  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\metrics.py", line 5, in <module>
+seaborn==0.11.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\plots.py", line 15, in <module>
+opencv-python
+pillow
+pyYAML
+tqdm==4.56.0
+progressbar2
+-f https://download.pytorch.org/whl/torch_stable.html
+torch==1.7.1+cu110
+torchvision==0.8.2+cu110
+https://download.lfd.uci.edu/pythonlibs/q4trcu4l/GDAL‑3.2.3‑cp39‑cp39‑win_amd64.whl  # Python 3.9 and Win 10 64 Bit needed
+https://download.lfd.uci.edu/pythonlibs/q4trcu4l/Fiona‑1.8.19‑cp39‑cp39‑win_amd64.whl # Python 3.9 and Win 10 64 Bit needed
+geopandas
