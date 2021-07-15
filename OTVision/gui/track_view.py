@@ -215,12 +215,13 @@ def process_events(window, files, frame_folders_files):
         for i, file in enumerate(files):
             detections, fir, filename = track.read(file)
             # ?: Which return, "new_detections" or "tracks_finished!?
-            tracks_px = track.track(
+            tracks_px, trajectories_geojson = track.track(
                 detections=detections, trk_config=trk_config
             )
             track.write(
                 tracks_px=tracks_px,
                 detfile=file,
+                trajectories_geojson=trajectories_geojson,
                 overwrite=values["-check_overwrite-"],
             )
             window["-progress_track-"].update(current_count=i + 1, max=len(files))
