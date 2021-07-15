@@ -52,7 +52,7 @@ import os
 import cv2
 import numpy as np
 import pandas as pd
-import OTVision.transformtoworld.helpers as helpers
+import transform.helpers as helpers
 
 
 # Define relative path to test data (using os.path.dirname repeatedly)
@@ -119,7 +119,7 @@ def read_traj_pixel_dialog(traj_pixel_path):
 
 
 def calculate_homography_matrix(refpts_pixel, refpts_world):
-    """Calculate homography matrix using pixel and world coordinates of corresponding 
+    """Calculate homography matrix using pixel and world coordinates of corresponding
     reference points.
 
     Keyword arguments:
