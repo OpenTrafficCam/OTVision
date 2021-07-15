@@ -85,7 +85,9 @@ def main(
         normalized=normalized,
     )
 
-    # save_detections(detections_chunks, files)
+    # save detection information to corresponding frame path
+    for frame_path, detection in zip(frame_paths, detections_chunks):
+        save_detections(detection, frame_path)
 
 
 def _extract_video_paths(file_paths):
