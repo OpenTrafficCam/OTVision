@@ -223,7 +223,7 @@ def detect_video(
     return detections
 
 
-def detect_chunks(
+def detect_images(
     file_chunks,
     model=None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
@@ -232,6 +232,7 @@ def detect_chunks(
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],  # TODO: not needed
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+    ot_labels_enabled: bool = False
 ):
     yolo_detections = []
 
@@ -257,10 +258,12 @@ def detect_chunks(
     _print_overall_performance_stats(duration, det_fps)
 
     names = results.names
-
-    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-    detections = _convert_detections_chunks(yolo_detections, names, det_config)
-    return detections
+    if ot_labels_enabled:
+        return [yolo_detections, names]
+    else:
+        det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
+        detections = _convert_detections_chunks(yolo_detections, names, det_config)
+        return detections
 
 
 # TODO: Where should this class be? Helper class?

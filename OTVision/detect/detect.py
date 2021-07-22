@@ -46,6 +46,7 @@ def main(
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+    ot_labels_enabled: bool = False
 ):  # sourcery skip: merge-dict-assign
 
     # if type(files) is not list:
@@ -74,7 +75,7 @@ def main(
         )
         save_detections(detections_videos, path)
 
-    detections_chunks = yolo.detect_chunks(
+    detections_chunks = yolo.detect_images(
         file_chunks=frame_chunks,
         model=model,
         weights=weights,
@@ -83,11 +84,15 @@ def main(
         size=size,
         chunksize=chunksize,
         normalized=normalized,
+        ot_labels_enabled=ot_labels_enabled
     )
-
+    # TODO: what happens if no frames detected
     # save detection information to corresponding frame path
-    for frame_path, detection in zip(frame_paths, detections_chunks):
-        save_detections(detection, frame_path)
+    if ot_labels_enabled:
+        return detections_chunks
+    else:
+        for frame_path, detection in zip(frame_paths, detections_chunks):
+            save_detections(detection, frame_path)
 
 
 def _extract_video_paths(file_paths):
