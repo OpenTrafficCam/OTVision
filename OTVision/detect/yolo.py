@@ -23,6 +23,8 @@ import torch
 from cv2 import VideoCapture, CAP_PROP_FPS
 from config import CONFIG
 
+from helpers.files import is_video
+
 
 def detect(
     file,
@@ -157,7 +159,7 @@ def detect_video(
     yolo_detections = []
     t1 = perf_counter()
 
-    if not is_video(file_path):
+    if not is_video(file_path, CONFIG["FILETYPES"]["VID"]):
         raise NoVideoException("The file: {} is not a video!".format(file_path))
 
     cap = VideoCapture(file_path)
@@ -264,17 +266,6 @@ def detect_images(
         det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
         detections = _convert_detections_chunks(yolo_detections, names, det_config)
         return detections
-
-
-# TODO: Where should this class be? Helper class?
-def is_video(pathToVideo):
-    video_formats = CONFIG["FILETYPES"]["VID"]
-    videoFile = Path(pathToVideo)
-
-    if videoFile.suffix in video_formats:
-        return True
-    else:
-        return False
 
 
 def _get_batch_of_frames(cap, batchSize):

@@ -24,7 +24,7 @@ import json
 
 from pathlib import Path
 from config import CONFIG
-from helpers.files import get_files
+from helpers.files import get_files, is_video
 from detect import yolo
 
 
@@ -95,11 +95,11 @@ def main(
             save_detections(detection, frame_path)
 
 
-def _extract_video_paths(file_paths):
+def _extract_video_paths(file_paths, video_formats = CONFIG["FILETYPES"]["VID"]):
     video_paths, other_paths = [], []
 
     for path in file_paths:
-        if yolo.is_video(path):
+        if is_video(path, video_formats):
             video_paths.append(path)
         else:
             other_paths.append(path)

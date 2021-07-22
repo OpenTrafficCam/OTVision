@@ -128,6 +128,15 @@ def _get_testdatafolder():
     return str(testdatafolder)
 
 
+def is_video(pathToVideo, video_formats):
+    videoFile = Path(pathToVideo)
+
+    if videoFile.suffix in video_formats:
+        return True
+    else:
+        return False
+
+
 if __name__ == "__main__":
     paths = "D:/tmp/"
     # paths = ["D:/tmp/tmp1", "D:\\tmp\\tmp2"]
