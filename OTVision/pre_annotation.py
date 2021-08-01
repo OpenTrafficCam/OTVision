@@ -92,8 +92,13 @@ def _writecvatlabels(file, results):
 
 def _pre_annotation(file, chunk_size):
     files = _unzip(file)
-    xywhn, names = detect(
-        files, weights="yolov5x", chunksize=chunk_size, normalized=True
+    xywhn, names = detect.main(
+        files,
+        filetypes=CONFIG["FILETYPES"]["IMG"],
+        weights="yolov5x",
+        chunksize=chunk_size,
+        normalized=True,
+        ot_labels_enabled=True,
     )
     _writebbox(file, xywhn)
     _writenames(file, names)
