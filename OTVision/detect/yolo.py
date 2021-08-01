@@ -26,11 +26,11 @@ from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format
 
 
-class NoVideoException(Exception):
+class NoVideoError(Exception):
     pass
 
 
-class VideoFoundException(Exception):
+class VideoFoundError(Exception):
     pass
 
 
@@ -67,7 +67,7 @@ def detect_video(
     t1 = perf_counter()
 
     if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
-        raise NoVideoException("The file: {} is not a video!".format(file_path))
+        raise NoVideoError("The file: {} is not a video!".format(file_path))
 
     cap = VideoCapture(file_path)
     batch_no = 0
@@ -162,7 +162,7 @@ def detect_images(
     t1 = perf_counter()
 
     if _containsvideo(file_chunks):
-        raise VideoFoundException(
+        raise VideoFoundError(
             "List of paths given to detect_chunks function shouldn't contain any videos"
         )
     for chunk in file_chunks:
