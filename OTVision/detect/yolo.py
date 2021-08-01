@@ -21,12 +21,12 @@ from pathlib import Path
 from time import perf_counter
 import torch
 from cv2 import VideoCapture, CAP_PROP_FPS
-from config import CONFIG
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format
 
 
+# TODO: remove method
 def detect(
     file,
     model=None,
@@ -181,9 +181,7 @@ def detect_video(
 
     cap = VideoCapture(file_path)
     batch_no = 0
-    # TODO while gotframe
-    # what happens when gotframe false -> while loop never executed when while got_frame:
-    # we are working in batches
+
     got_frame = True
     while got_frame:
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
@@ -226,18 +224,9 @@ def detect_video(
 
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
     vid_config = _get_vidconfig(file_path, width, height, fps, frames)
-    detections = _convert_detections(yolo_detections, names, vid_config, det_config)
-
-    """     if is_video(path_to_file):
-            det_config = _get_det_config(
-                weights, conf, iou, size, chunksize, normalized
-            )
-            vid_config = _get_vidconfig(path_to_file, width, height, fps, frames)
-            detections = _convert_detections(
+    detections = _convert_detections(
         yolo_detections, class_names, vid_config, det_config
-            )
-        else:
-            detections = [yolo_detections, names] """
+    )
 
     return detections
 
@@ -249,7 +238,7 @@ def detect_images(
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
-    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],  # TODO: not needed
+    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     ot_labels_enabled: bool = False,
 ):
@@ -304,6 +293,7 @@ def detect_images(
         return detections
 
 
+def _get_batch_of_frames(video_capture, batch_size):
     """Reads the the next batch_size frames from VideoCapture.
 
     Args:
@@ -316,8 +306,9 @@ def detect_images(
         batch(list): batch of frames.
     """
     batch = []
-    for frame in range(0, batchSize):
-        gotFrame, img = cap.read()
+    gotFrame = False
+    for _ in range(0, batch_size):
+        gotFrame, img = video_capture.read()
         if gotFrame:
             batch.append(img)
         else:
