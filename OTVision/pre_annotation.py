@@ -22,7 +22,8 @@ import shutil
 import os
 import progressbar
 
-from detect.yolo import detect
+from OTVision.detect import detect
+from OTVision.config import CONFIG
 
 
 def _pngfiles(file):

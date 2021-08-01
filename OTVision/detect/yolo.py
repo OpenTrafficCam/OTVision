@@ -23,6 +23,7 @@ import torch
 from cv2 import VideoCapture, CAP_PROP_FPS
 from config import CONFIG
 
+from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format
 
 

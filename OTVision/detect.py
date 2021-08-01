@@ -19,6 +19,8 @@
 from detect import detect
 from pathlib import Path
 
+from OTVision.detect import detect
+
 if __name__ == "__main__":
     test_path = Path(__file__).parents[1] / "tests" / "data"
     test_path = str(test_path)

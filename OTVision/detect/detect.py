@@ -23,7 +23,10 @@ Module to call yolov5/detect.py with arguments
 import json
 
 from pathlib import Path
+
+from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
+from OTVision.detect import yolo
 
 
 # def main(paths, filetypes, det_config={}):

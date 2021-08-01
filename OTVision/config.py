@@ -20,8 +20,10 @@
 from pathlib import Path
 import json
 import logging
+
 import PySimpleGUI as sg
-from helpers.files import _get_testdatafolder
+
+from OTVision.helpers.files import _get_testdatafolder
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 
