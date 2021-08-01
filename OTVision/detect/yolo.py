@@ -72,6 +72,8 @@ def detect_video(
     cap = VideoCapture(file_path)
     batch_no = 0
 
+    print("Run detection on video: {}".format(file_path))
+
     got_frame = True
     while got_frame:
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
@@ -93,10 +95,9 @@ def detect_video(
         _add_detection_results(yolo_detections, results, normalized)
 
         t_list = perf_counter()
-        t_batch = perf_counter()
 
         _print_batch_performances_stats(
-            batch_no, t_start, t_trans, t_det, t_list, t_batch
+            batch_no, t_start, t_trans, t_det, t_list, len(img_batch) 
         )
         batch_no += 1
 
@@ -165,9 +166,19 @@ def detect_images(
         raise VideoFoundError(
             "List of paths given to detect_chunks function shouldn't contain any videos"
         )
+    img_batch = 0
+    print("Run detection on images")
     for chunk in file_chunks:
+        t_start = perf_counter()
         results = model(chunk, size=size)
+        t_det = perf_counter()
         _add_detection_results(yolo_detections, results, normalized)
+        img_batch += 1
+        print(
+            "img_batch_no: {0:d}, det:{1:0.4f}, batch_size: {2:d}, fps: {3:0.1f}".format(
+                img_batch, t_det - t_start, len(chunk), chunksize / (t_det - t_start)
+            )
+        )
 
     t2 = perf_counter()
     duration = t2 - t1
@@ -210,15 +221,19 @@ def _print_overall_performance_stats(duration, det_fps):
     print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
 
 
-def _print_batch_performances_stats(batch_no, t_start, t_trans, t_det, t_list, t_batch):
+def _print_batch_performances_stats(
+    batch_no, t_start, t_trans, t_det, t_list, batch_size
+):
+    batch_no = "batch_no: {:d}".format(batch_no)
+    transformed_batch = "trans: {:0.4f}".format(t_trans - t_start)
+    det = "det: {:0.4f}".format(t_det - t_start)
+    add_list = "list: {:0.4f}".format(t_list - t_det)
+    batch_len = "batch_size: {:d}".format(batch_size)
+    fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
+
     print(
-        "batch_no: {0:0.4f}, trans: {1:0.4f}, det: {2:0.4f}, list: {3:0.4f}, batch: {4:0.4f}, fps:{5:0.1f}".format(
-            batch_no,
-            t_trans - t_start,
-            t_det - t_start,
-            t_list - t_det,
-            t_batch - t_list,
-            1 / (t_batch - t_start),
+        "{0}, {1}, {2}, {3}, {4}, {5}".format(
+            batch_no, transformed_batch, det, add_list, batch_len, fps
         )
     )
 
