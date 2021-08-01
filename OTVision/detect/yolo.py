@@ -23,7 +23,7 @@ import torch
 from cv2 import VideoCapture, CAP_PROP_FPS
 from config import CONFIG
 
-from helpers.files import is_video
+from OTVision.helpers.files import is_in_format
 
 
 def detect(
@@ -250,7 +250,7 @@ def detect_images(
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],  # TODO: not needed
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-    ot_labels_enabled: bool = False
+    ot_labels_enabled: bool = False,
 ):
     """Detect and classify bounding boxes in images/frames using YOLOv5
 

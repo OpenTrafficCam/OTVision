@@ -44,7 +44,7 @@ def main(
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-    ot_labels_enabled: bool = False
+    ot_labels_enabled: bool = False,
 ):  # sourcery skip: merge-dict-assign
 
     # if type(files) is not list:
@@ -82,7 +82,7 @@ def main(
         size=size,
         chunksize=chunksize,
         normalized=normalized,
-        ot_labels_enabled=ot_labels_enabled
+        ot_labels_enabled=ot_labels_enabled,
     )
     # TODO: what happens if no frames detected
     # save detection information to corresponding frame path
