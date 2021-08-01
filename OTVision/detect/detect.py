@@ -95,7 +95,12 @@ def main(
             save_detections(detection, frame_path)
 
 
-def _extract_video_paths(file_paths, video_formats = CONFIG["FILETYPES"]["VID"]):
+    """ Divide a list of files in video files and other files.
+
+    Args:
+        file_paths (list): The list of files.
+        vidoe_formats
+    """
     video_paths, other_paths = [], []
 
     for path in file_paths:

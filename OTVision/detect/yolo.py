@@ -153,6 +153,22 @@ def detect_video(
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
 ):
+    """Detect and classify bounding boxes in videos using YOLOv5
+
+    Args:
+        files (str ot list of str): files to detect.
+        model (yolo object): Yolo model to detect with.
+        weights (str, optional): Weigths, if no model passed. Defaults to "yolov5s".
+        conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
+        iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
+        size (int, optional): Frame size for detection. Defaults to 640.
+        chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
+        normalized (bool, optional): Coords in % of image/frame size (True) or pixels
+        (False). Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """
     if model is None:
         model = loadmodel(weights, conf, iou)
 
@@ -236,6 +252,25 @@ def detect_images(
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     ot_labels_enabled: bool = False
 ):
+    """Detect and classify bounding boxes in images/frames using YOLOv5
+
+    Args:
+        files (str ot list of str): files to detect.
+        model (yolo object): Yolo model to detect with.
+        weights (str, optional): Weigths, if no model passed. Defaults to "yolov5s".
+        conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
+        iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
+        size (int, optional): Frame size for detection. Defaults to 640.
+        chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
+        normalized (bool, optional): Coords in % of image/frame size (True) or pixels
+        (False). Defaults to False.
+        ot_labels_enabled (bool, optional): returns [detections, names] where detections
+        consist of bounding boxes but without any annotations and the class name index
+        (True) or returns the detections in otdet format(False). Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """
     yolo_detections = []
 
     if not file_chunks:
@@ -268,7 +303,17 @@ def detect_images(
         return detections
 
 
-def _get_batch_of_frames(cap, batchSize):
+    """Reads the the next batch_size frames from VideoCapture.
+
+    Args:
+        video_capture (obj): VideoCapture instance.
+        batch_size (int): batch size.
+
+    Returns:
+        gotFrame (bool): True if there are more frames to read.
+        False if no more frames can be read.
+        batch(list): batch of frames.
+    """
     batch = []
     for frame in range(0, batchSize):
         gotFrame, img = cap.read()
@@ -297,6 +342,16 @@ def _print_batch_performances_stats(batch_no, t_start, t_trans, t_det, t_list, t
 
 
 def _add_detection_results(detections, results, normalized):
+    """Adds detection result to an existing list.
+
+    Args:
+        detections (list): the existing list containing detections.
+        results (list): detection results.
+        normalized (bool): True if results are normalized. False otherwise.
+
+    Returns:
+        list: the detections list with the newly added
+    """
     if normalized:
         detections.extend([i.tolist() for i in results.xywhn])
     else:
@@ -383,6 +438,7 @@ def _convert_detections(yolo_detections, names, vid_config, det_config):
 
 
 def _createchunks(chunksize, files):
+    # TODO: Remove method
     if type(files) is str:
         return [files]
     elif _containsvideo(files):
