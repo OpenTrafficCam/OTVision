@@ -221,7 +221,7 @@ def detect_video(
     det_fps = len(yolo_detections) / duration
     _print_overall_performance_stats(duration, det_fps)
 
-    names = results.names
+    class_names = results.names
 
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
     vid_config = _get_vidconfig(file_path, width, height, fps, frames)
@@ -233,7 +233,7 @@ def detect_video(
             )
             vid_config = _get_vidconfig(path_to_file, width, height, fps, frames)
             detections = _convert_detections(
-                yolo_detections, names, vid_config, det_config
+        yolo_detections, class_names, vid_config, det_config
             )
         else:
             detections = [yolo_detections, names] """
