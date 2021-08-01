@@ -211,12 +211,25 @@ def process_events(window, files, frame_folders_files):
 
     # Set parameters
     elif event == "-button_detect-":
-        model = yolo.loadmodel(
+        # TODO: Should we allow passing own instance of model?
+        # Currently, detect.main loads own yolo model instance.
+
+        """ model = yolo.loadmodel(
             weights=values["-drop_weights-"],
             conf=values["-slider_conf-"],
             iou=values["-slider_iou-"],
-        )
-        for i, file in enumerate(files):
+        ) """
+        detect.main(
+                files=files,
+                weights=values["-drop_weights-"],
+                conf=values["-slider_conf-"],
+                iou=values["-slider_iou-"],
+                size=values["-slider_imgsize-"],
+                chunksize=int(values["-slider_chunksize-"]),
+                normalized=values["-check_normalized-"],
+            )
+
+        """ for i, file in enumerate(files):
             detections = yolo.detect(
                 file=file,
                 model=model,
@@ -232,7 +245,7 @@ def process_events(window, files, frame_folders_files):
                 infile=file,
                 overwrite=values["-check_overwrite-"],
             )
-            window["-progress_detect-"].update(current_count=i + 1, max=len(files))
+            window["-progress_detect-"].update(current_count=i + 1, max=len(files)) """
         sg.popup("Job done!", title="Job done!", icon=CONFIG["GUI"]["OTC ICON"])
 
     # Folders and files
