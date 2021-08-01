@@ -16,7 +16,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from detect import detect
 from pathlib import Path
 
 from OTVision.detect import detect
@@ -31,5 +30,6 @@ if __name__ == "__main__":
         "size": 640,
         "chunksize": 5,
         "normalized": False,
+        "ot_labels_enabled": True
     }
-    detect.main(test_path, ".mp4", **det_config)
+    detect.main(test_path, [".mp4", ".jpeg", ".jpg"], **det_config)
