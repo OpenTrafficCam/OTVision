@@ -19,8 +19,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from gui import transform
+from gui import transform_view
 
 
 if __name__ == "__main__":
-    transform.main()
+    transform_view.main()

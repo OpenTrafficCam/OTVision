@@ -20,8 +20,7 @@
 
 import PySimpleGUI as sg
 from config import CONFIG
-from gui import convert, detect, track, undistort  #, transform
-from gui.helpers import otc_theme
+from gui import convert_view, detect_view, track_view, undistort_view, transform_view
 
 
 def main():
@@ -126,27 +125,27 @@ def main():
         # Call subpackage guis by button click
         elif event == "-BUTTONCONVERT-":
             window.Hide()
-            convert.main()
+            convert_view.main()
             window.UnHide()
             window.maximize()
         elif event == "-BUTTONDETECT-":
             window.Hide()
-            detect.main()
+            detect_view.main()
             window.UnHide()
             window.maximize()
         elif event == "-BUTTONTRACK-":
             window.Hide()
-            track.main()
+            track_view.main()
             window.UnHide()
             window.maximize()
         elif event == "-BUTTONUNDISTORT-":
             window.Hide()
-            undistort.main()
+            undistort_view.main()
             window.UnHide()
             window.maximize()
         elif event == "-BUTTONTRANSFORM-":
             window.Hide()
-            transform.main()
+            transform_view.main()
             window.UnHide()
             window.maximize()
 

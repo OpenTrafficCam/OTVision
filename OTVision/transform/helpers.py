@@ -1,11 +1,9 @@
 from tkinter import filedialog
 import os
+import config
 
 # Define relative path to test data (using os.path.dirname repeatedly)
-TEST_DATA_FOLDER = (
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    + r"\tests\data"
-)
+TEST_DATA_FOLDER = config.CONFIG["TESTDATAFOLDER"]
 
 
 def select_refpts_files():
