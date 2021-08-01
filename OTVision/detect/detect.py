@@ -36,10 +36,6 @@ from OTVision.detect import yolo
 
 def main(
     files,
-    # should default be CONFIG["FILETYPES"]["VID"]?
-    #  allowing only one filetype or multiple? e.g. different video formats
-    # TODO: Specify what filetypes are allowed, e.g. img and videos
-    # filetype: str = ".mp4",
     filetypes: list = CONFIG["FILETYPES"]["VID"],
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
@@ -49,10 +45,6 @@ def main(
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     ot_labels_enabled: bool = False,
 ):  # sourcery skip: merge-dict-assign
-
-    # if type(files) is not list:
-    #     files = [files]
-
     model = yolo.loadmodel(weights, conf, iou)
 
     file_paths = get_files(paths=files, filetypes=filetypes)
