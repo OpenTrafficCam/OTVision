@@ -128,10 +128,20 @@ def _get_testdatafolder():
     return str(testdatafolder)
 
 
-def is_video(pathToVideo, video_formats):
-    videoFile = Path(pathToVideo)
+def is_in_format(pathToVideo, file_formats):
+    """ Checks if a file path is in specified format.
 
-    if videoFile.suffix in video_formats:
+    Args:
+        pathToVideo (str): the file path
+        file_formats(list(str)): the file formats
+
+    Returns:
+        True if path is of format specified in file_formats.
+        Otherwise False.
+    """
+    file = Path(pathToVideo)
+
+    if file.suffix in file_formats:
         return True
     else:
         return False
