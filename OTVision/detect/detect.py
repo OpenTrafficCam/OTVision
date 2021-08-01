@@ -23,9 +23,7 @@ Module to call yolov5/detect.py with arguments
 import json
 
 from pathlib import Path
-from config import CONFIG
-from helpers.files import get_files, is_video
-from detect import yolo
+from OTVision.helpers.files import get_files, is_in_format
 
 
 # def main(paths, filetypes, det_config={}):
@@ -58,7 +56,7 @@ def main(
 
     # split file paths to two groups -> videos | images
     # only when accepting multiple filetypes
-    video_paths, frame_paths = _extract_video_paths(file_paths)
+    video_paths, frame_paths = _split_to_video_img_paths(file_paths)
 
     frame_chunks = _create_chunks(frame_paths, chunksize)
 
@@ -95,20 +93,36 @@ def main(
             save_detections(detection, frame_path)
 
 
-    """ Divide a list of files in video files and other files.
+def _split_to_video_img_paths(
+    file_paths,
+    video_formats=CONFIG["FILETYPES"]["VID"],
+    img_formats=CONFIG["FILETYPES"]["IMG"],
+):
+    """Divide a list of files in video files and other files.
 
     Args:
         file_paths (list): The list of files.
         vidoe_formats
+
+    Returns:
+        [list(str), list{str)] : list of video paths and list of images paths
     """
-    video_paths, other_paths = [], []
+    video_paths, img_paths = [], []
 
     for path in file_paths:
-        if is_video(path, video_formats):
+        if is_in_format(path, video_formats):
             video_paths.append(path)
+        elif is_in_format(path, img_formats):
+            img_paths.append(path)
         else:
-            other_paths.append(path)
-    return video_paths, other_paths
+            raise FormatNotSupportedError(
+                "The format of path is not supported ({})".format(path)
+            )
+    return video_paths, img_paths
+
+
+class FormatNotSupportedError(Exception):
+    pass
 
 
 def _create_chunks(file_paths, chunksize):

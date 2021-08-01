@@ -175,7 +175,7 @@ def detect_video(
     yolo_detections = []
     t1 = perf_counter()
 
-    if not is_video(file_path, CONFIG["FILETYPES"]["VID"]):
+    if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
         raise NoVideoException("The file: {} is not a video!".format(file_path))
 
     cap = VideoCapture(file_path)
