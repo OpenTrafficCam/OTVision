@@ -1,5 +1,5 @@
-# OTVision: Python gui to track road users detected as bounding boxes
-# in images or frames of videos using open source algorithms like IOU-Tracker.
+# OTVision: Python gui to transform pixel coordinates to utm coordinates
+# using a set of reference points available in both pixel and utm coordinates
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -23,45 +23,72 @@ from config import CONFIG
 from gui.helpers.frames import OTFrameFoldersFiles
 from gui.helpers.windows import OTSubpackageWindow
 from gui.helpers.texts import OTTextSpacer
-from gui.helpers import otc_theme
 from transform import transform
 from helpers.files import get_files
 
 
-def main(paths=None, debug=True):
+def main(tracks_paths=None, refpts_path=None, debug=True):
 
     # Initial configuration
     if debug:
-        paths = CONFIG["TESTDATAFOLDER"]
-        paths = get_files(
-            paths=paths,
-            filetypes=CONFIG["FILETYPES"]["DETECT"],
+        tracks_paths = CONFIG["TESTDATAFOLDER"]
+        tracks_paths = get_files(
+            paths=tracks_paths,
+            filetypes=CONFIG["FILETYPES"]["TRACK"],
         )
-    elif not paths:
-        paths = CONFIG["LAST PATHS"]["DETECTIONS"]
-    files = get_files(
-        paths=paths,
-        filetypes=CONFIG["FILETYPES"]["DETECT"],
+        refpts_path = CONFIG["TESTDATAFOLDER"]
+        refpts_path = get_files(
+            paths=refpts_path,
+            filetypes=CONFIG["FILETYPES"]["REFPTS"],
+        )
+    elif not tracks_paths or not refpts_path:
+        if not tracks_paths:
+            tracks_paths = CONFIG["LAST PATHS"]["TRACK"]
+        if not refpts_path:
+            refpts_path = CONFIG["LAST PATHS"]["REFPTS"]
+    tracks_files = get_files(
+        paths=tracks_paths,
+        filetypes=CONFIG["FILETYPES"]["TRACK"],
+    )
+    refpts_file = get_files(
+        paths=refpts_path,
+        filetypes=CONFIG["FILETYPES"]["REFPTS"],
     )
 
     # Get initial layout and create initial window
-    layout, frame_folders_files = create_layout(files)
-    window = OTSubpackageWindow(title="OTVision: Track", layout=layout)
-    frame_folders_files.listbox_files.expand(expand_x=True)
-    window["-progress_track-"].update_bar(0)
+    layout, frame_folders_files_tracks, frame_folders_files_refpts = create_layout(
+        tracks_files, refpts_file
+    )
+    window = OTSubpackageWindow(title="OTVision: Transform", layout=layout)
+    frame_folders_files_tracks.listbox_files.expand(expand_x=True)
+    frame_folders_files_refpts.listbox_files.expand(expand_x=True)
+    window["-progress_transform-"].update_bar(0)
 
     # Call function to process events
     show_window = True
     while show_window:
-        show_window, files = process_events(window, files, frame_folders_files)
+        show_window, tracks_files, refpts_file = process_events(
+            window,
+            tracks_files,
+            refpts_file,
+            frame_folders_files_tracks,
+            frame_folders_files_refpts,
+        )
     window.close()
 
 
-def create_layout(files):
+def create_layout(tracks_files, refpts_file):
 
-    # GUI elements: Choose Detections
-    frame_folders_files = OTFrameFoldersFiles(
-        default_filetype=CONFIG["FILETYPES"]["DETECT"], files=files
+    # GUI elements: Choose tracks
+    frame_folders_files_tracks = OTFrameFoldersFiles(
+        default_filetype=CONFIG["FILETYPES"]["TRACK"], files=tracks_files
+    )
+
+    # GUI elements: Choose reference points
+    frame_folders_files_refpts = OTFrameFoldersFiles(
+        default_filetype=CONFIG["FILETYPES"]["REFPTS"],
+        files=refpts_file,
+        title="Step 1: Browse reference points file",
     )
 
     # GUI elements: Tracking parameters
@@ -69,129 +96,52 @@ def create_layout(files):
     width_c2 = 10
     slider_height = 10
 
-    # sigma_l, sigma_h, sigma_iou, t_min, t_miss_max
-    text_sigma_l = sg.T(
-        "Sigma l",
-        justification="right",
-        size=(width_c1, 1),
+    # GUI elements: Transform
+    button_transform = sg.B("Transform!", key="-button_transform-")
+    progress_transform = sg.ProgressBar(
+        max_value=len(tracks_files),
+        size=(CONFIG["GUI"]["FRAMEWIDTH"] / 2, 20),
+        key="-progress_transform-",
     )
-    slider_sigma_l = sg.Slider(
-        range=(0, 1),
-        resolution=0.01,
-        orientation="h",
-        size=(width_c2, slider_height),
-        default_value=CONFIG["TRACK"]["IOU"]["SIGMA_L"],
-        key="-slider_sigma_l-",
-    )
-    text_sigma_h = sg.T(
-        "Sigma h",
-        justification="right",
-        size=(width_c1, 1),
-    )
-    slider_sigma_h = sg.Slider(
-        range=(0, 1),
-        resolution=0.01,
-        orientation="h",
-        size=(width_c2, slider_height),
-        default_value=CONFIG["TRACK"]["IOU"]["SIGMA_H"],
-        key="-slider_sigma_h-",
-    )
-    text_sigma_iou = sg.T(
-        "Sigma iou",
-        justification="right",
-        size=(width_c1, 1),
-    )
-    slider_sigma_iou = sg.Slider(
-        range=(0, 1),
-        resolution=0.01,
-        orientation="h",
-        size=(width_c2, slider_height),
-        default_value=CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
-        key="-slider_sigma_iou-",
-    )
-    text_t_min = sg.T(
-        "t min",
-        justification="right",
-        size=(width_c1, 1),
-    )
-    slider_t_min = sg.Slider(
-        range=(0, 20),  # TODO: #78 track iou t(min) boundaries for gui?
-        resolution=1,
-        orientation="h",
-        size=(width_c2, slider_height),
-        default_value=CONFIG["TRACK"]["IOU"]["T_MIN"],
-        key="-slider_t_min-",
-    )
-    text_t_miss_max = sg.T(
-        "t miss max",
-        justification="right",
-        size=(width_c1, 1),
-    )
-    slider_t_miss_max = sg.Slider(
-        range=(0, 10),  # TODO: #79 track iou t(miss,max) boundaries for gui?
-        resolution=1,
-        orientation="h",
-        size=(width_c2, slider_height),
-        default_value=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-        key="-slider_t_miss_max-",
-    )
-    text_overwrite = sg.T(
-        "Overwrite",
-        justification="right",
-        size=(width_c1, 1),
-    )
-    check_overwrite = sg.Check(
-        text="",
-        default=CONFIG["TRACK"]["IOU"]["OVERWRITE"],
-        key="-check_overwrite-",
-    )
-
-    frame_parameters = sg.Frame(
-        "Step 2: Set parameters",
-        [
+    frame_transform = sg.Frame(
+        title="Step 3: Start transforming to UTM coordinates",
+        layout=[
             [OTTextSpacer()],
-            [text_sigma_l, slider_sigma_l],
-            [text_sigma_h, slider_sigma_h],
-            [text_sigma_iou, slider_sigma_iou],
-            [text_t_min, slider_t_min],
-            [text_t_miss_max, slider_t_miss_max],
-            [text_overwrite, check_overwrite],
+            [button_transform],
+            [progress_transform],
             [OTTextSpacer()],
         ],
-        size=(100, 10),
-    )
-
-    # GUI elements: Track
-    button_track = sg.B("Track!", key="-button_track-")
-    progress_track = sg.ProgressBar(
-        max_value=len(files),
-        size=(CONFIG["GUI"]["FRAMEWIDTH"] / 2, 20),
-        key="-progress_track-",
-    )
-    frame_track = sg.Frame(
-        title="Step 3: Start tracking",
-        layout=[[OTTextSpacer()], [button_track], [progress_track], [OTTextSpacer()]],
         element_justification="center",
     )
 
     # Put layout together
     col_all = sg.Column(
-        [[frame_folders_files], [frame_parameters], [frame_track]],
+        [
+            [frame_folders_files_tracks],
+            [frame_folders_files_refpts],
+            [frame_transform],
+        ],
         scrollable=True,
         expand_y=True,
     )
     layout = [[col_all]]
 
-    return layout, frame_folders_files
+    return layout, frame_folders_files_tracks, frame_folders_files_refpts
 
 
-def process_events(window, files, frame_folders_files):
+def process_events(
+    window,
+    tracks_files,
+    refpts_file,
+    frame_folders_files_tracks,
+    frame_folders_files_refpts,
+):
     """Event Loop to process "events" and get the "values" of the inputs
 
     Args:
         window: Window of subpackage
         files: Current file list
-        frame_folders_files: Instance of gui.helpers.frames.OTFrameFoldersFiles
+        frame_folders_files_tracks, frame_folders_files_refpts: Instances of gui.helpers.frames.OTFrameFoldersFiles
 
     Returns:
         show_window: False if window should be closed after this loop
@@ -202,32 +152,21 @@ def process_events(window, files, frame_folders_files):
 
     # Close Gui
     if event in [sg.WIN_CLOSED, "Cancel", "-BUTTONBACKTOHOME-"]:
-        return False, files
+        return False, tracks_files, refpts_file
 
     # Set parameters
-    elif event == "-button_track-":
-        trk_config = {}
-        trk_config["sigma_l"] = values["-slider_sigma_l-"]
-        trk_config["sigma_h"] = values["-slider_sigma_h-"]
-        trk_config["sigma_iou"] = values["-slider_sigma_iou-"]
-        trk_config["t_min"] = values["-slider_t_min-"]
-        trk_config["save_age"] = values["-slider_t_miss_max-"]
-        for i, file in enumerate(files):
-            detections, fir, filename = track.read(file)
-            # ?: Which return, "new_detections" or "tracks_finished!?
-            tracks_px = track.track(
-                detections=detections, trk_config=trk_config
-            )
-            track.write(
-                tracks_px=tracks_px,
-                detfile=file,
-                overwrite=values["-check_overwrite-"],
-            )
-            window["-progress_track-"].update(current_count=i + 1, max=len(files))
+    elif event == "-button_transform-":
+        tracks_utm = transform.main(tracks_files=tracks_files, refpts_file=refpts_file)
+        window["-progress_transform-"].update(
+            current_count=i + 1, max=len(tracks_files)
+        )
         sg.popup("Job done!", title="Job done!", icon=CONFIG["GUI"]["OTC ICON"])
 
     # Folders and files
-    files = frame_folders_files.process_events(event, values, files)
-    window["-progress_track-"].update(current_count=0, max=len(files))
+    tracks_files = frame_folders_files_tracks.process_events(
+        event, values, tracks_files
+    )
+    refpts_file = frame_folders_files_refpts.process_events(event, values, refpts_file)
+    window["-progress_transform-"].update(current_count=0, max=len(tracks_files))
 
-    return True, files
+    return True, tracks_files, refpts_file
