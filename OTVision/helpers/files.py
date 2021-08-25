@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
+import json
 import logging
 
 
@@ -80,6 +81,15 @@ def remove_dir(dir: str):
         else:
             remove_dir(path)
     dir.rmdir()
+
+
+def read_json(json_file, filetype_wanted=".json"):
+    filetype = Path(json_file).suffix
+    if filetype != filetype_wanted:
+        raise ValueError(f"Wrong filetype {filetype}, has to be {filetype_wanted}")
+    with open(json_file) as f:
+        dict_from_json_file = json.load(f)
+    return dict_from_json_file
 
 
 def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
