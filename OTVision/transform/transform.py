@@ -31,22 +31,11 @@ The module saves the trajectories in world coordinates as .pkl files.
 For different camera views, the module has to be run repeatedly with respective
 reference points in pixel coordinates.
 
-Additional information due to OpenCV shortcoming:
-Some extra calculations are performed, because OpenCV functions cannot deal with all
-digits of UTM coordinates.
-Hence, from "refpts_world" only the three digits before and all digits after delimiter
-are used for transformation.
-After transformation the truncated thousands digits are concatenated again.
-To avoid errors due to different thousands digits within study area, before
-transformation "refpts_world" are shifted,
-so that the center of all reference points lies on a round 500 m value for both x & y
-UTM coordinates.
-After transformation the "tracks_utm" coordinates are shifted back by exactly the same
-value.
-
 To Dos:
 - Save also homography as npy file?
 """
+
+# TODO: #104 OpenCV findHomography and perspectiveTransform cannot handle after delimiter digits
 
 import os
 import logging
@@ -67,83 +56,33 @@ TEST_DATA_FOLDER = (
 )
 
 
-def read_refpts_pixel(refpts_pixel_path):
-    """
-    Read reference points in pixel coordinates from npy or csv format to a numpy array.
-
-    Keyword arguments:
-    refpts_pixel_path -- Path to reference points file
-    """
-    if refpts_pixel_path.endswith(".npy"):
-        print(refpts_pixel_path + " is a numpy file")
-        refpts_pixel = np.load(refpts_pixel_path)
-    elif refpts_pixel_path.endswith(".txt"):
-        print(refpts_pixel_path + " is a text file")
-        refpts_pixel = np.loadtxt(refpts_pixel_path, dtype="i4", delimiter=";")
-    else:
-        raise Exception("Wrong file type: refpts_pixel_path must be npy or txt")
-
-    return refpts_pixel
-
-
-def read_refpts_world(refpts_world_path):
-    """
-    Read reference points in world coordinates from npy or csv format to a numpy array.
-
-    Keyword arguments:
-    refpts_world_path -- Path to reference points file
-    """
-
-    if refpts_world_path.endswith(".npy"):
-        print(refpts_world_path + " is a numpy file")
-        refpts_world = np.load(refpts_world_path)
-    elif refpts_world_path.endswith(".txt"):
-        print(refpts_world_path + " is a text file")
-        refpts_world = np.loadtxt(refpts_world_path, delimiter=";")
-    else:
-        raise Exception("Wrong file type: refpts_world_path must be npy or txt")
-
-    return refpts_world
-
-
 def main(tracks_files, refpts_file):
     refpts = pd.read_csv(refpts_file, delimiter=";")
     (
         homography,
         refpts_world_upshifted_predecimal_pt1_1row,
         upshift_world,
-    ) = calculate_homography(refpts)
-    tracks_files = get_files(paths=tracks_files, filetypes=".ottrk")
-    homography = calculate_homography(refpts)
+    ) = get_homography(refpts)
+    tracks_files = get_files(paths=tracks_files, filetypes=["GeoJSON", "gpkg"])
+    homography = get_homography(refpts)
     for tracks_file in tracks_files:
-        tracks_utm = convertPixelToWorld(
+        tracks_px = gpd.read_file(tracks_file)
+        tracks_utm = transform_to_utm(
             tracks_px,
             homography,
             refpts_world_upshifted_predecimal_pt1_1row,
             upshift_world,
         )
-        save_tracks_utm(tracks_px_path, tracks_utm)
+        outfile = Path(tracks_file).with_stem(Path(tracks_file).stem + "_utm")
+        fiona_drivers_dict = {".gpkg": "GPKG", ".geojson": "GeoJSON"}
+        tracks_utm.to_file(
+            outfile,
+            driver=fiona_drivers_dict[outfile.suffix],
+        )
     # Add geojson + gpkg
 
 
-def read_tracks_px_dialog(tracks_px_path):
-    """Read a single trajectory file in pkl or csv format (otc style) to a pandas dataframe
-
-    Keyword arguments:
-    tracks_px_path -- Tath to trajectory file
-    """
-    if tracks_px_path.endswith(".pkl"):
-        print(tracks_px_path + " is a python pickle file")
-        tracks_px = pd.read_pickle(tracks_px_path)
-        print(tracks_px)
-    elif tracks_px_path.endswith(".csv"):
-        print(tracks_px_path + " is a csv file")
-        tracks_px = pd.read_csv(tracks_px_path, delimiter=";", index_col=0)
-        print(tracks_px)
-    return tracks_px
-
-
-def calculate_homography(refpts):
+def get_homography(refpts):
     """Calculate homography matrix using pixel and world coordinates of corresponding
     reference points.
 
@@ -154,9 +93,9 @@ def calculate_homography(refpts):
     # Transform pandas dataframe to numpy array, add 1 dimension and apply OpenCV´s
     # perspective transformation
     refpts_world = refpts[["Lat", "Lon"]].to_numpy(dtype="float32")
-    refpts_world = np.array([refpts_world], dtype="float32")
+    refpts_world = np.array(refpts_world, dtype="float32")
     refpts_pixel = refpts[["X", "Y"]].to_numpy(dtype="float32")
-    refpts_pixel = np.array([refpts_pixel], dtype="float32")
+    refpts_pixel = np.array(refpts_pixel, dtype="float32")
 
     # Upshift both x and y world coordinates of reference points to next round 500m
     # value (UTM is in meters)
@@ -226,7 +165,7 @@ def calculate_homography(refpts):
     return homography, refpts_world_upshifted_predecimal_pt1_1row, upshift_world
 
 
-def convertPixelToWorld(
+def transform_to_utm(
     tracks_px,
     homography,
     refpts_world_upshifted_predecimal_pt1_1row,
@@ -248,7 +187,7 @@ def convertPixelToWorld(
     tracks_px_np = tracks_px[["x", "y"]].to_numpy(dtype="float32")
     tracks_px_np_tmp = np.array([tracks_px_np], dtype="float32")
     tracks_utm_upshifted_np_disassembled_3d = cv2.perspectiveTransform(
-        tracks_px_np_tmp, homography
+        tracks_px_np_tmp, homography[0]
     )
     tracks_utm_upshifted_np_disassembled = np.squeeze(
         tracks_utm_upshifted_np_disassembled_3d
@@ -267,56 +206,14 @@ def convertPixelToWorld(
     # In trajectory dataframe, overwrite pixel coordinates with world coordinates
     # (from numpy array)
     tracks_utm = tracks_px
-    tracks_utm[["x", "y"]] = tracks_utm_np
+    # TODO: #105 resulting utm coordinates are still wrong
+    tracks_utm[["lon", "lat"]] = tracks_utm_np
+
+    # Overwrite geometry column and set crs
+    tracks_utm["geometry"] = gpd.points_from_xy(tracks_utm["lat"], tracks_utm["lon"])
+    tracks_utm = tracks_utm.set_crs(epsg=32633)
 
     return tracks_utm
-
-
-def write(
-    tracks_utm,
-    trajectories_geojson,
-    detfile,
-    overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"],
-):
-    """
-    docstring
-    """
-
-    # TODO: #96 Make writing each filetype optional (list of filetypes as parameter)
-    # Write JSON
-    with open(Path(detfile).with_suffix(".ottrk"), "w") as f:
-        json.dump(tracks_utm, f, indent=4)
-    logging.info("JSON written")
-
-    # Write GeoJSON
-    # TODO: #95 Add metadata to GeoJSON (and GPKG)
-    with open(Path(detfile).with_suffix(".GeoJSON"), "w") as f:
-        json.dump(trajectories_geojson, f, indent=4)
-    logging.info("GeoJSON written")
-
-    # Convert to geodataframe and write GPKG
-    get_geodataframe_from_framewise_tracks(tracks_utm).to_file(
-        Path(detfile).with_suffix(".gpkg"), driver="GPKG"
-    )
-    logging.info("GPKG written")
-
-
-def get_geodataframe_from_framewise_tracks(tracks_px):
-    df_trajectories = pd.DataFrame.from_dict(
-        {
-            (frame_nr, det_nr): tracks_px["data"][frame_nr][det_nr]
-            for frame_nr in tracks_px["data"].keys()
-            for det_nr in tracks_px["data"][frame_nr].keys()
-        },
-        orient="index",
-    ).rename_axis(("frame", "ID"))
-    gdf_trajectories = gpd.GeoDataFrame(
-        df_trajectories,
-        geometry=gpd.points_from_xy(df_trajectories.x, df_trajectories.y),
-    )
-    print(gdf_trajectories)
-
-    return gdf_trajectories
 
 
 def save_tracks_utm(tracks_px_path, tracks_utm):
@@ -332,33 +229,6 @@ def save_tracks_utm(tracks_px_path, tracks_utm):
         tracks_px_path[:-4] + "World_decComma.csv", index=False, sep=";", decimal=","
     )
     tracks_utm.to_pickle(tracks_px_path[:-4] + "World.pkl")
-
-
-def main_old():
-    # Find homography matrix for corresponding refpts in pixel and world coordinates
-    refpts_pixel = read_refpts_pixel_dialog()
-    refpts_world = read_refpts_world_dialog()
-    (
-        homography,
-        refpts_world_upshifted_predecimal_pt1_1row,
-        upshift_world,
-    ) = calculate_homography(refpts_pixel, refpts_world)
-
-    # Convert trajectories from pixel to world coordinates using homography matrix for
-    # all selected trajectory files
-    tracks_px_paths = choose_tracks_px_dialog()
-    for tracks_px_path in tracks_px_paths:
-        try:
-            tracks_px = read_tracks_px_dialog(tracks_px_path)
-        except:
-            print("Failed to read file: " + tracks_px_path)
-        tracks_utm = convertPixelToWorld(
-            tracks_px,
-            homography,
-            refpts_world_upshifted_predecimal_pt1_1row,
-            upshift_world,
-        )
-        save_tracks_utm(tracks_px_path, tracks_utm)
 
 
 if __name__ == "__main__":

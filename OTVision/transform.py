@@ -19,8 +19,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from gui import transform_view
+from transform import transform
 
 
 if __name__ == "__main__":
-    transform_view.main()
+    transform.main(
+        tracks_files=r"C:\Users\Baerwolff\Git\OpenTrafficCam\OTVision\tests\data\Testvideo_FR20_Cars-Cyclist.gpkg",
+        refpts_file=r"C:\Users\Baerwolff\Git\OpenTrafficCam\OTVision\tests\data\Testvideo_FR20_refpts.csv",
+    )
