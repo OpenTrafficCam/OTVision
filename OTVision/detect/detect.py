@@ -37,6 +37,7 @@ from OTVision.detect import yolo
 def main(
     files,
     filetypes: list = CONFIG["FILETYPES"]["VID"],
+    model=None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
@@ -45,7 +46,12 @@ def main(
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     ot_labels_enabled: bool = False,
 ):  # sourcery skip: merge-dict-assign
-    model = yolo.loadmodel(weights, conf, iou)
+    if model is None:
+        yolo_model = yolo.loadmodel(weights, conf, iou)
+    else:
+        yolo_model = model
+        yolo_model.conf = conf
+        yolo_model.iou = iou
 
     file_paths = get_files(paths=files, filetypes=filetypes)
 
@@ -58,7 +64,7 @@ def main(
     for path in video_paths:
         detections_videos = yolo.detect_video(
             file_path=path,
-            model=model,
+            model=yolo_model,
             weights=weights,
             conf=conf,
             iou=iou,
@@ -70,7 +76,7 @@ def main(
 
     detections_chunks = yolo.detect_images(
         file_chunks=frame_chunks,
-        model=model,
+        model=yolo_model,
         weights=weights,
         conf=conf,
         iou=iou,
