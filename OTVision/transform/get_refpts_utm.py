@@ -1,0 +1,24 @@
+# %%
+import folium
+
+# TODO: #106 Get refpts in utm coordinates from folium map
+
+# %%
+"""Show a gdf on an interactive folium map.
+Currently only works if only one geometry column is passed,
+use "drop" on the fly if you have more."""
+folium_map = (
+    folium.Map(location=[51.165567, 10.371094], zoom_start=5)
+)  # location=[gdf_polygon.centroid.x.mean(), gdf_polygon.centroid.y.mean()] doesnt work
+folium.TileLayer(
+    tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+    attr="Google",
+    name="Google Satellite",
+    overlay=True,
+    control=True,
+    max_zoom=21
+).add_to(folium_map)
+# folium.TileLayer("openstreetmap", name="asdf", control=True).add_to(folium_map)
+folium.LayerControl().add_to(folium_map)
+folium_map
+# %%
