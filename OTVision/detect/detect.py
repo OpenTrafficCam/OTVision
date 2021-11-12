@@ -24,9 +24,9 @@ import json
 
 from pathlib import Path
 
-from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, is_in_format
-from OTVision.detect import yolo
+from config import CONFIG
+from helpers.files import get_files, is_in_format
+from . import yolo
 
 
 # def main(paths, filetypes, det_config={}):
