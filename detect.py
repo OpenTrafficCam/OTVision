@@ -21,7 +21,7 @@ from pathlib import Path
 from OTVision import detect
 
 if __name__ == "__main__":
-    test_path = Path(__file__).parents[1] / "tests" / "data"
+    test_path = Path(__file__).parents[0] / "tests" / "data"
     test_path = str(test_path)
     det_config = {
         "weights": "yolov5s",
