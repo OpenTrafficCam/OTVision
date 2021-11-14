@@ -7,5 +7,11 @@
         "./OTVision"
     ],
     "python.languageServer": "Pylance",
-    "python.pythonPath": "venv\\Scripts\\python.exe"
+    "python.pythonPath": "venv\\Scripts\\python.exe",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+      "cSpell.diagnosticLevel": "Hint",
 }
