@@ -124,7 +124,7 @@ def create_layout(files):
         size=(width_c1, 1),
     )
     slider_chunksize = sg.Slider(
-        range=(0, 20),
+        range=(1, 20),
         orientation="h",
         size=(width_c2, slider_height),
         default_value=CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
@@ -214,20 +214,20 @@ def process_events(window, files, frame_folders_files):
         # TODO: Should we allow passing own instance of model?
         # Currently, detect.main loads own yolo model instance.
 
-        """ model = yolo.loadmodel(
+        """model = yolo.loadmodel(
             weights=values["-drop_weights-"],
             conf=values["-slider_conf-"],
             iou=values["-slider_iou-"],
-        ) """
+        )"""
         detect.main(
-                files=files,
-                weights=values["-drop_weights-"],
-                conf=values["-slider_conf-"],
-                iou=values["-slider_iou-"],
-                size=values["-slider_imgsize-"],
-                chunksize=int(values["-slider_chunksize-"]),
-                normalized=values["-check_normalized-"],
-            )
+            files=files,
+            weights=values["-drop_weights-"],
+            conf=values["-slider_conf-"],
+            iou=values["-slider_iou-"],
+            size=values["-slider_imgsize-"],
+            chunksize=int(values["-slider_chunksize-"]),
+            normalized=values["-check_normalized-"],
+        )
 
         """ for i, file in enumerate(files):
             detections = yolo.detect(
