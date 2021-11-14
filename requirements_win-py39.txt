@@ -27,5 +27,10 @@ torchvision==0.8.2+cu110
 https://github.com/OpenTrafficCam/downloads/blob/master/GDAL-3.2.3-cp39-cp39-win_amd64.whl?raw=true
 https://github.com/OpenTrafficCam/downloads/blob/master/Fiona-1.8.19-cp39-cp39-win_amd64.whl?raw=true
 geopandas
+
+# development
 flake8
 black
+
+# testing
+pytest==6.2.4
