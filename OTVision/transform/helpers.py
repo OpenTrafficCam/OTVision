@@ -1,6 +1,7 @@
 from tkinter import filedialog
 import os
-import config
+
+import OTVision.config as config
 
 # Define relative path to test data (using os.path.dirname repeatedly)
 TEST_DATA_FOLDER = config.CONFIG["TESTDATAFOLDER"]

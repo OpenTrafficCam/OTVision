@@ -20,7 +20,8 @@
 
 
 import PySimpleGUI as sg
-from config import CONFIG
+
+from OTVision.config import CONFIG
 
 # Add your new theme colors and settings
 sg.LOOK_AND_FEEL_TABLE["OTC"] = {

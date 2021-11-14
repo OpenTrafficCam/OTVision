@@ -24,8 +24,8 @@ import json
 
 from pathlib import Path
 
-from config import CONFIG
-from helpers.files import get_files, is_in_format
+from OTVision.config import CONFIG
+from OTVision.helpers.files import get_files, is_in_format
 from . import yolo
 
 

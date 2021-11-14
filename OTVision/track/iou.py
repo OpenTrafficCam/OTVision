@@ -7,8 +7,9 @@
 # ---------------------------------------------------------
 
 import pandas as pd
-from config import CONFIG
-from track.iou_util import iou
+
+from OTVision.config import CONFIG
+from .iou_util import iou
 
 
 def make_bbox(obj):

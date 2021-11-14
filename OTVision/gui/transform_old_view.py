@@ -19,12 +19,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import PySimpleGUI as sg
-from config import CONFIG
-from gui.helpers import otc_theme
 import cv2
 import datetime
 import pause
 import os
+
+from OTVision.config import CONFIG
+from .helpers import otc_theme
 
 
 # Constants

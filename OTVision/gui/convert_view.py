@@ -19,13 +19,14 @@
 
 
 import PySimpleGUI as sg
-from config import CONFIG
-from gui.helpers.frames import OTFrameFoldersFiles
-from gui.helpers.windows import OTSubpackageWindow
-from gui.helpers.texts import OTTextSpacer
-from gui.helpers import otc_theme
-from convert.convert import convert
-from helpers.files import get_files
+
+from OTVision.config import CONFIG
+from .helpers.frames import OTFrameFoldersFiles
+from .helpers.windows import OTSubpackageWindow
+from .helpers.texts import OTTextSpacer
+from .helpers import otc_theme
+from OTVision.convert.convert import convert
+from OTVision.helpers.files import get_files
 
 
 def main(paths=None, debug=True):

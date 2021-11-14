@@ -26,9 +26,10 @@ import logging
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import LineString, Point
-from config import CONFIG
-from track.iou import track_iou
-from helpers.files import get_files, denormalize
+
+from OTVision.config import CONFIG
+from .iou import track_iou
+from OTVision.helpers.files import get_files, denormalize
 
 # TODO:Change structure and naming to according to detect
 config_track_default = {

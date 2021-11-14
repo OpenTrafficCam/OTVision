@@ -19,13 +19,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import PySimpleGUI as sg
-from config import CONFIG
-from gui.helpers.frames import OTFrameFoldersFiles
-from gui.helpers.windows import OTSubpackageWindow
-from gui.helpers.texts import OTTextSpacer
-from gui.helpers import otc_theme
-from transform import transform
-from helpers.files import get_files
+
+from .helpers.frames import OTFrameFoldersFiles
+from .helpers.windows import OTSubpackageWindow
+from .helpers.texts import OTTextSpacer
+from .helpers import otc_theme
+from OTVision.config import CONFIG
+from OTVision.transform import transform
+from OTVision.helpers.files import get_files
 
 
 def main(paths=None, debug=True):

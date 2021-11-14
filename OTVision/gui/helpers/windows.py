@@ -18,7 +18,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import PySimpleGUI as sg
-from config import CONFIG
+
+from OTVision.config import CONFIG
 
 
 class OTSubpackageWindow(sg.Window):

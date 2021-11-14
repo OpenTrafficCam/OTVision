@@ -19,8 +19,9 @@
 
 
 import PySimpleGUI as sg
-from config import CONFIG
-from gui import convert_view, detect_view, track_view, undistort_view, transform_view
+
+from OTVision.config import CONFIG
+from . import convert_view, detect_view, track_view, undistort_view, transform_view
 
 
 def main():

@@ -19,9 +19,10 @@
 
 import PySimpleGUI as sg
 from pathlib import Path
-from config import CONFIG
-from helpers.files import get_files
-from gui.helpers.texts import OTTextSpacer
+
+from OTVision.config import CONFIG
+from OTVision.helpers.files import get_files
+from .texts import OTTextSpacer
 
 
 class OTFrameFoldersFiles(sg.Frame):
