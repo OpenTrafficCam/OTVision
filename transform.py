@@ -1,4 +1,5 @@
-# OTVision: Python module to testwise run OTVision/detect/detect.py
+# OTVision: Python module to calculate homography matrix from reference
+# points and transform trajectory points from pixel into world coordinates.
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -18,14 +19,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from pathlib import Path
-from convert.convert import main as convert
+from OTVision.gui import transform_view
 
 
 if __name__ == "__main__":
-    convert(
-        str(
-            Path(__file__).parents[1]
-            / r"tests/data/testvideo_FR20_2020-02-20_12-00-00.h264"
-        )
-    )
+    transform_view.main()

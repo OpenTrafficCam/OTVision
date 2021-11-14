@@ -19,8 +19,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from gui import transform_view
+# from gui import track
+from OTVision import track
 
 
 if __name__ == "__main__":
-    transform_view.main()
+    track()

@@ -1,4 +1,4 @@
-# OTVision: Python module to build a gui for OTVision.
+# OTVision: Python module to testwise run OTVision/detect/detect.py
 
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -17,9 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from gui import __main__
 
-# TODO: Add real gui window for OTVision
+from pathlib import Path
+from OTVision.convert import main as convert
+
 
 if __name__ == "__main__":
-    __main__.main()
+    convert(
+        str(
+            Path(__file__).parents[1]
+            / r"tests/data/testvideo_FR20_2020-02-20_12-00-00.h264"
+        )
+    )
