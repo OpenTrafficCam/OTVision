@@ -1,12 +1,19 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from view_helpers import FrameFiles, FrameSubmit, FrameGoTo
+from view.view_helpers import FrameFiles, FrameSubmit, FrameGoTo
+from config import CONFIG
 
 
 class FrameDetect(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_videos = FrameFiles(master=self, text="Choose video files")
+        self.frame_videos = FrameFiles(
+            master=self,
+            text="Choose video files",
+            filecategory="video files",
+            default_filetype=CONFIG["DEFAULT_FILETYPE"]["VID"],
+            filetypes=CONFIG["FILETYPES"]["VID"],
+        )
         self.frame_videos.pack(fill="both", expand=1)
         self.frame_options = FrameDetectOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)
@@ -58,10 +65,10 @@ class FrameDetectOptions(tk.LabelFrame):
         self.label_chunksize = tk.Label(master=self, text="Chunk size")
         self.label_chunksize.grid(row=4, column=0, sticky="w")
         self.scale_chunksize = tk.Scale(
-            master=self, from_=0, to=20, resolution=1, orient="horizontal"
+            master=self, from_=1, to=20, resolution=1, orient="horizontal"
         )
         self.scale_chunksize.grid(row=4, column=1, sticky="w")
-        self.scale_chunksize.set(0)  # TODO: Get from config
+        self.scale_chunksize.set(1)  # TODO: Get from config
         # Normalized
         self.checkbutton_normalized = tk.Checkbutton(master=self, text="Normalized")
         self.checkbutton_normalized.grid(row=5, column=0, columnspan=2, sticky="w")

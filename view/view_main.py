@@ -1,11 +1,10 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from view_convert import FrameConvert
-from view_detect import FrameDetect
-from view_track import FrameTrack
+from view.view_convert import FrameConvert
+from view.view_detect import FrameDetect
+from view.view_track import FrameTrack
 
 FRAME_WIDTH = 50
-
 pad_options = {"padx": 5, "pady": 5}
 
 
@@ -26,10 +25,10 @@ class WindowOTVision(tk.Tk):
         self.notebook.add(self.frame_detect, text="Detect")
         self.frame_track = FrameTrack(master=self.notebook)
         self.notebook.add(self.frame_track, text="Track")
-        self.frame_undistort = FrameConvert(master=self.notebook)
-        self.notebook.add(self.frame_undistort, text="Undistort")
-        self.frame_transform = FrameConvert(master=self.notebook)
-        self.notebook.add(self.frame_transform, text="Transform")
+        # self.frame_undistort = FrameConvert(master=self.notebook)
+        # self.notebook.add(self.frame_undistort, text="Undistort")
+        # self.frame_transform = FrameConvert(master=self.notebook)
+        # self.notebook.add(self.frame_transform, text="Transform")
 
 
 def main():

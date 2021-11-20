@@ -14,7 +14,7 @@ def main(
     input_fps: float = None,
     output_fps: float = None,
     fps_from_filename: bool = True,
-    overwrite: bool = True,
+    overwrite: bool = True,  #TODO: Set more parameters as global variables in config.py
 ):
     """Converts multiple h264-based videos into other formats and/or other frame rates.
 
@@ -26,7 +26,8 @@ def main(
         overwrite (bool, optional): [description]. Defaults to True.
     """
 
-    h264_files = get_files(paths, "h.264")
+    check_ffmpeg()
+    h264_files = get_files(paths, ".h264")
     for h264_file in h264_files:
         convert(
             h264_file,
@@ -66,12 +67,9 @@ def convert(
         [type]: [description]
     """
 
-    print("Hello")
-    check_ffmpeg()
     input_path = Path(input_video)
     input_filename = input_path.stem
     input_filetype = input_path.suffix
-    print(output_filetype)
     output_path = input_path.with_suffix(output_filetype)
     if not overwrite and output_path.is_file:
         return None

@@ -30,16 +30,21 @@ CONFIG = {}
 CONFIG["TESTDATAFOLDER"] = _get_testdatafolder()
 
 # FILETYPES
+CONFIG["DEFAULT_FILETYPE"] = {}
+CONFIG["DEFAULT_FILETYPE"]["VID"] = ".mp4"
+CONFIG["DEFAULT_FILETYPE"]["IMG"] = ".jpg"
+CONFIG["DEFAULT_FILETYPE"]["DETECT"] = ".otdet"
+CONFIG["DEFAULT_FILETYPE"]["TRACK"] = ".ottrk"
 CONFIG["FILETYPES"] = {}
 CONFIG["FILETYPES"]["VID"] = [
-    ".mov",
     ".avi",
+    ".mkv",
+    ".m4v",
+    ".mov",
     ".mp4",
     ".mpg",
     ".mpeg",
-    ".m4v",
     ".wmv",
-    ".mkv",
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 CONFIG["FILETYPES"]["DETECT"] = ".otdet"

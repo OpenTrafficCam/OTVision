@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from view_helpers import FrameFiles, FrameSubmit, FrameGoTo
+from view.view_helpers import FrameFiles, FrameSubmit, FrameGoTo
+from config import CONFIG
 
 # BUG: Space at bottom of all LabelFrames
 
@@ -8,7 +9,12 @@ from view_helpers import FrameFiles, FrameSubmit, FrameGoTo
 class FrameConvert(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_videos = FrameFiles(master=self, text="Choose h264 files")
+        self.frame_videos = FrameFiles(
+            master=self,
+            text="Choose h264 files",
+            filecategory="h264 videos",
+            default_filetype=".h264",
+        )
         self.frame_videos.pack(fill="both", expand=1)
         self.frame_options = FrameConvertOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)

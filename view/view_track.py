@@ -1,12 +1,19 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from view_helpers import FrameFiles, FrameSubmit, FrameGoTo
+from view.view_helpers import FrameFiles, FrameSubmit, FrameGoTo
+from config import CONFIG
 
 
 class FrameTrack(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_videos = FrameFiles(master=self, text="Choose detection files")
+        self.frame_videos = FrameFiles(
+            master=self,
+            text="Choose detection files",
+            filecategory="detection files",
+            default_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+            filetypes=CONFIG["FILETYPES"]["DETECT"],
+        )
         self.frame_videos.pack(fill="both", expand=1)
         self.frame_options = FrameTrackOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)
