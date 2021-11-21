@@ -1,10 +1,24 @@
-# %%
-# ---------------------------------------------------------
-# IOU Tracker
-# Copyright (c) 2017 TU Berlin, Communication Systems Group
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Erik Bochinski
-# ---------------------------------------------------------
+# OTVision: Python module to track road users in frames detected by OTVision
+# based on IOU Tracker written by Erik Bochinski originally licensed under the
+# MIT License, see <https://github.com/bochinski/iou-tracker>.
+
+# Copyright (C) 2021 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more detectionsails.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 import pandas as pd
 from config import CONFIG
