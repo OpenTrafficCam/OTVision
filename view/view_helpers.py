@@ -80,10 +80,10 @@ class FrameFiles(tk.LabelFrame):
 
 
 class FrameSubmit(tk.LabelFrame):
-    def __init__(self, **kwargs):
+    def __init__(self, button_label="Submit", **kwargs):
         super().__init__(**kwargs)
         # Convert
-        self.button_convert = tk.Button(master=self, text="Convert!")
+        self.button_convert = tk.Button(master=self, text=button_label)
         self.button_convert.grid(row=0, column=0, sticky="ew")
         # Progress bar
         self.progress = ttk.Progressbar(master=self)

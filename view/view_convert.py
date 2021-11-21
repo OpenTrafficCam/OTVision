@@ -18,7 +18,7 @@ class FrameConvert(tk.Frame):
         self.frame_videos.pack(fill="both", expand=1)
         self.frame_options = FrameConvertOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)
-        self.frame_submit = FrameSubmit(master=self, text="Start conversion")
+        self.frame_submit = FrameSubmit(master=self, text="Start conversion", button_label="Convert")
         self.frame_submit.pack(fill="both", expand=1)
         self.frame_goto = FrameGoTo(
             master=self, text="Continue with next step", text_button="Go to detection!"

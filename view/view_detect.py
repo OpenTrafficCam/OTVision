@@ -17,7 +17,7 @@ class FrameDetect(tk.Frame):
         self.frame_videos.pack(fill="both", expand=1)
         self.frame_options = FrameDetectOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)
-        self.frame_submit = FrameSubmit(master=self, text="Start detection")
+        self.frame_submit = FrameSubmit(master=self, text="Start detection", button_label="Detect")
         self.frame_submit.pack(fill="both", expand=1)
         self.frame_goto = FrameGoTo(
             master=self, text="Continue with next step", text_button="Go to tracking!"

@@ -17,7 +17,9 @@ class FrameTrack(tk.Frame):
         self.frame_videos.pack(fill="both", expand=1)
         self.frame_options = FrameTrackOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)
-        self.frame_submit = FrameSubmit(master=self, text="Start tracking")
+        self.frame_submit = FrameSubmit(
+            master=self, text="Start tracking", button_label="Track"
+        )
         self.frame_submit.pack(fill="both", expand=1)
         # self.frame_goto.pack(fill="both", expand=1)
 
