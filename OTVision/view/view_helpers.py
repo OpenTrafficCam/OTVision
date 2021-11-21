@@ -37,17 +37,25 @@ class FrameFiles(tk.LabelFrame):
         )  # BUG: takes 1 positional argument but 2 were given
         self.button_add_file.grid(row=1, column=1, sticky="ew")
         self.button_rem_sel = tk.Button(master=self, text="Remove selected")
+        self.button_rem_sel.bind("<Button-1>", self.remove_selected)
         self.button_rem_sel.grid(row=1, column=2, sticky="ew")
         self.button_rem_all = tk.Button(master=self, text="Remove all")
+        self.button_rem_all.bind("<Button-1>", self.remove_all)
         self.button_rem_all.grid(row=1, column=3, sticky="ew")
         # File names
         # self.label_video = tk.Label(master=self, text="Videos to convert:")
         # self.label_video.grid(row=1, column=0, columnspan=4, sticky="w")
-        self.listbox_video = tk.Listbox(master=self, width=50)
-        self.listbox_video.grid(row=2, column=0, columnspan=4, sticky="ew")
+        self.listbox_files = tk.Listbox(master=self, width=150, selectmode="extended")
+        self.listbox_files.grid(row=2, column=0, columnspan=4, sticky="ew")
 
     def set_filetype(self, event):
         self.filetype = self.combo_filetype.get()
+
+    def get_listbox_files(self):
+        return self.listbox_files.get(first=0, last=self.listbox_files.size() - 1)
+
+    def get_listbox_file_indices(self):
+        return self.listbox_files.get(first=0, last=self.listbox_files.size() - 1)
 
     def add_files(self, event):
         new_paths = list(
@@ -60,20 +68,30 @@ class FrameFiles(tk.LabelFrame):
             )
         )
         new_paths = get_files(new_paths, self.filetype)
-        print(new_paths)
-        self.listbox_video.insert("end", new_paths)
+        self.add_to_listbox(new_paths)
 
     def add_dirs(self, event):
-        new_dir = filedialog.askdirectory(title="Select one or multiple folders")
-        print(new_dir)
+        new_dir = filedialog.askdirectory(title="Select a folder")
         new_paths = get_files(new_dir, self.filetype)
-        self.listbox_video.insert("end", new_paths)
+        self.add_to_listbox(new_paths)
 
-    def remove_files(self, event):
-        first = self.listbox_video.curselection()[0]
-        last = self.listbox_video.curselection()[1]
-        if last > first:
-            self.listbox_video.delete(first=first, last=last)
+    def add_to_listbox(self, new_paths):
+        for new_path in new_paths:
+            if new_path not in self.get_listbox_files():
+                self.listbox_files.insert("end", new_path)
+
+    def remove_selected(self, event):
+        selection = self.listbox_files.curselection()
+        self.remove_from_listbox(selection)
+
+    def remove_all(self, event):
+        selection = range(self.listbox_files.size())
+        self.remove_from_listbox(selection)
+
+    def remove_from_listbox(self, selection):
+        for delta, selected_file in enumerate(selection):
+            file_to_remove = selected_file - delta
+            self.listbox_files.delete(first=file_to_remove)
 
     def debug(self, event):
         print(event)
