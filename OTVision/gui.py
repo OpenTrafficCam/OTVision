@@ -22,4 +22,4 @@ from gui import __main__
 # TODO: Add real gui window for OTVision
 
 if __name__ == "__main__":
-    __main__.main()
+    __main__.main()  # TODO: Rename main
