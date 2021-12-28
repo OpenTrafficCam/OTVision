@@ -27,25 +27,20 @@ class FrameFiles(tk.LabelFrame):
         self.filetypes = filetypes
         # File buttons
         self.button_add_folder = tk.Button(master=self, text="Add folder")
-        self.button_add_folder.bind(
-            "<Button-1>", self.add_dirs
-        )  # BUG: takes 1 positional argument but 2 were given
+        self.button_add_folder.bind("<ButtonRelease-1>", self.add_dirs)
         self.button_add_folder.grid(row=1, column=0, sticky="ew")
         self.button_add_file = tk.Button(master=self, text="Add files")
-        self.button_add_file.bind(
-            "<Button-1>", self.add_files
-        )  # BUG: takes 1 positional argument but 2 were given
+        self.button_add_file.bind("<ButtonRelease-1>", self.add_files)
         self.button_add_file.grid(row=1, column=1, sticky="ew")
         self.button_rem_sel = tk.Button(master=self, text="Remove selected")
-        self.button_rem_sel.bind("<Button-1>", self.remove_selected)
+        self.button_rem_sel.bind("<ButtonRelease-1>", self.remove_selected)
         self.button_rem_sel.grid(row=1, column=2, sticky="ew")
         self.button_rem_all = tk.Button(master=self, text="Remove all")
-        self.button_rem_all.bind("<Button-1>", self.remove_all)
+        self.button_rem_all.bind("<ButtonRelease-1>", self.remove_all)
         self.button_rem_all.grid(row=1, column=3, sticky="ew")
-        # File names
-        # self.label_video = tk.Label(master=self, text="Videos to convert:")
-        # self.label_video.grid(row=1, column=0, columnspan=4, sticky="w")
+        # File list
         self.listbox_files = tk.Listbox(master=self, width=150, selectmode="extended")
+        self.listbox_files.yview()
         self.listbox_files.grid(row=2, column=0, columnspan=4, sticky="ew")
 
     def set_filetype(self, event):
@@ -101,8 +96,8 @@ class FrameSubmit(tk.LabelFrame):
     def __init__(self, button_label="Submit", **kwargs):
         super().__init__(**kwargs)
         # Convert
-        self.button_convert = tk.Button(master=self, text=button_label)
-        self.button_convert.grid(row=0, column=0, sticky="ew")
+        self.button_submit = tk.Button(master=self, text=button_label)
+        self.button_submit.grid(row=0, column=0, sticky="ew")
         # Progress bar
         self.progress = ttk.Progressbar(master=self)
         self.progress.grid(row=1, column=0, sticky="ew")

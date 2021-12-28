@@ -7,17 +7,19 @@ from config import CONFIG
 class FrameTrack(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_videos = FrameFiles(
+        self.frame_files = FrameFiles(
             master=self,
             text="Choose detection files",
             filecategory="detection files",
             default_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
             filetypes=CONFIG["FILETYPES"]["DETECT"],
         )
-        self.frame_videos.pack(fill="both", expand=1)
-        self.frame_options = FrameTrackOptions(master=self, text="Configure")
+        self.frame_files.pack(fill="both", expand=1)
+        self.frame_options = FrameTrackOptions(
+            master=self, text="Configure"
+        )  # Always name this "frame_options"
         self.frame_options.pack(fill="both", expand=1)
-        self.frame_submit = FrameSubmit(
+        self.frame_submit = FrameStartTracking(
             master=self, text="Start tracking", button_label="Track"
         )
         self.frame_submit.pack(fill="both", expand=1)
@@ -71,3 +73,12 @@ class FrameTrackOptions(tk.LabelFrame):
         self.checkbutton_overwrite = tk.Checkbutton(master=self, text="Overwrite")
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
         self.checkbutton_overwrite.select()
+
+
+class FrameStartTracking(FrameSubmit):
+    def __init__(self, button_label="Submit", **kwargs):
+        super().__init__(**kwargs)
+        self.button_submit.bind("<ButtonRelease-1>", self.submit)
+
+    def submit(self, event):
+        print("Starting tracking")  #TODO: Call track with parameters
