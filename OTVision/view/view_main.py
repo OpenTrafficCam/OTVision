@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 from view.view_convert import FrameConvert
 from view.view_detect import FrameDetect
 from view.view_track import FrameTrack
+from config import CONFIG
 
 FRAME_WIDTH = 50
 pad_options = {"padx": 5, "pady": 5}
@@ -12,6 +13,7 @@ class WindowOTVision(tk.Tk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.title("OTVision")
+        self.iconbitmap(CONFIG["GUI"]["OTC ICON"])
         self.set_layout()
 
     def set_layout(self):

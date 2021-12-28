@@ -109,7 +109,7 @@ CONFIG["TRANSFORM"]["OVERWRTIE"] = False
 # GUI
 CONFIG["GUI"] = {}
 CONFIG["GUI"]["OTC ICON"] = str(
-    Path(__file__).parents[0] / r"gui" / r"helpers" / r"OTC.ico"
+    Path(__file__).parents[0] / r"view" / r"helpers" / r"OTC.ico"
 )
 CONFIG["GUI"]["FONT"] = "Open Sans"
 CONFIG["GUI"]["FONTSIZE"] = 12
