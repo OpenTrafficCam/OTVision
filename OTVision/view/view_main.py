@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 from view.view_convert import FrameConvert
 from view.view_detect import FrameDetect
 from view.view_track import FrameTrack
+from view.view_helpers import FrameFileTree
 from config import CONFIG
 
 FRAME_WIDTH = 50
@@ -17,6 +18,9 @@ class WindowOTVision(tk.Tk):
         self.set_layout()
 
     def set_layout(self):
+        # Treeview files
+        self.frame_files = FrameFileTree(master=self, text="Choose files")
+        self.frame_files.pack(pady=10, expand=True)
         # Notebook
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(pady=10, expand=True)
@@ -34,6 +38,7 @@ class WindowOTVision(tk.Tk):
 
 
 def main():
+    global app
     app = WindowOTVision()
     app.mainloop()
 

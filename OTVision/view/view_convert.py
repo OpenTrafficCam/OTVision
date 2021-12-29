@@ -10,13 +10,13 @@ from convert.convert import main as convert
 class FrameConvert(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_files = FrameFiles(
-            master=self,
-            text="Choose h264 files",
-            filecategory="h264 videos",
-            default_filetype=".h264",
-        )
-        self.frame_files.pack(fill="both", expand=1)
+        # self.frame_files = FrameFiles(
+        #     master=self,
+        #     text="Choose h264 files",
+        #     filecategory="h264 videos",
+        #     default_filetype=".h264",
+        # )
+        # self.frame_files.pack(fill="both", expand=1)
         self.frame_options = FrameConvertOptions(master=self, text="Configure")
         self.frame_options.pack(fill="both", expand=1)
         self.frame_submit = FrameStartConversion(
@@ -102,3 +102,8 @@ class FrameStartConversion(FrameSubmit):
             overwrite=overwrite,
         )
         print("Conversion succesful")
+
+
+class FrameGoToDetect(FrameGoTo):
+    def __init__(self, text_button="Submit", **kwargs):
+        super().__init__(**kwargs)

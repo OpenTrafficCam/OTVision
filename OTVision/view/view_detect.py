@@ -7,14 +7,14 @@ from config import CONFIG
 class FrameDetect(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_files = FrameFiles(
-            master=self,
-            text="Choose video files",
-            filecategory="video files",
-            default_filetype=CONFIG["DEFAULT_FILETYPE"]["VID"],
-            filetypes=CONFIG["FILETYPES"]["VID"],
-        )
-        self.frame_files.pack(fill="both", expand=1)
+        # self.frame_files = FrameFiles(
+        #     master=self,
+        #     text="Choose video files",
+        #     filecategory="video files",
+        #     default_filetype=CONFIG["DEFAULT_FILETYPE"]["VID"],
+        #     filetypes=CONFIG["FILETYPES"]["VID"],
+        # )
+        # self.frame_files.pack(fill="both", expand=1)
         self.frame_options = FrameDetectOptions(
             master=self, text="Configure"
         )  # Always name this "frame_options"

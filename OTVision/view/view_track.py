@@ -7,14 +7,14 @@ from config import CONFIG
 class FrameTrack(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.frame_files = FrameFiles(
-            master=self,
-            text="Choose detection files",
-            filecategory="detection files",
-            default_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
-            filetypes=CONFIG["FILETYPES"]["DETECT"],
-        )
-        self.frame_files.pack(fill="both", expand=1)
+        # self.frame_files = FrameFiles(
+        #     master=self,
+        #     text="Choose detection files",
+        #     filecategory="detection files",
+        #     default_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+        #     filetypes=CONFIG["FILETYPES"]["DETECT"],
+        # )
+        # self.frame_files.pack(fill="both", expand=1)
         self.frame_options = FrameTrackOptions(
             master=self, text="Configure"
         )  # Always name this "frame_options"
@@ -81,4 +81,4 @@ class FrameStartTracking(FrameSubmit):
         self.button_submit.bind("<ButtonRelease-1>", self.submit)
 
     def submit(self, event):
-        print("Starting tracking")  #TODO: Call track with parameters
+        print("Starting tracking")  # TODO: Call track with parameters
