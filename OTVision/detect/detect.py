@@ -31,7 +31,7 @@ from detect import yolo
 #     files = get_files(paths, filetypes)
 #     multiple_videos(files, **det_config)
 
-
+# TODO: Add option to allow or prevent overwrite in detect
 def main(
     files,
     filetype: str = ".mp4",
