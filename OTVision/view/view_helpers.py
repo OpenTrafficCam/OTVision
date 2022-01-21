@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import filedialog
-from config import CONFIG
+from config import CONFIG, PAD
 from helpers.files import get_files
 from pathlib import Path
 
@@ -51,7 +51,7 @@ class FrameFileTree(tk.LabelFrame):
 
         # Frame for treeview
         self.frame_tree = tk.Frame(master=self)
-        self.frame_tree.pack()
+        self.frame_tree.pack(**PAD, fill="x")  # BUG: Treeview fills only to the left
 
         # Files treeview
         self.tree_files = ttk.Treeview(master=self.frame_tree)
@@ -264,25 +264,42 @@ class FrameFiles(tk.LabelFrame):
         print(event)
 
 
-class FrameSubmit(tk.LabelFrame):
-    def __init__(self, button_label="Submit", **kwargs):
+class FrameRun(tk.Frame):
+    def __init__(self, button_label="Run!", **kwargs):
         super().__init__(**kwargs)
-        # Convert
-        self.button_submit = tk.Button(master=self, text=button_label)
-        self.button_submit.grid(row=0, column=0, sticky="ew")
-        # Progress bar
-        self.progress = ttk.Progressbar(master=self)
-        self.progress.grid(row=1, column=0, sticky="ew")
+        # Run
+        self.button_run = tk.Button(master=self, text=button_label)
+        self.button_run.pack(fill="both")
+        # Include in chained run
+        self.checkbutton_run_chained = tk.Checkbutton(
+            master=self, text="Include in chained run"
+        )
+        self.checkbutton_run_chained.pack()
+        # self.checkbutton_run_chained.select()
+        # # Progress bar  # TODO
+        # self.progress = ttk.Progressbar(master=self)
+        # self.progress.grid(row=1, column=0, sticky="ew")
 
 
-class FrameGoTo(tk.LabelFrame):
+class FrameRunChained(tk.LabelFrame):
+    def __init__(self, button_label="Run chained!", **kwargs):
+        super().__init__(**kwargs)
+        # Run
+        self.button_run = tk.Button(master=self, text=button_label)
+        self.button_run.pack(**PAD, fill="x", expand=1)
+        # # Progress bar  # TODO
+        # self.progress = ttk.Progressbar(master=self)
+        # self.progress.grid(row=1, column=0, sticky="ew")
+
+
+class FrameGoTo(tk.Frame):
     def __init__(self, text_button, **kwargs):
         super().__init__(**kwargs)
         # Go to
         self.text_button = text_button
         self.button_goto = tk.Button(master=self, text=text_button)
         self.button_goto.bind("<ButtonRelease-1>", self.goto_subpackage)
-        self.button_goto.grid(row=0, column=0, sticky="ew")
+        self.button_goto.pack()
 
     def goto_subpackage(self, event):
         # TODO: Decide which subpackage to go to

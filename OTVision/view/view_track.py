@@ -1,32 +1,21 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from view.view_helpers import FrameFiles, FrameSubmit, FrameGoTo
-from config import CONFIG
+from view.view_helpers import FrameFiles, FrameRun, FrameGoTo
+from config import CONFIG, PAD
 
 
-class FrameTrack(tk.Frame):
+class FrameTrack(tk.LabelFrame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.frame_files = FrameFiles(
-        #     master=self,
-        #     text="Choose detection files",
-        #     filecategory="detection files",
-        #     default_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
-        #     filetypes=CONFIG["FILETYPES"]["DETECT"],
-        # )
-        # self.frame_files.pack(fill="both", expand=1)
         self.frame_options = FrameTrackOptions(
-            master=self, text="Configure"
+            master=self
         )  # Always name this "frame_options"
-        self.frame_options.pack(fill="both", expand=1)
-        self.frame_submit = FrameStartTracking(
-            master=self, text="Start tracking", button_label="Track"
-        )
-        self.frame_submit.pack(fill="both", expand=1)
-        # self.frame_goto.pack(fill="both", expand=1)
+        self.frame_options.pack(**PAD, fill="both", expand=1, anchor="n")
+        self.frame_run = FrameRunTracking(master=self)
+        self.frame_run.pack(**PAD, side="left", fill="both", expand=1, anchor="s")
 
 
-class FrameTrackOptions(tk.LabelFrame):
+class FrameTrackOptions(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Sigma l
@@ -75,10 +64,10 @@ class FrameTrackOptions(tk.LabelFrame):
         self.checkbutton_overwrite.select()
 
 
-class FrameStartTracking(FrameSubmit):
-    def __init__(self, button_label="Submit", **kwargs):
+class FrameRunTracking(FrameRun):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.button_submit.bind("<ButtonRelease-1>", self.submit)
+        self.button_run.bind("<ButtonRelease-1>", self.run)
 
-    def submit(self, event):
+    def run(self, event):
         print("Starting tracking")  # TODO: Call track with parameters

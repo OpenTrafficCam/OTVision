@@ -1,35 +1,20 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from view.view_helpers import FrameFiles, FrameSubmit, FrameGoTo, FrameSubmit
-from config import CONFIG
+from view.view_helpers import FrameFiles, FrameRun, FrameGoTo
+from config import CONFIG, PAD
 from convert.convert import main as convert
 
-# BUG: Space at bottom of all LabelFrames
 
-
-class FrameConvert(tk.Frame):
+class FrameConvert(tk.LabelFrame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.frame_files = FrameFiles(
-        #     master=self,
-        #     text="Choose h264 files",
-        #     filecategory="h264 videos",
-        #     default_filetype=".h264",
-        # )
-        # self.frame_files.pack(fill="both", expand=1)
-        self.frame_options = FrameConvertOptions(master=self, text="Configure")
-        self.frame_options.pack(fill="both", expand=1)
-        self.frame_submit = FrameStartConversion(
-            master=self, text="Start conversion", button_label="Convert"
-        )
-        self.frame_submit.pack(fill="both", expand=1)
-        self.frame_goto = FrameGoTo(
-            master=self, text="Continue with next step", text_button="Go to detection!"
-        )
-        self.frame_goto.pack(fill="both", expand=1)
+        self.frame_options = FrameConvertOptions(master=self)
+        self.frame_options.pack(**PAD, fill="x", expand=1, anchor="n")
+        self.frame_run = FrameRunConversion(master=self)
+        self.frame_run.pack(**PAD, side="left", fill="both", expand=1, anchor="s")
 
 
-class FrameConvertOptions(tk.LabelFrame):
+class FrameConvertOptions(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # File type
@@ -76,12 +61,12 @@ class FrameConvertOptions(tk.LabelFrame):
             self.entry_framerate.configure(state="disabled")
 
 
-class FrameStartConversion(FrameSubmit):
-    def __init__(self, button_label="Submit", **kwargs):
+class FrameRunConversion(FrameRun):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.button_submit.bind("<ButtonRelease-1>", self.submit)
+        self.button_run.bind("<ButtonRelease-1>", self.run)
 
-    def submit(self, event):
+    def run(self, event):
         print(self.master.frame_options.checkbutton_use_framerate_var.get())
         paths = list(self.master.frame_files.get_listbox_files())
         output_filetype = "." + self.master.frame_options.combo_filtype.get()
@@ -102,8 +87,3 @@ class FrameStartConversion(FrameSubmit):
             overwrite=overwrite,
         )
         print("Conversion succesful")
-
-
-class FrameGoToDetect(FrameGoTo):
-    def __init__(self, text_button="Submit", **kwargs):
-        super().__init__(**kwargs)

@@ -118,6 +118,7 @@ CONFIG["GUI"]["WINDOW"]["LOCATION_X"] = 0
 CONFIG["GUI"]["WINDOW"]["LOCATION_Y"] = 0
 CONFIG["GUI"]["FRAMEWIDTH"] = 80
 CONFIG["GUI"]["COLWIDTH"] = 50
+PAD = {"padx": 10, "pady": 10}
 
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)
