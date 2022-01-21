@@ -70,7 +70,9 @@ class FrameRunConversion(FrameRun):
         self.button_run.bind("<ButtonRelease-1>", self.run)
 
     def run(self, event):
-        print(self.master.frame_options.checkbutton_use_framerate_var.get())
+        fps_from_filename = (
+            self.master.frame_options.checkbutton_use_framerate_var.get()
+        )
         paths = list(self.master.master.frame_files.get_tree_files())
         output_filetype = "." + self.master.frame_options.combo_filtype.get()
         input_fps = self.master.frame_options.entry_framerate.get()
@@ -81,7 +83,7 @@ class FrameRunConversion(FrameRun):
             output_filetype=output_filetype,
             input_fps=input_fps,
             output_fps=output_fps,
-            fps_from_filename=True,
+            fps_from_filename=fps_from_filename,
             overwrite=overwrite,
         )
         self.master.master.frame_files.update_files_dict()
