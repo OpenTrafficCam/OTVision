@@ -59,7 +59,10 @@ class FrameTrackOptions(tk.Frame):
         self.scale_t_miss_max.grid(row=4, column=1, sticky="w")
         self.scale_t_miss_max.set(10)  # TODO: Get from config
         # Overwrite
-        self.checkbutton_overwrite = tk.Checkbutton(master=self, text="Overwrite")
+        self.checkbutton_overwrite_var = tk.BooleanVar()
+        self.checkbutton_overwrite = tk.Checkbutton(
+            master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
+        )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
         self.checkbutton_overwrite.select()
 

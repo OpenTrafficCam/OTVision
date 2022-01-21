@@ -1,6 +1,8 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import filedialog
+
+from numpy import var
 from config import CONFIG, PAD
 from helpers.files import get_files
 from pathlib import Path
@@ -271,8 +273,11 @@ class FrameRun(tk.Frame):
         self.button_run = tk.Button(master=self, text=button_label)
         self.button_run.pack(fill="both")
         # Include in chained run
+        self.checkbutton_run_chained_var = tk.BooleanVar()
         self.checkbutton_run_chained = tk.Checkbutton(
-            master=self, text="Include in chained run"
+            master=self,
+            text="Include in chained run",
+            variable=self.checkbutton_run_chained_var,
         )
         self.checkbutton_run_chained.pack()
         # self.checkbutton_run_chained.select()

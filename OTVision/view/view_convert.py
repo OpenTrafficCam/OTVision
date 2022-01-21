@@ -46,8 +46,11 @@ class FrameConvertOptions(tk.Frame):
         self.entry_framerate.insert(index=0, string="20.0")  # TODO: Get from config
         self.entry_framerate.configure(state="disabled")
         # Overwrite
+        self.checkbutton_overwrite_var = tk.BooleanVar()
         self.checkbutton_overwrite = tk.Checkbutton(
-            master=self, text="Overwrite existing videos"
+            master=self,
+            text="Overwrite existing videos",
+            variable=self.checkbutton_overwrite_var,
         )
         self.checkbutton_overwrite.grid(row=3, column=0, columnspan=2, sticky="w")
         self.checkbutton_overwrite.select()

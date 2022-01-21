@@ -60,11 +60,17 @@ class FrameDetectOptions(tk.Frame):
         self.scale_chunksize.grid(row=4, column=1, sticky="w")
         self.scale_chunksize.set(1)  # TODO: Get from config
         # Normalized
-        self.checkbutton_normalized = tk.Checkbutton(master=self, text="Normalized")
+        self.checkbutton_normalized_var = tk.BooleanVar()
+        self.checkbutton_normalized = tk.Checkbutton(
+            master=self, text="Normalized", variable=self.checkbutton_normalized_var
+        )
         self.checkbutton_normalized.grid(row=5, column=0, columnspan=2, sticky="w")
         # self.checkbutton_overwrite.select()  # BUG: Still selected
         # Overwrite
-        self.checkbutton_overwrite = tk.Checkbutton(master=self, text="Overwrite")
+        self.checkbutton_overwrite_var = tk.BooleanVar()
+        self.checkbutton_overwrite = tk.Checkbutton(
+            master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
+        )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
         self.checkbutton_overwrite.select()
 
