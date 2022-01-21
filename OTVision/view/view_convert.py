@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 from view.view_helpers import FrameFiles, FrameRun, FrameGoTo
 from config import CONFIG, PAD
 from convert.convert import main as convert
+from helpers.files import get_files
 
 
 class FrameConvert(tk.LabelFrame):
@@ -70,10 +71,15 @@ class FrameRunConversion(FrameRun):
         self.button_run.bind("<ButtonRelease-1>", self.run)
 
     def run(self, event):
+        print("---Starting conversion---")
         fps_from_filename = (
             self.master.frame_options.checkbutton_use_framerate_var.get()
         )
-        paths = list(self.master.master.frame_files.get_tree_files())
+        paths = get_files(
+            paths=self.master.master.frame_files.get_tree_files(),
+            filetypes=".h264",
+            replace_filetype=True,
+        )
         output_filetype = "." + self.master.frame_options.combo_filtype.get()
         input_fps = self.master.frame_options.entry_framerate.get()
         output_fps = self.master.frame_options.entry_framerate.get()
@@ -87,4 +93,4 @@ class FrameRunConversion(FrameRun):
             overwrite=overwrite,
         )
         self.master.master.frame_files.update_files_dict()
-        print("Conversion successful")
+        print("---Conversion successful---")
