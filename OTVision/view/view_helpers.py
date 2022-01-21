@@ -133,6 +133,11 @@ class FrameFileTree(tk.LabelFrame):
             self.update_files_dict_values(path)
         self.update_tree_files()
 
+    def update_files_dict(self):
+        for path in self.files_dict.keys():
+            self.update_files_dict_values(path)
+        self.update_tree_files()
+
     def update_files_dict_values(self, path):
         TRUE_SYMBOL = "\u2705"  # "\u2713"  # "\u2714"
         FALSE_SYMBOL = "\u274E"  # "\u2717"  # "\u2718"

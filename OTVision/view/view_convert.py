@@ -71,16 +71,11 @@ class FrameRunConversion(FrameRun):
 
     def run(self, event):
         print(self.master.frame_options.checkbutton_use_framerate_var.get())
-        paths = list(self.master.frame_files.get_listbox_files())
+        paths = list(self.master.master.frame_files.get_tree_files())
         output_filetype = "." + self.master.frame_options.combo_filtype.get()
         input_fps = self.master.frame_options.entry_framerate.get()
         output_fps = self.master.frame_options.entry_framerate.get()
         overwrite = self.master.frame_options.checkbutton_use_framerate_var.get()
-        # print(paths)
-        # print(output_filetype)
-        # print(input_fps)
-        # print(output_fps)
-        # print(overwrite)
         convert(
             paths=paths,
             output_filetype=output_filetype,
@@ -89,4 +84,5 @@ class FrameRunConversion(FrameRun):
             fps_from_filename=True,
             overwrite=overwrite,
         )
-        print("Conversion succesful")
+        self.master.master.frame_files.update_files_dict()
+        print("Conversion successful")
