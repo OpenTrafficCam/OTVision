@@ -1,7 +1,11 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+
+from numpy import size
 from view.view_helpers import FrameFiles, FrameRun, FrameGoTo
 from config import CONFIG, PAD
+from detect.detect import main as detect
+from helpers.files import get_files
 
 
 class FrameDetect(tk.LabelFrame):
@@ -81,4 +85,29 @@ class FrameRunDetection(FrameRun):
         self.button_run.bind("<ButtonRelease-1>", self.run)
 
     def run(self, event):
-        print("Starting detection")  # TODO: Call detect with parameters
+        print("---Starting detection---")
+        input_filetype = "." + self.master.master.frame_files.combo_vid_filetype.get()
+        paths = get_files(
+            paths=self.master.master.frame_files.get_tree_files(),
+            filetypes=input_filetype,
+            replace_filetype=True,
+        )  # TODO: Get files with correct extension
+        weights = self.master.frame_options.combo_weights.get()
+        conf = self.master.frame_options.scale_conf.get()
+        iou = self.master.frame_options.scale_iou.get()
+        size = self.master.frame_options.scale_imgsize.get()
+        chunksize = self.master.frame_options.scale_chunksize.get()
+        normalized = self.master.frame_options.checkbutton_normalized_var.get()
+        overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        detect(
+            files=paths,
+            filetype=input_filetype,
+            weights=weights,
+            conf=conf,
+            iou=iou,
+            size=size,
+            chunksize=chunksize,
+            normalized=normalized,
+        )  # TODO: Add overwrite parameter (first add argument to detect)
+        self.master.master.frame_files.update_files_dict()
+        print("---Detection successful---")
