@@ -80,7 +80,7 @@ class FrameRunTracking(FrameRun):
             paths=self.master.master.frame_files.get_tree_files(),
             filetypes=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
             replace_filetype=True,
-        )  # TODO: Get files with correct extension
+        )
         sigma_l = self.master.frame_options.scale_sigma_l.get()
         sigma_h = self.master.frame_options.scale_sigma_h.get()
         sigma_iou = self.master.frame_options.scale_sigma_iou.get()

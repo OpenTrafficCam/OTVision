@@ -91,7 +91,7 @@ class FrameRunDetection(FrameRun):
             paths=self.master.master.frame_files.get_tree_files(),
             filetypes=input_filetype,
             replace_filetype=True,
-        )  # TODO: Get files with correct extension
+        )
         weights = self.master.frame_options.combo_weights.get()
         conf = self.master.frame_options.scale_conf.get()
         iou = self.master.frame_options.scale_iou.get()
