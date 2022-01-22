@@ -37,7 +37,7 @@ class FrameDetectOptions(tk.Frame):
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
         self.scale_conf.grid(row=1, column=1, sticky="w")
-        self.scale_conf.set(0.25)  # TODO: Get from config
+        self.scale_conf.set(CONFIG["DETECT"]["YOLO"]["CONF"])
         # IOU
         self.label_iou = tk.Label(master=self, text="IOU")
         self.label_iou.grid(row=2, column=0, sticky="sw")
@@ -45,7 +45,7 @@ class FrameDetectOptions(tk.Frame):
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
         self.scale_iou.grid(row=2, column=1, sticky="w")
-        self.scale_iou.set(0.45)  # TODO: Get from config
+        self.scale_iou.set(CONFIG["DETECT"]["YOLO"]["IOU"])
         # Image size
         self.label_imgsize = tk.Label(master=self, text="Image size")
         self.label_imgsize.grid(row=3, column=0, sticky="sw")
@@ -53,7 +53,7 @@ class FrameDetectOptions(tk.Frame):
             master=self, from_=100, to=1000, resolution=10, orient="horizontal"
         )
         self.scale_imgsize.grid(row=3, column=1, sticky="w")
-        self.scale_imgsize.set(640)  # TODO: Get from config
+        self.scale_imgsize.set(CONFIG["DETECT"]["YOLO"]["IMGSIZE"])
         # Chunk size
         self.label_chunksize = tk.Label(master=self, text="Chunk size")
         self.label_chunksize.grid(row=4, column=0, sticky="sw")
@@ -61,7 +61,7 @@ class FrameDetectOptions(tk.Frame):
             master=self, from_=1, to=20, resolution=1, orient="horizontal"
         )
         self.scale_chunksize.grid(row=4, column=1, sticky="w")
-        self.scale_chunksize.set(1)  # TODO: Get from config
+        self.scale_chunksize.set(CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"])
         # Normalized
         self.checkbutton_normalized_var = tk.BooleanVar()
         self.checkbutton_normalized = tk.Checkbutton(
@@ -75,7 +75,8 @@ class FrameDetectOptions(tk.Frame):
             master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
         )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
-        self.checkbutton_overwrite.select()
+        if CONFIG["DETECT"]["YOLO"]["OVERWRITE"]:
+            self.checkbutton_overwrite.select()
 
 
 class FrameRunDetection(FrameRun):

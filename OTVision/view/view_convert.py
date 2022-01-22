@@ -22,10 +22,12 @@ class FrameConvertOptions(tk.Frame):
         self.label_filtype = tk.Label(master=self, text="Output file type")
         self.label_filtype.grid(row=0, column=0, sticky="w")
         self.combo_filtype = ttk.Combobox(
-            master=self, values=CONFIG["FILETYPES"]["VID"], width=5
+            master=self,
+            values=[str.replace(".", "") for str in CONFIG["FILETYPES"]["VID"]],
+            width=5,
         )
         self.combo_filtype.grid(row=0, column=1, sticky="w")
-        self.combo_filtype.set(CONFIG["DEFAULT_FILETYPE"]["VID"])
+        self.combo_filtype.set(CONFIG["DEFAULT_FILETYPE"]["VID"].replace(".", ""))
         # Frame rate from video
         self.checkbutton_use_framerate_var = tk.BooleanVar()
         self.checkbutton_use_framerate = tk.Checkbutton(
@@ -43,7 +45,7 @@ class FrameConvertOptions(tk.Frame):
         self.label_framerate.grid(row=2, column=0, sticky="w")
         self.entry_framerate = tk.Entry(master=self, width=4)
         self.entry_framerate.grid(row=2, column=1, sticky="w")
-        self.entry_framerate.insert(index=0, string="20.0")  # TODO: Get from config
+        self.entry_framerate.insert(index=0, string=CONFIG["CONVERT"]["FPS"])
         self.entry_framerate.configure(state="disabled")
         # Overwrite
         self.checkbutton_overwrite_var = tk.BooleanVar()
@@ -53,13 +55,14 @@ class FrameConvertOptions(tk.Frame):
             variable=self.checkbutton_overwrite_var,
         )
         self.checkbutton_overwrite.grid(row=3, column=0, columnspan=2, sticky="w")
-        self.checkbutton_overwrite.select()
+        if CONFIG["CONVERT"]["OVERWRITE"]:
+            self.checkbutton_overwrite.select()
 
     def toggle_entry_framerate(self, event):
         if self.checkbutton_use_framerate_var.get():
             self.entry_framerate.configure(state="normal")
             self.entry_framerate.delete(0, "end")
-            self.entry_framerate.insert(0, 20.0)
+            self.entry_framerate.insert(0, CONFIG["CONVERT"]["FPS"])
         else:
             self.entry_framerate.configure(state="disabled")
 
