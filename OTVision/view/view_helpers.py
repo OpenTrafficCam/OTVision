@@ -304,31 +304,9 @@ class FrameRunChained(tk.LabelFrame):
         # self.progress.grid(row=1, column=0, sticky="ew")
 
     def run(self, event):
-        self.master.frame_convert.frame_run.run(event)
-        self.master.frame_detect.frame_run.run(event)
-        self.master.frame_track.frame_run.run(event)
-
-
-class FrameGoTo(tk.Frame):
-    def __init__(self, text_button, **kwargs):
-        super().__init__(**kwargs)
-        # Go to
-        self.text_button = text_button
-        self.button_goto = tk.Button(master=self, text=text_button)
-        self.button_goto.bind("<ButtonRelease-1>", self.goto_subpackage)
-        self.button_goto.pack()
-
-    def goto_subpackage(self, event):
-        # TODO: Decide which subpackage to go to
-        if "detect" in self.text_button:
-            self.master.master.select(1)
-        elif "track" in self.text_button:
-            self.master.master.select(2)
-        paths = ["Hello", "Moto"]
-        self.master.master.frame_track.frame_files.add_to_listbox(paths)
-
-    def goto_detect(self):
-        pass
-
-    def goto_track(self):
-        pass
+        if self.master.frame_convert.frame_run.checkbutton_run_chained_var.get():
+            self.master.frame_convert.frame_run.run(event)
+        if self.master.frame_detect.frame_run.checkbutton_run_chained_var.get():
+            self.master.frame_detect.frame_run.run(event)
+        if self.master.frame_track.frame_run.checkbutton_run_chained_var.get():
+            self.master.frame_track.frame_run.run(event)
