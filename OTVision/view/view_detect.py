@@ -26,11 +26,10 @@ class FrameDetectOptions(tk.Frame):
         self.label_weights = tk.Label(master=self, text="Weights")
         self.label_weights.grid(row=0, column=0, sticky="w")
         self.combo_weights = ttk.Combobox(
-            master=self,
-            values=["yolov5s", "yolov5m", "yolov5l", "yolov5x"],
-        )  # TODO: Get from config
+            master=self, values=CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"], width=8
+        )
         self.combo_weights.grid(row=0, column=1, sticky="w")
-        self.combo_weights.current(0)
+        self.combo_weights.set(CONFIG["DETECT"]["YOLO"]["WEIGHTS"])
         # Confidence
         self.label_conf = tk.Label(master=self, text="Confidence")
         self.label_conf.grid(row=1, column=0, sticky="w")

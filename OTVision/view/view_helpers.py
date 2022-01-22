@@ -28,6 +28,7 @@ class FrameFileTree(tk.LabelFrame):
         self.combo_vid_filetype = ttk.Combobox(
             master=self.frame_controls,
             values=[str.replace(".", "") for str in CONFIG["FILETYPES"]["VID"]],
+            width=5,
         )
         self.combo_vid_filetype.grid(row=0, column=5, sticky="w")
         self.combo_vid_filetype.bind("<<ComboboxSelected>>", self.set_vid_filetype)

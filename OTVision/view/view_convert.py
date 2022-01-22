@@ -22,11 +22,10 @@ class FrameConvertOptions(tk.Frame):
         self.label_filtype = tk.Label(master=self, text="Output file type")
         self.label_filtype.grid(row=0, column=0, sticky="w")
         self.combo_filtype = ttk.Combobox(
-            master=self,
-            values=["avi", "mov", "m4v", "mkv", "mp4", "mpeg", "mpg", "wmv"],
-        )  # TODO: Get from config
+            master=self, values=CONFIG["FILETYPES"]["VID"], width=5
+        )
         self.combo_filtype.grid(row=0, column=1, sticky="w")
-        self.combo_filtype.current(4)
+        self.combo_filtype.set(CONFIG["DEFAULT_FILETYPE"]["VID"])
         # Frame rate from video
         self.checkbutton_use_framerate_var = tk.BooleanVar()
         self.checkbutton_use_framerate = tk.Checkbutton(
