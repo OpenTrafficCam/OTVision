@@ -26,8 +26,9 @@ logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=loggin
 
 CONFIG = {}
 
-# TESTDATAFOLDER
+# FOLDERS
 CONFIG["TESTDATAFOLDER"] = _get_testdatafolder()
+CONFIG["SEARCH_SUBDIRS"] = True
 
 # FILETYPES
 CONFIG["DEFAULT_FILETYPE"] = {}
