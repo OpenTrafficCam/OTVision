@@ -61,6 +61,7 @@ CONFIG["LAST PATHS"]["REFPTS"] = []
 
 # CONVERT
 CONFIG["CONVERT"] = {}
+CONFIG["CONVERT"]["RUN_CHAINED"] = True
 CONFIG["CONVERT"][
     "FFMPEG_URL"
 ] = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
@@ -73,6 +74,7 @@ CONFIG["CONVERT"]["OVERWRITE"] = True
 
 # DETECT
 CONFIG["DETECT"] = {}
+CONFIG["DETECT"]["RUN_CHAINED"] = True
 CONFIG["DETECT"]["YOLO"] = {}
 CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
 CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
@@ -90,6 +92,7 @@ CONFIG["DETECT"]["YOLO"]["OVERWRITE"] = True
 
 # TRACK
 CONFIG["TRACK"] = {}
+CONFIG["TRACK"]["RUN_CHAINED"] = True
 CONFIG["TRACK"]["IOU"] = {}
 CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25  # or 0.1? @arminkollascheck
 CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8  # or 0.85? @arminkollascheck

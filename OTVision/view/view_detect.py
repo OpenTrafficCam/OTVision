@@ -82,6 +82,8 @@ class FrameRunDetection(FrameRun):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.button_run.bind("<ButtonRelease-1>", self.run)
+        if CONFIG["DETECT"]["RUN_CHAINED"]:
+            self.checkbutton_run_chained.select()
 
     def run(self, event):
         print("---Starting detection---")
