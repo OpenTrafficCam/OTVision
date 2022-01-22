@@ -20,17 +20,27 @@ class FrameFileTree(tk.LabelFrame):
         self.frame_controls = tk.Frame(master=self)
         self.frame_controls.pack()
 
+        # Search subdir checkbox
+        self.checkbutton_subdir_var = tk.BooleanVar()
+        self.checkbutton_subdir = tk.Checkbutton(
+            master=self.frame_controls,
+            text="Search subfolders",
+            variable=self.checkbutton_subdir_var,
+        )
+        self.checkbutton_subdir.grid(row=0, column=0, sticky="w")
+        self.checkbutton_subdir_var.set(CONFIG["SEARCH_SUBDIRS"])
+
         # File type dropdowns
         self.label_vid_filetype = tk.Label(
             master=self.frame_controls, text="Video file type"
         )
-        self.label_vid_filetype.grid(row=0, column=4, sticky="w")
+        self.label_vid_filetype.grid(row=0, column=5, sticky="w")
         self.combo_vid_filetype = ttk.Combobox(
             master=self.frame_controls,
             values=[str.replace(".", "") for str in CONFIG["FILETYPES"]["VID"]],
             width=5,
         )
-        self.combo_vid_filetype.grid(row=0, column=5, sticky="w")
+        self.combo_vid_filetype.grid(row=0, column=6, sticky="w")
         self.combo_vid_filetype.bind("<<ComboboxSelected>>", self.set_vid_filetype)
         self.combo_vid_filetype.set(self.vid_filetype)
 
@@ -39,18 +49,18 @@ class FrameFileTree(tk.LabelFrame):
             master=self.frame_controls, text="Add folder"
         )
         self.button_add_folder.bind("<ButtonRelease-1>", self.add_dirs)
-        self.button_add_folder.grid(row=0, column=0, sticky="ew")
+        self.button_add_folder.grid(row=0, column=1, sticky="ew")
         self.button_add_file = tk.Button(master=self.frame_controls, text="Add files")
         self.button_add_file.bind("<ButtonRelease-1>", self.add_files)
-        self.button_add_file.grid(row=0, column=1, sticky="ew")
+        self.button_add_file.grid(row=0, column=2, sticky="ew")
         self.button_rem_sel = tk.Button(
             master=self.frame_controls, text="Remove selected"
         )
         self.button_rem_sel.bind("<ButtonRelease-1>", self.remove_selected)
-        self.button_rem_sel.grid(row=0, column=2, sticky="ew")
+        self.button_rem_sel.grid(row=0, column=3, sticky="ew")
         self.button_rem_all = tk.Button(master=self.frame_controls, text="Remove all")
         self.button_rem_all.bind("<ButtonRelease-1>", self.remove_all)
-        self.button_rem_all.grid(row=0, column=3, sticky="ew")
+        self.button_rem_all.grid(row=0, column=4, sticky="ew")
 
         # Frame for treeview
         self.frame_tree = tk.Frame(master=self)
@@ -97,9 +107,23 @@ class FrameFileTree(tk.LabelFrame):
         self.update_tree_files()
 
     def add_dirs(self, event):
-        new_dir = filedialog.askdirectory(title="Select a folder")
-        new_paths = get_files(new_dir, self.filetype)
-        self.add_to_listbox(new_paths)
+        new_dir = filedialog.askdirectory(title="Select a folder", mustexist=True)
+        new_paths = get_files(
+            new_dir,
+            filetypes=[
+                ".h264",
+                "." + self.vid_filetype,
+                CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+            ],
+            search_subdirs=self.checkbutton_subdir_var.get(),
+        )
+        unique_new_paths = []
+        for elem in new_paths:
+            if str(Path(elem).with_suffix("")) not in [
+                str(Path(p).with_suffix("")) for p in unique_new_paths
+            ]:
+                unique_new_paths.append(elem)
+        self.add_to_files_dict(unique_new_paths)
 
     def add_files(self, event):
         # Show filedialog
