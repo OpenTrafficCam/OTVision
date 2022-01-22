@@ -1,5 +1,4 @@
 import tkinter as tk
-import tkinter.ttk as ttk
 from view.view_convert import FrameConvert
 from view.view_detect import FrameDetect
 from view.view_track import FrameTrack

@@ -1,6 +1,5 @@
 import tkinter as tk
-import tkinter.ttk as ttk
-from view.view_helpers import FrameFiles, FrameRun, FrameGoTo
+from view.view_helpers import FrameRun
 from config import CONFIG, PAD
 from track.track import main as track
 from helpers.files import get_files
