@@ -26,19 +26,16 @@ from track.iou_util import iou
 
 
 def make_bbox(obj):
-    bbox = (
+    return (
         obj["x"] - obj["w"] / 2,
         obj["y"] - obj["h"] / 2,
         obj["x"] + obj["w"] / 2,
         obj["y"] + obj["h"] / 2,
     )
-    return bbox
 
 
 def center(obj):
-    center = (obj["x"], obj["y"])
-
-    return center
+    return obj["x"], obj["y"]
 
 
 def track_iou(
