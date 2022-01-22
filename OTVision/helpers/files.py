@@ -21,18 +21,21 @@ import json
 import logging
 
 
-def get_files(paths, filetypes=None, replace_filetype=False):
+def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
     """
-    Generates a list of files ending with filename based on filenames or the recursive
-    content of folders.
+    Generates a list of files ending with filename based on filenames or the
+    (recursive) content of folders.
 
     Args:
         paths ([str or list of str]): where to find the files
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
-            directories are ignored.
+            directories are ignored. Defaults to None.
         replace_filetype ([bool]): Wheter or not to replace the filetype in file paths
             with the filetype given. Currently only applied when one filetype was given.
+            Defaults to False.
+        search_subdirs ([bool]): Wheter or not to search subdirs of dirs given as paths.
+            Defaults to True.
 
     Returns:
         [list]: [list of filenames as str]
@@ -51,22 +54,20 @@ def get_files(paths, filetypes=None, replace_filetype=False):
         if type(filetypes) is not list:
             filetypes = [filetypes]
         for filetype in filetypes:
-            if type(filetype) is str:
-                if not filetype.startswith("_"):
-                    if not filetype.startswith("."):
-                        filetype = "." + filetype
-                    filetype = filetype.lower()
-            else:
+            if type(filetype) is not str:
                 raise TypeError("Filetype needs to be a str or a list of str")
 
+            if not filetype.startswith("_"):
+                if not filetype.startswith("."):
+                    filetype = "." + filetype
+                filetype = filetype.lower()
     # add all files to a single list _files_
     for path in paths:
         path = Path(path)
         # Replace filetype in path if replace_filetype is given as argument
         # and path has suffix and only one filetype was given
-        if filetypes and replace_filetype and len(filetypes) == 1:
-            if path.suffix:
-                path = path.with_suffix(filetypes[0])
+        if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
+            path = path.with_suffix(filetypes[0])
         # If path is a real file add it to return list
         if path.is_file():
             file = str(path)
@@ -79,7 +80,7 @@ def get_files(paths, filetypes=None, replace_filetype=False):
         # If path is a real file add it to return list
         elif path.is_dir():
             for filetype in filetypes:
-                for file in path.glob("**/*" + filetype):
+                for file in path.glob(("**/*" if search_subdirs else "*") + filetype):
                     file = str(file)
                     files.add(file)
         else:
