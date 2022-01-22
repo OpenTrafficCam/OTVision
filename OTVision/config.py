@@ -68,7 +68,7 @@ CONFIG["CONVERT"]["FFMPEG_PATH"] = str(
     Path(__file__).parents[0] / r"convert" / r"ffmpeg.exe"
 )
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".mp4"
-CONFIG["CONVERT"]["FPS"] = 25.0
+CONFIG["CONVERT"]["FPS"] = 20.0
 CONFIG["CONVERT"]["OVERWRITE"] = True
 
 # DETECT
@@ -84,19 +84,19 @@ CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
 CONFIG["DETECT"]["YOLO"]["CONF"] = 0.25
 CONFIG["DETECT"]["YOLO"]["IOU"] = 0.45
 CONFIG["DETECT"]["YOLO"]["IMGSIZE"] = 640
-CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
+CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 1
 CONFIG["DETECT"]["YOLO"]["NORMALIZED"] = False
 CONFIG["DETECT"]["YOLO"]["OVERWRITE"] = True
 
 # TRACK
 CONFIG["TRACK"] = {}
 CONFIG["TRACK"]["IOU"] = {}
-CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25  # or 0.1? @arminkollascheck 
-CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8  # or 0.85? @arminkollascheck 
-CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.3  # or 0.4? @arminkollascheck 
-CONFIG["TRACK"]["IOU"]["T_MIN"] = 5  # or 12? @arminkollascheck 
-CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 25  # or 5? @arminkollascheck 
-CONFIG["TRACK"]["IOU"]["OVERWRITE"] = True 
+CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25  # or 0.1? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8  # or 0.85? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.3  # or 0.4? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["T_MIN"] = 5  # or 12? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 25  # or 5? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["OVERWRITE"] = True
 
 # UNDISTORT
 CONFIG["UNDISTORT"] = {}
