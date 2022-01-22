@@ -2,6 +2,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from view.view_helpers import FrameFiles, FrameRun, FrameGoTo
 from config import CONFIG, PAD
+from track.track import main as track
+from helpers.files import get_files
 
 
 class FrameTrack(tk.LabelFrame):
@@ -73,4 +75,26 @@ class FrameRunTracking(FrameRun):
         self.button_run.bind("<ButtonRelease-1>", self.run)
 
     def run(self, event):
-        print("Starting tracking")  # TODO: Call track with parameters
+        print("---Starting tracking---")
+        paths = get_files(
+            paths=self.master.master.frame_files.get_tree_files(),
+            filetypes=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+            replace_filetype=True,
+        )  # TODO: Get files with correct extension
+        sigma_l = self.master.frame_options.scale_sigma_l.get()
+        sigma_h = self.master.frame_options.scale_sigma_h.get()
+        sigma_iou = self.master.frame_options.scale_sigma_iou.get()
+        t_min = self.master.frame_options.scale_t_min.get()
+        t_miss_max = self.master.frame_options.scale_t_miss_max.get()
+        overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        track(
+            paths=paths,
+            sigma_l=sigma_l,
+            sigma_h=sigma_h,
+            sigma_iou=sigma_iou,
+            t_min=t_min,
+            t_miss_max=t_miss_max,
+            overwrite=overwrite,
+        )
+        self.master.master.frame_files.update_files_dict()
+        print("---Tracking successful---")
