@@ -298,9 +298,15 @@ class FrameRunChained(tk.LabelFrame):
         # Run
         self.button_run = tk.Button(master=self, text=button_label)
         self.button_run.pack(**PAD, fill="x", expand=1)
+        self.button_run.bind("<ButtonRelease-1>", self.run)
         # # Progress bar  # TODO
         # self.progress = ttk.Progressbar(master=self)
         # self.progress.grid(row=1, column=0, sticky="ew")
+
+    def run(self, event):
+        self.master.frame_convert.frame_run.run(event)
+        self.master.frame_detect.frame_run.run(event)
+        self.master.frame_track.frame_run.run(event)
 
 
 class FrameGoTo(tk.Frame):
