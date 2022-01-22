@@ -30,48 +30,73 @@ from config import CONFIG
 from track.iou import track_iou
 from helpers.files import get_files, denormalize
 
-# TODO:Change structure and naming to according to detect
-config_track_default = {
-    "yolo_mode": "spp",
-    "sigma_l": 0.1,
-    "sigma_h": 0.85,
-    "sigma_iou": 0.4,
-    "t_min": 12,
-    "save_age": 5,
-    "overwrite": True,
-}
+
+def main(
+    paths,
+    yolo_mode="spp",  # Why yolo mode?
+    sigma_l=CONFIG["TRACK"]["IOU"]["SIGMA_L"],
+    sigma_h=CONFIG["TRACK"]["IOU"]["SIGMA_H"],
+    sigma_iou=CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
+    t_min=CONFIG["TRACK"]["IOU"]["T_MIN"],
+    t_miss_max=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+    overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"],
+):
+    filetypes = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
+    detections_files = get_files(paths, filetypes)
+    for detections_file in detections_files:
+        logging.info(f"New detections file: {detections_file}")
+        try:
+            with open(detections_file) as f:
+                detections = json.load(f)
+        except:
+            logging.error(f"Could not read {detections_file} as json")
+            continue
+        logging.info("detections read")
+        detections = denormalize(detections)
+        logging.info("detections denormalized")
+        tracks_px, trajectories_geojson = track(
+            detections=detections,
+            yolo_mode=yolo_mode,
+            sigma_l=sigma_l,
+            sigma_h=sigma_h,
+            sigma_iou=sigma_iou,
+            t_min=t_min,
+            t_miss_max=t_miss_max,
+        )
+        logging.info("detections tracked")
+        write(
+            tracks_px=tracks_px,
+            trajectories_geojson=trajectories_geojson,
+            detections_file=detections_file,
+        )
+        logging.info("Tracking finished")
 
 
-def read(detections_file):
-    """
-    docstring
-    """
-    dir = Path(detections_file).parent
-    filename = Path(detections_file).stem.rsplit("_", 1)[0]
-    # detections_suffix = Path(detections_file).stem.rsplit("_", 1)[1]
-    filetype = Path(detections_file).suffix
-    if filetype == ".otdet":
-        with open(detections_file) as f:
-            detections = json.load(f)
-    else:
-        raise ValueError("Filetype " + filetype + " cannot be read, has to be .otdet")
-    return detections, dir, filename
-
-
-def track(detections, trk_config=config_track_default):
-    """
-    docstring
-    """
-
+def track(
+    detections,
+    yolo_mode="spp",
+    sigma_l=CONFIG["TRACK"]["IOU"]["SIGMA_L"],
+    sigma_h=CONFIG["TRACK"]["IOU"]["SIGMA_H"],
+    sigma_iou=CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
+    t_min=CONFIG["TRACK"]["IOU"]["T_MIN"],
+    t_miss_max=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+):
     new_detections, trajectories_geojson, vehIDs_finished = track_iou(
-        detections["data"],
-        trk_config["sigma_l"],
-        trk_config["sigma_h"],
-        trk_config["sigma_iou"],
-        trk_config["t_min"],
-        trk_config["save_age"],
+        detections=detections["data"],
+        sigma_l=sigma_l,
+        sigma_h=sigma_h,
+        sigma_iou=sigma_iou,
+        t_min=t_min,
+        t_miss_max=t_miss_max,
     )
+    trk_config = {}
+    trk_config["yolo_mode"] = yolo_mode
     trk_config["tracker"] = "IOU"
+    trk_config["sigma_l"] = sigma_l
+    trk_config["sigma_h"] = sigma_h
+    trk_config["sigma_iou"] = sigma_iou
+    trk_config["t_min"] = t_min
+    trk_config["t_miss_max"] = t_miss_max
     tracks_px = {}
     tracks_px["vid_config"] = detections["vid_config"]
     tracks_px["det_config"] = detections["det_config"]
@@ -85,28 +110,24 @@ def track(detections, trk_config=config_track_default):
 def write(
     tracks_px,
     trajectories_geojson,
-    detfile,
+    detections_file,
     overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"],
 ):
-    """
-    docstring
-    """
-
     # TODO: #96 Make writing each filetype optional (list of filetypes as parameter)
     # Write JSON
-    with open(Path(detfile).with_suffix(".ottrk"), "w") as f:
+    with open(Path(detections_file).with_suffix(".ottrk"), "w") as f:
         json.dump(tracks_px, f, indent=4)
     logging.info("JSON written")
 
     # Write GeoJSON
     # TODO: #95 Add metadata to GeoJSON (and GPKG)
-    with open(Path(detfile).with_suffix(".GeoJSON"), "w") as f:
+    with open(Path(detections_file).with_suffix(".GeoJSON"), "w") as f:
         json.dump(trajectories_geojson, f, indent=4)
     logging.info("GeoJSON written")
 
     # Convert to geodataframe and write GPKG
     get_geodataframe_from_framewise_tracks(tracks_px).to_file(
-        Path(detfile).with_suffix(".gpkg"), driver="GPKG"
+        Path(detections_file).with_suffix(".gpkg"), driver="GPKG"
     )
     logging.info("GPKG written")
 
@@ -158,24 +179,6 @@ def get_geodataframe_from_trackwise_tracks(trajectories_px):
     #     geometry=gpd.points_from_xy(df_trajectories.x, df_trajectories.y),
     # )
     return df_trajectories  # gdf_trajectories
-
-
-def main(paths=CONFIG["TESTDATAFOLDER"], config_track=config_track_default):
-    """
-    docstring
-    """
-    filetypes = ".otdet"
-    detections_files = get_files(paths, filetypes)
-    for detections_file in detections_files:
-        logging.info(f"New detections file: {detections_file}")
-        detections, dir, filename = read(detections_file)
-        logging.info("detections read")
-        detections = denormalize(detections)
-        logging.info("detections denormalized")
-        tracks_px, trajectories_geojson = track(detections)
-        logging.info("detections tracked")
-        write(tracks_px, trajectories_geojson, detections_file)
-        logging.info("Tracking finished")
 
 
 # To Dos:
