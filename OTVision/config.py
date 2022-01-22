@@ -91,12 +91,12 @@ CONFIG["DETECT"]["YOLO"]["OVERWRITE"] = True
 # TRACK
 CONFIG["TRACK"] = {}
 CONFIG["TRACK"]["IOU"] = {}
-CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25
-CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8
-CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.3
-CONFIG["TRACK"]["IOU"]["T_MIN"] = 5
-CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 25
-CONFIG["TRACK"]["IOU"]["OVERWRITE"] = True
+CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25  # or 0.1? @arminkollascheck 
+CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8  # or 0.85? @arminkollascheck 
+CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.3  # or 0.4? @arminkollascheck 
+CONFIG["TRACK"]["IOU"]["T_MIN"] = 5  # or 12? @arminkollascheck 
+CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 25  # or 5? @arminkollascheck 
+CONFIG["TRACK"]["IOU"]["OVERWRITE"] = True 
 
 # UNDISTORT
 CONFIG["UNDISTORT"] = {}
