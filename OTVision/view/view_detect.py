@@ -1,7 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from numpy import size
 from view.view_helpers import FrameRun
 from config import CONFIG, PAD
 from detect.detect import main as detect
