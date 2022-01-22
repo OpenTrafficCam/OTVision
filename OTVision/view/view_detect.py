@@ -32,7 +32,7 @@ class FrameDetectOptions(tk.Frame):
         self.combo_weights.set(CONFIG["DETECT"]["YOLO"]["WEIGHTS"])
         # Confidence
         self.label_conf = tk.Label(master=self, text="Confidence")
-        self.label_conf.grid(row=1, column=0, sticky="w")
+        self.label_conf.grid(row=1, column=0, sticky="sw")
         self.scale_conf = tk.Scale(
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
@@ -40,7 +40,7 @@ class FrameDetectOptions(tk.Frame):
         self.scale_conf.set(0.25)  # TODO: Get from config
         # IOU
         self.label_iou = tk.Label(master=self, text="IOU")
-        self.label_iou.grid(row=2, column=0, sticky="w")
+        self.label_iou.grid(row=2, column=0, sticky="sw")
         self.scale_iou = tk.Scale(
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
@@ -48,7 +48,7 @@ class FrameDetectOptions(tk.Frame):
         self.scale_iou.set(0.45)  # TODO: Get from config
         # Image size
         self.label_imgsize = tk.Label(master=self, text="Image size")
-        self.label_imgsize.grid(row=3, column=0, sticky="w")
+        self.label_imgsize.grid(row=3, column=0, sticky="sw")
         self.scale_imgsize = tk.Scale(
             master=self, from_=100, to=1000, resolution=10, orient="horizontal"
         )
@@ -56,7 +56,7 @@ class FrameDetectOptions(tk.Frame):
         self.scale_imgsize.set(640)  # TODO: Get from config
         # Chunk size
         self.label_chunksize = tk.Label(master=self, text="Chunk size")
-        self.label_chunksize.grid(row=4, column=0, sticky="w")
+        self.label_chunksize.grid(row=4, column=0, sticky="sw")
         self.scale_chunksize = tk.Scale(
             master=self, from_=1, to=20, resolution=1, orient="horizontal"
         )

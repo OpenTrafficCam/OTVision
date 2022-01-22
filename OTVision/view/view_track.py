@@ -22,7 +22,7 @@ class FrameTrackOptions(tk.Frame):
         super().__init__(**kwargs)
         # Sigma l
         self.label_sigma_l = tk.Label(master=self, text="sigma l")
-        self.label_sigma_l.grid(row=0, column=0, sticky="w")
+        self.label_sigma_l.grid(row=0, column=0, sticky="sw")
         self.scale_sigma_l = tk.Scale(
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
@@ -30,7 +30,7 @@ class FrameTrackOptions(tk.Frame):
         self.scale_sigma_l.set(0.25)  # TODO: Get from config
         # Sigma h
         self.label_sigma_h = tk.Label(master=self, text="sigma h")
-        self.label_sigma_h.grid(row=1, column=0, sticky="w")
+        self.label_sigma_h.grid(row=1, column=0, sticky="sw")
         self.scale_sigma_h = tk.Scale(
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
@@ -38,7 +38,7 @@ class FrameTrackOptions(tk.Frame):
         self.scale_sigma_h.set(0.8)  # TODO: Get from config
         # Sigma IOU
         self.label_sigma_iou = tk.Label(master=self, text="sigma IOU")
-        self.label_sigma_iou.grid(row=2, column=0, sticky="w")
+        self.label_sigma_iou.grid(row=2, column=0, sticky="sw")
         self.scale_sigma_iou = tk.Scale(
             master=self, from_=0, to=1, resolution=0.01, orient="horizontal"
         )
@@ -46,7 +46,7 @@ class FrameTrackOptions(tk.Frame):
         self.scale_sigma_iou.set(0.3)  # TODO: Get from config
         # t min
         self.label_t_min = tk.Label(master=self, text="t min")
-        self.label_t_min.grid(row=3, column=0, sticky="w")
+        self.label_t_min.grid(row=3, column=0, sticky="sw")
         self.scale_t_min = tk.Scale(
             master=self, from_=0, to=20, resolution=1, orient="horizontal"
         )
@@ -54,7 +54,7 @@ class FrameTrackOptions(tk.Frame):
         self.scale_t_min.set(5)  # TODO: Get from config
         # t miss max
         self.label_t_miss_max = tk.Label(master=self, text="t miss max")
-        self.label_t_miss_max.grid(row=4, column=0, sticky="w")
+        self.label_t_miss_max.grid(row=4, column=0, sticky="sw")
         self.scale_t_miss_max = tk.Scale(
             master=self, from_=0, to=10, resolution=1, orient="horizontal"
         )

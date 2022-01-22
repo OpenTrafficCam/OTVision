@@ -38,10 +38,10 @@ class FrameConvertOptions(tk.Frame):
         )
         self.checkbutton_use_framerate.grid(row=1, column=0, columnspan=2, sticky="w")
         self.checkbutton_use_framerate.select()
-        # Input frame rate  # TODO: Show only when previous checkbutton not selected
+        # Input frame rate
         self.label_framerate = tk.Label(master=self, text="Input frame rate")
         self.label_framerate.grid(row=2, column=0, sticky="w")
-        self.entry_framerate = tk.Entry(master=self)
+        self.entry_framerate = tk.Entry(master=self, width=4)
         self.entry_framerate.grid(row=2, column=1, sticky="w")
         self.entry_framerate.insert(index=0, string="20.0")  # TODO: Get from config
         self.entry_framerate.configure(state="disabled")
