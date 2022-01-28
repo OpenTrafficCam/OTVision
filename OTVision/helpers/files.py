@@ -17,17 +17,25 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
+import json
 import logging
 
 
-def get_files(paths, filetypes):
+def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
     """
-    Generates a list of files ending with filename based on filenames or the recursive
-    content of folders.
+    Generates a list of files ending with filename based on filenames or the
+    (recursive) content of folders.
 
     Args:
         paths ([str or list of str]): where to find the files
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
+            If no filetype is given, filetypes of file paths given are used and
+            directories are ignored. Defaults to None.
+        replace_filetype ([bool]): Wheter or not to replace the filetype in file paths
+            with the filetype given. Currently only applied when one filetype was given.
+            Defaults to False.
+        search_subdirs ([bool]): Wheter or not to search subdirs of dirs given as paths.
+            Defaults to True.
 
     Returns:
         [list]: [list of filenames as str]
@@ -42,28 +50,37 @@ def get_files(paths, filetypes):
         raise TypeError("Paths needs to be str or list of str")
 
     # Check if filetypes is str or a list and transform it
-    if type(filetypes) is not list:
-        filetypes = [filetypes]
-    for filetype in filetypes:
-        if type(filetype) is str:
+    if filetypes:
+        if type(filetypes) is not list:
+            filetypes = [filetypes]
+        for filetype in filetypes:
+            if type(filetype) is not str:
+                raise TypeError("Filetype needs to be a str or a list of str")
+
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
                     filetype = "." + filetype
                 filetype = filetype.lower()
-        else:
-            raise TypeError("Filetype needs to be a str or a list of str")
-
     # add all files to a single list _files_
     for path in paths:
         path = Path(path)
+        # Replace filetype in path if replace_filetype is given as argument
+        # and path has suffix and only one filetype was given
+        if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
+            path = path.with_suffix(filetypes[0])
+        # If path is a real file add it to return list
         if path.is_file():
             file = str(path)
-            for filetype in filetypes:
-                if file.endswith(filetype):
-                    files.add(file)
+            if filetypes:
+                for filetype in filetypes:
+                    if file.endswith(filetype):
+                        files.add(file)
+            else:
+                files.add(file)
+        # If path is a real file add it to return list
         elif path.is_dir():
             for filetype in filetypes:
-                for file in path.glob("**/*" + filetype):
+                for file in path.glob(("**/*" if search_subdirs else "*") + filetype):
                     file = str(file)
                     files.add(file)
         else:
@@ -80,6 +97,15 @@ def remove_dir(dir: str):
         else:
             remove_dir(path)
     dir.rmdir()
+
+
+def read_json(json_file, filetype_wanted=".json"):
+    filetype = Path(json_file).suffix
+    if filetype != filetype_wanted:
+        raise ValueError(f"Wrong filetype {filetype}, has to be {filetype_wanted}")
+    with open(json_file) as f:
+        dict_from_json_file = json.load(f)
+    return dict_from_json_file
 
 
 def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):

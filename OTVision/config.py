@@ -27,25 +27,31 @@ logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=loggin
 
 CONFIG = {}
 
-# TESTDATAFOLDER
+# FOLDERS
 CONFIG["TESTDATAFOLDER"] = _get_testdatafolder()
+CONFIG["SEARCH_SUBDIRS"] = True
 
 # FILETYPES
+CONFIG["DEFAULT_FILETYPE"] = {}
+CONFIG["DEFAULT_FILETYPE"]["VID"] = ".mp4"
+CONFIG["DEFAULT_FILETYPE"]["IMG"] = ".jpg"
+CONFIG["DEFAULT_FILETYPE"]["DETECT"] = ".otdet"
+CONFIG["DEFAULT_FILETYPE"]["TRACK"] = ".ottrk"
 CONFIG["FILETYPES"] = {}
 CONFIG["FILETYPES"]["VID"] = [
-    ".mov",
     ".avi",
+    ".mkv",
+    ".m4v",
+    ".mov",
     ".mp4",
     ".mpg",
     ".mpeg",
-    ".m4v",
     ".wmv",
-    ".mkv",
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 CONFIG["FILETYPES"]["DETECT"] = ".otdet"
 CONFIG["FILETYPES"]["TRACK"] = [".ottrk", ".gpkg"]
-CONFIG["FILETYPES"]["TRANSFORM"] = ".otrfp"
+CONFIG["FILETYPES"]["REFPTS"] = ".csv"
 
 # LAST PATHS
 CONFIG["LAST PATHS"] = {}
@@ -57,6 +63,7 @@ CONFIG["LAST PATHS"]["REFPTS"] = []
 
 # CONVERT
 CONFIG["CONVERT"] = {}
+CONFIG["CONVERT"]["RUN_CHAINED"] = True
 CONFIG["CONVERT"][
     "FFMPEG_URL"
 ] = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
@@ -64,11 +71,12 @@ CONFIG["CONVERT"]["FFMPEG_PATH"] = str(
     Path(__file__).parents[0] / r"convert" / r"ffmpeg.exe"
 )
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".mp4"
-CONFIG["CONVERT"]["FPS"] = 25.0
+CONFIG["CONVERT"]["FPS"] = 20.0
 CONFIG["CONVERT"]["OVERWRITE"] = True
 
 # DETECT
 CONFIG["DETECT"] = {}
+CONFIG["DETECT"]["RUN_CHAINED"] = True
 CONFIG["DETECT"]["YOLO"] = {}
 CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
 CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
@@ -80,18 +88,19 @@ CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
 CONFIG["DETECT"]["YOLO"]["CONF"] = 0.25
 CONFIG["DETECT"]["YOLO"]["IOU"] = 0.45
 CONFIG["DETECT"]["YOLO"]["IMGSIZE"] = 640
-CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 0
+CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 1
 CONFIG["DETECT"]["YOLO"]["NORMALIZED"] = False
 CONFIG["DETECT"]["YOLO"]["OVERWRITE"] = True
 
 # TRACK
 CONFIG["TRACK"] = {}
+CONFIG["TRACK"]["RUN_CHAINED"] = True
 CONFIG["TRACK"]["IOU"] = {}
-CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25
-CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8
-CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.3
-CONFIG["TRACK"]["IOU"]["T_MIN"] = 5
-CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 25
+CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.25  # or 0.1? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.8  # or 0.85? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.3  # or 0.4? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["T_MIN"] = 5  # or 12? @arminkollascheck
+CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 25  # or 5? @arminkollascheck
 CONFIG["TRACK"]["IOU"]["OVERWRITE"] = True
 
 # UNDISTORT
@@ -105,7 +114,7 @@ CONFIG["TRANSFORM"]["OVERWRTIE"] = False
 # GUI
 CONFIG["GUI"] = {}
 CONFIG["GUI"]["OTC ICON"] = str(
-    Path(__file__).parents[0] / r"gui" / r"helpers" / r"OTC.ico"
+    Path(__file__).parents[0] / r"view" / r"helpers" / r"OTC.ico"
 )
 CONFIG["GUI"]["FONT"] = "Open Sans"
 CONFIG["GUI"]["FONTSIZE"] = 12
@@ -114,6 +123,7 @@ CONFIG["GUI"]["WINDOW"]["LOCATION_X"] = 0
 CONFIG["GUI"]["WINDOW"]["LOCATION_Y"] = 0
 CONFIG["GUI"]["FRAMEWIDTH"] = 80
 CONFIG["GUI"]["COLWIDTH"] = 50
+PAD = {"padx": 10, "pady": 10}
 
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)

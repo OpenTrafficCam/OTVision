@@ -15,7 +15,7 @@ def main(
     input_fps: float = None,
     output_fps: float = None,
     fps_from_filename: bool = True,
-    overwrite: bool = True,
+    overwrite: bool = True,  # TODO: #111 Set more parameters as global variables in config.py
 ):
     """Converts multiple h264-based videos into other formats and/or other frame rates.
 
@@ -27,7 +27,8 @@ def main(
         overwrite (bool, optional): [description]. Defaults to True.
     """
 
-    h264_files = get_files(paths, "h.264")
+    check_ffmpeg()
+    h264_files = get_files(paths, ".h264")
     for h264_file in h264_files:
         convert(
             h264_file,
@@ -46,7 +47,7 @@ def convert(
     output_fps: float = None,
     fps_from_filename: bool = True,
     overwrite: bool = True,
-):
+):  # sourcery skip: inline-variable, simplify-fstring-formatting
     """Converts h264-based videos into other formats and/or other frame rates. Also
     input frame rates can be given. If input video file is raw h264 and no input frame
     rate is given it tries to read "FR" from filename and otherwise sets default frame
@@ -67,42 +68,30 @@ def convert(
         [type]: [description]
     """
 
-    print("Hello")
-    check_ffmpeg()
     input_path = Path(input_video)
     input_filename = input_path.stem
     input_filetype = input_path.suffix
-    print(output_filetype)
     output_path = input_path.with_suffix(output_filetype)
     if not overwrite and output_path.is_file:
         return None
-    vid_filetypes = [
-        ".mov",
-        ".avi",
-        ".mp4",
-        ".mpg",
-        ".mpeg",
-        ".m4v",
-        ".wmv",
-        ".mkv",
-        ".h264",
-    ]
+    vid_filetypes = CONFIG["FILETYPES"]["VID"] + [".h264"]
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
-        DEFAULT_FPS = CONFIG["CONVERT"]["FPS"]
         if fps_from_filename:
             try:
-                # Get input fps frome filename
+                # Get input fps frome filename  #TODO: Check regex for numbers
                 input_fps = float(re.search("_FR(.*?)_", input_filename).group(1))
             except AttributeError("Frame rate not found in filename"):
                 pass
         elif input_fps is None:
-            input_fps = DEFAULT_FPS
+            input_fps = CONFIG["CONVERT"]["FPS"]
 
         print(f"Input fps: {input_fps}")
         print(f"Output fps: {output_fps}")
 
         # Create ffmpeg command
-        input_fps_cmd = f"-framerate {input_fps}" if input_fps is not None else ""
+        input_fps_cmd = (
+            f"-framerate {input_fps}" if input_fps is not None else ""
+        )  # ? Change -framerate to -r?
         if output_fps is not None:
             output_fps_cmd = f"-r {output_fps}"
             copy_cmd = ""
@@ -111,16 +100,18 @@ def convert(
             copy_cmd = "-vcodec copy"  # No decoding, only demuxing
         # Input file
         ffmpeg_cmd_in = f"{input_fps_cmd} -i {input_path}"
-        # Filters
-        ffmpeg_cmd_filter = f"-c:v libx264 {output_fps_cmd} {copy_cmd}"
+        # Filters (mybe necessary for special cases, insert )
+        # ffmpeg_cmd_filter = "-c:v libx264"
+        ffmpeg_cmd_filter = ""
         # Output file
-        ffmpeg_cmd_out = f"-y {output_path}"
+        ffmpeg_cmd_out = (
+            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y {output_path}"
+        )
         # Concat and run ffmpeg command
         FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
-        ffmpeg_cmd = (
-            f"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_filter} {ffmpeg_cmd_out}"
-        )
+        ffmpeg_cmd = f"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         os.system(ffmpeg_cmd)
+        print("File converted")
 
     elif input_filetype in vid_filetypes:
         raise TypeError("Output video filetype is not supported")
