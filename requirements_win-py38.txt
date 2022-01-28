@@ -4,13 +4,9 @@
 numpy==1.19.5
 pandas==1.2.2
 
-# gui ----------------------------------------
-PySimpleGUI==4.34.0
+# image/video ---------------------------------
 # opencv-python>=4.1.2
 Pillow
-
-# helpers --------------------------------------
-pause
 
 # yolo ---------------------------------------
 requests==2.25.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\models\common.py", line 7, in <module>
@@ -24,13 +20,15 @@ progressbar2
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.7.1+cu110
 torchvision==0.8.2+cu110
+
+# tracks ---------------------------------------
 https://github.com/OpenTrafficCam/downloads/blob/master/GDAL-3.2.3-cp38-cp38-win_amd64.whl?raw=true
 https://github.com/OpenTrafficCam/downloads/blob/master/Fiona-1.8.19-cp38-cp38-win_amd64.whl?raw=true
 geopandas
 
-# development
+# development ---------------------------------------
 flake8
 black
 
-# testing
+# testing ---------------------------------------
 pytest==6.2.4
