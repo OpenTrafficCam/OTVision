@@ -12,8 +12,6 @@ Pillow
 requests==2.25.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\models\common.py", line 7, in <module>
 matplotlib  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\metrics.py", line 5, in <module>
 seaborn==0.11.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\plots.py", line 15, in <module>
-opencv-python==4.5.3
-pillow
 pyYAML
 tqdm==4.56.0
 progressbar2
