@@ -1,8 +1,8 @@
 import tkinter as tk
-from view.view_helpers import FrameRun
-from config import CONFIG, PAD
-from track.track import main as track
-from helpers.files import get_files
+from OTVision.view.view_helpers import FrameRun
+from OTVision.config import CONFIG, PAD
+from OTVision.track.track import main as track
+from OTVision.helpers.files import get_files
 
 
 class FrameTrack(tk.LabelFrame):

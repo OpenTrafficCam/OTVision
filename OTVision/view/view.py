@@ -1,9 +1,9 @@
 import tkinter as tk
-from view.view_convert import FrameConvert
-from view.view_detect import FrameDetect
-from view.view_track import FrameTrack
-from view.view_helpers import FrameFileTree, FrameRunChained
-from config import CONFIG, PAD
+from OTVision.view.view_convert import FrameConvert
+from OTVision.view.view_detect import FrameDetect
+from OTVision.view.view_track import FrameTrack
+from OTVision.view.view_helpers import FrameFileTree, FrameRunChained
+from OTVision.config import CONFIG, PAD
 
 FRAME_WIDTH = 50
 

@@ -154,6 +154,25 @@ def _get_testdatafolder():
     return str(testdatafolder)
 
 
+def is_in_format(pathToVideo, file_formats):
+    """ Checks if a file path is in specified format.
+
+    Args:
+        pathToVideo (str): the file path
+        file_formats(list(str)): the file formats
+
+    Returns:
+        True if path is of format specified in file_formats.
+        Otherwise False.
+    """
+    file = Path(pathToVideo)
+
+    if file.suffix in file_formats:
+        return True
+    else:
+        return False
+
+
 if __name__ == "__main__":
     paths = "D:/tmp/"
     # paths = ["D:/tmp/tmp1", "D:\\tmp\\tmp2"]

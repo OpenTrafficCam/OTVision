@@ -4,8 +4,9 @@ from pathlib import Path
 import subprocess
 from urllib.request import urlretrieve
 from zipfile import ZipFile
-from config import CONFIG
-from helpers.files import get_files, remove_dir
+
+from OTVision.config import CONFIG
+from OTVision.helpers.files import get_files, remove_dir
 
 
 def main(

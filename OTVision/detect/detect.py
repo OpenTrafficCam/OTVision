@@ -21,10 +21,12 @@ Module to call yolov5/detect.py with arguments
 
 
 import json
+
 from pathlib import Path
-from config import CONFIG
-from helpers.files import get_files
-from detect import yolo
+
+from OTVision.config import CONFIG
+from OTVision.helpers.files import get_files, is_in_format
+from . import yolo
 
 
 # def main(paths, filetypes, det_config={}):
@@ -34,31 +36,102 @@ from detect import yolo
 # TODO: Add option to allow or prevent overwrite in detect
 def main(
     files,
-    filetype: str = ".mp4",
+    filetypes: list = CONFIG["FILETYPES"]["VID"],
+    model=None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+    ot_labels_enabled: bool = False,
 ):  # sourcery skip: merge-dict-assign
+    if model is None:
+        yolo_model = yolo.loadmodel(weights, conf, iou)
+    else:
+        yolo_model = model
+        yolo_model.conf = conf
+        yolo_model.iou = iou
 
-    # if type(files) is not list:
-    #     files = [files]
+    file_paths = get_files(paths=files, filetypes=filetypes)
 
-    files = get_files(paths=files, filetypes=CONFIG["FILETYPES"]["VID"])
+    # split file paths to two groups -> videos | images
+    # only when accepting multiple filetypes
+    video_paths, frame_paths = _split_to_video_img_paths(file_paths)
 
-    model = yolo.loadmodel(weights, conf, iou)
+    frame_chunks = _create_chunks(frame_paths, chunksize)
 
-    for file in files:
-        detections = yolo.detect(
-            file=file,
-            model=model,
+    for path in video_paths:
+        detections_videos = yolo.detect_video(
+            file_path=path,
+            model=yolo_model,
+            weights=weights,
+            conf=conf,
+            iou=iou,
             size=size,
             chunksize=chunksize,
             normalized=normalized,
         )
-        save_detections(detections, file)
+        save_detections(detections_videos, path)
+
+    detections_chunks = yolo.detect_images(
+        file_chunks=frame_chunks,
+        model=yolo_model,
+        weights=weights,
+        conf=conf,
+        iou=iou,
+        size=size,
+        chunksize=chunksize,
+        normalized=normalized,
+        ot_labels_enabled=ot_labels_enabled,
+    )
+    # TODO: what happens if no frames detected
+    # save detection information to corresponding frame path
+    if ot_labels_enabled:
+        return detections_chunks
+    else:
+        for frame_path, detection in zip(frame_paths, detections_chunks):
+            save_detections(detection, frame_path)
+
+
+def _split_to_video_img_paths(
+    file_paths,
+    video_formats=CONFIG["FILETYPES"]["VID"],
+    img_formats=CONFIG["FILETYPES"]["IMG"],
+):
+    """Divide a list of files in video files and other files.
+
+    Args:
+        file_paths (list): The list of files.
+        vidoe_formats
+
+    Returns:
+        [list(str), list{str)] : list of video paths and list of images paths
+    """
+    video_paths, img_paths = [], []
+
+    for path in file_paths:
+        if is_in_format(path, video_formats):
+            video_paths.append(path)
+        elif is_in_format(path, img_formats):
+            img_paths.append(path)
+        else:
+            raise FormatNotSupportedError(
+                "The format of path is not supported ({})".format(path)
+            )
+    return video_paths, img_paths
+
+
+class FormatNotSupportedError(Exception):
+    pass
+
+
+def _create_chunks(file_paths, chunksize):
+    if chunksize == 0:
+        return file_paths
+    else:
+        chunk_starts = range(0, len(file_paths), chunksize)
+        return [file_paths[i : i + chunksize] for i in chunk_starts]
 
 
 def save_detections(

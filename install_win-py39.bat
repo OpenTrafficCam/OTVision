@@ -1,4 +1,3 @@
-cd ..
 python -m venv venv
 call venv\Scripts\activate
 timeout /T 1
