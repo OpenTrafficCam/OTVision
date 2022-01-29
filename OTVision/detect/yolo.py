@@ -97,7 +97,7 @@ def detect_video(
         t_list = perf_counter()
 
         _print_batch_performances_stats(
-            batch_no, t_start, t_trans, t_det, t_list, len(img_batch) 
+            batch_no, t_start, t_trans, t_det, t_list, len(img_batch)
         )
         batch_no += 1
 
@@ -259,9 +259,13 @@ def loadmodel(weights, conf, iou):
     t1 = perf_counter()
 
     if torch.cuda.is_available():
-        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cuda()
+        model = torch.hub.load(
+            "ultralytics/yolov5", weights, pretrained=True, force_reload=True
+        ).cuda()
     else:
-        model = torch.hub.load("ultralytics/yolov5", weights, pretrained=True).cpu()
+        model = torch.hub.load(
+            "ultralytics/yolov5", weights, pretrained=True, force_reload=True
+        ).cpu()
 
     model.conf = conf
     model.iou = iou
