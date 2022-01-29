@@ -68,6 +68,8 @@ def convert(
         [type]: [description]
     """
 
+    print(f"Preparing {input_video} for conversion")
+
     input_path = Path(input_video)
     input_filename = input_path.stem
     input_filetype = input_path.suffix
@@ -85,8 +87,7 @@ def convert(
         elif input_fps is None:
             input_fps = CONFIG["CONVERT"]["FPS"]
 
-        print(f"Input fps: {input_fps}")
-        print(f"Output fps: {output_fps}")
+        print(f"Creating ffmpeg command")
 
         # Create ffmpeg command
         input_fps_cmd = (
@@ -110,8 +111,11 @@ def convert(
         # Concat and run ffmpeg command
         FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
         ffmpeg_cmd = f"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
+        print(f"ffmpeg command: {ffmpeg_cmd}")
+
+        print(f"Converting from {input_fps} fps to {output_fps} fps {output_filetype}")
         os.system(ffmpeg_cmd)
-        print("File converted")
+        print(f"Converted successfully to {output_path}")
 
     elif input_filetype in vid_filetypes:
         raise TypeError("Output video filetype is not supported")
@@ -135,18 +139,21 @@ def download_ffmpeg():
     Args:
         ffmpeg_path (str): path to ffmpeg.exe
     """
+    print("Downloading ffmpeg zip archive (patience: may take a while...)")
     FFMPEG_DIR = str(Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0])
-    os.mkdir(str(Path(FFMPEG_DIR) / "tmp"))
+    if not Path(str(Path(FFMPEG_DIR) / "tmp")).is_dir():
+        os.mkdir(str(Path(FFMPEG_DIR) / "tmp"))
     FFMPEG_ZIP = str(Path(FFMPEG_DIR) / "tmp" / r"ffmpeg.zip")
     FFMPEG_ZIP_DIR = str(Path(FFMPEG_ZIP).parents[0])
     try:
         urlretrieve(CONFIG["CONVERT"]["FFMPEG_URL"], FFMPEG_ZIP)
-        print("Successfully downloaded ffmpeg zip archive.")
+        print("Successfully downloaded ffmpeg zip archive")
     except Exception as inst:
         print(inst)
-        print("Can't download ffmpeg zip archive. Please download manually.")
+        print("Can't download ffmpeg zip archive. Please download manually")
     else:
         try:
+            print("Extracting ffmpeg.exe from ffmpeg zip archive")
             with ZipFile(FFMPEG_ZIP, "r") as zip:
                 for name in zip.namelist():
                     if Path(name).name == r"ffmpeg.exe":
@@ -162,10 +169,10 @@ def download_ffmpeg():
                 str(Path(FFMPEG_DIR) / "ffmpeg.exe"),
             )
             remove_dir(dir=FFMPEG_ZIP_DIR)
-            print("Successfully extracted ffmpeg.exe from ffmpeg zip archive.")
+            print("Successfully extracted ffmpeg.exe from ffmpeg zip archive")
         except Exception as inst:
             print(inst)
-            print("Can't extract ffmpeg.exe, please extract manual.")
+            print("Can't extract ffmpeg.exe, please extract manual")
 
 
 if __name__ == "__main__":
