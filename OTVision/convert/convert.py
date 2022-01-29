@@ -110,11 +110,11 @@ def convert(
         )
         # Concat and run ffmpeg command
         FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
-        ffmpeg_cmd = f"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
+        ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         print(f"ffmpeg command: {ffmpeg_cmd}")
 
         print(f"Converting from {input_fps} fps to {output_fps} fps {output_filetype}")
-        os.system(ffmpeg_cmd)
+        os.system(ffmpeg_cmd)  # BUG: Error if "(" in path, maybe try subprocess.call()
         print(f"Converted successfully to {output_path}")
 
     elif input_filetype in vid_filetypes:
