@@ -114,7 +114,7 @@ def convert(
         print(f"ffmpeg command: {ffmpeg_cmd}")
 
         print(f"Converting from {input_fps} fps to {output_fps} fps {output_filetype}")
-        os.system(ffmpeg_cmd)  # BUG: Error if "(" in path, maybe try subprocess.call()
+        subprocess.call(ffmpeg_cmd)
         print(f"Converted successfully to {output_path}")
 
     elif input_filetype in vid_filetypes:
