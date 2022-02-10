@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
+from pathlib import Path, PosixPath
 import json
 import logging
 
@@ -44,23 +44,25 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     files = set()
 
     # Check, if paths is a str or a list
-    if type(paths) is str:
+    if type(paths) is str or type(paths) is PosixPath:
         paths = [paths]
-    elif type(paths) is not list:
-        raise TypeError("Paths needs to be str or list of str")
+    elif type(paths) is not list and type(paths) is not PosixPath:
+        raise TypeError("Paths needs to be a str, a list of str, or PosixPath object")
 
     # Check if filetypes is str or a list and transform it
     if filetypes:
         if type(filetypes) is not list:
             filetypes = [filetypes]
-        for filetype in filetypes:
+
+        for idx, filetype in enumerate(filetypes):
             if type(filetype) is not str:
                 raise TypeError("Filetype needs to be a str or a list of str")
 
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
                     filetype = "." + filetype
-                filetype = filetype.lower()
+                filetypes[idx] = filetype.lower()
+
     # add all files to a single list _files_
     for path in paths:
         path = Path(path)
@@ -73,16 +75,17 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
             file = str(path)
             if filetypes:
                 for filetype in filetypes:
-                    if file.endswith(filetype):
+                    if file.suffix.lower() == filetype:
                         files.add(file)
             else:
                 files.add(file)
         # If path is a real file add it to return list
         elif path.is_dir():
             for filetype in filetypes:
-                for file in path.glob(("**/*" if search_subdirs else "*") + filetype):
-                    file = str(file)
-                    files.add(file)
+                for file in path.glob("**/*" if search_subdirs else "*"):
+                    if file.is_file and file.suffix.lower() == filetype:
+                        file = str(file)
+                        files.add(file)
         else:
             raise TypeError("Paths needs to be a path as a str or a list of str")
 
@@ -154,8 +157,10 @@ def _get_testdatafolder():
     return str(testdatafolder)
 
 
-def is_in_format(pathToVideo, file_formats):
-    """ Checks if a file path is in specified format.
+def is_in_format(file_path, file_formats):
+    """Checks if a file path is in specified format.
+
+    The case of a file format is ignored.
 
     Args:
         pathToVideo (str): the file path
@@ -165,9 +170,14 @@ def is_in_format(pathToVideo, file_formats):
         True if path is of format specified in file_formats.
         Otherwise False.
     """
-    file = Path(pathToVideo)
+    file = Path(file_path)
 
-    if file.suffix in file_formats:
+    if file.suffix.lower() in [
+        file_format.lower()
+        if file_format.startswith(".")
+        else f".{file_format.lower()}"
+        for file_format in file_formats
+    ]:
         return True
     else:
         return False
