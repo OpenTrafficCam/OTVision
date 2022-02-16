@@ -131,7 +131,7 @@ def _read(config_name: str = "user"):
     config_path = get_path(config_name=config_name)
     if config_path.suffix == ".otconf":
         if not config_path.is_file():
-            print(f"{config_name}.otconf doesnt exist, load default.otconf instead")
+            print(f"{config_name}.otconf doesn't exist, load default.otconf instead")
             config_path = get_path(config_name="default")
             if not config_path.is_file():
                 raise FileNotFoundError()
@@ -139,7 +139,7 @@ def _read(config_name: str = "user"):
             config = json.load(f)
         return config
     else:
-        raise ValueError("Filetype for configuratuin has to be .otconf")
+        raise ValueError("Filetype for configuration has to be .otconf")
 
 
 def _write(config: dict, config_name: str = "user"):
