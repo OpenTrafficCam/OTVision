@@ -6,15 +6,15 @@ pandas==1.2.2
 
 # image/video ---------------------------------
 opencv-python==4.5.3.56
-Pillow
+Pillow==8.3.1
 
 # yolo ---------------------------------------
 requests==2.25.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\models\common.py", line 7, in <module>
-matplotlib  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\metrics.py", line 5, in <module>
+matplotlib==3.4.2  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\metrics.py", line 5, in <module>
 seaborn==0.11.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\plots.py", line 15, in <module>
-pyYAML
+pyYAML==5.4.1
 tqdm==4.56.0
-progressbar2
+progressbar2==3.53.1
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.7.1+cu110
 torchvision==0.8.2+cu110
@@ -22,11 +22,11 @@ torchvision==0.8.2+cu110
 # tracks ---------------------------------------
 https://github.com/OpenTrafficCam/downloads/blob/master/GDAL-3.2.3-cp39-cp39-win_amd64.whl?raw=true
 https://github.com/OpenTrafficCam/downloads/blob/master/Fiona-1.8.19-cp39-cp39-win_amd64.whl?raw=true
-geopandas
+geopandas==0.9.0
 
 # development ---------------------------------------
-flake8
-black
+flake8==3.9.2
+black==21.6b0
 
 # testing ---------------------------------------
 pytest==6.2.4
