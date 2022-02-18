@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path, PosixPath
+import shutil
 import json
 import logging
+
+from pathlib import Path, PosixPath
 
 
 def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
@@ -27,7 +29,8 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     (recursive) content of folders.
 
     Args:
-        paths ([str or list of str]): where to find the files
+        paths ([str or list of str or PosixPath or list of PosixPath]): where to find
+        the files.
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
@@ -181,6 +184,13 @@ def is_in_format(file_path, file_formats):
         return True
     else:
         return False
+
+
+def unzip(file):
+    file = Path(file)
+    directory = file.with_suffix("")
+    shutil.unpack_archive(file, directory)
+    return directory
 
 
 if __name__ == "__main__":
