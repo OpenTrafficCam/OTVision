@@ -20,7 +20,7 @@ import shutil
 import json
 import logging
 
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 
 def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
@@ -29,7 +29,7 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     (recursive) content of folders.
 
     Args:
-        paths ([str or list of str or PosixPath or list of PosixPath]): where to find
+        paths ([str or list of str or Path or list of Path]): where to find
         the files.
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
@@ -47,10 +47,10 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     files = set()
 
     # Check, if paths is a str or a list
-    if type(paths) is str or type(paths) is PosixPath:
+    if type(paths) is str or isinstance(paths, Path):
         paths = [paths]
-    elif type(paths) is not list and type(paths) is not PosixPath:
-        raise TypeError("Paths needs to be a str, a list of str, or PosixPath object")
+    elif type(paths) is not list and isinstance(paths, Path):
+        raise TypeError("Paths needs to be a str, a list of str, or Path object")
 
     # Check if filetypes is str or a list and transform it
     if filetypes:
@@ -75,20 +75,18 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
             path = path.with_suffix(filetypes[0])
         # If path is a real file add it to return list
         if path.is_file():
-            file = str(path)
             if filetypes:
                 for filetype in filetypes:
-                    if file.suffix.lower() == filetype:
-                        files.add(file)
+                    if path.suffix.lower() == filetype:
+                        files.add(str(path))
             else:
-                files.add(file)
+                files.add(str(path))
         # If path is a real file add it to return list
         elif path.is_dir():
             for filetype in filetypes:
                 for file in path.glob("**/*" if search_subdirs else "*"):
                     if file.is_file and file.suffix.lower() == filetype:
-                        file = str(file)
-                        files.add(file)
+                        files.add(str(file))
         else:
             raise TypeError("Paths needs to be a path as a str or a list of str")
 
