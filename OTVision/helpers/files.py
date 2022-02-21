@@ -19,6 +19,7 @@
 import shutil
 import json
 import logging
+from typing import Union
 
 from pathlib import Path
 
@@ -93,8 +94,8 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     return sorted(list(files))
 
 
-def remove_dir(dir: str):
-    dir = Path(dir)
+def remove_dir(dir_path: Union[str, Path]):
+    dir = Path(dir_path)
     for path in dir.glob("*"):
         if path.is_file():
             path.unlink()
