@@ -1,4 +1,3 @@
-# Only tested for Apple M1 machines
 geopandas
 matplotlib==3.4.2
 numpy==1.21.0
