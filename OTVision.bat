@@ -1,3 +1,4 @@
-call venv\Scripts\activate
-python view.py
-timeout /T 10
+call %~dp0\venv\Scripts\activate
+python %~dp0\view.py
+timeout /T 3
+deactivate
