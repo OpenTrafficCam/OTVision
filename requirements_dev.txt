@@ -1,6 +1,0 @@
-pytest>=6.2.4
-flake8
-black
-tox
-mypy
-pytest-cov
