@@ -10,8 +10,6 @@ on:
   pull_request:
     branches: [master, 1st-version]
   
-  push
-
 jobs:
   build:
     name: lint
