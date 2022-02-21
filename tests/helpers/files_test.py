@@ -64,9 +64,15 @@ def test_get_files_noFilenamesAs2ndParam_ReturnEmptyList(test_dir_with_files):
 
 
 def test_get_files_invalidTypeAs1stParam_RaiseTypeError():
-    dictionary = dict()
+    number = 7
     with pytest.raises(TypeError):
-        get_files(dictionary, ".json")
+        get_files(number, ".json")
+
+
+def test_get_files_dictAs1stParam_RaiseTypeError():
+    _dict = {}
+    with pytest.raises(TypeError):
+        get_files(_dict, ".json")
 
 
 def test_get_files_sameFiletypeWithDifferentCasesAsParam_returnsCorrectList(

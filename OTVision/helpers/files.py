@@ -50,7 +50,7 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     # Check, if paths is a str or a list
     if type(paths) is str or isinstance(paths, Path):
         paths = [paths]
-    elif type(paths) is not list and isinstance(paths, Path):
+    elif type(paths) is not list and not isinstance(paths, Path):
         raise TypeError("Paths needs to be a str, a list of str, or Path object")
 
     # Check if filetypes is str or a list and transform it
