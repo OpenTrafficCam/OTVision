@@ -17,52 +17,74 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
+import json
+import logging
 
 
-def get_files(paths, filetype):
+def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
     """
-    Generates a list of files ending with filename based on filenames or the recursive
-    contend of folders.
+    Generates a list of files ending with filename based on filenames or the
+    (recursive) content of folders.
 
     Args:
         paths ([str or list of str]): where to find the files
-        filetype ([str]): ending of the files to find. Preceding "_" prevents adding a '.'
+        filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
+            If no filetype is given, filetypes of file paths given are used and
+            directories are ignored. Defaults to None.
+        replace_filetype ([bool]): Wheter or not to replace the filetype in file paths
+            with the filetype given. Currently only applied when one filetype was given.
+            Defaults to False.
+        search_subdirs ([bool]): Wheter or not to search subdirs of dirs given as paths.
+            Defaults to True.
 
     Returns:
         [list]: [list of filenames as str]
     """
 
     files = set()
-    pathlist = []
 
-    # check, if _paths_ is a list or str
-    if type(paths) is list:
-        pathlist.extend(paths)
-    elif type(paths) is str:
-        pathlist.append(paths)
-    else:
+    # Check, if paths is a str or a list
+    if type(paths) is str:
+        paths = [paths]
+    elif type(paths) is not list:
         raise TypeError("Paths needs to be str or list of str")
 
-    # check if _filename_ is str and transform it
-    if type(filetype) is str:
-        if not filetype.startswith("_"):
-            if not filetype.startswith("."):
-                filetype = "." + filetype
-            filetype = filetype.lower()
-    else:
-        raise TypeError("filetype needs to be a str")
+    # Check if filetypes is str or a list and transform it
+    if filetypes:
+        if type(filetypes) is not list:
+            filetypes = [filetypes]
+        for filetype in filetypes:
+            if type(filetype) is not str:
+                raise TypeError("Filetype needs to be a str or a list of str")
 
+            if not filetype.startswith("_"):
+                if not filetype.startswith("."):
+                    filetype = "." + filetype
+                filetype = filetype.lower()
     # add all files to a single list _files_
-    for path in pathlist:
+    for path in paths:
         path = Path(path)
+        # Replace filetype in path if replace_filetype is given as argument
+        # and path has suffix and only one filetype was given
+        if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
+            path = path.with_suffix(filetypes[0])
+        # If path is a real file add it to return list
         if path.is_file():
             file = str(path)
-            if file.endswith(filetype):
+            if filetypes:
+                for filetype in filetypes:
+                    if file.endswith(filetype):
+                        files.add(file)
+            else:
                 files.add(file)
+        # If path is a real file add it to return list
         elif path.is_dir():
-            for file in path.glob("**/*" + filetype):
-                file = str(file)
-                files.add(file)
+            for filetype in filetypes:
+                for file in path.glob(("**/*" if search_subdirs else "*") + filetype):
+                    file = str(file)
+                    files.add(file)
+        else:
+            raise TypeError("Paths needs to be a path as a str or a list of str")
 
     return sorted(list(files))
 
@@ -75,6 +97,80 @@ def remove_dir(dir: str):
         else:
             remove_dir(path)
     dir.rmdir()
+
+
+def read_json(json_file, filetype_wanted=".json"):
+    filetype = Path(json_file).suffix
+    if filetype != filetype_wanted:
+        raise ValueError(f"Wrong filetype {filetype}, has to be {filetype_wanted}")
+    with open(json_file) as f:
+        dict_from_json_file = json.load(f)
+    return dict_from_json_file
+
+
+def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+    if otdict["det_config"]["normalized"]:
+        direction = "denormalize"
+        otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
+        otdict["det_config"]["normalized"] = False
+        logging.info("Dict denormalized!")
+    else:
+        logging.info("Dict was not normalized!")
+    return otdict
+
+
+def normalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+    if not otdict["det_config"]["normalized"]:
+        direction = "normalize"
+        otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
+        otdict["det_config"]["normalized"] = True
+        logging.info("Dict normalized!")
+    else:
+        logging.info("Dict was already normalized!")
+    return otdict
+
+
+def _normal_transformation(otdict, direction, keys_width, keys_height):
+    width = otdict["vid_config"]["width"]
+    height = otdict["vid_config"]["height"]
+    for detection in otdict["data"]:
+        for bbox in otdict["data"][detection]["classified"]:
+            for key in bbox:
+                if key in keys_width:
+                    if direction == "normalize":
+                        bbox[key] = bbox[key] / width
+                    elif direction == "denormalize":
+                        bbox[key] = bbox[key] * width
+                elif key in keys_height:
+                    if direction == "normalize":
+                        bbox[key] = bbox[key] / height
+                    elif direction == "denormalize":
+                        bbox[key] = bbox[key] * height
+    return otdict
+
+
+def _get_testdatafolder():
+    testdatafolder = str(Path(__file__).parents[2] / r"tests/data")
+    return str(testdatafolder)
+
+
+def is_in_format(pathToVideo, file_formats):
+    """ Checks if a file path is in specified format.
+
+    Args:
+        pathToVideo (str): the file path
+        file_formats(list(str)): the file formats
+
+    Returns:
+        True if path is of format specified in file_formats.
+        Otherwise False.
+    """
+    file = Path(pathToVideo)
+
+    if file.suffix in file_formats:
+        return True
+    else:
+        return False
 
 
 if __name__ == "__main__":
@@ -91,3 +187,4 @@ if __name__ == "__main__":
     files = get_files(paths, filetype)
     for file in files:
         print(file)
+    print(_get_testdatafolder())
