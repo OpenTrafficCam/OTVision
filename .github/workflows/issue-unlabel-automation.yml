@@ -1,44 +1,59 @@
-name: Remove Issue from Project
+name: Remove Issue from Projects
 
 on:
   issues:
     types: [unlabeled]
 
 jobs:
-  ToDo-List:
+  remove-from-projects:
     runs-on: ubuntu-latest
     steps:
-      - name: Remove former bugs and features from ToDo-List
-        uses: alex-page/github-project-automation-plus@v0.5.1
+      - name: Remove bugs and features from ToDo-List
+        uses: alex-page/github-project-automation-plus@v0.8.1
         if: |
           !contains(github.event.issue.labels.*.name, 'bug') &&
           !contains(github.event.issue.labels.*.name, 'feature')
         with:
-          project: ToDo-List
+          project: ToDo OpenTrafficCam
           column: To do
-          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
+          repo-token: ${{ secrets.GHPROJECT_TOKEN }}
           action: delete
-  Wish-List:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Remove former ideas from Wish-List
-        uses: alex-page/github-project-automation-plus@v0.5.1
-        if: |
-          !contains(github.event.issue.labels.*.name, 'idea')
-        with:
-          project: Wish-List
-          column: ${{ github.event.repository.name }}
-          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
-          action: delete
-  Discussion:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Remove former questions from Friday-Discussion
-        uses: alex-page/github-project-automation-plus@v0.5.1
+          
+      - name: Remove questions from Weekly-Discussion
+        uses: alex-page/github-project-automation-plus@v0.8.1
         if: |
           !contains(github.event.issue.labels.*.name, 'question')
         with:
-          project: OTC Core Developer Friday-Meeting
-          column: neu
-          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
+          project: OTC Core Developer Weekly Meeting
+          column: questions
+          repo-token: ${{ secrets.GHPROJECT_TOKEN }}
           action: delete
+          
+      - name: Remove public bugs from Weekly-Discussion
+        uses: alex-page/github-project-automation-plus@v0.8.1
+        if: |
+          !contains(github.event.issue.labels.*.name, 'bug')
+        with:
+          project: OTC Core Developer Weekly Meeting
+          column: public bugs
+          repo-token: ${{ secrets.GHPROJECT_TOKEN }}
+          action: delete
+          
+      # Move to other column if label is present
+      - name: Move questions to Weekly-Discussion
+        uses: alex-page/github-project-automation-plus@v0.8.1
+        if: |
+          contains(github.event.issue.labels.*.name, 'question')
+        with:
+          project: OTC Core Developer Weekly Meeting
+          column: questions
+          repo-token: ${{ secrets.GHPROJECT_TOKEN }}
+          
+      - name: Move public bugs to Weekly-Discussion
+        uses: alex-page/github-project-automation-plus@v0.8.1
+        if: |
+          contains(github.event.issue.labels.*.name, 'bug')
+        with:
+          project: OTC Core Developer Weekly Meeting
+          column: public bugs
+          repo-token: ${{ secrets.GHPROJECT_TOKEN }}
