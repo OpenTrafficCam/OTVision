@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Move PR to ToDo-List
-        uses: alex-page/github-project-automation-plus@v0.5.1
+        uses: alex-page/github-project-automation-plus@v0.8.1
         with:
-          project: ToDo-List
+          project: ToDo OpenTrafficCam
           column: In progress
-          repo-token: ${{ secrets.TOKEN_SEBASTIAN }}
+          repo-token: ${{ secrets.GHPROJECT_TOKEN }}
