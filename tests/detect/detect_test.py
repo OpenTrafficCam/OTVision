@@ -38,9 +38,3 @@ def test_split_to_video_img_paths_illegalPathsParam(paths_with_illegal_fileforma
 def test_split_to_video_img_paths_emptyListsParam():
     videos, imgs = _split_to_video_img_paths([])
     assert not videos and not imgs
-
-
-def test_me_must_fail():
-    x = True
-    y = False
-    assert x == y
