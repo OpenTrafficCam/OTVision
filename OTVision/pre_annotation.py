@@ -114,13 +114,3 @@ def check_isfile(file, chunk_size):
         zipFiles = _fileList(file, "zip")
         for file in progressbar.progressbar(zipFiles):
             _pre_annotation(file, chunk_size)
-
-
-if __name__ == "__main__":
-    from time import perf_counter
-
-    print("Starting")
-    path = r"C:\Users\MichaelHeilig\Downloads\annotation_data\task_wolfartsweierer straße #9-2021_05_05_14_38_18-yolo 1.1.zip"
-    chunk_size = 100
-    check_isfile(path, chunk_size)
-    print("Done in {0:0.2f} s".format(perf_counter()))
