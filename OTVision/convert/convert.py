@@ -1,7 +1,7 @@
-import re
 import os
-from pathlib import Path
+import re
 import subprocess
+from pathlib import Path
 from urllib.request import urlretrieve
 from zipfile import ZipFile
 

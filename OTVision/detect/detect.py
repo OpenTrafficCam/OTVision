@@ -21,19 +21,20 @@ Module to call yolov5/detect.py with arguments
 
 
 import json
-
 from pathlib import Path
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
-from . import yolo
 
+from . import yolo
 
 # def main(paths, filetypes, det_config={}):
 #     files = get_files(paths, filetypes)
 #     multiple_videos(files, **det_config)
 
 # TODO: Add option to allow or prevent overwrite in detect
+
+
 def main(
     files,
     filetypes: list = CONFIG["FILETYPES"]["VID"],

@@ -1,9 +1,10 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from OTVision.view.view_helpers import FrameRun
+
 from OTVision.config import CONFIG, PAD
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files
+from OTVision.view.view_helpers import FrameRun
 
 
 class FrameConvert(tk.LabelFrame):

@@ -19,8 +19,9 @@
 
 from pathlib import Path
 from time import perf_counter
+
 import torch
-from cv2 import VideoCapture, CAP_PROP_FPS
+from cv2 import CAP_PROP_FPS, VideoCapture
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format

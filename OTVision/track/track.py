@@ -20,16 +20,18 @@
 
 
 import json
-from pathlib import Path
-from datetime import datetime
 import logging
-import pandas as pd
+from datetime import datetime
+from pathlib import Path
+
 import geopandas as gpd
+import pandas as pd
 from shapely.geometry import LineString, Point
 
 from OTVision.config import CONFIG
+from OTVision.helpers.files import denormalize, get_files
+
 from .iou import track_iou
-from OTVision.helpers.files import get_files, denormalize
 
 
 def main(

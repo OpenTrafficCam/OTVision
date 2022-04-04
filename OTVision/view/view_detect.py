@@ -1,10 +1,10 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from OTVision.view.view_helpers import FrameRun
 from OTVision.config import CONFIG, PAD
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.files import get_files
+from OTVision.view.view_helpers import FrameRun
 
 
 class FrameDetect(tk.LabelFrame):

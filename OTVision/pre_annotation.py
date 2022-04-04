@@ -17,13 +17,14 @@
 
 # TODO: docstrings in pre_annotation
 
-from pathlib import Path
-import shutil
 import os
+import shutil
+from pathlib import Path
+
 import progressbar
 
-from OTVision.detect import detect
 from OTVision.config import CONFIG
+from OTVision.detect import detect
 
 
 def _pngfiles(file):
