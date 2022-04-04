@@ -203,7 +203,6 @@ class FrameFileTree(tk.LabelFrame):
             self.tree_files.item(item)["text"]
             for item in self.tree_files.get_children()
         ]
-        # return [self.tree_files.set(item, 0) for item in self.tree_files.get_children()]
 
     def deselect_tree_files(self, events):
         for item in self.tree_files.selection():
