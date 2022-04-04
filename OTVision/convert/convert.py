@@ -15,7 +15,8 @@ def main(
     input_fps: float = None,
     output_fps: float = None,
     fps_from_filename: bool = True,
-    overwrite: bool = True,  # TODO: #111 Set more parameters as global variables in config.py
+    overwrite: bool = True,
+    # TODO: #111 Set more parameters as global variables in config.py
 ):
     """Converts multiple h264-based videos into other formats and/or other frame rates.
 

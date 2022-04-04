@@ -22,7 +22,6 @@ from time import perf_counter
 
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
-
 from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format
 
@@ -176,8 +175,11 @@ def detect_images(
         _add_detection_results(yolo_detections, results, normalized)
         img_batch += 1
         print(
-            "img_batch_no: {0:d}, det:{1:0.4f}, batch_size: {2:d}, fps: {3:0.1f}".format(
-                img_batch, t_det - t_start, len(chunk), chunksize / (t_det - t_start)
+            (
+                f"img_batch_no: {img_batch:d}, "
+                f"det:{t_det - t_start:0.4f}, "
+                f"batch_size: {len(chunk):d}, "
+                f"fps: {chunksize / (t_det - t_start):0.1f}"
             )
         )
 
@@ -391,8 +393,11 @@ def detect_df(
 
         # Datenformat:
         # Geopandas?
-        # | ix:filename | ix:frame | ix:detectionid | shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
-        # | ix:trackid | ix:filename | ix:frame | ix:detectionid | shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
+        # | ix:filename | ix:frame | ix:detectionid | ...
+        # ... shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
+
+        # | ix:trackid | ix:filename | ix:frame | ix:detectionid | ...
+        # ... shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
 
         # df["class"][""]
         # df.loc[123,"video.mp4", 543, 4), "class"]
