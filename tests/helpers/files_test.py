@@ -1,7 +1,7 @@
-import unittest
 import os
-from pathlib import Path
 import shutil
+import unittest
+from pathlib import Path
 
 from OTVision.helpers.files import get_files
 

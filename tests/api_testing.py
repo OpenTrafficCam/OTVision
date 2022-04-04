@@ -1,7 +1,7 @@
 # %%
 # Add OTVision to path
-from pathlib import Path
 import sys
+from pathlib import Path
 
 otvision_path = str(Path(__file__).parents[1] / "OTVision")
 print(otvision_path)
