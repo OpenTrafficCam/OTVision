@@ -66,10 +66,10 @@ def main(
             )
 
         logging.info("detections read")
-        detections = denormalize(detections)
+        detections_denormalized = denormalize(detections)
         logging.info("detections denormalized")
         tracks_px, trajectories_geojson = track(
-            detections=detections,
+            detections=detections_denormalized,
             yolo_mode=yolo_mode,
             sigma_l=sigma_l,
             sigma_h=sigma_h,
