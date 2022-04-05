@@ -151,5 +151,44 @@ def save_detections(
         print("Detections file already exists, was not overwritten")
 
 
-if __name__ == "__main__":
-    det_config = {"weights": "yolov5x", "conf": 0.25, "iou": 0.45, "size": 640}
+# TODO: detect to df or gdf (geopandas)
+def detect_df(
+    files,
+    filetypes: list = CONFIG["FILETYPES"]["VID"],
+    model=None,
+    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
+    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
+    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
+    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
+    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
+    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+    ot_labels_enabled: bool = False,
+):
+
+    results = main(
+        files=files,
+        filetypes=filetypes,
+        model=model,
+        weights=weights,
+        conf=conf,
+        iou=iou,
+        size=size,
+        chunksize=chunksize,
+        normalized=normalized,
+        ot_labels_enabled=True,
+    )
+
+    for dets in results:
+        # where dets is a list dets respective to files [dets_file_1, ..., dets_file_N]
+
+        # Datenformat:
+        # Geopandas?
+        # | ix:filename | ix:frame | ix:detectionid | ...
+        # ... shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
+
+        # | ix:trackid | ix:filename | ix:frame | ix:detectionid | ...
+        # ... shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
+
+        # df["class"][""]
+        # df.loc[123,"video.mp4", 543, 4), "class"]
+        pass
