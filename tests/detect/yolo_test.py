@@ -66,7 +66,7 @@ def test_get_batch_of_frames_chunksize0(video_path):
     chunksize = 0
     cap = VideoCapture(video_path)
     gotframe, frames = _get_batch_of_frames(cap, chunksize)
-    assert gotframe == False
+    assert gotframe is False
     assert not frames
 
 
