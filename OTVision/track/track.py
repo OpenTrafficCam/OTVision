@@ -50,6 +50,28 @@ def main(
         try:
             with open(detections_file) as f:
                 detections = json.load(f)
+            logging.info("detections read")
+
+            detections_denormalized = denormalize(detections)
+            logging.info("detections denormalized")
+
+            tracks_px, trajectories_geojson = track(
+                detections=detections_denormalized,
+                yolo_mode=yolo_mode,
+                sigma_l=sigma_l,
+                sigma_h=sigma_h,
+                sigma_iou=sigma_iou,
+                t_min=t_min,
+                t_miss_max=t_miss_max,
+            )
+            logging.info("detections tracked")
+
+            write(
+                tracks_px=tracks_px,
+                trajectories_geojson=trajectories_geojson,
+                detections_file=detections_file,
+            )
+            logging.info("Tracking finished")
         except OSError as oe:
             logging.error(
                 (
@@ -64,26 +86,6 @@ def main(
                     f"Following exception occured: {str(je)}"
                 )
             )
-
-        logging.info("detections read")
-        detections_denormalized = denormalize(detections)
-        logging.info("detections denormalized")
-        tracks_px, trajectories_geojson = track(
-            detections=detections_denormalized,
-            yolo_mode=yolo_mode,
-            sigma_l=sigma_l,
-            sigma_h=sigma_h,
-            sigma_iou=sigma_iou,
-            t_min=t_min,
-            t_miss_max=t_miss_max,
-        )
-        logging.info("detections tracked")
-        write(
-            tracks_px=tracks_px,
-            trajectories_geojson=trajectories_geojson,
-            detections_file=detections_file,
-        )
-        logging.info("Tracking finished")
 
 
 def track(
