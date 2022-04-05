@@ -3,8 +3,6 @@ import tkinter.ttk as ttk
 from pathlib import Path
 from tkinter import filedialog
 
-from numpy import var
-
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
 

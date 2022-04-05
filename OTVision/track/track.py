@@ -21,12 +21,10 @@
 
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import LineString, Point
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import denormalize, get_files
