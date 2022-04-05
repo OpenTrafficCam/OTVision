@@ -19,8 +19,8 @@
 
 
 from pathlib import Path
-from OTVision.convert import main as convert
 
+from OTVision.convert import main as convert
 
 if __name__ == "__main__":
     convert(
