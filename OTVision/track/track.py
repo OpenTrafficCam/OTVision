@@ -46,12 +46,25 @@ def main(
     detections_files = get_files(paths, filetypes)
     for detections_file in detections_files:
         logging.info(f"New detections file: {detections_file}")
+
         try:
             with open(detections_file) as f:
                 detections = json.load(f)
-        except:
-            logging.error(f"Could not read {detections_file} as json")
-            continue
+        except OSError as oe:
+            logging.error(
+                (
+                    f'Could not open "{detections_file}". '
+                    f"Following exception occured: {str(oe)}"
+                )
+            )
+        except json.JSONDecodeError as je:
+            logging.error(
+                (
+                    f'Unable to decode "{detections_file}" as JSON.'
+                    f"Following exception occured: {str(je)}"
+                )
+            )
+
         logging.info("detections read")
         detections = denormalize(detections)
         logging.info("detections denormalized")
