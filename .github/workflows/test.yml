@@ -26,4 +26,4 @@ jobs:
           pip install -r requirements.txt
           pip install pytest 
       - name: Test with pytest
-        run: pytest
+        run: pytest --cov=OTVision tests/
