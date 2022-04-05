@@ -88,7 +88,7 @@ def convert(
         elif input_fps is None:
             input_fps = CONFIG["CONVERT"]["FPS"]
 
-        print(f"Creating ffmpeg command")
+        print("Creating ffmpeg command")
 
         # Create ffmpeg command
         input_fps_cmd = (
