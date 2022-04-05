@@ -99,7 +99,7 @@ class FrameRunDetection(FrameRun):
         size = self.master.frame_options.scale_imgsize.get()
         chunksize = self.master.frame_options.scale_chunksize.get()
         normalized = self.master.frame_options.checkbutton_normalized_var.get()
-        overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        # overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
         detect(
             files=paths,
             filetypes=input_filetype,
