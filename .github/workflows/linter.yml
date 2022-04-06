@@ -21,3 +21,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_PYTHON_PYLINT: false
           VALIDATE_PYTHON_MYPY: false
+          VALIDATE_JSCPD: false
+          VALIDATE_PYTHON_BLACK: false
+
+          LINTER_RULES_PATH: /
+          PYTHON_FLAKE8_CONFIG_FILE: setup.cfg
