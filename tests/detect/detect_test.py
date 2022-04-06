@@ -1,7 +1,6 @@
 import pytest
 
-from OTVision.detect.detect import (FormatNotSupportedError,
-                                    _split_to_video_img_paths)
+from OTVision.detect.detect import FormatNotSupportedError, _split_to_video_img_paths
 
 
 @pytest.fixture
