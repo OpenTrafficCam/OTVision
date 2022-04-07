@@ -28,3 +28,4 @@ jobs:
           LINTER_RULES_PATH: /
           PYTHON_FLAKE8_CONFIG_FILE: setup.cfg
           PYTHON_ISORT_CONFIG_FILE: setup.cfg
+          YAML_CONFIG_FILE: .yamllint.yaml
