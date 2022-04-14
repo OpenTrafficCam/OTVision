@@ -18,6 +18,11 @@ We appreciate your support in the form of both code and comments. First, please 
 2. Klick on .\OTVision\Install.bat (a venv will be created and packages from requirements.txt will be installed including PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/))
 3. Klick on .\OTVision\OTVision.bat (venv will be activated and OTVision gui will be started)
 
+## Development
+
+For development please install also the ```requirements_dev.txt``` (and use flake8 for linting and black for autoformatting with line length 88).
+We suggest to use VS Code for editing the code, as we also ship a settings.json.
+
 ## License
 
 This software is licensed under the [GPL-3.0 License](LICENSE)
