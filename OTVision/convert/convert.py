@@ -1,7 +1,7 @@
-import re
 import os
-from pathlib import Path
+import re
 import subprocess
+from pathlib import Path
 from urllib.request import urlretrieve
 from zipfile import ZipFile
 
@@ -15,7 +15,8 @@ def main(
     input_fps: float = None,
     output_fps: float = None,
     fps_from_filename: bool = True,
-    overwrite: bool = True,  # TODO: #111 Set more parameters as global variables in config.py
+    overwrite: bool = True,
+    # TODO: #111 Set more parameters as global variables in config.py
 ):
     """Converts multiple h264-based videos into other formats and/or other frame rates.
 
@@ -87,7 +88,7 @@ def convert(
         elif input_fps is None:
             input_fps = CONFIG["CONVERT"]["FPS"]
 
-        print(f"Creating ffmpeg command")
+        print("Creating ffmpeg command")
 
         # Create ffmpeg command
         input_fps_cmd = (

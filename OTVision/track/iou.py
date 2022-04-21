@@ -23,6 +23,7 @@
 import pandas as pd
 
 from OTVision.config import CONFIG
+
 from .iou_util import iou
 
 

@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
 import json
 import logging
+from pathlib import Path
 
 
 def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
@@ -155,7 +155,7 @@ def _get_testdatafolder():
 
 
 def is_in_format(pathToVideo, file_formats):
-    """ Checks if a file path is in specified format.
+    """Checks if a file path is in specified format.
 
     Args:
         pathToVideo (str): the file path

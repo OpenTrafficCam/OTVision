@@ -1,14 +1,11 @@
+---
 name: super-linter
 #
 # Documentation:
 # https://help.github.com/en/articles/workflow-syntax-for-github-actions
 #
 
-on:
-#   push:
-#     branches-ignore: [master]
-  pull_request:
-    branches: [master]
+on: pull_request
 
 jobs:
   build:
@@ -18,9 +15,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Lint Code Base
-        uses: docker://github/super-linter:v3
+        uses: docker://github/super-linter:v4
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_PYTHON_PYLINT: false
+          VALIDATE_PYTHON_MYPY: false
+          VALIDATE_JSCPD: false
+          VALIDATE_PYTHON_BLACK: false
+
+          LINTER_RULES_PATH: /
+          PYTHON_FLAKE8_CONFIG_FILE: setup.cfg
+          PYTHON_ISORT_CONFIG_FILE: setup.cfg
+          YAML_CONFIG_FILE: .yamllint.yaml

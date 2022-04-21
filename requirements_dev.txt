@@ -1,0 +1,6 @@
+pytest>=6.2.4
+flake8
+black
+isort
+# mypy # don't use for now
+pytest-cov

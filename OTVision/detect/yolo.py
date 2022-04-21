@@ -19,8 +19,9 @@
 
 from pathlib import Path
 from time import perf_counter
+
 import torch
-from cv2 import VideoCapture, CAP_PROP_FPS
+from cv2 import CAP_PROP_FPS, VideoCapture
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format
@@ -175,8 +176,11 @@ def detect_images(
         _add_detection_results(yolo_detections, results, normalized)
         img_batch += 1
         print(
-            "img_batch_no: {0:d}, det:{1:0.4f}, batch_size: {2:d}, fps: {3:0.1f}".format(
-                img_batch, t_det - t_start, len(chunk), chunksize / (t_det - t_start)
+            (
+                f"img_batch_no: {img_batch:d}, "
+                f"det:{t_det - t_start:0.4f}, "
+                f"batch_size: {len(chunk):d}, "
+                f"fps: {chunksize / (t_det - t_start):0.1f}"
             )
         )
 
@@ -370,49 +374,3 @@ def _containsvideo(file_chunks):
         if file.suffix in vid_formats:
             return True
     return False
-
-
-# TODO: detect to df or gdf (geopandas)
-def detect_df(
-    files,
-    weights: str = "yolov5x",
-    conf: float = 0.25,
-    iou: float = 0.45,
-    size: int = 640,
-):
-
-    results = detect(files, weights, conf, iou, size)
-
-    tensors = results.xywhn
-
-    for tensor in tensors:
-        tensor.tolist()
-
-        # Datenformat:
-        # Geopandas?
-        # | ix:filename | ix:frame | ix:detectionid | shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
-        # | ix:trackid | ix:filename | ix:frame | ix:detectionid | shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
-
-        # df["class"][""]
-        # df.loc[123,"video.mp4", 543, 4), "class"]
-
-
-if __name__ == "__main__":
-    test_path = Path(__file__).parents[2] / "tests" / "data"
-    video_1 = str(test_path / "testvideo_1.mkv")
-    video_2 = str(test_path / "testvideo_2.mkv")
-    # files = [video_1, video_2]
-    files = video_1
-
-    weights = "yolov5x"
-    conf = 0.50
-    iou = 0.45
-    size = 640
-    chunksize = 0
-
-    bboxes, names = detect(
-        files=files,
-        normalized="xyxy",
-    )
-    print(bboxes)
-    main(files, bboxes, names)
