@@ -1,7 +1,9 @@
-# OTVision
+# OTVision 
+# (May use 'git add --force my/ignore/file.foo' to stage a file despite having it on gitignore)
 OTVision/user.conf
 yolov5*.pt
 obj_train_data/*
+tests/data/*
 *.mp4
 *ffmpeg.exe
 
