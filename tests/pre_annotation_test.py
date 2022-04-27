@@ -1,15 +1,15 @@
 import shutil
-
-import pytest
 from pathlib import Path
 
-from OTVision.pre_annotation import _pre_annotate
-from OTVision.pre_annotation import _write_class_labels
-from OTVision.pre_annotation import _write_bbox
-from OTVision.pre_annotation import _zip_annotated_dir
+import pytest
 
 from OTVision.helpers.files import unzip
-from OTVision.helpers.files import get_files
+from OTVision.pre_annotation import (
+    _pre_annotate,
+    _write_bbox,
+    _write_class_labels,
+    _zip_annotated_dir,
+)
 
 
 @pytest.fixture
