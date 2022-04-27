@@ -20,97 +20,73 @@
 import os
 import shutil
 from pathlib import Path
+from time import perf_counter
 
 import progressbar
 
-from OTVision.config import CONFIG
 from OTVision.detect import detect
+from OTVision.helpers.files import get_files, unzip
 
 
-def _pngfiles(file):
-    file = Path(file)
-    dir = file.with_suffix("")
-    pngfiles = dir.glob("obj_train_data/*.png")
-
-    return pngfiles
-
-
-def _fileList(file, suffix):
-    file = Path(file)
-    dir = file.with_suffix("")
-    files = dir.glob("*.{}".format(suffix))
-    return [str(file) for file in files]
-
-
-def _unzip(file):
-    file = Path(file)
-    dir = file.with_suffix("")
-    shutil.unpack_archive(file, dir)
-    pngfiles = _pngfiles(file)
-    files = [str(file) for file in pngfiles]
-    return files
-
-
-def _zip(file, pngs=False):
-    file = Path(file)
-    dir = file.with_suffix("")
+def _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False):
+    to_be_zipped = Path(cvat_yolo_dir)
     if not pngs:
-        pngfiles = _pngfiles(file)
-        for pngfile in pngfiles:
-            pngfile.unlink()
-    newfile = dir.parent / (file.stem + "_annotated")
-    shutil.make_archive(newfile, "zip", root_dir=dir)
-    shutil.rmtree(dir)
+        img_paths = get_files(to_be_zipped, filetypes=img_type)
+        for img_path in img_paths:
+            img = Path(img_path)
+            img.unlink()
+    new_file = to_be_zipped.parent / f"{to_be_zipped.name}_annotated"
+    shutil.make_archive(new_file, "zip", root_dir=to_be_zipped)
+    shutil.rmtree(to_be_zipped)
+    return new_file.with_name(f"{new_file.stem}.zip")
 
 
-def _writenames(file, names):
-    file = Path(file)
-    dir = file.with_suffix("")
-    objnames = dir / "obj.names"
-    with open(objnames, "w") as f:
-        for name in names:
+def _write_class_labels(cvat_yolo_dir, class_labels):
+    cvat_yolo_dir = Path(cvat_yolo_dir)
+    obj_names = cvat_yolo_dir / "obj.names"
+    with open(obj_names, "w") as f:
+        for name in class_labels:
             f.write((name + "\n"))
 
 
-def _writebbox(file: str, xywhn: list):
-    pngfiles = _pngfiles(file)
+def _write_bbox(cvat_yolo_dir: str, img_type: str, xywhn: list):
+    image_paths = get_files(cvat_yolo_dir, filetypes=img_type)
+    assert len(image_paths) == len(xywhn)
 
-    for png in pngfiles:
-        txt = png.with_suffix(".txt")
-        detections = xywhn.pop(0)
-        with open(txt, "a") as f:
+    for img_path, detections in zip(image_paths, xywhn):
+        annotation_txt = Path(img_path).with_suffix(".txt")
+
+        with open(annotation_txt, "w") as f:
             for detection in detections:
-                x, y, w, h, conf, cls = detection
+                x, y, w, h, _, _cls = detection  # [x, y, w, h, conf, class]
                 line = "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
-                    x=x, y=y, w=w, h=h, cls=cls
+                    x=x, y=y, w=w, h=h, cls=_cls
                 )
                 f.write((line + "\n"))
 
 
-def _writecvatlabels(file, results):
-    # TODO: write cvat label data to file
-    pass
-
-
-def _pre_annotation(file, chunk_size):
-    files = _unzip(file)
-    xywhn, names = detect.main(
-        files,
-        filetypes=CONFIG["FILETYPES"]["IMG"],
-        weights="yolov5x",
+def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, img_type):
+    yolo_cvat_dir = unzip(cvat_yolo_zip)
+    bboxes_in_xywhn_format, class_labels = detect.main(
+        files=yolo_cvat_dir,
+        filetypes=img_type,
+        weights=model_weights,
         chunksize=chunk_size,
         normalized=True,
         ot_labels_enabled=True,
     )
-    _writebbox(file, xywhn)
-    _writenames(file, names)
-    _zip(file, pngs=False)
+    _write_bbox(yolo_cvat_dir, img_type, bboxes_in_xywhn_format)
+    _write_class_labels(yolo_cvat_dir, class_labels)
+    yolo_cvat_annotated = _zip_annotated_dir(yolo_cvat_dir, img_type, pngs=False)
+    return yolo_cvat_annotated
 
 
-def check_isfile(file, chunk_size):
+def main(file, model_weights, chunk_size, img_type="png"):
+    print("Starting")
     if os.path.isfile(file):
-        _pre_annotation(file, chunk_size)
+        _pre_annotate(file, model_weights, chunk_size, img_type)
     elif os.path.isdir(file):
-        zipFiles = _fileList(file, "zip")
-        for file in progressbar.progressbar(zipFiles):
-            _pre_annotation(file, chunk_size)
+        zip_files = get_files(file, "zip")
+        for file in progressbar.progressbar(zip_files):
+            _pre_annotate(file, model_weights, chunk_size, img_type)
+    print("Done in {0:0.2f} s".format(perf_counter()))

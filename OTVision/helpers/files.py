@@ -18,7 +18,9 @@
 
 import json
 import logging
+import shutil
 from pathlib import Path
+from typing import Union
 
 
 def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
@@ -27,7 +29,8 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     (recursive) content of folders.
 
     Args:
-        paths ([str or list of str]): where to find the files
+        paths ([str or list of str or Path or list of Path]): where to find
+        the files.
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
@@ -44,23 +47,25 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     files = set()
 
     # Check, if paths is a str or a list
-    if type(paths) is str:
+    if type(paths) is str or isinstance(paths, Path):
         paths = [paths]
-    elif type(paths) is not list:
-        raise TypeError("Paths needs to be str or list of str")
+    elif type(paths) is not list and not isinstance(paths, Path):
+        raise TypeError("Paths needs to be a str, a list of str, or Path object")
 
     # Check if filetypes is str or a list and transform it
     if filetypes:
         if type(filetypes) is not list:
             filetypes = [filetypes]
-        for filetype in filetypes:
+
+        for idx, filetype in enumerate(filetypes):
             if type(filetype) is not str:
                 raise TypeError("Filetype needs to be a str or a list of str")
 
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
                     filetype = "." + filetype
-                filetype = filetype.lower()
+                filetypes[idx] = filetype.lower()
+
     # add all files to a single list _files_
     for path in paths:
         path = Path(path)
@@ -70,27 +75,26 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
             path = path.with_suffix(filetypes[0])
         # If path is a real file add it to return list
         if path.is_file():
-            file = str(path)
             if filetypes:
                 for filetype in filetypes:
-                    if file.endswith(filetype):
-                        files.add(file)
+                    if path.suffix.lower() == filetype:
+                        files.add(str(path))
             else:
-                files.add(file)
+                files.add(str(path))
         # If path is a real file add it to return list
         elif path.is_dir():
             for filetype in filetypes:
-                for file in path.glob(("**/*" if search_subdirs else "*") + filetype):
-                    file = str(file)
-                    files.add(file)
+                for file in path.glob("**/*" if search_subdirs else "*"):
+                    if file.is_file and file.suffix.lower() == filetype:
+                        files.add(str(file))
         else:
             raise TypeError("Paths needs to be a path as a str or a list of str")
 
     return sorted(list(files))
 
 
-def remove_dir(dir: str):
-    dir = Path(dir)
+def remove_dir(dir_path: Union[str, Path]):
+    dir = Path(dir_path)
     for path in dir.glob("*"):
         if path.is_file():
             path.unlink()
@@ -154,8 +158,10 @@ def _get_testdatafolder():
     return str(testdatafolder)
 
 
-def is_in_format(pathToVideo, file_formats):
+def is_in_format(file_path, file_formats):
     """Checks if a file path is in specified format.
+
+    The case of a file format is ignored.
 
     Args:
         pathToVideo (str): the file path
@@ -165,12 +171,24 @@ def is_in_format(pathToVideo, file_formats):
         True if path is of format specified in file_formats.
         Otherwise False.
     """
-    file = Path(pathToVideo)
+    file = Path(file_path)
 
-    if file.suffix in file_formats:
+    if file.suffix.lower() in [
+        file_format.lower()
+        if file_format.startswith(".")
+        else f".{file_format.lower()}"
+        for file_format in file_formats
+    ]:
         return True
     else:
         return False
+
+
+def unzip(file):
+    file = Path(file)
+    directory = file.with_suffix("")
+    shutil.unpack_archive(file, directory)
+    return directory
 
 
 if __name__ == "__main__":

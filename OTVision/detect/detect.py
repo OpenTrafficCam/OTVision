@@ -132,7 +132,7 @@ def _create_chunks(file_paths, chunksize):
         return file_paths
     else:
         chunk_starts = range(0, len(file_paths), chunksize)
-        return [file_paths[i : i + chunksize] for i in chunk_starts]
+        return [file_paths[i: i + chunksize] for i in chunk_starts]
 
 
 def save_detections(
