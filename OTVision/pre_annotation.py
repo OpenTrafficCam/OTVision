@@ -17,16 +17,15 @@
 
 # TODO: docstrings in pre_annotation
 
-import shutil
 import os
+import shutil
+from pathlib import Path
 from time import perf_counter
 
-from pathlib import Path
 import progressbar
 
 from OTVision.detect import detect
-from OTVision.helpers.files import get_files
-from OTVision.helpers.files import unzip
+from OTVision.helpers.files import get_files, unzip
 
 
 def _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False):
@@ -91,10 +90,3 @@ def main(file, model_weights, chunk_size, img_type="png"):
         for file in progressbar.progressbar(zip_files):
             _pre_annotate(file, model_weights, chunk_size, img_type)
     print("Done in {0:0.2f} s".format(perf_counter()))
-
-
-if __name__ == "__main__":
-
-    path = r"C:\Users\MichaelHeilig\Downloads\annotation_data\task_wolfartsweierer straße #9-2021_05_05_14_38_18-yolo 1.1.zip"
-    chunk_size = 100
-    main(path, "yolov5s", chunk_size)

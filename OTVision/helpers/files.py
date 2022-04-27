@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import shutil
 import json
 import logging
-from typing import Union
-
+import shutil
 from pathlib import Path
+from typing import Union
 
 
 def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):

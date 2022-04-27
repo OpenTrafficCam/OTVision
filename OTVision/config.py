@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
 import json
 import logging
+from pathlib import Path
 
 from .helpers.files import _get_testdatafolder
 

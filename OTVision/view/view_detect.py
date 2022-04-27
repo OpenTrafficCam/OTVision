@@ -1,10 +1,10 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from OTVision.view.view_helpers import FrameRun
 from OTVision.config import CONFIG, PAD
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.files import get_files
+from OTVision.view.view_helpers import FrameRun
 
 
 class FrameDetect(tk.LabelFrame):
@@ -99,7 +99,7 @@ class FrameRunDetection(FrameRun):
         size = self.master.frame_options.scale_imgsize.get()
         chunksize = self.master.frame_options.scale_chunksize.get()
         normalized = self.master.frame_options.checkbutton_normalized_var.get()
-        overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        # overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
         detect(
             files=paths,
             filetypes=input_filetype,

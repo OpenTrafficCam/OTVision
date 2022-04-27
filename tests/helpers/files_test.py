@@ -1,10 +1,9 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import pytest
 
-from OTVision.helpers.files import is_in_format
-from OTVision.helpers.files import get_files
+from OTVision.helpers.files import get_files, is_in_format
 
 
 @pytest.fixture

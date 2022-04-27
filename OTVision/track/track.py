@@ -20,16 +20,16 @@
 
 
 import json
-from pathlib import Path
-from datetime import datetime
 import logging
-import pandas as pd
+from pathlib import Path
+
 import geopandas as gpd
-from shapely.geometry import LineString, Point
+import pandas as pd
 
 from OTVision.config import CONFIG
+from OTVision.helpers.files import denormalize, get_files
+
 from .iou import track_iou
-from OTVision.helpers.files import get_files, denormalize
 
 
 def main(
@@ -46,31 +46,46 @@ def main(
     detections_files = get_files(paths, filetypes)
     for detections_file in detections_files:
         logging.info(f"New detections file: {detections_file}")
+
         try:
             with open(detections_file) as f:
                 detections = json.load(f)
-        except:
-            logging.error(f"Could not read {detections_file} as json")
-            continue
-        logging.info("detections read")
-        detections = denormalize(detections)
-        logging.info("detections denormalized")
-        tracks_px, trajectories_geojson = track(
-            detections=detections,
-            yolo_mode=yolo_mode,
-            sigma_l=sigma_l,
-            sigma_h=sigma_h,
-            sigma_iou=sigma_iou,
-            t_min=t_min,
-            t_miss_max=t_miss_max,
-        )
-        logging.info("detections tracked")
-        write(
-            tracks_px=tracks_px,
-            trajectories_geojson=trajectories_geojson,
-            detections_file=detections_file,
-        )
-        logging.info("Tracking finished")
+            logging.info("detections read")
+
+            detections_denormalized = denormalize(detections)
+            logging.info("detections denormalized")
+
+            tracks_px, trajectories_geojson = track(
+                detections=detections_denormalized,
+                yolo_mode=yolo_mode,
+                sigma_l=sigma_l,
+                sigma_h=sigma_h,
+                sigma_iou=sigma_iou,
+                t_min=t_min,
+                t_miss_max=t_miss_max,
+            )
+            logging.info("detections tracked")
+
+            write(
+                tracks_px=tracks_px,
+                trajectories_geojson=trajectories_geojson,
+                detections_file=detections_file,
+            )
+            logging.info("Tracking finished")
+        except OSError as oe:
+            logging.error(
+                (
+                    f'Could not open "{detections_file}". '
+                    f"Following exception occured: {str(oe)}"
+                )
+            )
+        except json.JSONDecodeError as je:
+            logging.error(
+                (
+                    f'Unable to decode "{detections_file}" as JSON.'
+                    f"Following exception occured: {str(je)}"
+                )
+            )
 
 
 def track(

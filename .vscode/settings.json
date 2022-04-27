@@ -1,17 +1,28 @@
 {
-    "python.formatting.provider": "black",
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.linting.enabled": true,
+    "python.pythonPath": "venv\\Scripts\\python.exe",
     "python.analysis.extraPaths": [
         "./OTVision"
     ],
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length=88"
+    ],
+    "python.sortImports.args": [
+        "--profile=black",
+    ],
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
     "python.languageServer": "Pylance",
-    "python.pythonPath": "venv\\Scripts\\python.exe",
     "python.testing.pytestArgs": [
         "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-      "cSpell.diagnosticLevel": "Hint",
 }

@@ -22,6 +22,5 @@
 # from gui import track
 from OTVision import track
 
-
 if __name__ == "__main__":
     track()
