@@ -65,9 +65,11 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     for path in paths:
         path = Path(path)
         # Replace filetype in path if replace_filetype is given as argument
-        # and path has suffix and only one filetype was given
+        # and path has suffix and only one filetype was given and new path exists
         if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
-            path = path.with_suffix(filetypes[0])
+            path_with_filetype_replaced = path.with_suffix(filetypes[0])
+            if path_with_filetype_replaced.is_file():
+                path = path.with_suffix(filetypes[0])
         # If path is a real file add it to return list
         if path.is_file():
             file = str(path)
