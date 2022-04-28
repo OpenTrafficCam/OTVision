@@ -1,5 +1,4 @@
 import os
-import platform
 import shutil
 from pathlib import Path
 

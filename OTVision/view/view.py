@@ -1,4 +1,3 @@
-import platform
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
