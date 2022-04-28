@@ -16,6 +16,22 @@ class FrameConvert(tk.LabelFrame):
         self.frame_run.pack(**PAD, side="left", fill="both", expand=1, anchor="s")
 
 
+class FrameConvertDummy(tk.LabelFrame):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.label_winonly = tk.Label(
+            master=self,
+            text="This function is Windows only for now",
+        )
+        self.label_winonly.pack(**PAD, side="top", fill="both", expand=1, anchor="n")
+        self.label_manually = tk.Label(
+            master=self, text="Please convert h264 to mp4 manually"
+        )
+        self.label_manually.pack(**PAD, side="top", fill="both", expand=1, anchor="n")
+        self.label_ffmpeg = tk.Label(master=self, text="(e.g. using ffmpeg)")
+        self.label_ffmpeg.pack(**PAD, side="top", fill="both", expand=1, anchor="n")
+
+
 class FrameConvertOptions(tk.Frame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

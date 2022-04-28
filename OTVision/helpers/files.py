@@ -69,12 +69,16 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     # add all files to a single list _files_
     for path in paths:
         path = Path(path)
-        # Replace filetype in path if replace_filetype is given as argument
-        # and path has suffix and only one filetype was given
-        if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
-            path = path.with_suffix(filetypes[0])
         # If path is a real file add it to return list
         if path.is_file():
+            # Replace filetype in path if replace_filetype is given as argument
+            # and path has suffix and only one filetype was given and new path exists
+            if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
+                path_with_filetype_replaced = path.with_suffix(filetypes[0])
+                if path_with_filetype_replaced.is_file():
+                    path = path.with_suffix(filetypes[0])
+            # Add path to list of returned paths if filetype meets requirements
+            file = str(path)
             if filetypes:
                 for filetype in filetypes:
                     if path.suffix.lower() == filetype:
@@ -88,7 +92,9 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
                     if file.is_file and file.suffix.lower() == filetype:
                         files.add(str(file))
         else:
-            raise TypeError("Paths needs to be a path as a str or a list of str")
+            raise TypeError(
+                "Paths needs to be a path as a pathlib.Path() or a str or a list of str"
+            )
 
     return sorted(list(files))
 
@@ -112,7 +118,11 @@ def read_json(json_file, filetype_wanted=".json"):
     return dict_from_json_file
 
 
-def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+def denormalize(otdict, keys_width=None, keys_height=None):
+    if keys_width is None:
+        keys_width = ["x", "w"]
+    if keys_height is None:
+        keys_height = ["y", "h"]
     if otdict["det_config"]["normalized"]:
         direction = "denormalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
@@ -123,7 +133,11 @@ def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
     return otdict
 
 
-def normalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+def normalize(otdict, keys_width=None, keys_height=None):
+    if keys_width is None:
+        keys_width = ["x", "w"]
+    if keys_height is None:
+        keys_height = ["y", "h"]
     if not otdict["det_config"]["normalized"]:
         direction = "normalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
@@ -154,8 +168,7 @@ def _normal_transformation(otdict, direction, keys_width, keys_height):
 
 
 def _get_testdatafolder():
-    testdatafolder = str(Path(__file__).parents[2] / r"tests/data")
-    return str(testdatafolder)
+    return str(Path(__file__).parents[2] / r"tests/data")
 
 
 def is_in_format(file_path, file_formats):
@@ -171,6 +184,7 @@ def is_in_format(file_path, file_formats):
         True if path is of format specified in file_formats.
         Otherwise False.
     """
+
     file = Path(file_path)
 
     if file.suffix.lower() in [

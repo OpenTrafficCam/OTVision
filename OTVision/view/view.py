@@ -1,7 +1,8 @@
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
-from OTVision.view.view_convert import FrameConvert
+from OTVision.helpers.machine import ON_WINDOWS
+from OTVision.view.view_convert import FrameConvert, FrameConvertDummy
 from OTVision.view.view_detect import FrameDetect
 from OTVision.view.view_helpers import FrameFileTree, FrameRunChained
 from OTVision.view.view_track import FrameTrack
@@ -23,9 +24,13 @@ class WindowOTVision(tk.Tk):
         self.frame_files = FrameFileTree(master=self, text="Choose files")
         self.frame_files.grid(**PAD, row=0, column=0, columnspan=3, sticky="ew")
         # Settings
-        # Convert
-        self.frame_convert = FrameConvert(master=self, text="Convert")
-        self.frame_convert.grid(**PAD, row=1, column=0, sticky="nsew")
+        # Convert (Only works on windows machines for now)
+        if ON_WINDOWS:
+            self.frame_convert = FrameConvert(master=self, text="Convert")
+            self.frame_convert.grid(**PAD, row=1, column=0, sticky="nsew")
+        else:
+            self.frame_convert_dummy = FrameConvertDummy(master=self, text="Convert")
+            self.frame_convert_dummy.grid(**PAD, row=1, column=0, sticky="nsew")
         # Detect
         self.frame_detect = FrameDetect(master=self, text="Detect")
         self.frame_detect.grid(**PAD, row=1, column=1, sticky="nsew")
