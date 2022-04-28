@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.8", "3.9"]
 
     steps:
@@ -20,11 +20,25 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Install Ubuntu dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_linux.txt
+      - name: Install Windows dependencies for python 3.8
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.8'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_win-py38.txt
+      - name: Install Windows dependencies for python 3.9
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.9'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_win-py39.txt
+      - name: Install test dependencies
+        run: |
           pip install pytest-cov
           pip install pytest
+          python -m hascuda
       - name: Test with pytest
         run: pytest --cov=OTVision tests/
