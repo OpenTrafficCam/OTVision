@@ -4,6 +4,7 @@ yolov5*.pt
 obj_train_data/*
 *.mp4
 *ffmpeg.exe
+tests/resources/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -153,6 +154,7 @@ out/
 local.properties
 
 # OS generated files #
+.DS_Store
 .DS_Store?
 ehthumbs.db
 Icon?

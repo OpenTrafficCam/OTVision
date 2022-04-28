@@ -156,7 +156,7 @@ def detect_images(
     yolo_detections = []
 
     if not file_chunks:
-        return yolo_detections
+        return [], [] if ot_labels_enabled else yolo_detections
 
     if model is None:
         model = loadmodel(weights, conf, iou)
