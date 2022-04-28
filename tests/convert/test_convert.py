@@ -47,14 +47,17 @@ def test_convert():
     # Get reference data
     h264_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="h264")
     mp4_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="mp4")
-    test_data_tmp_dir = CONFIG["TESTDATAFOLDER"].replace("tests\data", "tests\data_tmp")
+    test_data_tmp_dir = Path(
+        CONFIG["TESTDATAFOLDER"].replace("tests\data", "tests\data_tmp")
+    )
 
     # Copy input data to temporary folder and start conversion
-    if not Path(test_data_tmp_dir).is_dir():
+    if not test_data_tmp_dir.is_dir():
         os.mkdir(test_data_tmp_dir)
     for h264_ref_video in h264_ref_videos:
         shutil.copy2(
-            h264_ref_video, h264_ref_video.replace("tests\data", "tests\data_tmp")
+            Path(h264_ref_video),
+            Path(h264_ref_video.replace("tests\data", "tests\data_tmp")),
         )
     h264_test_videos = get_files(
         paths=test_data_tmp_dir,
@@ -68,7 +71,7 @@ def test_convert():
 
     def array_from_video(path):
         frames = []
-        cap = cv2.VideoCapture(path)
+        cap = cv2.VideoCapture(str(path))
         ret = True
         while ret:
             (
@@ -83,8 +86,10 @@ def test_convert():
     # IDEA: Just test if file sizes of both mp4 files are equal
     for mp4_ref_video in mp4_ref_videos:
         assert np.array_equal(
-            array_from_video(mp4_ref_video),
-            array_from_video(mp4_ref_video.replace("tests\data", "tests\data_tmp")),
+            array_from_video(Path(mp4_ref_video)),
+            array_from_video(
+                Path(mp4_ref_video.replace("tests\data", "tests\data_tmp"))
+            ),
         )
 
     # Remove test data tmp dir
