@@ -5,6 +5,7 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
+from OTVision.helpers.machine import ON_WINDOWS
 
 
 class FrameFileTree(tk.LabelFrame):
@@ -107,10 +108,11 @@ class FrameFileTree(tk.LabelFrame):
 
     def add_dirs(self, event):
         new_dir = filedialog.askdirectory(title="Select a folder", mustexist=True)
+        # NOTE: h264 is only included on Windows for now
         new_paths = get_files(
             new_dir,
-            filetypes=[
-                ".h264",
+            filetypes=([".h264"] if ON_WINDOWS else [])
+            + [
                 "." + self.vid_filetype,
                 CONFIG["DEFAULT_FILETYPE"]["DETECT"],
             ],
@@ -129,8 +131,9 @@ class FrameFileTree(tk.LabelFrame):
         new_paths = list(
             filedialog.askopenfilenames(
                 title="Select one or multiple files",
-                filetypes=[
-                    (".h264", ".h264"),
+                # NOTE: h264 is only included on Windows for now
+                filetypes=([(".h264", ".h264")] if ON_WINDOWS else [])
+                + [
                     (".mp4", ".mp4"),
                     (".otdet", ".otdet"),
                     (".ottrk", ".ottrk"),
@@ -326,7 +329,10 @@ class FrameRunChained(tk.LabelFrame):
         # self.progress.grid(row=1, column=0, sticky="ew")
 
     def run(self, event):
-        if self.master.frame_convert.frame_run.checkbutton_run_chained_var.get():
+        if (
+            ON_WINDOWS
+            and self.master.frame_convert.frame_run.checkbutton_run_chained_var.get()
+        ):
             self.master.frame_convert.frame_run.run(event)
         if self.master.frame_detect.frame_run.checkbutton_run_chained_var.get():
             self.master.frame_detect.frame_run.run(event)

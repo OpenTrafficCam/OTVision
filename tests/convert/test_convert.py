@@ -7,9 +7,7 @@ from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files, remove_dir
-
-ON_WINDOWS = platform.system() == "Windows"
-"""Wether OS is Windows or not"""
+from OTVision.helpers.machine import ON_WINDOWS
 
 
 def test_check_ffmpeg():

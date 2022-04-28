@@ -1,4 +1,5 @@
 import os
+import platform
 import re
 import subprocess
 from pathlib import Path
@@ -7,6 +8,7 @@ from zipfile import ZipFile
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, remove_dir
+from OTVision.helpers.machine import ON_WINDOWS
 
 
 def main(
@@ -19,6 +21,8 @@ def main(
     # TODO: #111 Set more parameters as global variables in config.py
 ):
     """Converts multiple h264-based videos into other formats and/or other frame rates.
+
+    Currently only works for windows as ffmpeg.exe is utilized.
 
     Args:
         paths ([type]): [description]
@@ -54,6 +58,8 @@ def convert(
     rate is given it tries to read "FR" from filename and otherwise sets default frame
     rate of 25.
 
+    Currently only works for windows as ffmpeg.exe is utilized.
+
     Args:
         input_video (str): [description]
         output_filetype (str, optional): [description]. Defaults to ".avi".
@@ -68,6 +74,10 @@ def convert(
     Returns:
         [type]: [description]
     """
+
+    if not ON_WINDOWS:
+        print("Sorry, this function only works on windows machines for now")
+        return
 
     print(f"Preparing {input_video} for conversion")
 
@@ -129,6 +139,11 @@ def check_ffmpeg():
     Args:
         ffmpeg_path (str): path, where to save ffmpeg
     """
+
+    if not ON_WINDOWS:
+        print("Sorry, this function only works on windows machines for now")
+        return
+
     try:
         subprocess.call(CONFIG["CONVERT"]["FFMPEG_PATH"])
     except FileNotFoundError:
@@ -140,6 +155,11 @@ def download_ffmpeg():
     Args:
         ffmpeg_path (str): path to ffmpeg.exe
     """
+
+    if not ON_WINDOWS:
+        print("Sorry, this function only works on windows machines for now")
+        return
+
     print("Downloading ffmpeg zip archive (patience: may take a while...)")
     FFMPEG_DIR = str(Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0])
     if not Path(str(Path(FFMPEG_DIR) / "tmp")).is_dir():
