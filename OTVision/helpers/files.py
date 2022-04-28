@@ -118,7 +118,7 @@ def read_json(json_file, filetype_wanted=".json"):
     return dict_from_json_file
 
 
-def denormalize(otdict, keys_width = None, keys_height = None):
+def denormalize(otdict, keys_width=None, keys_height=None):
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
@@ -133,7 +133,7 @@ def denormalize(otdict, keys_width = None, keys_height = None):
     return otdict
 
 
-def normalize(otdict, keys_width = None, keys_height = None):
+def normalize(otdict, keys_width=None, keys_height=None):
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
