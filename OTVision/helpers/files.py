@@ -27,7 +27,7 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     (recursive) content of folders.
 
     Args:
-        paths ([str or list of str]): where to find the files
+        paths ([pathlib.Path() or str or list of str]): where to find the files
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
@@ -44,7 +44,9 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     files = set()
 
     # Check, if paths is a str or a list
-    if type(paths) is str:
+    if isinstance(paths, Path):
+        paths = [str(paths)]
+    elif type(paths) is str:
         paths = [paths]
     elif type(paths) is not list:
         raise TypeError("Paths needs to be str or list of str")
@@ -59,19 +61,20 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
 
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
-                    filetype = "." + filetype
+                    filetype = f".{filetype}"
                 filetype = filetype.lower()
     # add all files to a single list _files_
     for path in paths:
         path = Path(path)
-        # Replace filetype in path if replace_filetype is given as argument
-        # and path has suffix and only one filetype was given and new path exists
-        if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
-            path_with_filetype_replaced = path.with_suffix(filetypes[0])
-            if path_with_filetype_replaced.is_file():
-                path = path.with_suffix(filetypes[0])
         # If path is a real file add it to return list
         if path.is_file():
+            # Replace filetype in path if replace_filetype is given as argument
+            # and path has suffix and only one filetype was given and new path exists
+            if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
+                path_with_filetype_replaced = path.with_suffix(filetypes[0])
+                if path_with_filetype_replaced.is_file():
+                    path = path.with_suffix(filetypes[0])
+            # Add path to list of returned paths if filetype meets requirements
             file = str(path)
             if filetypes:
                 for filetype in filetypes:
@@ -86,7 +89,9 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
                     file = str(file)
                     files.add(file)
         else:
-            raise TypeError("Paths needs to be a path as a str or a list of str")
+            raise TypeError(
+                "Paths needs to be a path as a pathlib.Path() or a str or a list of str"
+            )
 
     return sorted(list(files))
 
@@ -110,7 +115,11 @@ def read_json(json_file, filetype_wanted=".json"):
     return dict_from_json_file
 
 
-def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+def denormalize(otdict, keys_width = None, keys_height = None):
+    if keys_width is None:
+        keys_width = ["x", "w"]
+    if keys_height is None:
+        keys_height = ["y", "h"]
     if otdict["det_config"]["normalized"]:
         direction = "denormalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
@@ -121,7 +130,11 @@ def denormalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
     return otdict
 
 
-def normalize(otdict, keys_width=["x", "w"], keys_height=["y", "h"]):
+def normalize(otdict, keys_width = None, keys_height = None):
+    if keys_width is None:
+        keys_width = ["x", "w"]
+    if keys_height is None:
+        keys_height = ["y", "h"]
     if not otdict["det_config"]["normalized"]:
         direction = "normalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
@@ -152,8 +165,7 @@ def _normal_transformation(otdict, direction, keys_width, keys_height):
 
 
 def _get_testdatafolder():
-    testdatafolder = str(Path(__file__).parents[2] / r"tests/data")
-    return str(testdatafolder)
+    return str(Path(__file__).parents[2] / r"tests/data")
 
 
 def is_in_format(pathToVideo, file_formats):
@@ -169,10 +181,7 @@ def is_in_format(pathToVideo, file_formats):
     """
     file = Path(pathToVideo)
 
-    if file.suffix in file_formats:
-        return True
-    else:
-        return False
+    return file.suffix in file_formats
 
 
 if __name__ == "__main__":
