@@ -47,9 +47,7 @@ def test_convert():
     # Get reference data
     h264_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="h264")
     mp4_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="mp4")
-    test_data_tmp_dir = Path(
-        CONFIG["TESTDATAFOLDER"].replace("tests\data", "tests\data_tmp")
-    )
+    test_data_tmp_dir = Path(CONFIG["TESTDATAFOLDER"]).parent / "data_tmp"
 
     # Copy input data to temporary folder and start conversion
     if not test_data_tmp_dir.is_dir():
@@ -57,7 +55,7 @@ def test_convert():
     for h264_ref_video in h264_ref_videos:
         shutil.copy2(
             Path(h264_ref_video),
-            Path(h264_ref_video.replace("tests\data", "tests\data_tmp")),
+            Path(h264_ref_video).parents[1] / "data_tmp" / Path(h264_ref_video).name,
         )
     h264_test_videos = get_files(
         paths=test_data_tmp_dir,
@@ -88,7 +86,7 @@ def test_convert():
         assert np.array_equal(
             array_from_video(Path(mp4_ref_video)),
             array_from_video(
-                Path(mp4_ref_video.replace("tests\data", "tests\data_tmp"))
+                Path(mp4_ref_video).parents[1] / "data_tmp" / Path(mp4_ref_video).name
             ),
         )
 
