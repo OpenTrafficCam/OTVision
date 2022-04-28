@@ -1,17 +1,22 @@
 import os
+import platform
 import shutil
 from pathlib import Path
-
-import pytest
 
 from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files, remove_dir
 
+ON_WINDOWS = platform.system() == "Windows"
+"""Wether OS is Windows or not"""
+
 
 def test_check_ffmpeg():
     """Tests if ffmpeg.exe is checked and downloaded correctly"""
+
+    if not ON_WINDOWS:
+        return
 
     ffmpeg_exe_path = Path(CONFIG["CONVERT"]["FFMPEG_PATH"])
 
@@ -38,6 +43,8 @@ def test_convert():
     transforming short test videos from h264 to mp4 based on
     framerate specified as part of the file path using ffmpeg.exe
     """
+    if not ON_WINDOWS:
+        return
 
     # Maybe also delete ffmpeg.exe to test download? or separately?
     # Get reference data
