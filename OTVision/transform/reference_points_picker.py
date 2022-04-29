@@ -25,6 +25,7 @@ class ReferencePointsPicker:
         self.image_path = image_path
         self.image = cv2.imread(self.image_path)
         self.refpts = {}
+        self.historic_refpts = {}
 
         self.drawing = False
 
@@ -85,30 +86,48 @@ class ReferencePointsPicker:
     # ----------- Handle connections -----------
 
     def add_refpt(self, x, y):
-        self.append_refpts(x, y)
-        self.draw_refpts()
         print("add refpt")
+        self.refpts = self.append_refpt(refpts=self.refpts, x=x, y=y)
+        self.draw_refpts()
+        self._print_refpts()
 
     def undo_last_refpt(self):
-        self.pop_refpts()
-        self.draw_refpts()
-        print("undo last refpt")
+
+        if self.refpts:
+            print("undo last refpt")
+            self.refpts, undone_refpt = self.pop_refpt(refpts=self.refpts)
+            print(self.refpts)
+            print(undone_refpt)
+            self.historic_refpts = self.append_refpt(
+                refpts=self.historic_refpts, x=undone_refpt["x"], y=undone_refpt["y"]
+            )
+            self._print_refpts()
+            self.draw_refpts()
+        else:
+            print("refpts empty, cannot undo last refpt")
 
     def redo_last_refpt(self):
-        # TODO: Get last refpt from history dict and call add self.add_refpt()
-        x, y = 0, 0
-        self.add_refpt(x, y)
-        print("redo last refpt")
+        if self.historic_refpts:
+            print("redo last refpt")
+            self.historic_refpts, redone_refpt = self.pop_refpt(
+                refpts=self.historic_refpts
+            )
+            self.add_refpt(x=redone_refpt["x"], y=redone_refpt["y"])
+        else:
+            print("no historc refpts, cannot redo last refpt")
 
     # ----------- Edit refpts dict -----------
 
-    def append_refpts(self, x, y):
-        # TODO: Extend (history) dict with new refpt
+    def append_refpt(self, refpts, x, y):
         print("append refpts")
+        new_idx = len(refpts) + 1
+        refpts[new_idx] = {"x": x, "y": y}
+        return refpts
 
-    def pop_refpts(self):
-        # TODO: pop (history) dict
+    def pop_refpt(self, refpts):
         print("pop refpts")
+        popped_refpt = refpts.popitem()[1]
+        return refpts, popped_refpt
 
     # ----------- Draw on image -----------
 
@@ -135,6 +154,17 @@ class ReferencePointsPicker:
         # Alternative: Own implementation using cv2.imwrite()
         # Problem: Ctrl+S shortcut is occupied by this
         pass
+
+    # ----------- Helper function -----------
+
+    def _print_refpts(self):
+        print("-------------------------")
+        print("refpts:")
+        print(self.refpts)
+        print("-------------------------")
+        print("historic refpts:")
+        print(self.historic_refpts)
+        print("-------------------------")
 
 
 def main(title, image_path):
