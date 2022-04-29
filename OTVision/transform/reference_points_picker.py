@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import cv2
 
 # TODO: from OTVision.config import CONFIG
@@ -24,10 +22,11 @@ class ReferencePointsPicker:
         # TODO: Path(CONFIG["TESTDATAFOLDER"]) / r"Radeberg_CamView.png"
         self.image_path = image_path
         self.image = cv2.imread(self.image_path)
+        self.raw_image = cv2.imread(self.image_path)
         self.refpts = {}
         self.historic_refpts = {}
 
-        self.drawing = False
+        self.left_button_down = False
 
         # Initial method calls
         self.show()
@@ -59,16 +58,15 @@ class ReferencePointsPicker:
         """Reads the current mouse position with a left click and writes it
         to the end of the array refpkte and increases the counter by one"""
         if event == cv2.EVENT_LBUTTONUP:
-            self.drawing = False
+            self.left_button_down = False
             self.add_refpt(x, y)
-            self.update_image()
         elif event == cv2.EVENT_LBUTTONDOWN:
-            self.drawing = True
+            self.left_button_down = True
         elif event == cv2.EVENT_MOUSEMOVE:
-            if self.drawing == True:
+            if self.left_button_down:
                 self.draw_magnifier(x, y)
         elif event == cv2.EVENT_MOUSEWHEEL:
-            if self.drawing == True:
+            if self.left_button_down:
                 self.zoom_magnifier(x, y)
 
     def handle_keystrokes(self, key):
@@ -79,7 +77,7 @@ class ReferencePointsPicker:
             self.redo_last_refpt()
 
     def update_image(self):
-        if not self.drawing:
+        if not self.left_button_down:
             print("update image")
             cv2.imshow(self.title, self.image)
 
@@ -88,7 +86,7 @@ class ReferencePointsPicker:
     def add_refpt(self, x, y):
         print("add refpt")
         self.refpts = self.append_refpt(refpts=self.refpts, x=x, y=y)
-        self.draw_refpts()
+        self.draw_refpts("add")
         self._print_refpts()
 
     def undo_last_refpt(self):
@@ -101,8 +99,8 @@ class ReferencePointsPicker:
             self.historic_refpts = self.append_refpt(
                 refpts=self.historic_refpts, x=undone_refpt["x"], y=undone_refpt["y"]
             )
+            self.draw_refpts("delete")
             self._print_refpts()
-            self.draw_refpts()
         else:
             print("refpts empty, cannot undo last refpt")
 
@@ -139,9 +137,34 @@ class ReferencePointsPicker:
         # TODO
         print("zoom magnifier")
 
-    def draw_refpts(self):
-        # TODO
+    def draw_refpts(self, how):
+        FONT = cv2.FONT_ITALIC
+        FONT_SIZE_REL = 0.02
+        MARKER_SIZE_REL = 0.02
+        FONT_SIZE_PX = round(self.raw_image.shape[0] * FONT_SIZE_REL)
+        MARKER_SIZE_PX = round(self.raw_image.shape[0] * MARKER_SIZE_REL)
         print("draw refpts")
+        self.image = self.raw_image.copy()
+        for idx, refpt in self.refpts.items():
+            x = refpt["x"]
+            y = refpt["y"]
+            marker_bottom = (x, y + MARKER_SIZE_PX)
+            marker_top = (x, y - MARKER_SIZE_PX)
+            marker_left = (x - MARKER_SIZE_PX, y)
+            marker_right = (x + MARKER_SIZE_PX, y)
+            cv2.line(self.image, marker_bottom, marker_top, (0, 0, 255), 1)
+            cv2.line(self.image, marker_left, marker_right, (0, 0, 255), 1)
+            cv2.putText(
+                self.image,
+                str(idx),
+                marker_top,
+                FONT,
+                cv2.getFontScaleFromHeight(FONT, FONT_SIZE_PX),
+                (0, 0, 255),
+                1,
+                cv2.LINE_AA,
+            )
+        self.update_image()
 
     # ----------- Complete job -----------
 
