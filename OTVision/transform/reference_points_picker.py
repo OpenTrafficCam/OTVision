@@ -1,6 +1,9 @@
-import cv2
+import json
+import logging
+from pathlib import Path
+from random import randrange
 
-# TODO: from OTVision.config import CONFIG
+import cv2
 
 
 class ReferencePointsPicker:
@@ -15,23 +18,61 @@ class ReferencePointsPicker:
         ESC                         Close window and return reference points
     """
 
-    def __init__(self, title=None, image_path=None):
+    def __init__(self, title=None, image_path=None, video_path=None):
 
         # Attributes
         self.title = title or "Click reference points"
-        # TODO: Path(CONFIG["TESTDATAFOLDER"]) / r"Radeberg_CamView.png"
-        self.image_path = image_path
-        self.image = cv2.imread(self.image_path)
-        self.raw_image = cv2.imread(self.image_path)
-        self.refpts = {}
-        self.historic_refpts = {}
-
         self.left_button_down = False
+        self.refpts = {}
+        self.image_path = image_path
+        self.video_path = video_path
+        self.refpts_path = Path(image_path or video_path).with_suffix(".otrfpts")
+        self.image = None
+        self.video = None
+        self.update_base_image()
+        self.historic_refpts = {}
 
         # Initial method calls
         self.show()
 
-    # ----------- Handle gui -----------
+    # ----------- Handle OpenCV gui -----------
+
+    def update_base_image(self, random_frame=False):
+        print("update base image")
+        if self.image_path:
+            try:
+                self.base_image = cv2.imread(self.image_path)
+            except:
+                raise ImageWontOpenError(
+                    f"Error opening this image file: {self.image_path}"
+                )
+            self.video = None
+        elif self.video_path:
+            if not self.video:
+                self.video = cv2.VideoCapture(self.video_path)
+            if not self.video.isOpened():
+                raise VideoWontOpenError(
+                    f"Error opening this video file: {self.video_path}"
+                )
+            total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
+            if random_frame:
+                frame_nr = randrange(0, total_frames)
+                self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_nr)
+            else:
+                frame_nr = self.video.get(cv2.CAP_PROP_POS_FRAMES)
+                if frame_nr >= total_frames:
+                    self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ret, self.base_image = self.video.read()
+            if not ret:
+                raise FrameNotAvailableError("Video Frame cannot be read correctly")
+        else:
+            raise NoPathError("Neither image nor video path was specified")
+        self.draw_refpts()
+
+    def update_image(self):
+        if not self.left_button_down:
+            print("update image")
+            cv2.imshow(self.title, self.image)
 
     def show(self):
 
@@ -47,7 +88,6 @@ class ReferencePointsPicker:
                 cv2.getWindowProperty(self.title, cv2.WND_PROP_VISIBLE) >= 1
             )
             if key == 27 or not window_visible:
-                self.return_refpts()
                 break  # Exit loop and collapse OpenCV window
             else:
                 self.handle_keystrokes(key)
@@ -71,22 +111,23 @@ class ReferencePointsPicker:
 
     def handle_keystrokes(self, key):
         # TODO
-        if key == 26:
+        if key == 26:  # ctrl + z
             self.undo_last_refpt()
-        elif key == 25:
+        elif key == 25:  # ctrl + y
             self.redo_last_refpt()
-
-    def update_image(self):
-        if not self.left_button_down:
-            print("update image")
-            cv2.imshow(self.title, self.image)
+        elif key == 14:  # ctrl + n
+            self.update_base_image(random_frame=False)
+        elif key == 18:  # ctrl + r
+            self.update_base_image(random_frame=True)
+        elif key == 23:  # ctrl+w
+            self._write_refpts()
 
     # ----------- Handle connections -----------
 
     def add_refpt(self, x, y):
         print("add refpt")
         self.refpts = self.append_refpt(refpts=self.refpts, x=x, y=y)
-        self.draw_refpts("add")
+        self.draw_refpts()
         self._print_refpts()
 
     def undo_last_refpt(self):
@@ -97,9 +138,11 @@ class ReferencePointsPicker:
             print(self.refpts)
             print(undone_refpt)
             self.historic_refpts = self.append_refpt(
-                refpts=self.historic_refpts, x=undone_refpt["x"], y=undone_refpt["y"]
+                refpts=self.historic_refpts,
+                x=undone_refpt["x_px"],
+                y=undone_refpt["y_px"],
             )
-            self.draw_refpts("delete")
+            self.draw_refpts()
             self._print_refpts()
         else:
             print("refpts empty, cannot undo last refpt")
@@ -110,7 +153,7 @@ class ReferencePointsPicker:
             self.historic_refpts, redone_refpt = self.pop_refpt(
                 refpts=self.historic_refpts
             )
-            self.add_refpt(x=redone_refpt["x"], y=redone_refpt["y"])
+            self.add_refpt(x=redone_refpt["x_px"], y=redone_refpt["y_px"])
         else:
             print("no historc refpts, cannot redo last refpt")
 
@@ -137,17 +180,17 @@ class ReferencePointsPicker:
         # TODO
         print("zoom magnifier")
 
-    def draw_refpts(self, how):
+    def draw_refpts(self):
         FONT = cv2.FONT_ITALIC
         FONT_SIZE_REL = 0.02
         MARKER_SIZE_REL = 0.02
-        FONT_SIZE_PX = round(self.raw_image.shape[0] * FONT_SIZE_REL)
-        MARKER_SIZE_PX = round(self.raw_image.shape[0] * MARKER_SIZE_REL)
+        FONT_SIZE_PX = round(self.base_image.shape[0] * FONT_SIZE_REL)
+        MARKER_SIZE_PX = round(self.base_image.shape[0] * MARKER_SIZE_REL)
         print("draw refpts")
-        self.image = self.raw_image.copy()
+        self.image = self.base_image.copy()
         for idx, refpt in self.refpts.items():
-            x = refpt["x"]
-            y = refpt["y"]
+            x = refpt["x_px"]
+            y = refpt["y_px"]
             marker_bottom = (x, y + MARKER_SIZE_PX)
             marker_top = (x, y - MARKER_SIZE_PX)
             marker_left = (x - MARKER_SIZE_PX, y)
@@ -168,9 +211,11 @@ class ReferencePointsPicker:
 
     # ----------- Complete job -----------
 
-    def return_refpts(self):
-        # TODO
-        print("return refpts")
+    def _write_refpts(self):
+        print("write refpts")
+        # Only necessary if the reference points picker is used as standalone tool
+        with open(self.refpts_path, "w") as f:
+            json.dump(self.refpts, f, indent=4)
 
     def write_image(self):
         """This is done via on-board resources of OpenCV"""
@@ -190,11 +235,32 @@ class ReferencePointsPicker:
         print("-------------------------")
 
 
-def main(title, image_path):
-    refpts = ReferencePointsPicker(title=title, image_path=image_path).refpts
-    print(refpts)
-    return refpts
+def main(title, image_path=None, video_path=None):
+    logging.info("Start picker")
+    return ReferencePointsPicker(
+        title=title, image_path=image_path, video_path=video_path
+    ).refpts
+
+
+class NoPathError(Exception):
+    pass
+
+
+class ImageWontOpenError(Exception):
+    pass
+
+
+class VideoWontOpenError(Exception):
+    pass
+
+
+class FrameNotAvailableError(Exception):
+    pass
 
 
 if __name__ == "__main__":
-    main(title="My refpt picker", image_path=r"tests\data\Radeberg_CamView.png")
+    # main(title="My refpt picker", image_path=r"tests\data\Radeberg_CamView.png")
+    main(
+        title="My refpt picker",
+        video_path=r"tests\data\Testvideo_FR20_Cars-Cyclist.mp4",
+    )
