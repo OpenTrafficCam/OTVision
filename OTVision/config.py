@@ -51,7 +51,7 @@ CONFIG["FILETYPES"]["VID"] = [
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
 CONFIG["FILETYPES"]["DETECT"] = ".otdet"
 CONFIG["FILETYPES"]["TRACK"] = [".ottrk", ".gpkg"]
-CONFIG["FILETYPES"]["REFPTS"] = ".csv"
+CONFIG["FILETYPES"]["REFPTS"] = [".otrfpts", ".csv"]
 
 # LAST PATHS
 CONFIG["LAST PATHS"] = {}
@@ -109,7 +109,8 @@ CONFIG["UNDISTORT"]["OVERWRTIE"] = False
 
 # TRANSFORM
 CONFIG["TRANSFORM"] = {}
-CONFIG["TRANSFORM"]["OVERWRTIE"] = False
+CONFIG["TRANSFORM"]["RUN_CHAINED"] = True
+CONFIG["TRANSFORM"]["OVERWRITE"] = False
 
 # GUI
 CONFIG["GUI"] = {}
