@@ -75,6 +75,7 @@ class FrameFileTree(tk.LabelFrame):
             "video": self.vid_filetype,
             "otdet": "otdet",
             "ottrk": "ottrk",
+            "otrfpts": "otrfpts",
         }
         self.tree_files["columns"] = tuple(
             {k: v for k, v in tree_files_cols.items() if k != "#0"}.keys()
@@ -183,6 +184,11 @@ class FrameFileTree(tk.LabelFrame):
         self.files_dict[path]["ottrk"] = (
             TRUE_SYMBOL if Path(path).with_suffix(".ottrk").is_file() else FALSE_SYMBOL
         )
+        self.files_dict[path]["otrfpts"] = (
+            TRUE_SYMBOL
+            if Path(path).with_suffix(".otrfpts").is_file()
+            else FALSE_SYMBOL
+        )
 
     def update_tree_files(self):
         self.tree_files.delete(*self.tree_files.get_children())
@@ -196,6 +202,7 @@ class FrameFileTree(tk.LabelFrame):
                     file_values["video"],
                     file_values["otdet"],
                     file_values["ottrk"],
+                    file_values["otrfpts"],
                 ),
             )
 
