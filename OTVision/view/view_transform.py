@@ -48,28 +48,33 @@ class FrameTransformOptions(tk.Frame):
 
     def choose_refpts(self, event):
         print("load refpts")
+
+        # Get selected files
         selected_files = []
         for item in self.master.master.frame_files.tree_files.selection():
             file = self.master.master.frame_files.tree_files.item(item)["text"]
             selected_files.append(file)
 
-        # Show filedialog
-        refpts_file = filedialog.askopenfilename(
-            title="Select a reference points files",
-            filetypes=[(".otrfpts", ".otrfpts")],
-            initialdir=Path(selected_files[0]).parent,
-        )
-        # Check paths
-        refpts_file = get_files(refpts_file)[0]
-        print(refpts_file)
+        if selected_files:
 
-        # Copy files
-        for selected_file in selected_files:
-            new_refpts_file = Path(selected_file).with_suffix(".otrfpts")
+            # Show filedialog
+            refpts_file = filedialog.askopenfilename(
+                title="Select a reference points files",
+                filetypes=[(".otrfpts", ".otrfpts")],
+                initialdir=Path(selected_files[0]).parent,
+            )
+
+            # Check paths
+            refpts_file = get_files(refpts_file)[0]
             print(refpts_file)
-            print(new_refpts_file)
-            if str(new_refpts_file) != str(refpts_file):
-                shutil.copy2(refpts_file, new_refpts_file)
+
+            # Copy files
+            for selected_file in selected_files:
+                new_refpts_file = Path(selected_file).with_suffix(".otrfpts")
+                try:
+                    shutil.copy2(refpts_file, new_refpts_file)
+                except shutil.SameFileError:
+                    continue
 
     def click_refpts(self, event):
         print("click refpts")
