@@ -7,6 +7,7 @@ from tkinter import filedialog
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
 from OTVision.transform.transform import main as transform
+from OTVision.transform.transform import write_refpts
 from OTVision.view.view_helpers import FrameRun
 
 
@@ -46,16 +47,15 @@ class FrameTransformOptions(tk.Frame):
         if CONFIG["TRANSFORM"]["OVERWRITE"]:
             self.checkbutton_overwrite.select()
 
-    def choose_refpts(self, event):
-        print("load refpts")
+    def choose_refpts(self, event):  # sourcery skip: use-named-expression
 
-        # Get selected files
-        selected_files = []
-        for item in self.master.master.frame_files.tree_files.selection():
-            file = self.master.master.frame_files.tree_files.item(item)["text"]
-            selected_files.append(file)
+        # Get selected files from files frame
+        selected_files = self.master.master.frame_files.get_selected_files()
+        print("Selected files:")
+        print(selected_files)
 
         if selected_files:
+            print("choose refpts file for selected files")
 
             # Show filedialog
             refpts_file = filedialog.askopenfilename(
@@ -68,13 +68,16 @@ class FrameTransformOptions(tk.Frame):
             refpts_file = get_files(refpts_file)[0]
             print(refpts_file)
 
-            # Copy files
+            # Copy refpts file for all selected
             for selected_file in selected_files:
                 new_refpts_file = Path(selected_file).with_suffix(".otrfpts")
                 try:
                     shutil.copy2(refpts_file, new_refpts_file)
                 except shutil.SameFileError:
                     continue
+
+            # Update dict and treeview in files frame
+            self.master.master.frame_files.update_files_dict()
 
     def click_refpts(self, event):
         print("click refpts")
