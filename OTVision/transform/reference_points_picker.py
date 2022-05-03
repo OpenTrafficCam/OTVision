@@ -1,7 +1,10 @@
 import json
 import logging
+import tkinter as tk
 from pathlib import Path
 from random import randrange
+from tkinter import ttk
+from tkinter.simpledialog import Dialog, askfloat
 
 import cv2
 
@@ -18,21 +21,22 @@ class ReferencePointsPicker:
         ESC                         Close window and return reference points
     """
 
-    def __init__(self, title=None, image_path=None, video_path=None):
+    def __init__(self, title=None, image_path=None, video_path=None, popup_root=None):
 
         # Attributes
         self.title = title or "Click reference points"
         self.left_button_down = False
         self.refpts = {}
+        self.historic_refpts = {}
         self.image_path = image_path
         self.video_path = video_path
         self.refpts_path = Path(image_path or video_path).with_suffix(".otrfpts")
         self.image = None
         self.video = None
-        self.update_base_image()
-        self.historic_refpts = {}
+        self.popup_root = popup_root
 
         # Initial method calls
+        self.update_base_image()
         self.show()
 
     # ----------- Handle OpenCV gui -----------
@@ -94,23 +98,22 @@ class ReferencePointsPicker:
 
         cv2.destroyAllWindows()
 
-    def handle_mouse_events(self, event, x, y, flags, params):
+    def handle_mouse_events(self, event, x_px, y_px, flags, params):
         """Reads the current mouse position with a left click and writes it
         to the end of the array refpkte and increases the counter by one"""
         if event == cv2.EVENT_LBUTTONUP:
             self.left_button_down = False
-            self.add_refpt(x, y)
+            self.add_refpt(x_px, y_px)
         elif event == cv2.EVENT_LBUTTONDOWN:
             self.left_button_down = True
         elif event == cv2.EVENT_MOUSEMOVE:
             if self.left_button_down:
-                self.draw_magnifier(x, y)
+                self.draw_magnifier(x_px, y_px)
         elif event == cv2.EVENT_MOUSEWHEEL:
             if self.left_button_down:
-                self.zoom_magnifier(x, y)
+                self.zoom_magnifier(x_px, y_px)
 
     def handle_keystrokes(self, key):
-        # TODO
         if key == 26:  # ctrl + z
             self.undo_last_refpt()
         elif key == 25:  # ctrl + y
@@ -124,11 +127,15 @@ class ReferencePointsPicker:
 
     # ----------- Handle connections -----------
 
-    def add_refpt(self, x, y):
+    def add_refpt(self, x_px, y_px):
         print("add refpt")
-        self.refpts = self.append_refpt(refpts=self.refpts, x=x, y=y)
+        new_refpt_px = {"x_px": x_px, "y_px": y_px}
+        self.draw_refpts(temp_refpt=new_refpt_px)
+        if new_refpt_utm := self.get_refpt_utm_from_popup():
+            new_refpt = {**new_refpt_px, **new_refpt_utm}
+            self.refpts = self.append_refpt(refpts=self.refpts, new_refpt=new_refpt)
+            self._print_refpts()
         self.draw_refpts()
-        self._print_refpts()
 
     def undo_last_refpt(self):
 
@@ -138,9 +145,7 @@ class ReferencePointsPicker:
             print(self.refpts)
             print(undone_refpt)
             self.historic_refpts = self.append_refpt(
-                refpts=self.historic_refpts,
-                x=undone_refpt["x_px"],
-                y=undone_refpt["y_px"],
+                refpts=self.historic_refpts, new_refpt=undone_refpt
             )
             self.draw_refpts()
             self._print_refpts()
@@ -153,16 +158,54 @@ class ReferencePointsPicker:
             self.historic_refpts, redone_refpt = self.pop_refpt(
                 refpts=self.historic_refpts
             )
-            self.add_refpt(x=redone_refpt["x_px"], y=redone_refpt["y_px"])
+            self.append_refpt(refpts=self.refpts, new_refpt=redone_refpt)
+            self.draw_refpts()
+            self._print_refpts()
         else:
             print("no historc refpts, cannot redo last refpt")
 
+    def get_refpt_utm_from_popup(self):
+        if not self.popup_root:
+            self.popup_root = tk.Tk()
+            self.popup_root.overrideredirect(1)
+            self.popup_root.withdraw()
+        refpt_utm_correct = False
+        while not refpt_utm_correct:
+            # Get utm part of refpt from pupup
+            new_refpt_utm = DialogUTMCoordinates(parent=self.popup_root).coords_utm
+            # Check utm part of refpt
+            print(new_refpt_utm)
+            if new_refpt_utm:  # BUG: ValueError: could not convert string to float: ''
+                # TODO: Cancel cancels whole refpt (even pixel coordinates, otherwise stuck in infinite loop)
+                hemisphere_correct = isinstance(
+                    new_refpt_utm["hemisphere"], str
+                ) and new_refpt_utm["hemisphere"] in ["N", "S"]
+                zone_correct = isinstance(new_refpt_utm["zone_utm"], int) and (
+                    1 <= new_refpt_utm["zone_utm"] <= 60
+                )
+                lon_utm_correct = isinstance(
+                    new_refpt_utm["lon_utm"], (float, int)
+                ) and (100000 <= new_refpt_utm["lon_utm"] <= 900000)
+                lat_utm_correct = isinstance(
+                    new_refpt_utm["lat_utm"], (float, int)
+                ) and (0 <= new_refpt_utm["lat_utm"] <= 10000000)
+                if (
+                    hemisphere_correct
+                    and zone_correct
+                    and lon_utm_correct
+                    and lat_utm_correct
+                ):
+                    refpt_utm_correct = True
+            else:
+                break
+        return new_refpt_utm
+
     # ----------- Edit refpts dict -----------
 
-    def append_refpt(self, refpts, x, y):
+    def append_refpt(self, refpts, new_refpt):
         print("append refpts")
         new_idx = len(refpts) + 1
-        refpts[new_idx] = {"x": x, "y": y}
+        refpts[new_idx] = new_refpt
         return refpts
 
     def pop_refpt(self, refpts):
@@ -172,15 +215,15 @@ class ReferencePointsPicker:
 
     # ----------- Draw on image -----------
 
-    def draw_magnifier(self, x, y):
+    def draw_magnifier(self, x_px, y_px):
         # TODO
         print("draw magnifier")
 
-    def zoom_magnifier(self, x, y):
+    def zoom_magnifier(self, x_px, y_px):
         # TODO
         print("zoom magnifier")
 
-    def draw_refpts(self):
+    def draw_refpts(self, temp_refpt=None):
         FONT = cv2.FONT_ITALIC
         FONT_SIZE_REL = 0.02
         MARKER_SIZE_REL = 0.02
@@ -188,13 +231,16 @@ class ReferencePointsPicker:
         MARKER_SIZE_PX = round(self.base_image.shape[0] * MARKER_SIZE_REL)
         print("draw refpts")
         self.image = self.base_image.copy()
-        for idx, refpt in self.refpts.items():
-            x = refpt["x_px"]
-            y = refpt["y_px"]
-            marker_bottom = (x, y + MARKER_SIZE_PX)
-            marker_top = (x, y - MARKER_SIZE_PX)
-            marker_left = (x - MARKER_SIZE_PX, y)
-            marker_right = (x + MARKER_SIZE_PX, y)
+        refpts = self.refpts.copy()
+        if temp_refpt:
+            refpts = self.append_refpt(refpts=refpts, new_refpt=temp_refpt)
+        for idx, refpt in refpts.items():
+            x_px = refpt["x_px"]
+            y_px = refpt["y_px"]
+            marker_bottom = (x_px, y_px + MARKER_SIZE_PX)
+            marker_top = (x_px, y_px - MARKER_SIZE_PX)
+            marker_left = (x_px - MARKER_SIZE_PX, y_px)
+            marker_right = (x_px + MARKER_SIZE_PX, y_px)
             cv2.line(self.image, marker_bottom, marker_top, (0, 0, 255), 1)
             cv2.line(self.image, marker_left, marker_right, (0, 0, 255), 1)
             cv2.putText(
@@ -240,6 +286,121 @@ def main(title, image_path=None, video_path=None):
     return ReferencePointsPicker(
         title=title, image_path=image_path, video_path=video_path
     ).refpts
+
+
+class DialogUTMCoordinates(Dialog):
+    def __init__(self, **kwargs):
+        self.coords_utm = None
+        super().__init__(**kwargs)
+
+    # root = tk.Tk()
+    # root.overrideredirect(1)
+    # root.withdraw()
+    # coords = DialogUTMCoordinates(root)
+
+    def body(self, master):
+
+        # Labels
+        tk.Label(master, text="Provide reference point\nin UTM coordinates!").grid(
+            row=0, columnspan=3
+        )
+        tk.Label(master, text="UTM zone:").grid(row=1, sticky="e")
+        tk.Label(master, text="Longitude (E):").grid(row=2, sticky="e")
+        tk.Label(master, text="Latitude (N):").grid(row=3, sticky="e")
+
+        # Zone
+        zones = list(range(1, 61))
+        self.combo_zone = ttk.Combobox(
+            master=master, values=zones, width=3, state="readonly"
+        )
+        self.combo_zone.set(32)
+        self.combo_zone.grid(row=1, column=1, sticky="ew")
+
+        # Hemisphere
+        hemispheres = ["N", "S"]
+        self.combo_hemisphere = ttk.Combobox(
+            master=master, values=hemispheres, width=2, state="readonly"
+        )
+        self.combo_hemisphere.set("N")
+        self.combo_hemisphere.grid(row=1, column=2, sticky="ew")
+
+        # Coordinates
+        # vcmd_lon = (
+        #     self.register(self.validate_lon),
+        #     "%d",
+        #     "%i",
+        #     "%P",
+        #     "%s",
+        #     "%S",
+        #     "%v",
+        #     "%V",
+        #     "%W",
+        # )
+        # ivcmd_lon = (self.register(self.on_invalid),)
+        # vcmd_lat = (
+        #     self.register(self.validate_lat),
+        #     # "%d",
+        #     # "%i",
+        #     "%P",
+        #     # "%s",
+        #     # "%S",
+        #     # "%v",
+        #     # "%V",
+        #     # "%W",
+        # )
+        self.input_lon = tk.Entry(
+            master, width=5
+        )  # , validate="focusout", validatecommand=vcmd_lon
+        self.input_lat = tk.Entry(
+            master, width=5
+        )  # , validate="focusout", validatecommand=vcmd_lat
+        self.input_lon.grid(row=2, column=1, columnspan=2, sticky="ew")
+        self.input_lat.grid(row=3, column=1, columnspan=2, sticky="ew")
+
+        return self.combo_zone  # initial focus
+
+    def apply(self):
+        self.zone = int(self.combo_zone.get())
+        self.hemisphere = self.combo_hemisphere.get()
+        self.lon = float(self.input_lon.get())
+        self.lat = float(self.input_lat.get())
+        self.coords_utm = {
+            "hemisphere": self.hemisphere,
+            "zone_utm": self.zone,
+            "lon_utm": self.lon,
+            "lat_utm": self.lat,
+        }
+        print(self.coords_utm)
+
+    # def validate_lon(self, d, i, P, s, S, v, V, W):
+    #     print("end", "OnValidate:\n")
+    #     print("end", f"d='{d}'\n")
+    #     print("end", f"i='{i}'\n")
+    #     print("end", f"P='{P}'\n")
+    #     print("end", f"s='{s}'\n")
+    #     print("end", f"S='{S}'\n")
+    #     print("end", f"v='{v}'\n")
+    #     print("end", f"V='{V}'\n")
+    #     print("end", f"W='{W}'\n")
+    #     try:
+    #         lon = float(P)
+    #         in_range = 100000 < lon < 900000
+    #         print("In Range:")
+    #         print(in_range)
+    #         return in_range
+    #     except ValueError:
+    #         print("ValueError")
+    #         return False
+
+    # def on_invalid_lon(self):
+    #     pass
+
+    # def validate_lat(self, P):
+    #     try:
+    #         lat = float(P)
+    #         return 0 < lat < 10000000
+    #     except ValueError:
+    #         return False
 
 
 class NoPathError(Exception):
