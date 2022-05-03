@@ -33,6 +33,15 @@ def transform(tracks):
     return tracks_utm
 
 
+def write_refpts(refpts, refpts_file):
+    write_json(
+        dict_to_write=refpts,
+        file=refpts_file,
+        extension=CONFIG["FILETYPES"]["REFPTS"],
+        overwrite=True,
+    )
+
+
 def write_tracks(tracks_utm, tracks_file):
     write_json(
         dict_to_write=tracks_utm,
