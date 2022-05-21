@@ -132,6 +132,10 @@ def read_json(json_file, extension=".json"):
                 f"Following exception occured: {str(je)}"
             )
         )
+    except Exception as e:
+        logging.error(e)
+        print(e)
+    # BUG: "UnboundLocalError: local variable 'dict_from_json_file' referenced before assignment"
     return dict_from_json_file
 
 
