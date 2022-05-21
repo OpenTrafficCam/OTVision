@@ -205,11 +205,34 @@ class FrameFileTree(tk.LabelFrame):
                     file_values["otrfpts"],
                 ),
             )
+        self.update_other_gui_parts()
+
+    def update_other_gui_parts(self):
+        # Activate/deactivate buttons in FrameTransform
+        if self.files_dict:
+            self.master.frame_transform.frame_options.button_choose_refpts[
+                "state"
+            ] = tk.NORMAL
+            self.master.frame_transform.frame_options.button_click_refpts[
+                "state"
+            ] = tk.NORMAL
+        else:
+            self.master.frame_transform.frame_options.button_choose_refpts[
+                "state"
+            ] = tk.DISABLED
+            self.master.frame_transform.frame_options.button_click_refpts[
+                "state"
+            ] = tk.DISABLED
 
     def get_tree_files(self):
         return [
             self.tree_files.item(item)["text"]
             for item in self.tree_files.get_children()
+        ]
+
+    def get_selected_files(self):
+        return [
+            self.tree_files.item(item)["text"] for item in self.tree_files.selection()
         ]
 
     def deselect_tree_files(self, events):

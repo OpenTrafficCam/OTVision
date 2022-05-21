@@ -6,6 +6,7 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
+from OTVision.transform.reference_points_picker import ReferencePointsPicker
 from OTVision.transform.transform import main as transform
 from OTVision.transform.transform import write_refpts
 from OTVision.view.view_helpers import FrameRun
@@ -80,7 +81,31 @@ class FrameTransformOptions(tk.Frame):
             self.master.master.frame_files.update_files_dict()
 
     def click_refpts(self, event):
-        print("click refpts")
+
+        # Get selected files from files frame
+        selected_files = self.master.master.frame_files.get_selected_files()
+        print("Selected files:")
+        print(selected_files)
+
+        if selected_files:
+            print("click and save refpts for selected files")
+
+            # Get refpts from picker tool
+            refpts = ReferencePointsPicker(
+                video_path=r"tests\data\Testvideo_FR20_Cars-Truck.mp4"
+            ).refpts
+
+            if refpts:
+
+                # Save refpts for all selected files
+                for selected_file in selected_files:
+                    new_refpts_file = Path(selected_file).with_suffix(".otrfpts")
+                    write_refpts(refpts=refpts, refpts_file=new_refpts_file)
+
+                # Update dict and treeview in files frame
+                self.master.master.frame_files.update_files_dict()
+        else:
+            print("No files selected")
 
 
 class FrameRunTransformation(FrameRun):

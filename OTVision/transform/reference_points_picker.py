@@ -18,6 +18,8 @@ class ReferencePointsPicker:
         CTRL + Z                    Unmark last reference point
         CTRL + Y                    Remark last reference point
         CTRL + S                    Save image with markers
+        CTRL + N                    Show next frame of video (disabled if image was loaded)
+        CTRL + R                    Show random frame of video (disabled if image was loaded)
         ESC                         Close window and return reference points
     """
 
@@ -170,9 +172,12 @@ class ReferencePointsPicker:
             self.popup_root.overrideredirect(1)
             self.popup_root.withdraw()
         refpt_utm_correct = False
+        try_again = False
         while not refpt_utm_correct:
             # Get utm part of refpt from pupup
-            new_refpt_utm = DialogUTMCoordinates(parent=self.popup_root).coords_utm
+            new_refpt_utm = DialogUTMCoordinates(
+                parent=self.popup_root, try_again=try_again
+            ).coords_utm
             # Check utm part of refpt
             print(new_refpt_utm)
             if new_refpt_utm:  # BUG: ValueError: could not convert string to float: ''
@@ -196,6 +201,8 @@ class ReferencePointsPicker:
                     and lat_utm_correct
                 ):
                     refpt_utm_correct = True
+                else:
+                    try_again = True
             else:
                 break
         return new_refpt_utm
@@ -289,8 +296,9 @@ def main(title, image_path=None, video_path=None):
 
 
 class DialogUTMCoordinates(Dialog):
-    def __init__(self, **kwargs):
+    def __init__(self, try_again=False, **kwargs):
         self.coords_utm = None
+        self.try_again = try_again
         super().__init__(**kwargs)
 
     # root = tk.Tk()
@@ -298,12 +306,14 @@ class DialogUTMCoordinates(Dialog):
     # root.withdraw()
     # coords = DialogUTMCoordinates(root)
 
-    def body(self, master):
+    def body(self, master):  # sourcery skip: assign-if-exp, swap-if-expression
 
         # Labels
-        tk.Label(master, text="Provide reference point\nin UTM coordinates!").grid(
-            row=0, columnspan=3
-        )
+        if not self.try_again:
+            text_provide = "Provide reference point\nin UTM coordinates!"
+        else:
+            text_provide = "No valid UTM!\nProvide reference point\nin UTM coordinates!"
+        tk.Label(master, text=text_provide).grid(row=0, columnspan=3)
         tk.Label(master, text="UTM zone:").grid(row=1, sticky="e")
         tk.Label(master, text="Longitude (E):").grid(row=2, sticky="e")
         tk.Label(master, text="Latitude (N):").grid(row=3, sticky="e")
