@@ -1,16 +1,16 @@
 # Only tested for Apple M1 machines
-geopandas
-matplotlib==3.4.2
-numpy==1.21.0
-opencv-python>=4.5.3.56
-pandas==1.3.0
-Pillow==8.4.0
+matplotlib==3.5.2
+numpy==1.22.4
+pandas==1.4.2
+Pillow==9.1.1
 progressbar33==2.4
-shapely
-torchvision=>0.10.0
+shapely==1.8.2
+torch==1.10.2
+torchvision==0.11.3
+opencv-python==4.6.0.66
 
 # YOLOv5
-requests
-PyYAML
-tqdm
-seaborn>=0.11.2
+requests==2.27.1
+PyYAML==6.0
+tqdm==4.64.0
+seaborn==0.11.2

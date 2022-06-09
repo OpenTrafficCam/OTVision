@@ -14,9 +14,26 @@ We appreciate your support in the form of both code and comments. First, please 
 
 ## Installation
 
+### Windows
+
 1. Clone this repository
 2. Klick on .\OTVision\Install.bat (a venv will be created and packages from requirements.txt will be installed including PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/))
 3. Klick on .\OTVision\OTVision.bat (venv will be activated and OTVision gui will be started)
+
+### Apple M1 macOS
+
+To install the dependencies required to run OTVision on Apple M1 the following requirements need to be satisfied:
+
+- brew ([Installation Guide](https://brew.sh))
+- [Make](https://www.gnu.org/software/make/) (Install with brew via `brew install make`)
+
+To install the dependencies with **Make** run the following command in the OTVision directory:
+
+```bash
+make venv
+source .venv/bin/activate
+make install_m1
+```
 
 ## Development
 
