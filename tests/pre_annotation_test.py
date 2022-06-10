@@ -23,10 +23,9 @@ def test_resources_dir():
 
 
 @pytest.fixture
-def example_images(test_data_dir):
-    img_1 = Path(test_data_dir, "Radeberg_Satellite_far.jpg")
-    img_2 = Path(test_data_dir, "Radeberg_Satellite.jpg")
-    return [img_1, img_2]
+def example_image(test_data_dir):
+    img_1 = Path(test_data_dir, "Radeberg_Satellite.jpg")
+    return img_1
 
 
 @pytest.fixture
@@ -38,19 +37,14 @@ def class_labels():
 def detections():
     return [
         [
-            [0.5, 0.4, 0.2, 0.2, 0.8, 1.0],
-            [0.6, 0.5, 0.3, 0.4, 0.7, 2.0],
-            [0.5, 0.5, 0.2, 0.2, 0.6, 3.0],
-        ],
-        [
             [0.1, 0.2, 0.512, 0.1234, 0.42, 10.0],
             [0.45, 0.4, 0.612, 0.56, 0.43, 10.0],
-        ],
+        ]
     ]
 
 
 @pytest.fixture
-def cvat_yolo_example_dataset_zipped(test_resources_dir, example_images):
+def cvat_yolo_example_dataset_zipped(test_resources_dir, example_image):
     # Set up
     pre_annotation_dir = Path(test_resources_dir, "pre_annotation")
     example_dataset = Path(pre_annotation_dir, "example_dataset")
@@ -60,18 +54,14 @@ def cvat_yolo_example_dataset_zipped(test_resources_dir, example_images):
     obj_train_data.mkdir(parents=True, exist_ok=True)
 
     # Copy images to obj_train_data folder
-    dest_img_0 = obj_train_data / Path(example_images[0]).name
-    dest_img_1 = obj_train_data / Path(example_images[1]).name
+    dest_img = obj_train_data / Path(example_image).name
 
-    shutil.copy(src=example_images[0], dst=dest_img_0)
-    shutil.copy(src=example_images[1], dst=dest_img_1)
+    shutil.copy(src=example_image, dst=dest_img)
 
     # Create empty annotation text files
-    ann_0 = dest_img_0.with_suffix(".txt")
-    ann_1 = dest_img_1.with_suffix(".txt")
+    ann = dest_img.with_suffix(".txt")
 
-    ann_0.touch()
-    ann_1.touch()
+    ann.touch()
 
     # Create obj.names, obj.data, train.txt
     obj_names = example_dataset / "obj.names"
@@ -109,10 +99,9 @@ def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
     obj_names = cvat_dir_unzipped / "obj.names"
     files = [f for f in obj_train_data.iterdir()]
 
-    assert len(files) == 2
-    assert "Radeberg_Satellite_far" in [f.stem for f in files]
+    assert len(files) == 1
     assert "Radeberg_Satellite" in [f.stem for f in files]
-    assert Path(files[0]).suffix == ".txt" and Path(files[1]).suffix == ".txt"
+    assert Path(files[0]).suffix == ".txt"
     assert obj_names.stat().st_size > 0
 
 
@@ -177,6 +166,5 @@ def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped):
     assert Path(annotated_unzipped, "obj_train_data").is_dir()
     assert Path(annotated_unzipped, "obj.names").exists()
     assert Path(annotated_unzipped, "obj.data").exists()
-    assert Path(annotated_unzipped, "train.txt").exists()
     assert Path(annotated_unzipped, "train.txt").exists()
     assert len(annotated_obj_train_data_content) == 0, "Method should remove all images"
