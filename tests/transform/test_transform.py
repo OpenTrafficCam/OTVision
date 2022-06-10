@@ -12,29 +12,34 @@ from OTVision.helpers.files import get_files, remove_dir
 from OTVision.helpers.machine import ON_WINDOWS
 from OTVision.transform.transform import main as transform
 
-TMP_FOLDER = "data_tmp"
+TMP_DIR_NAME = "data_tmp"
+TMP_DIR = Path(CONFIG["TESTDATAFOLDER"]).parent / TMP_DIR_NAME
+UNIFORM_REFPTS_FILE = Path(CONFIG["TESTDATAFOLDER"]) / "Testvideo_FR20_uniform.otrfpts"
 
 
-def test_transform():
+@pytest.mark.parametrize("uniform_refpts_file", [None, UNIFORM_REFPTS_FILE])
+def test_transform(uniform_refpts_file):
     """Tests the main function of OTVision/transform/transform.py
-    transforming tracks file from pixel to world coordinates based
+    transforming test tracks files from pixel to world coordinates based
     on a set of reference points in both pixel and world coordinates
+    for both tracks file-specific reference points
+    and uniform reference points for all test data
     """
 
-    # Get ottrk and otrpfts files from tests/data
-
-    ref_tracks_files = get_files(
+    # Get true ottrk and otrpfts files from tests/data
+    true_ottrk_files = get_files(
         paths=Path(CONFIG["TESTDATAFOLDER"]),
         filetypes=".ottrk",
     )
     # Create tests/data_tmp
-    test_data_tmp_dir = Path(CONFIG["TESTDATAFOLDER"]).parent / TMP_FOLDER
-    if not test_data_tmp_dir.is_dir():
-        os.mkdir(test_data_tmp_dir)
-    for true_ottrk_file in ref_tracks_files:
+    if not TMP_DIR.is_dir():
+        os.mkdir(TMP_DIR)
+    for true_ottrk_file in true_ottrk_files:
         # Copy ottrk file to tests/data_tmp
         true_ottrk_file = Path(true_ottrk_file)
-        test_ottrk_file = true_ottrk_file.parents[1] / TMP_FOLDER / true_ottrk_file.name
+        test_ottrk_file = (
+            true_ottrk_file.parents[1] / TMP_DIR_NAME / true_ottrk_file.name
+        )
         shutil.copy2(
             true_ottrk_file,
             test_ottrk_file,
@@ -42,18 +47,27 @@ def test_transform():
         # Copy otrfpts file to tests/data_tmp
         true_otrfpts_file = Path(true_ottrk_file).with_suffix(".otrfpts")
         test_otrfpts_file = (
-            true_otrfpts_file.parents[1] / TMP_FOLDER / true_otrfpts_file.name
+            true_otrfpts_file.parents[1] / TMP_DIR_NAME / true_otrfpts_file.name
         )
         shutil.copy2(
             true_otrfpts_file,
             test_otrfpts_file,
         )
-        # Transform ottrk using otrefpts
-        transform(tracks_files=test_ottrk_file, refpts_file=test_otrfpts_file)
 
+    # Get test ottrk and otrpfts files from tests/data_tmp
+    test_tracks_files = get_files(
+        paths=Path(TMP_DIR),
+        filetypes=".ottrk",
+    )
+
+    # Transform list of .ottrk files using otrefpts
+    transform(tracks_files=test_tracks_files, uniform_refpts_file=uniform_refpts_file)
+
+    # Compare gpkg files for all test data
+    for true_ottrk_file in true_ottrk_files:
         # Get gpkg file names and read to df's
         true_gpkg_file = Path(true_ottrk_file).with_suffix(".gpkg")
-        test_gpkg_file = true_gpkg_file.parents[1] / TMP_FOLDER / true_gpkg_file.name
+        test_gpkg_file = true_gpkg_file.parents[1] / TMP_DIR_NAME / true_gpkg_file.name
         true_utm_tracks_df = gpd.read_file(true_gpkg_file)
         test_utm_tracks_df = gpd.read_file(test_gpkg_file)
 
@@ -61,6 +75,6 @@ def test_transform():
         assert_frame_equal(true_utm_tracks_df, test_utm_tracks_df)
 
     # Remove tests/data_tmp and all contents
-    remove_dir(test_data_tmp_dir)
+    remove_dir(TMP_DIR)
 
     assert True
