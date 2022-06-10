@@ -35,27 +35,24 @@ def test_check_ffmpeg():
     assert ffmpeg_creation_time_before == ffmpeg_creation_time_after
 
 
-def test_convert():
+def test_convert(test_data_tmp_dir: Path):
     """Tests the main function of OTVision/convert/convert.py
     transforming short test videos from h264 to mp4 based on
     framerate specified as part of the file path using ffmpeg.exe
     """
+
     if not ON_WINDOWS:
         return
 
-    # Maybe also delete ffmpeg.exe to test download? or separately?
     # Get reference data
     h264_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="h264")
     mp4_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="mp4")
-    test_data_tmp_dir = Path(CONFIG["TESTDATAFOLDER"]).parent / "data_tmp"
 
     # Copy input data to temporary folder and start conversion
-    if not test_data_tmp_dir.is_dir():
-        os.mkdir(test_data_tmp_dir)
     for h264_ref_video in h264_ref_videos:
         shutil.copy2(
             Path(h264_ref_video),
-            Path(h264_ref_video).parents[1] / "data_tmp" / Path(h264_ref_video).name,
+            Path(h264_ref_video).parents[1] / test_data_tmp_dir.name / Path(h264_ref_video).name,
         )
     h264_test_videos = get_files(
         paths=test_data_tmp_dir,
@@ -86,9 +83,6 @@ def test_convert():
         assert np.array_equal(
             array_from_video(Path(mp4_ref_video)),
             array_from_video(
-                Path(mp4_ref_video).parents[1] / "data_tmp" / Path(mp4_ref_video).name
+                Path(mp4_ref_video).parents[1] / test_data_tmp_dir.name / Path(mp4_ref_video).name
             ),
         )
-
-    # Remove test data tmp dir
-    remove_dir(test_data_tmp_dir)
