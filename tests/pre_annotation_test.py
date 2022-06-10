@@ -13,7 +13,7 @@ from OTVision.pre_annotation import (
 
 
 @pytest.fixture
-def test_data_dir():
+def true_data_dir():
     return Path(__file__).parent / "data"
 
 
@@ -23,9 +23,9 @@ def test_resources_dir():
 
 
 @pytest.fixture
-def example_images(test_data_dir):
-    img_1 = Path(test_data_dir, "Radeberg_Satellite_far.jpg")
-    img_2 = Path(test_data_dir, "Radeberg_Satellite.jpg")
+def example_images(true_data_dir):
+    img_1 = Path(true_data_dir, "Testvideo_CamView_Cars-Cyclist.png")
+    img_2 = Path(true_data_dir, "Testvideo_CamView_Cars-Truck.png")
     return [img_1, img_2]
 
 
@@ -101,7 +101,7 @@ def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
         cvat_yolo_zip=cvat_yolo_example_dataset_zipped,
         model_weights="yolov5s",
         chunk_size=100,
-        img_type="jpg",
+        img_type="png",
     )
 
     cvat_dir_unzipped = unzip(cvat_dir_zipped)
@@ -110,8 +110,8 @@ def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
     files = [f for f in obj_train_data.iterdir()]
 
     assert len(files) == 2
-    assert "Radeberg_Satellite_far" in [f.stem for f in files]
-    assert "Radeberg_Satellite" in [f.stem for f in files]
+    assert "Testvideo_CamView_Cars-Cyclist" in [f.stem for f in files]
+    assert "Testvideo_CamView_Cars-Truck" in [f.stem for f in files]
     assert Path(files[0]).suffix == ".txt" and Path(files[1]).suffix == ".txt"
     assert obj_names.stat().st_size > 0
 
@@ -137,7 +137,7 @@ def test_write_bbox_cvatYoloZipAs1stParam_validDetectionsAs2ndParam_writeBboxes(
     cvat_yolo_example_dataset_zipped, detections
 ):
     cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
-    _write_bbox(cvat_dir_unzipped, "jpg", detections)
+    _write_bbox(cvat_dir_unzipped, "png", detections)
 
     obj_train_data = Path(cvat_dir_unzipped, "obj_train_data")
     cvat_anns = [f for f in obj_train_data.iterdir() if f.suffix == ".txt"]
@@ -161,7 +161,7 @@ def test_write_bbox_cvatYoloZipAs1stParam_validDetectionsAs2ndParam_writeBboxes(
 
 def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped):
     cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
-    annotated_zip = _zip_annotated_dir(cvat_dir_unzipped, "jpg")
+    annotated_zip = _zip_annotated_dir(cvat_dir_unzipped, "png")
     annotated_unzipped = unzip(annotated_zip)
     assert (
         annotated_zip.is_file()
@@ -171,7 +171,7 @@ def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped):
 
     annotated_obj_train_data = annotated_unzipped / "obj_train_data"
     annotated_obj_train_data_content = [
-        f for f in annotated_obj_train_data.iterdir() if f.stem == "jpg"
+        f for f in annotated_obj_train_data.iterdir() if f.stem == "png"
     ]
 
     assert Path(annotated_unzipped, "obj_train_data").is_dir()
