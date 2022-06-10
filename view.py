@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from OTVision import view
+from OTVision.view.view import main
 
 if __name__ == "__main__":
-    view()
+    main()
