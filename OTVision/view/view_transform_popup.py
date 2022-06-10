@@ -13,6 +13,7 @@ class FrameRefptsCanvas(tk.LabelFrame):
         self.canvas.pack(fill="both", expand=True)
         self.canvas.create_image(0, 0, image=self.image, anchor="nw")
 
+
 class FrameRefptsControls(tk.LabelFrame):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
