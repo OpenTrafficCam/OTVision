@@ -24,7 +24,7 @@ import tkinter as tk
 from pathlib import Path
 from random import randrange
 from tkinter import ttk
-from tkinter.simpledialog import Dialog, askfloat
+from tkinter.simpledialog import Dialog
 
 import cv2
 
@@ -33,13 +33,13 @@ class ReferencePointsPicker:
     """Class to pick reference points in pixel coordinates for transform subpackage.
 
     Instructions for using the gui:
-        Hold left mouse button      Find perfect spot for reference point with magnifier
+        Hold left mouse button      Find spot for reference point with magnifier
         Release left mouse button   Mark reference point
         CTRL + Z                    Unmark last reference point
         CTRL + Y                    Remark last reference point
         CTRL + S                    Save image with markers
-        CTRL + N                    Show next frame of video (disabled if image was loaded)
-        CTRL + R                    Show random frame of video (disabled if image was loaded)
+        CTRL + N                    Show next frame (disabled if image was loaded)
+        CTRL + R                    Show random frame (disabled if image was loaded)
         ESC                         Close window and return reference points
     """
 
@@ -68,10 +68,10 @@ class ReferencePointsPicker:
         if self.image_path:
             try:
                 self.base_image = cv2.imread(self.image_path)
-            except:
+            except Exception as e:
                 raise ImageWontOpenError(
                     f"Error opening this image file: {self.image_path}"
-                )
+                ) from e
             self.video = None
         elif self.video_path:
             if not self.video:
@@ -201,7 +201,8 @@ class ReferencePointsPicker:
             # Check utm part of refpt
             print(new_refpt_utm)
             if new_refpt_utm:  # BUG: ValueError: could not convert string to float: ''
-                # TODO: Cancel cancels whole refpt (even pixel coordinates, otherwise stuck in infinite loop)
+                # TODO: Cancel cancels whole refpt
+                # (even pixel coordinates, otherwise stuck in infinite loop)
                 hemisphere_correct = isinstance(
                     new_refpt_utm["hemisphere"], str
                 ) and new_refpt_utm["hemisphere"] in ["N", "S"]
