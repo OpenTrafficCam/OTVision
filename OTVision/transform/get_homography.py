@@ -22,15 +22,21 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from OTVision.helpers.formats import ottrk_dict_to_df
-
 
 def get_homography(refpts):
     """Calculate homography matrix using pixel and world coordinates of corresponding
     reference points.
-    Keyword arguments:
-    refpts -- dict of reference points in both pixel coordinates (keys: "x_px", "y_px")
-    and utm coordinates (keys: "lon_utm", "lat_utm")
+
+    Args:
+        refpts (dict): Corresponding reference points in both pixel and utm coordinates
+
+    Returns:
+        ndarry: homography
+        ndarry: refpts_utm_upshifted_predecimal_pt1_1row
+        ndarry: upshift_utm
+        int: utm_zone
+        str: hemisphere
+        dict: precision of homography
     """
 
     refpts_df = pd.DataFrame.from_dict(refpts, orient="index")
@@ -76,7 +82,9 @@ def get_homography(refpts):
     print(homography)
     print(mask)
 
-    evaluate_homography(refpts_px, refpts_utm_upshifted_disassembled, homography)
+    eval_dict = evaluate_homography(
+        refpts_px, refpts_utm_upshifted_disassembled, homography
+    )
 
     # TODO: Prevent different utm zones or hemispheres
     utm_zone = refpts_df["zone_utm"].mode()[0]
@@ -88,12 +96,23 @@ def get_homography(refpts):
         upshift_utm,
         utm_zone,
         hemisphere,
+        eval_dict,
     )
 
 
 def evaluate_homography(
     refpts_pixel, refpts_world_upshifted_disassembled, homography_matrix
 ):
+    """Calculates transformation error of homography
+
+    Args:
+        refpts_pixel (dict): Reference points in both pixel and utm coordinates
+        refpts_world_upshifted_disassembled (ndarry): Internal variable
+        homography_matrix (ndarray): Homography matrix
+
+    Returns:
+        dict: Evaluation of transformation error
+    """
     # Evaluate accuracy of homography matrix using reference points in world coords
     refpts_pixel_tmp = np.array([refpts_pixel], dtype="float32")
     refpts_world_upshifted_disassembled_transf_3d = cv2.perspectiveTransform(
@@ -117,3 +136,7 @@ def evaluate_homography(
     eval_df["delta_abs"] = eval_df["delta"].abs()
     print("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
     print("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+    eval_dict = {}
+    eval_dict["Mean transformation error [m]"] = eval_df["delta_abs"].mean()
+    eval_dict["Maximum transformation error [m]"] = eval_df["delta_abs"].max()
+    return eval_dict
