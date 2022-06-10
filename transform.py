@@ -27,7 +27,7 @@ if __name__ == "__main__":
         / r"tests"
         / r"data"
         / r"Testvideo_FR20_Cars-Cyclist.ottrk",
-        reftpts_file=Path(__file__).parents[0]
+        refpts_file=Path(__file__).parents[0]
         / r"tests"
         / r"data"
         / r"Testvideo_FR20_Cars-Cyclist.otrfpts",
