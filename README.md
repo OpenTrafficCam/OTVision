@@ -27,12 +27,17 @@ To install the dependencies required to run OTVision on Apple M1 the following r
 - brew ([Installation Guide](https://brew.sh))
 - [Make](https://www.gnu.org/software/make/) (Install with brew via `brew install make`)
 
-To install the dependencies with **Make** run the following command in the OTVision directory:
+Use the following `make` command to start the OTVision GUI assuming the command is executed in the OTVision directory.
+This command will automatically install all needed project dependencies if needed.
 
 ```bash
-make venv
-source .venv/bin/activate
-make install_m1
+make run 
+```
+
+To only install the OTVision's project dependencies with, run the following command in the OTVision directory:
+
+```bash
+make install
 ```
 
 ## Development

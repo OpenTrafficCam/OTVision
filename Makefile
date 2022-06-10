@@ -1,18 +1,49 @@
-venv:
-	python3 -m venv .venv
+VENV = .venv
+PYTHON = $(VENV)/bin/python3
+PIP = $(VENV)/bin/pip
+UNAME_S := $(shell uname -s)
 
-.ONESHELL:
-install_m1: # install for Apple M1 machines
-	brew install gdal 
-	pip install fiona
-	brew install proj
-	pip install pyproj
-	pip install pygeos
-	pip install geopandas
-	brew install python-tk
-	pip install -r requirements_m1.txt
+run: install 
+	$(PYTHON) view.py
 
+install: $(VENV)/bin/activate 
+
+$(VENV)/bin/activate: requirements_m1.txt
+	python3 -m venv $(VENV); \
+	if [ $(UNAME_S) == Linux ]; then \
+		sudo apt-get install python3-tk; \
+		$(PIP) install -r requirements_linux.txt; \
+	fi ; \
+	if [ $(UNAME_S) == Darwin ]; then \
+		if [ $(shell uname -m) == arm64 ]; then \
+			brew install gdal; \
+			$(PIP) install fiona; \
+			brew install proj; \
+			$(PIP) install pyproj; \
+			$(PIP) install pygeos; \
+			$(PIP) install geopandas; \
+			brew install python-tk; \
+			$(PIP) install -r requirements_m1.txt; \
+		fi ; \
+	fi 
+
+lint: 
+	$(PYTHON) -m flake8 OTVision tests
+	$(PYTHON) -m yamllint .
+
+format:
+	$(PYTHON) -m isort .
+	$(PYTHON) -m black .
+
+dev: requirements_dev.txt 
+	python3 -m venv $(VENV)
+	$(PIP) install -e .
+	$(PIP) install -r requirements_dev.txt
+		
 clean:
-	rm -rf .venv
+	rm -rf __pycache__
+	rm -rf $(VENV)
+
+.PHONY: run clean install
 
 
