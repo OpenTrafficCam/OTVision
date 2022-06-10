@@ -6,7 +6,8 @@ pandas==1.3.0
 Pillow==8.4.0
 progressbar33==2.4
 shapely
-torchvision==0.10.0
+torch==1.10.2+cu110
+torchvision==0.11.3+cu110
 
 # YOLOv5
 requests

@@ -10,12 +10,12 @@ install: $(VENV)/bin/activate
 
 $(VENV)/bin/activate: requirements_m1.txt
 	python3 -m venv $(VENV); \
-	if [ $(UNAME_S) == Linux ]; then \
+	if [ $(UNAME_S) = Linux ]; then \
 		sudo apt-get install python3-tk; \
 		$(PIP) install -r requirements_linux.txt; \
 	fi ; \
-	if [ $(UNAME_S) == Darwin ]; then \
-		if [ $(shell uname -m) == arm64 ]; then \
+	if [ $(UNAME_S) = Darwin ]; then \
+		if [ $(shell uname -m) = arm64 ]; then \
 			brew install gdal; \
 			$(PIP) install fiona; \
 			brew install proj; \
