@@ -1,6 +1,5 @@
 import shutil
 import tkinter as tk
-import tkinter.ttk as ttk
 from pathlib import Path
 from tkinter import filedialog
 
@@ -117,5 +116,10 @@ class FrameRunTransformation(FrameRun):
 
     def run(self, event):
         print("---Starting transformation---")
-        # TODO: Connect with transform presenter
+        tracks_files = get_files(
+            paths=self.master.master.frame_files.get_tree_files(),
+            filetypes=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
+            replace_filetype=True,
+        )
+        transform(tracks_files=tracks_files)
         print("---Conversion successful---")
