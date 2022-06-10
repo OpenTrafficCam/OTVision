@@ -13,7 +13,7 @@ from OTVision.pre_annotation import (
 
 
 @pytest.fixture
-def true_data_dir():
+def test_data_dir():
     return Path(__file__).parent / "data"
 
 
@@ -23,9 +23,9 @@ def test_resources_dir():
 
 
 @pytest.fixture
-def example_images(true_data_dir):
-    img_1 = Path(true_data_dir, "Testvideo_CamView_Cars-Cyclist.png")
-    img_2 = Path(true_data_dir, "Testvideo_CamView_Cars-Truck.png")
+def example_images(test_data_dir):
+    img_1 = Path(test_data_dir, "Testvideo_CamView_Cars-Cyclist.png")
+    img_2 = Path(test_data_dir, "Testvideo_CamView_Cars-Truck.png")
     return [img_1, img_2]
 
 
