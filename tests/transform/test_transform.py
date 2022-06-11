@@ -6,8 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, remove_dir
-from OTVision.helpers.machine import ON_WINDOWS
+from OTVision.helpers.files import get_files
 from OTVision.transform.transform import main as transform
 
 SINGLE_REFPTS_FILE = Path(CONFIG["TESTDATAFOLDER"]) / "Testvideo_FR20.otrfpts"
