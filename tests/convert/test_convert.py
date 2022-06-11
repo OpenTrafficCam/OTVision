@@ -52,7 +52,9 @@ def test_convert(test_data_tmp_dir: Path):
     for h264_ref_video in h264_ref_videos:
         shutil.copy2(
             Path(h264_ref_video),
-            Path(h264_ref_video).parents[1] / test_data_tmp_dir.name / Path(h264_ref_video).name,
+            Path(h264_ref_video).parents[1]
+            / test_data_tmp_dir.name
+            / Path(h264_ref_video).name,
         )
     h264_test_videos = get_files(
         paths=test_data_tmp_dir,
@@ -83,6 +85,8 @@ def test_convert(test_data_tmp_dir: Path):
         assert np.array_equal(
             array_from_video(Path(mp4_ref_video)),
             array_from_video(
-                Path(mp4_ref_video).parents[1] / test_data_tmp_dir.name / Path(mp4_ref_video).name
+                Path(mp4_ref_video).parents[1]
+                / test_data_tmp_dir.name
+                / Path(mp4_ref_video).name
             ),
         )
