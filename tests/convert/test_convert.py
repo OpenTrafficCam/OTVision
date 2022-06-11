@@ -5,7 +5,7 @@ from pathlib import Path
 from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
-from OTVision.helpers.files import get_files, remove_dir
+from OTVision.helpers.files import get_files
 from OTVision.helpers.machine import ON_WINDOWS
 
 
