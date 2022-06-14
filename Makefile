@@ -1,5 +1,6 @@
 VENV = .venv
-PYTHON = $(VENV)/bin/python3
+PY_VERSION = 3.9
+PYTHON = $(VENV)/bin/python$(PY_VERSION)
 PIP = $(VENV)/bin/pip
 UNAME_S := $(shell uname -s)
 
@@ -9,7 +10,7 @@ run: install
 install: $(VENV)/bin/activate 
 
 $(VENV)/bin/activate: requirements_m1.txt
-	python3 -m venv $(VENV); \
+	python$(PY_VERSION) -m venv $(VENV); \
 	if [ $(UNAME_S) == Linux ]; then \
 		sudo apt-get install python3-tk; \
 		$(PIP) install -r requirements_linux.txt; \
@@ -22,7 +23,7 @@ $(VENV)/bin/activate: requirements_m1.txt
 			$(PIP) install pyproj; \
 			$(PIP) install pygeos; \
 			$(PIP) install geopandas; \
-			brew install python-tk; \
+			brew install python-tk@$(PY_VERSION); \
 			$(PIP) install -r requirements_m1.txt; \
 		fi ; \
 	fi 

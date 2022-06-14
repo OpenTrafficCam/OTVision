@@ -5,8 +5,8 @@ pandas==1.4.2
 Pillow==9.1.1
 progressbar33==2.4
 shapely==1.8.2
-torch==1.10.2
-torchvision==0.11.3
+torch
+torchvision
 opencv-python==4.6.0.66
 
 # YOLOv5
