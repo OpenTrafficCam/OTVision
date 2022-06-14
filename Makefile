@@ -11,12 +11,12 @@ install: $(VENV)/bin/activate
 
 $(VENV)/bin/activate: requirements_m1.txt
 	python$(PY_VERSION) -m venv $(VENV); \
-	if [ $(UNAME_S) == Linux ]; then \
+	if [ $(UNAME_S) = Linux ]; then \
 		sudo apt-get install python3-tk; \
 		$(PIP) install -r requirements_linux.txt; \
 	fi ; \
-	if [ $(UNAME_S) == Darwin ]; then \
-		if [ $(shell uname -m) == arm64 ]; then \
+	if [ $(UNAME_S) = Darwin ]; then \
+		if [ $(shell uname -m) = arm64 ]; then \
 			brew install gdal; \
 			$(PIP) install fiona; \
 			brew install proj; \
@@ -28,16 +28,19 @@ $(VENV)/bin/activate: requirements_m1.txt
 		fi ; \
 	fi 
 
-lint: 
+test: requirements_dev.txt 
+	$(PYTHON) -m pytest .
+
+lint: requirements_dev.txt 
 	$(PYTHON) -m flake8 OTVision tests
 	$(PYTHON) -m yamllint .
 
-format:
+format: requirements_dev.txt 
 	$(PYTHON) -m isort .
 	$(PYTHON) -m black .
 
 dev: requirements_dev.txt 
-	python3 -m venv $(VENV)
+	python$(PYTHON_VERSION) -m venv $(VENV)
 	$(PIP) install -e .
 	$(PIP) install -r requirements_dev.txt
 		
@@ -45,6 +48,6 @@ clean:
 	rm -rf __pycache__
 	rm -rf $(VENV)
 
-.PHONY: run clean install
+.PHONY: run clean install test lint format
 
 
