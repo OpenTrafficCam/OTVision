@@ -40,7 +40,7 @@ format: requirements_dev.txt
 	$(PYTHON) -m black .
 
 dev: requirements_dev.txt 
-	python$(PYTHON_VERSION) -m venv $(VENV)
+	python$(PY_VERSION) -m venv $(VENV)
 	$(PIP) install -e .
 	$(PIP) install -r requirements_dev.txt
 		
