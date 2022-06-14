@@ -28,7 +28,7 @@ To install the dependencies required to run OTVision on Apple M1 the following r
 - [Make](https://www.gnu.org/software/make/) (Install with brew via `brew install make`)
 
 Use the following `make` command to start the OTVision GUI assuming the command is executed in the OTVision directory.
-This command will automatically install all needed project dependencies if needed. 
+This command will automatically install all needed project dependencies if needed.
 The default python version is set to 3.9.
 
 ```bash
