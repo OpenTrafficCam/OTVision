@@ -18,11 +18,7 @@ $(VENV)/bin/activate: requirements_m1.txt
 	if [ $(UNAME_S) = Darwin ]; then \
 		if [ $(shell uname -m) = arm64 ]; then \
 			brew install gdal; \
-			$(PIP) install fiona; \
 			brew install proj; \
-			$(PIP) install pyproj; \
-			$(PIP) install pygeos; \
-			$(PIP) install geopandas; \
 			brew install python-tk@$(PY_VERSION); \
 			$(PIP) install -r requirements_m1.txt; \
 		fi ; \
