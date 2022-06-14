@@ -1,3 +1,4 @@
+
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
@@ -14,7 +15,8 @@ class WindowOTVision(tk.Tk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.title("OTVision")
-        self.iconbitmap(CONFIG["GUI"]["OTC ICON"])
+        if ON_WINDOWS:
+            self.iconbitmap(CONFIG["GUI"]["OTC ICON"])
         self.set_layout()
 
     def set_layout(self):
