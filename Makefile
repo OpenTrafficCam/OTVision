@@ -1,30 +1,49 @@
-venv:
-	python3 -m venv .venv
+VENV = .venv
+PY_VERSION = 3.9
+PYTHON = $(VENV)/bin/python$(PY_VERSION)
+PIP = $(VENV)/bin/pip
+UNAME_S := $(shell uname -s)
 
-install: _otv _install
+run: install 
+	$(PYTHON) view.py
 
-install_m1: _otv _install_m1
+install: $(VENV)/bin/activate 
 
-install_dev_m1: _otv_dev install_m1
+$(VENV)/bin/activate: requirements_m1.txt
+	python$(PY_VERSION) -m venv $(VENV); \
+	if [ $(UNAME_S) = Linux ]; then \
+		sudo apt-get install python3-tk; \
+		$(PIP) install -r requirements_linux.txt; \
+	fi ; \
+	if [ $(UNAME_S) = Darwin ]; then \
+		if [ $(shell uname -m) = arm64 ]; then \
+			brew install gdal; \
+			brew install proj; \
+			brew install python-tk@$(PY_VERSION); \
+			$(PIP) install -r requirements_m1.txt; \
+		fi ; \
+	fi 
 
-install_dev: _otv_dev _install
+test: requirements_dev.txt 
+	$(PYTHON) -m pytest .
 
-_install:
-	pip install -r requirements_m1.txt
+lint: requirements_dev.txt 
+	$(PYTHON) -m flake8 OTVision tests
+	$(PYTHON) -m yamllint .
 
-.ONESHELL:
-_install_m1: # install for Apple M1 machines
-	brew install gdal proj
-	brew install python-tk
-	pip install -r requirements_m1.txt
+format: requirements_dev.txt 
+	$(PYTHON) -m isort .
+	$(PYTHON) -m black .
 
-_otv_dev:
-	pip install -e .
-
-_otv:
-	pip install -e .
-
+dev: requirements_dev.txt 
+	python$(PY_VERSION) -m venv $(VENV)
+	$(PIP) install -e .
+	$(PIP) install -r requirements_dev.txt
+		
 clean:
-	rm -rf .venv
+	rm -rf __pycache__
+	rm -rf $(VENV)
+
+.PHONY: run clean install test lint format
 
 
