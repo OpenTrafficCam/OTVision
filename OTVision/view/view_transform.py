@@ -91,7 +91,7 @@ class FrameTransformOptions(tk.Frame):
 
             # Get refpts from picker tool
             refpts = ReferencePointsPicker(
-                video_path=r"tests\data\Testvideo_FR20_Cars-Truck.mp4"
+                video_path=selected_files[0]
             ).refpts
 
             if refpts:
