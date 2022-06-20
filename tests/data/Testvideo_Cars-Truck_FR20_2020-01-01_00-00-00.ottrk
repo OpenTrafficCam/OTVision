@@ -23,7 +23,8 @@
         "sigma_h": 0.8,
         "sigma_iou": 0.3,
         "t_min": 5,
-        "t_miss_max": 10
+        "t_miss_max": 10,
+        "utm": false
     },
     "data": {
         "1": {

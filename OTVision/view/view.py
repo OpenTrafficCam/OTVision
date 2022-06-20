@@ -7,6 +7,7 @@ from OTVision.view.view_convert import FrameConvert, FrameConvertDummy
 from OTVision.view.view_detect import FrameDetect
 from OTVision.view.view_helpers import FrameFileTree, FrameRunChained
 from OTVision.view.view_track import FrameTrack
+from OTVision.view.view_transform import FrameTransform
 
 FRAME_WIDTH = 50
 
@@ -24,7 +25,7 @@ class WindowOTVision(tk.Tk):
             self.columnconfigure(index=col, weight=1)
         # Treeview files
         self.frame_files = FrameFileTree(master=self, text="Choose files")
-        self.frame_files.grid(**PAD, row=0, column=0, columnspan=3, sticky="ew")
+        self.frame_files.grid(**PAD, row=0, column=0, columnspan=4, sticky="ew")
         # Settings
         # Convert (Only works on windows machines for now)
         if ON_WINDOWS:
@@ -43,11 +44,11 @@ class WindowOTVision(tk.Tk):
         # self.frame_undistort = FrameUndistort(master=self, text="Undistort")
         # self.frame_undistort.pack(**PAD, side="left", expand=True)
         # # Transform # TODO
-        # self.frame_transform = FrameTransform(master=self, text="Transform)
-        # self.frame_transform.pack(**PAD, side="left", expand=True)
+        self.frame_transform = FrameTransform(master=self, text="Transform")
+        self.frame_transform.grid(**PAD, row=1, column=3, sticky="nsew")
         # Run chained
         self.frame_run_chained = FrameRunChained(master=self, text="Run chained")
-        self.frame_run_chained.grid(**PAD, row=2, column=0, columnspan=3, sticky="ew")
+        self.frame_run_chained.grid(**PAD, row=2, column=0, columnspan=4, sticky="ew")
 
     def toggle_frame_detect(self, event):
         if self.checkbutton_convert_var.get():

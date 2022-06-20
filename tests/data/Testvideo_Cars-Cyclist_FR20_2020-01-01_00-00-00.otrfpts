@@ -1,0 +1,42 @@
+{
+    "1": {
+        "x_px": 14,
+        "y_px": 259,
+        "hemisphere": "N",
+        "zone_utm": 32,
+        "lon_utm": 844098.58,
+        "lat_utm": 5673186.1
+    },
+    "2": {
+        "x_px": 652,
+        "y_px": 136,
+        "hemisphere": "N",
+        "zone_utm": 32,
+        "lon_utm": 844079.0,
+        "lat_utm": 5673195.83
+    },
+    "3": {
+        "x_px": 641,
+        "y_px": 297,
+        "hemisphere": "N",
+        "zone_utm": 32,
+        "lon_utm": 844095.6,
+        "lat_utm": 5673198.49
+    },
+    "4": {
+        "x_px": 305,
+        "y_px": 129,
+        "hemisphere": "N",
+        "zone_utm": 32,
+        "lon_utm": 844080.05,
+        "lat_utm": 5673179.59
+    },
+    "5": {
+        "x_px": 353,
+        "y_px": 192,
+        "hemisphere": "N",
+        "zone_utm": 32,
+        "lon_utm": 844091.24,
+        "lat_utm": 5673189.84
+    }
+}

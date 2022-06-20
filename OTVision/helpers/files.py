@@ -109,13 +109,47 @@ def remove_dir(dir_path: Union[str, Path]):
     dir.rmdir()
 
 
-def read_json(json_file, filetype_wanted=".json"):
+def read_json(json_file, extension=".json"):
+    if isinstance(extension, str):
+        extension = [extension]
     filetype = Path(json_file).suffix
-    if filetype != filetype_wanted:
-        raise ValueError(f"Wrong filetype {filetype}, has to be {filetype_wanted}")
-    with open(json_file) as f:
-        dict_from_json_file = json.load(f)
+    if filetype not in extension:
+        raise ValueError(f"Wrong filetype {filetype}, has to be {extension}")
+    try:
+        with open(json_file) as f:
+            dict_from_json_file = json.load(f)
+    except OSError as oe:
+        logging.error(
+            (
+                f'Could not open "{json_file}". '
+                f"Following exception occured: {str(oe)}"
+            )
+        )
+    except json.JSONDecodeError as je:
+        logging.error(
+            (
+                f'Unable to decode "{json_file}" as JSON.'
+                f"Following exception occured: {str(je)}"
+            )
+        )
+    except Exception as e:
+        logging.error(e)
+        print(e)
+    # BUG: "UnboundLocalError: local variable 'dict_from_json_file' referenced bef ass"
     return dict_from_json_file
+
+
+def write_json(
+    dict_to_write,
+    file,
+    extension=".json",
+    overwrite=False,
+):
+    outfile = Path(file).with_suffix(extension)
+    if overwrite or not get_files(outfile):
+        with open(outfile, "w") as f:
+            json.dump(dict_to_write, f, indent=4)
+        logging.info("JSON written")
 
 
 def denormalize(otdict, keys_width=None, keys_height=None):

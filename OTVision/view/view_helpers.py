@@ -75,6 +75,7 @@ class FrameFileTree(tk.LabelFrame):
             "video": self.vid_filetype,
             "otdet": "otdet",
             "ottrk": "ottrk",
+            "otrfpts": "otrfpts",
         }
         self.tree_files["columns"] = tuple(
             {k: v for k, v in tree_files_cols.items() if k != "#0"}.keys()
@@ -183,6 +184,11 @@ class FrameFileTree(tk.LabelFrame):
         self.files_dict[path]["ottrk"] = (
             TRUE_SYMBOL if Path(path).with_suffix(".ottrk").is_file() else FALSE_SYMBOL
         )
+        self.files_dict[path]["otrfpts"] = (
+            TRUE_SYMBOL
+            if Path(path).with_suffix(".otrfpts").is_file()
+            else FALSE_SYMBOL
+        )
 
     def update_tree_files(self):
         self.tree_files.delete(*self.tree_files.get_children())
@@ -196,13 +202,37 @@ class FrameFileTree(tk.LabelFrame):
                     file_values["video"],
                     file_values["otdet"],
                     file_values["ottrk"],
+                    file_values["otrfpts"],
                 ),
             )
+        self.update_other_gui_parts()
+
+    def update_other_gui_parts(self):
+        # Activate/deactivate buttons in FrameTransform
+        if self.files_dict:
+            self.master.frame_transform.frame_options.button_choose_refpts[
+                "state"
+            ] = tk.NORMAL
+            self.master.frame_transform.frame_options.button_click_refpts[
+                "state"
+            ] = tk.NORMAL
+        else:
+            self.master.frame_transform.frame_options.button_choose_refpts[
+                "state"
+            ] = tk.DISABLED
+            self.master.frame_transform.frame_options.button_click_refpts[
+                "state"
+            ] = tk.DISABLED
 
     def get_tree_files(self):
         return [
             self.tree_files.item(item)["text"]
             for item in self.tree_files.get_children()
+        ]
+
+    def get_selected_files(self):
+        return [
+            self.tree_files.item(item)["text"] for item in self.tree_files.selection()
         ]
 
     def deselect_tree_files(self, events):
