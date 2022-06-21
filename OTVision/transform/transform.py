@@ -27,7 +27,13 @@ import numpy as np
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, read_json, write_json
-from OTVision.helpers.formats import get_epsg_from_utm_zone, ottrk_dict_to_df
+from OTVision.helpers.formats import (
+    _get_datetime_from_filename,
+    _get_epsg_from_utm_zone,
+    _get_fps_from_filename,
+    _get_time_from_frame_number,
+    _ottrk_dict_to_df,
+)
 from OTVision.transform.get_homography import get_homography
 
 
@@ -93,7 +99,7 @@ def main(tracks_files, single_refpts_file=None):
             config_dict["trk_config"]["utm"] = True
             config_dict["trk_config"]["utm_zone"] = utm_zone
             config_dict["trk_config"]["hemisphere"] = hemisphere
-            config_dict["trk_config"]["epsg"] = get_epsg_from_utm_zone(
+            config_dict["trk_config"]["epsg"] = _get_epsg_from_utm_zone(
                 utm_zone=utm_zone, hemisphere=hemisphere
             )
             config_dict["trk_config"]["transformation accuracy"] = homography_eval_dict
@@ -120,9 +126,18 @@ def read_tracks(tracks_file):
         dict: Dict of metadata
     """
 
+    # Read dicts and turn tracks into DataFrame
     tracks_dict = read_json(tracks_file, extension=CONFIG["FILETYPES"]["TRACK"])
-    tracks_df = ottrk_dict_to_df(tracks_dict["data"])
+    tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
+    fps = _get_fps_from_filename(filename=str(tracks_file))
     config_dict = {key: value for key, value in tracks_dict.items() if key != "data"}
+
+    # Create datetime column from frame number
+    fps = int(config_dict["vid_config"]["fps"])
+    start_datetime = _get_datetime_from_filename(filename=tracks_file)
+    tracks_df["datetime"], tracks_df["datetime_ms"] = _get_time_from_frame_number(
+        frame_series=tracks_df["frame"], start_datetime=start_datetime, fps=fps
+    )
     return tracks_df, config_dict
 
 
@@ -240,20 +255,14 @@ def write_tracks(
         outfile = Path(tracks_file).with_suffix(".gpkg")
         if not outfile.is_file() or CONFIG["TRANSFORM"]["OVERWRITE"]:
             # Get CRS UTM EPSG number
-            epsg = get_epsg_from_utm_zone(utm_zone=utm_zone, hemisphere=hemisphere)
-            # Create, flatten, rename, set crs and write geopandas.GeoDataFrame
+            epsg = _get_epsg_from_utm_zone(utm_zone=utm_zone, hemisphere=hemisphere)
+            # Create, set crs and write geopandas.GeoDataFrame
             gpd.GeoDataFrame(
                 tracks_utm_df,
                 geometry=gpd.points_from_xy(
                     tracks_utm_df["lon_utm"], tracks_utm_df["lat_utm"]
                 ),
-            ).reset_index().rename(
-                columns={"level_0": "frame", "level_1": "object"}
-            ).set_crs(
-                f"epsg:{epsg}"
-            ).to_file(
-                filename=outfile, driver="GPKG"
-            )
+            ).set_crs(f"epsg:{epsg}").to_file(filename=outfile, driver="GPKG")
     # TODO: Export tracks as ottrk (json)
     # elif filetype == CONFIG["DEFAULT_FILETYPE"]["TRACKS"]:
     #     write_json(
