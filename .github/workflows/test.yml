@@ -39,6 +39,6 @@ jobs:
         run: |
           pip install pytest-cov
           pip install pytest
-          python -c 'from OTVision.helpers.machine import hascuda; print_has_cuda()'
+          python -c 'from OTVision.helpers.machine import print_has_cuda; print_has_cuda()'
       - name: Test with pytest
         run: pytest --cov=OTVision tests/
