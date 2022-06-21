@@ -134,7 +134,7 @@ def read_tracks(tracks_file):
 
     # Create datetime column from frame number
     fps = int(config_dict["vid_config"]["fps"])
-    start_datetime = _get_datetime_from_filename(filename=tracks_file)
+    start_datetime = _get_datetime_from_filename(filename=str(tracks_file))
     tracks_df["datetime"], tracks_df["datetime_ms"] = _get_time_from_frame_number(
         frame_series=tracks_df["frame"], start_datetime=start_datetime, fps=fps
     )
