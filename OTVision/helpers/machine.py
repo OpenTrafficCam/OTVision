@@ -29,3 +29,12 @@ PY_MINOR_VERSION = int(platform.python_version_tuple()[1])
 
 PY_PATCH_VERSION = int(platform.python_version_tuple()[2])
 """Python patch version digit (e.g. 5 for 3.9.5) OTVision is currently running with"""
+
+def _has_cuda():
+    """Returns True if CUDA is installed on machine
+
+    Returns:
+        Bool: If CUDA is installed on machine or not
+    """
+    import torch
+    return torch.cuda.is_available()
