@@ -233,19 +233,19 @@ def write_tracks(
         if not outfile.is_file() or CONFIG["TRANSFORM"]["OVERWRITE"]:
             # Get CRS UTM EPSG number
             epsg = get_epsg_from_utm_zone(utm_zone=utm_zone, hemisphere=hemisphere)
-            # Create and write geopandas.GeoDataFrame
+            # Create, flatten, rename, set crs and write geopandas.GeoDataFrame
             gpd.GeoDataFrame(
                 tracks_utm_df,
                 geometry=gpd.points_from_xy(
                     tracks_utm_df["lon_utm"], tracks_utm_df["lat_utm"]
                 ),
-            ).rename(columns={"level_0": "frame", "level_1": "object"}).set_crs(
+            ).reset_index().rename(
+                columns={"level_0": "frame", "level_1": "object"}
+            ).set_crs(
                 f"epsg:{epsg}"
             ).to_file(
                 filename=outfile, driver="GPKG"
             )
-    # BUG: Rename doesnt work :/
-    # ? remove lat lon cols from gdf after creating geom col?
     # TODO: Export tracks as ottrk (json)
     # elif filetype == CONFIG["DEFAULT_FILETYPE"]["TRACKS"]:
     #     write_json(
