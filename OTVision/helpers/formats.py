@@ -104,7 +104,7 @@ def _get_time_from_frame_number(
         return datetime_yyyymmdd_hhmmss
     elif not return_yyyymmdd_hhmmss:
         return datetime_milliseconds
-    elif not return_yyyymmdd_hhmmss and not return_milliseconds:
+    else:
         raise ValueError(
             "Either return_yyyymmdd_hhmmss or return_milliseconds has to be True"
         )
