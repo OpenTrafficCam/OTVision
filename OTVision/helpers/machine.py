@@ -59,3 +59,13 @@ def _has_cuda():
     import torch
 
     return torch.cuda.is_available()
+
+
+def print_has_cuda():
+    """Returns True if CUDA is installed on machine
+
+    Returns:
+        Bool: If CUDA is installed on machine or not
+    """
+
+    print(f"This system has cuda: {_has_cuda()}")
