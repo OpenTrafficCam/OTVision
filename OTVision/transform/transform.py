@@ -145,6 +145,10 @@ def transform(
     homography,
     refpts_utm_upshifted_predecimal_pt1_1row,
     upshift_utm,
+    x_col="x",
+    y_col="y",
+    lon_col="lon_utm",
+    lat_col="lat_utm",
 ):
     """Transforms trajectories from pixel to utm coordinates using homography from
     get_homography using corresponding reference points,
@@ -156,6 +160,10 @@ def transform(
         refpts_utm_upshifted_predecimal_pt1_1row (numpy.ndarry): Thousands digits
         of reference points in utm coorindates
         upshift_utm (numpy.ndarry): Upshift of reference points coordinates
+        x_col (str, optional): Column name of x-pixel values. Defaults to "x".
+        y_col (str, optional): Column name of y-pixel values. Defaults to "y".
+        lon_col (str, optional): Column name of lon values. Defaults to "lon_utm".
+        lat_col (str, optional): Column name of lat values. Defaults to "lat_utm".
 
     Returns:
         pandas.DataFrame: Trajectories in utm coordinates
@@ -165,7 +173,7 @@ def transform(
 
     # Transform pandas DataFrame to numpy array, add 1 dimension and apply OpenCV´s
     # perspective transformation
-    tracks_px_np = tracks_px[["x", "y"]].to_numpy(dtype="float32")
+    tracks_px_np = tracks_px[[x_col, y_col]].to_numpy(dtype="float32")
     tracks_px_np_tmp = np.array([tracks_px_np], dtype="float32")
     tracks_utm_upshifted_np_disassembled_3d = cv2.perspectiveTransform(
         tracks_px_np_tmp, homography
@@ -185,7 +193,7 @@ def transform(
     tracks_utm_np = np.subtract(tracks_utm_upshifted_np, upshift_utm)
 
     # In trajectory DataFrame, overwrite pixel with utm coordinates (from numpy array)
-    tracks_utm[["lon_utm", "lat_utm"]] = tracks_utm_np
+    tracks_utm[[lon_col, lat_col]] = tracks_utm_np
 
     return tracks_utm
 
