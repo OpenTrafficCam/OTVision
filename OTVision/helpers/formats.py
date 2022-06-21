@@ -27,17 +27,19 @@ import pandas as pd
 
 def _get_fps_from_filename(filename: str) -> int:
     """Get frame rate from file name using regex.
+    Returns None if frame rate is not found in file name.
 
     Args:
         input_filename (str): file name
 
     Returns:
-        int: frame rate in frames per second
+        int or None: frame rate in frames per second or None
     """
-    with contextlib.suppress(AttributeError("Frame rate not found in filename")):
+    try:
         # Get input fps frome filename  #TODO: Check regex for numbers
-        input_fps = float(re.search("_FR(.*?)_", filename)[1])
-    return input_fps
+        return float(re.search("_FR(.*?)_", filename)[1])
+    except AttributeError("Frame rate not found in filename"):
+        return None
 
 
 def _get_datetime_from_filename(
