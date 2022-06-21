@@ -108,7 +108,7 @@ class ReferencePointsPicker:
         while True:
 
             # wait for a key press to close the window (0 = indefinite loop)
-            key = cv2.waitKey(-1) & 0xFF
+            key = cv2.waitKey(-1) & 0xFF # BUG: #150 on mac
 
             window_visible = (
                 cv2.getWindowProperty(self.title, cv2.WND_PROP_VISIBLE) >= 1
