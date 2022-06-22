@@ -1,5 +1,4 @@
 import os
-import re
 import subprocess
 from pathlib import Path
 from urllib.request import urlretrieve
@@ -7,6 +6,7 @@ from zipfile import ZipFile
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, remove_dir
+from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.machine import ON_WINDOWS
 
 
@@ -89,11 +89,7 @@ def convert(
     vid_filetypes = CONFIG["FILETYPES"]["VID"] + [".h264"]
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
         if fps_from_filename:
-            try:
-                # Get input fps frome filename  #TODO: Check regex for numbers
-                input_fps = float(re.search("_FR(.*?)_", input_filename).group(1))
-            except AttributeError("Frame rate not found in filename"):
-                pass
+            input_fps = _get_fps_from_filename(input_filename)
         elif input_fps is None:
             input_fps = CONFIG["CONVERT"]["FPS"]
 
