@@ -35,11 +35,13 @@ def _get_fps_from_filename(filename: str) -> int:
     Returns:
         int or None: frame rate in frames per second or None
     """
-    try:
-        # Get input fps frome filename  #TODO: Check regex for numbers
-        return float(re.search("_FR(.*?)_", filename)[1])
-    except AttributeError("Frame rate not found in filename"):
+    # Get input fps frome filename
+
+    match = re.search(r"_FR([\d]+)_", filename)
+    if not match:
         return None
+
+    return int(match.group(1))
 
 
 def _get_datetime_from_filename(
