@@ -56,14 +56,13 @@ def _get_datetime_from_filename(
     Returns:
         str: datetime
     """
-    regex = "_[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}_[0-9]{2,2}-[0-9]{2,2}-[0-9]{2,2}"
+    regex = "_([0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}_[0-9]{2,2}-[0-9]{2,2}-[0-9]{2,2})"
     match = re.search(regex, filename)
     if not match:
         return epoch_datetime
 
     # Assume that there is only one timestamp in the file name
-    datetime_str_with_underscore = match.group(0)
-    datetime_str = datetime_str_with_underscore[1:]  # remove underscore
+    datetime_str = match.group(1)  # take group withtout underscore
 
     try:
         dt.datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
