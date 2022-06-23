@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import datetime as dt
 import re
 from typing import Union
 
@@ -34,11 +35,13 @@ def _get_fps_from_filename(filename: str) -> int:
     Returns:
         int or None: frame rate in frames per second or None
     """
-    try:
-        # Get input fps frome filename  #TODO: Check regex for numbers
-        return float(re.search("_FR(.*?)_", filename)[1])
-    except AttributeError("Frame rate not found in filename"):
+    # Get input fps frome filename
+
+    match = re.search(r"_FR([\d]+)_", filename)
+    if not match:
         return None
+
+    return int(match.group(1))
 
 
 def _get_datetime_from_filename(
@@ -55,18 +58,19 @@ def _get_datetime_from_filename(
     Returns:
         str: datetime
     """
+    regex = "_([0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}_[0-9]{2,2}-[0-9]{2,2}-[0-9]{2,2})"
+    match = re.search(regex, filename)
+    if not match:
+        return epoch_datetime
+
+    # Assume that there is only one timestamp in the file name
+    datetime_str = match.group(1)  # take group withtout underscore
+
     try:
-        # Get input fps frome filename  #TODO: Check regex for numbers
-        yyyy = "[2]+[0-1]+[0-9]+[0-9]"
-        mm = "[0-1]+[0-9]"
-        dd = "[0-3]+[0-9]"
-        hh = "[0-2]+[0-9]"
-        mm = "[0-5]+[0-9]"
-        ss = "[0-5]+[0-9]"
-        expr = f"[_]+{yyyy}+[-]+{mm}+[-]+{dd}+[_]+{hh}+[-]+{mm}+[-]+{ss}"
-        datetime_str = re.search(expr, filename)[0][1:]
-    except AttributeError("Frame rate not found in filename"):
-        datetime_str = epoch_datetime
+        dt.datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
+    except ValueError:
+        return epoch_datetime
+
     return datetime_str
 
 
