@@ -19,6 +19,7 @@
 
 from pathlib import Path
 from time import perf_counter
+from xml.dom.minidom import Attr
 
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
@@ -259,17 +260,54 @@ def _add_detection_results(detections, results, normalized):
         detections.extend([i.tolist() for i in results.xywh])
 
 
-def loadmodel(weights, conf, iou):
+def loadmodel(weights, conf=0.25, iou=0.25):
+    HUB_WEIGHTS = [
+        "yolov5n",
+        "yolov5n6",
+        "yolov5s",
+        "yolov5s6",
+        "yolov5m",
+        "yolov5m6",
+        "yolov5l",
+        "yolov5l6",
+        "yolov5x",
+        "yolov5x6",
+    ]
+
     t1 = perf_counter()
 
-    if torch.cuda.is_available():
+    if Path(weights).is_file():
         model = torch.hub.load(
-            "ultralytics/yolov5", weights, pretrained=True, force_reload=True
-        ).cuda()
+            repo_or_dir="ultralytics/yolov5",  # cv516Buaa/tph-yolov5 ?
+            model="custom",
+            path=weights,
+            # source="local",
+            force_reload=True,
+        )
+        # model.amp = False ?
+        # model = torch.jit.load(weights) ?
+    elif weights in torch.hub.list(github="ultralytics/yolov5", force_reload=True):
+
+        print(torch.hub.list(github="ultralytics/yolov5", force_reload=True))
+
+        if torch.cuda.is_available():
+            model = torch.hub.load(
+                repo_or_dir="ultralytics/yolov5",
+                model=weights,
+                pretrained=True,
+                force_reload=True,
+            ).cuda()
+        else:
+            model = torch.hub.load(
+                repo_or_dir="ultralytics/yolov5",
+                model=weights,
+                pretrained=True,
+                force_reload=True,
+            ).cpu()
     else:
-        model = torch.hub.load(
-            "ultralytics/yolov5", weights, pretrained=True, force_reload=True
-        ).cpu()
+        raise AttributeError(
+            "weights has to be path to .pt or valid model name from https://pytorch.org/hub/ultralytics_yolov5/"
+        )
 
     model.conf = conf
     model.iou = iou
