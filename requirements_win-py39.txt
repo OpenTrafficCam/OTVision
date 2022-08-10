@@ -13,7 +13,7 @@ requests==2.25.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5
 matplotlib==3.4.2  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\metrics.py", line 5, in <module>
 seaborn==0.11.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\utils\plots.py", line 15, in <module>
 pyYAML==5.4.1
-tqdm==4.56.0
+tqdm>=4.64.0
 progressbar2==3.53.1
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.7.1+cu110
