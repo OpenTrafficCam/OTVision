@@ -264,7 +264,7 @@ def loadmodel(weights, conf=0.25, iou=0.25):
 
     t1 = perf_counter()
 
-    if Path(weights).is_file():
+    if Path(weights).is_file() and Path(weights).suffix == ".pt":
         model = torch.hub.load(
             repo_or_dir="ultralytics/yolov5",  # cv516Buaa/tph-yolov5 ?
             model="custom",
