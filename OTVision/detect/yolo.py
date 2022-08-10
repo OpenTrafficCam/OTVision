@@ -261,18 +261,6 @@ def _add_detection_results(detections, results, normalized):
 
 
 def loadmodel(weights, conf=0.25, iou=0.25):
-    HUB_WEIGHTS = [
-        "yolov5n",
-        "yolov5n6",
-        "yolov5s",
-        "yolov5s6",
-        "yolov5m",
-        "yolov5m6",
-        "yolov5l",
-        "yolov5l6",
-        "yolov5x",
-        "yolov5x6",
-    ]
 
     t1 = perf_counter()
 
