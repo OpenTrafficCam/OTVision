@@ -27,6 +27,7 @@ from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
 
 from . import yolo
+import os
 
 # def main(paths, filetypes, det_config={}):
 #     files = get_files(paths, filetypes)
@@ -137,18 +138,20 @@ def _create_chunks(file_paths, chunksize):
 
 def save_detections(
     detections, infile, overwrite=CONFIG["DETECT"]["YOLO"]["OVERWRITE"]
-):
-    if overwrite or not get_files(infile, CONFIG["FILETYPES"]["DETECT"]):
+): 
+    filepath = os.path.dirname(infile) + "/" + os.path.splitext(os.path.basename(infile))[0] + CONFIG["FILETYPES"]["DETECT"]
+    exists = os.path.isfile(filepath)
+    if overwrite or not exists:
         infile_path = Path(infile)
         outfile = str(infile_path.with_suffix(CONFIG["FILETYPES"]["DETECT"]))
         with open(outfile, "w") as f:
             json.dump(detections, f, indent=4)
-        if overwrite:
-            print("Detections file overwritten")
+        if exists:
+            print("Detections file (" + os.path.basename(filepath) + ") overwritten") 
         else:
-            print("Detections file saved")
+            print("Detections as " + os.path.basename(filepath) + " saved")
     else:
-        print("Detections file already exists, was not overwritten")
+        print(os.path.basename(infile)+" already exists, was not overwritten")
 
 
 # TODO: detect to df or gdf (geopandas)
