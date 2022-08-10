@@ -272,8 +272,8 @@ def loadmodel(weights, conf=0.25, iou=0.25):
             # source="local",
             force_reload=True,
         )
-        # model.amp = False ?
-        # model = torch.jit.load(weights) ?
+        # cv516Buaa/tph-yolov5: model.amp = False ?
+        # cv516Buaa/tph-yolov5: model = torch.jit.load(weights) ?
     elif weights in torch.hub.list(github="ultralytics/yolov5", force_reload=True):
 
         if torch.cuda.is_available():
