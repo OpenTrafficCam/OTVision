@@ -26,6 +26,7 @@ from cv2 import CAP_PROP_FPS, VideoCapture
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import is_in_format
+from OTVision.helpers.log import log
 
 
 class NoVideoError(Exception):
@@ -161,7 +162,7 @@ def detect_images(
             "List of paths given to detect_chunks function shouldn't contain any videos"
         )
 
-    print("Run detection on images")
+    log.info("Run detection on images")
     for img_batch, chunk in enumerate(file_chunks, start=1):
         t_start = perf_counter()
         results = model(chunk, size=size)
@@ -171,7 +172,7 @@ def detect_images(
         str_det_time = f"det:{t_det - t_start:0.4f}"
         str_batch_size = f"batch_size: {len(chunk):d}"
         str_fps = f"fps: {chunksize / (t_det - t_start):0.1f}"
-        print(f"{str_batch_no}, {str_det_time}, {str_batch_size}, {str_fps}")
+        log.info(f"{str_batch_no}, {str_det_time}, {str_batch_size}, {str_fps}")
 
     t2 = perf_counter()
     duration = t2 - t1
@@ -208,7 +209,7 @@ def _get_batch_of_frames(video_capture, batch_size):
 
 
 def _print_overall_performance_stats(duration, det_fps):
-    print("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
+    log.info("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
 
 
 def _print_batch_performances_stats(
@@ -221,7 +222,7 @@ def _print_batch_performances_stats(
     batch_len = "batch_size: {:d}".format(batch_size)
     fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
 
-    print(
+    log.info(
         "{0}, {1}, {2}, {3}, {4}, {5}".format(
             batch_no, transformed_batch, det, add_list, batch_len, fps
         )

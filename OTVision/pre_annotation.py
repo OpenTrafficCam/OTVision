@@ -26,6 +26,7 @@ import progressbar
 
 from OTVision.detect import detect
 from OTVision.helpers.files import get_files, unzip
+from OTVision.helpers.log import log
 
 
 def _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False):
@@ -81,11 +82,11 @@ def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, img_type):
 
 
 def main(file, model_weights, chunk_size, img_type="png"):
-    print("Starting")
+    log.info("Starting")
     if os.path.isfile(file):
         _pre_annotate(file, model_weights, chunk_size, img_type)
     elif os.path.isdir(file):
         zip_files = get_files(file, "zip")
         for file in progressbar.progressbar(zip_files):
             _pre_annotate(file, model_weights, chunk_size, img_type)
-    print("Done in {0:0.2f} s".format(perf_counter()))
+    log.info("Done in {0:0.2f} s".format(perf_counter()))
