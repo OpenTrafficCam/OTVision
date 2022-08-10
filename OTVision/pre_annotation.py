@@ -68,7 +68,7 @@ def _write_bbox(cvat_yolo_dir: str, img_type: str, xywhn: list):
 def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, img_type):
     yolo_cvat_dir = unzip(cvat_yolo_zip)
     bboxes_in_xywhn_format, class_labels = detect.main(
-        files=yolo_cvat_dir,
+        paths=yolo_cvat_dir,
         filetypes=img_type,
         weights=model_weights,
         chunksize=chunk_size,
@@ -77,8 +77,7 @@ def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, img_type):
     )
     _write_bbox(yolo_cvat_dir, img_type, bboxes_in_xywhn_format)
     _write_class_labels(yolo_cvat_dir, class_labels)
-    yolo_cvat_annotated = _zip_annotated_dir(yolo_cvat_dir, img_type, pngs=False)
-    return yolo_cvat_annotated
+    return _zip_annotated_dir(yolo_cvat_dir, img_type, pngs=False)
 
 
 def main(file, model_weights, chunk_size, img_type="png"):

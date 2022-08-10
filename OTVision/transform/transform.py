@@ -1,5 +1,6 @@
-# OTVision: Python module to transform tracks from pixel to world coordinates
-
+"""
+OTVision main module for transforming tracks from pixel to world coordinates.
+"""
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -34,10 +35,17 @@ from OTVision.helpers.formats import (
     _get_time_from_frame_number,
     _ottrk_dict_to_df,
 )
-from OTVision.transform.get_homography import get_homography
+from OTVision.helpers.log import log
+
+from .get_homography import get_homography
 
 
-def main(tracks_files, single_refpts_file=None):
+def main(
+    paths,
+    single_refpts_file=None,
+    overwrite=CONFIG["TRANSFORM"]["OVERWRITE"],
+    debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
+):
     """Transforms .ottrk file containing trajectories in pixel coordinates
     to .gpkg file with trajectories in utm coordinates
     using either a single .otrfpts file for all .ottrk files
@@ -52,6 +60,11 @@ def main(tracks_files, single_refpts_file=None):
         single_refpts_file (str or Path, optional): Path to .otrfpts file. Default: None
     """
 
+    log.info("Start transformation from pixel to world coordinates")
+    if debug:
+        log.setLevel("DEBUG")
+        log.debug("Debug mode on")
+
     if single_refpts_file:
         refpts = read_refpts(reftpts_file=single_refpts_file)
         (
@@ -62,8 +75,10 @@ def main(tracks_files, single_refpts_file=None):
             hemisphere,
             homography_eval_dict,
         ) = get_homography(refpts=refpts)
-    tracks_files = get_files(paths=tracks_files, filetypes=CONFIG["FILETYPES"]["TRACK"])
+        log.info(f"Read {single_refpts_file}")
+    tracks_files = get_files(paths=paths, filetypes=CONFIG["FILETYPES"]["TRACK"])
     for tracks_file in tracks_files:
+        log.info(f"Try transforming {tracks_file}")
         # Try reading refpts and getting homography if not done above
         if not single_refpts_file:
             refpts_file = get_files(
@@ -71,7 +86,9 @@ def main(tracks_files, single_refpts_file=None):
                 filetypes=CONFIG["DEFAULT_FILETYPE"]["REFPTS"],
                 replace_filetype=True,
             )[0]
+            log.info(f"Found refpts file {refpts_file}")
             refpts = read_refpts(reftpts_file=refpts_file)
+            log.info("Refpts read")
             (
                 homography,
                 refpts_utm_upshift_predecimal,
@@ -80,13 +97,15 @@ def main(tracks_files, single_refpts_file=None):
                 hemisphere,
                 homography_eval_dict,
             ) = get_homography(refpts=refpts)
+            log.info("Homography matrix created")
         # Read tracks
         tracks_px_df, config_dict = read_tracks(tracks_file)
+        log.info("Tracks read")
         # Check if transformation is actually needed
         already_utm = (
             "utm" in config_dict["trk_config"] and config_dict["trk_config"]["utm"]
         )
-        if CONFIG["TRANSFORM"]["OVERWRITE"] or not already_utm:
+        if overwrite or not already_utm:
             config_dict["trk_config"]["utm"] = False  # ? or not?
             # Actual transformation
             tracks_utm_df = transform(
@@ -95,6 +114,7 @@ def main(tracks_files, single_refpts_file=None):
                 refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
                 upshift_utm=upshift_utm,
             )
+            log.info("Tracks transformed")
             # Add crs information tp config dict
             config_dict["trk_config"]["utm"] = True
             config_dict["trk_config"]["utm_zone"] = utm_zone
@@ -103,7 +123,8 @@ def main(tracks_files, single_refpts_file=None):
                 utm_zone=utm_zone, hemisphere=hemisphere
             )
             config_dict["trk_config"]["transformation accuracy"] = homography_eval_dict
-            print(config_dict)
+            log.info("Meta infos created")
+            log.debug(f"config_dict: {config_dict}")
             # Write tracks
             write_tracks(
                 tracks_utm_df=tracks_utm_df,
@@ -112,6 +133,7 @@ def main(tracks_files, single_refpts_file=None):
                 hemisphere=hemisphere,
                 tracks_file=tracks_file,
             )
+        log.info("Transformation successful")
 
 
 def read_tracks(tracks_file):
@@ -236,6 +258,7 @@ def write_tracks(
     hemisphere,
     tracks_file,
     filetype="gpkg",
+    overwrite=CONFIG["TRANSFORM"]["OVERWRITE"],
 ):
     """Writes tracks as .gpkg and in specific epsg projection
     according to UTM zone and hemisphere
@@ -252,8 +275,9 @@ def write_tracks(
     # TODO: Write config dict
 
     if filetype == "gpkg":  # TODO: Extend guard with overwrite parameter
-        outfile = Path(tracks_file).with_suffix(".gpkg")
-        if not outfile.is_file() or CONFIG["TRANSFORM"]["OVERWRITE"]:
+        gpkg_file = Path(tracks_file).with_suffix(".gpkg")
+        gpkg_file_already_exists = gpkg_file.is_file()
+        if overwrite or not gpkg_file_already_exists:
             # Get CRS UTM EPSG number
             epsg = _get_epsg_from_utm_zone(utm_zone=utm_zone, hemisphere=hemisphere)
             # Create, set crs and write geopandas.GeoDataFrame
@@ -262,12 +286,11 @@ def write_tracks(
                 geometry=gpd.points_from_xy(
                     tracks_utm_df["lon_utm"], tracks_utm_df["lat_utm"]
                 ),
-            ).set_crs(f"epsg:{epsg}").to_file(filename=outfile, driver="GPKG")
+            ).set_crs(f"epsg:{epsg}").to_file(filename=gpkg_file, driver="GPKG")
+            if gpkg_file_already_exists:
+                log.info(f"{gpkg_file} overwritten")
+            else:
+                log.info(f"{gpkg_file}  file written")
+        else:
+            log.info(f"{gpkg_file} already exists. To overwrite, set overwrite=True")
     # TODO: Export tracks as ottrk (json)
-    # elif filetype == CONFIG["DEFAULT_FILETYPE"]["TRACKS"]:
-    #     write_json(
-    #         dict_to_write=tracks_utm,
-    #         file=tracks_file,
-    #         extension=".ottrk",
-    #         overwrite=True,
-    #     )

@@ -23,7 +23,7 @@ from OTVision.transform.transform import main as transform
 
 if __name__ == "__main__":
     transform(
-        tracks_files=Path(__file__).parents[0]
+        paths=Path(__file__).parents[0]
         / r"tests"
         / r"data"
         / r"Testvideo_FR20_Cars-Cyclist.ottrk",

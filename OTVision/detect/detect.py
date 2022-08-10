@@ -1,8 +1,8 @@
 """
-Module to call yolov5/detect.py with arguments
+OTVision main module to detect objects in single or multiple images or videos.
 """
 
-# Copyright (C) 2020 OpenTrafficCam Contributors
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #
@@ -22,21 +22,17 @@ Module to call yolov5/detect.py with arguments
 
 import json
 from pathlib import Path
+from typing import Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
+from OTVision.helpers.log import log
 
 from . import yolo
 
-# def main(paths, filetypes, det_config={}):
-#     files = get_files(paths, filetypes)
-#     multiple_videos(files, **det_config)
-
-# TODO: Add option to allow or prevent overwrite in detect
-
 
 def main(
-    files,
+    paths: Union[list, str, Path],
     filetypes: list = CONFIG["FILETYPES"]["VID"],
     model=None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
@@ -45,26 +41,31 @@ def main(
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+    overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
     ot_labels_enabled: bool = False,
-):  # sourcery skip: merge-dict-assign
-    if model is None:
+    debug: bool = CONFIG["DETECT"]["DEBUG"],
+):
+    log.info("Start detection")
+    if debug:
+        log.setLevel("DEBUG")
+        log.debug("Debug mode on")
+
+    if not model:
         yolo_model = yolo.loadmodel(weights, conf, iou)
     else:
         yolo_model = model
         yolo_model.conf = conf
         yolo_model.iou = iou
+    log.info("Model prepared")
 
-    file_paths = get_files(paths=files, filetypes=filetypes)
+    files = get_files(paths=paths, filetypes=filetypes)
+    video_files, img_files = _split_to_video_img_paths(files)
+    log.info("Files splitted in videos and images")
 
-    # split file paths to two groups -> videos | images
-    # only when accepting multiple filetypes
-    video_paths, frame_paths = _split_to_video_img_paths(file_paths)
-
-    frame_chunks = _create_chunks(frame_paths, chunksize)
-
-    for path in video_paths:
-        detections_videos = yolo.detect_video(
-            file_path=path,
+    for video_file in video_files:
+        log.info(f"Try detecting {video_file}")
+        detections_video = yolo.detect_video(
+            file_path=video_file,
             model=yolo_model,
             weights=weights,
             conf=conf,
@@ -73,10 +74,13 @@ def main(
             chunksize=chunksize,
             normalized=normalized,
         )
-        save_detections(detections_videos, path)
+        log.info("Video detected")
+        write(detections_video, video_file, overwrite=overwrite)
 
-    detections_chunks = yolo.detect_images(
-        file_chunks=frame_chunks,
+    log.info(f"Try detecting {len(img_files)} images")
+    img_file_chunks = _create_chunks(img_files, chunksize)
+    detections_img_file_chunks = yolo.detect_images(
+        file_chunks=img_file_chunks,
         model=yolo_model,
         weights=weights,
         conf=conf,
@@ -86,17 +90,16 @@ def main(
         normalized=normalized,
         ot_labels_enabled=ot_labels_enabled,
     )
-    # TODO: what happens if no frames detected
-    # save detection information to corresponding frame path
+    log.info("Images detected")
+
     if ot_labels_enabled:
-        return detections_chunks
-    else:
-        for frame_path, detection in zip(frame_paths, detections_chunks):
-            save_detections(detection, frame_path)
+        return detections_img_file_chunks
+    for img_file, detection in zip(img_files, detections_img_file_chunks):
+        write(detection, img_file)
 
 
 def _split_to_video_img_paths(
-    file_paths,
+    files,
     video_formats=CONFIG["FILETYPES"]["VID"],
     img_formats=CONFIG["FILETYPES"]["IMG"],
 ):
@@ -109,86 +112,43 @@ def _split_to_video_img_paths(
     Returns:
         [list(str), list{str)] : list of video paths and list of images paths
     """
-    video_paths, img_paths = [], []
-
-    for path in file_paths:
-        if is_in_format(path, video_formats):
-            video_paths.append(path)
-        elif is_in_format(path, img_formats):
-            img_paths.append(path)
+    video_files, img_files = [], []
+    for file in files:
+        if is_in_format(file, video_formats):
+            video_files.append(file)
+        elif is_in_format(file, img_formats):
+            img_files.append(file)
         else:
             raise FormatNotSupportedError(
-                "The format of path is not supported ({})".format(path)
+                f"The format of path is not supported ({file})"
             )
-    return video_paths, img_paths
+    return video_files, img_files
 
 
 class FormatNotSupportedError(Exception):
     pass
 
 
-def _create_chunks(file_paths, chunksize):
+def _create_chunks(files, chunksize):
     if chunksize == 0:
-        return file_paths
-    else:
-        chunk_starts = range(0, len(file_paths), chunksize)
-        return [file_paths[i : i + chunksize] for i in chunk_starts]
+        return files
+    chunk_starts = range(0, len(files), chunksize)
+    return [files[i : i + chunksize] for i in chunk_starts]
 
 
-def save_detections(
-    detections, infile, overwrite=CONFIG["DETECT"]["YOLO"]["OVERWRITE"]
-):
-    if overwrite or not get_files(infile, CONFIG["FILETYPES"]["DETECT"]):
-        infile_path = Path(infile)
-        outfile = str(infile_path.with_suffix(CONFIG["FILETYPES"]["DETECT"]))
-        with open(outfile, "w") as f:
+def write(detections, img_or_video_file, overwrite=CONFIG["DETECT"]["OVERWRITE"]):
+    # ?: Check overwrite before detecting instead of before writing detections?
+    detection_file = Path(img_or_video_file).with_suffix(CONFIG["FILETYPES"]["DETECT"])
+    detections_file_already_exists = detection_file.is_file()
+    if overwrite or not detections_file_already_exists:
+        # Write JSON
+        with open(detection_file, "w") as f:
             json.dump(detections, f, indent=4)
-        if overwrite:
-            print("Detections file overwritten")
+        if detections_file_already_exists:
+            log.info(f"{detection_file} overwritten")
         else:
-            print("Detections file saved")
+            log.info(f"{detection_file} written")
     else:
-        print("Detections file already exists, was not overwritten")
-
-
-# TODO: detect to df or gdf (geopandas)
-def detect_df(
-    files,
-    filetypes: list = CONFIG["FILETYPES"]["VID"],
-    model=None,
-    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
-    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
-    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
-    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
-    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
-    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-    ot_labels_enabled: bool = False,
-):
-
-    results = main(
-        files=files,
-        filetypes=filetypes,
-        model=model,
-        weights=weights,
-        conf=conf,
-        iou=iou,
-        size=size,
-        chunksize=chunksize,
-        normalized=normalized,
-        ot_labels_enabled=True,
-    )
-
-    for dets in results:
-        # where dets is a list dets respective to files [dets_file_1, ..., dets_file_N]
-
-        # Datenformat:
-        # Geopandas?
-        # | ix:filename | ix:frame | ix:detectionid | ...
-        # ... shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
-
-        # | ix:trackid | ix:filename | ix:frame | ix:detectionid | ...
-        # ... shapely.geometry.box(xmin,ymin,xmax,ymax) | class | conf |
-
-        # df["class"][""]
-        # df.loc[123,"video.mp4", 543, 4), "class"]
-        pass
+        log.info(
+            f"{detection_file} already exists. To overwrite, set overwrite=True"
+        )

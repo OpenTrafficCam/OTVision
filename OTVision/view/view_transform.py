@@ -90,9 +90,7 @@ class FrameTransformOptions(tk.Frame):
             print("click and save refpts for selected files")
 
             # Get refpts from picker tool
-            refpts = ReferencePointsPicker(
-                video_path=selected_files[0]
-            ).refpts
+            refpts = ReferencePointsPicker(video_path=selected_files[0]).refpts
 
             if refpts:
 
@@ -121,5 +119,5 @@ class FrameRunTransformation(FrameRun):
             filetypes=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
             replace_filetype=True,
         )
-        transform(tracks_files=tracks_files)
+        transform(paths=tracks_files)
         print("---Conversion successful---")

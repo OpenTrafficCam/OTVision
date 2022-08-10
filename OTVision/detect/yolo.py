@@ -17,6 +17,7 @@
 
 # TODO: docstrings in yolo
 
+import logging
 from pathlib import Path
 from time import perf_counter
 
@@ -68,12 +69,12 @@ def detect_video(
     t1 = perf_counter()
 
     if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
-        raise NoVideoError("The file: {} is not a video!".format(file_path))
+        raise NoVideoError(f"The file: {file_path} is not a video!")
 
     cap = VideoCapture(file_path)
     batch_no = 0
 
-    print("Run detection on video: {}".format(file_path))
+    print(f"Run detection on video: {file_path}")
 
     got_frame = True
     while got_frame:
@@ -116,11 +117,7 @@ def detect_video(
 
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
     vid_config = _get_vidconfig(file_path, width, height, fps, frames)
-    detections = _convert_detections(
-        yolo_detections, class_names, vid_config, det_config
-    )
-
-    return detections
+    return _convert_detections(yolo_detections, class_names, vid_config, det_config)
 
 
 def detect_images(
@@ -154,48 +151,37 @@ def detect_images(
         [type]: [description]
     """
     yolo_detections = []
-
     if not file_chunks:
         return [], [] if ot_labels_enabled else yolo_detections
-
     if model is None:
         model = loadmodel(weights, conf, iou)
-
     t1 = perf_counter()
-
     if _containsvideo(file_chunks):
         raise VideoFoundError(
             "List of paths given to detect_chunks function shouldn't contain any videos"
         )
-    img_batch = 0
+
     print("Run detection on images")
-    for chunk in file_chunks:
+    for img_batch, chunk in enumerate(file_chunks, start=1):
         t_start = perf_counter()
         results = model(chunk, size=size)
         t_det = perf_counter()
         _add_detection_results(yolo_detections, results, normalized)
-        img_batch += 1
-        print(
-            (
-                f"img_batch_no: {img_batch:d}, "
-                f"det:{t_det - t_start:0.4f}, "
-                f"batch_size: {len(chunk):d}, "
-                f"fps: {chunksize / (t_det - t_start):0.1f}"
-            )
-        )
+        str_batch_no = f"img_batch_no: {img_batch:d}"
+        str_det_time = f"det:{t_det - t_start:0.4f}"
+        str_batch_size = f"batch_size: {len(chunk):d}"
+        str_fps = f"fps: {chunksize / (t_det - t_start):0.1f}"
+        print(f"{str_batch_no}, {str_det_time}, {str_batch_size}, {str_fps}")
 
     t2 = perf_counter()
     duration = t2 - t1
     det_fps = len(yolo_detections) / duration
     _print_overall_performance_stats(duration, det_fps)
-
     names = results.names
     if ot_labels_enabled:
         return [yolo_detections, names]
-    else:
-        det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-        detections = _convert_detections_chunks(yolo_detections, names, det_config)
-        return detections
+    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
+    return _convert_detections_chunks(yolo_detections, names, det_config)
 
 
 def _get_batch_of_frames(video_capture, batch_size):
@@ -212,7 +198,7 @@ def _get_batch_of_frames(video_capture, batch_size):
     """
     batch = []
     gotFrame = False
-    for _ in range(0, batch_size):
+    for _ in range(batch_size):
         gotFrame, img = video_capture.read()
         if gotFrame:
             batch.append(img)
@@ -260,6 +246,7 @@ def _add_detection_results(detections, results, normalized):
 
 
 def loadmodel(weights, conf, iou):
+    logging.info(f"Try loading model {weights}")
     t1 = perf_counter()
 
     if torch.cuda.is_available():
@@ -275,7 +262,7 @@ def loadmodel(weights, conf, iou):
     model.iou = iou
 
     t2 = perf_counter()
-    print("Model loaded in {0:0.2f} s".format(t2 - t1))
+    logging.info(f"Model loaded in {round(t2 - t1)} sec")
     return model
 
 
@@ -305,7 +292,6 @@ def _get_det_config(weights, conf, iou, size, chunksize, normalized):
 def _convert_detections_chunks(yolo_detections, names, det_config):
     result = []
     for no, yolo_detection in enumerate(yolo_detections):
-        data = {}
         detection = []
         for yolo_bbox in yolo_detection:
             bbox = {
@@ -316,10 +302,10 @@ def _convert_detections_chunks(yolo_detections, names, det_config):
                 "w": yolo_bbox[2],
                 "h": yolo_bbox[3],
             }
-            detection.append(bbox)
-        data[str(no + 1)] = {"classified": detection}
-        result.append({"det_config": det_config, "data": data})
 
+            detection.append(bbox)
+        data = {str(no + 1): {"classified": detection}}
+        result.append({"det_config": det_config, "data": data})
     return result
 
 
