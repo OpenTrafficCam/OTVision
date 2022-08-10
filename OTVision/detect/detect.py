@@ -21,13 +21,13 @@ Module to call yolov5/detect.py with arguments
 
 
 import json
+import os
 from pathlib import Path
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
 
 from . import yolo
-import os
 
 # def main(paths, filetypes, det_config={}):
 #     files = get_files(paths, filetypes)
@@ -138,8 +138,13 @@ def _create_chunks(file_paths, chunksize):
 
 def save_detections(
     detections, infile, overwrite=CONFIG["DETECT"]["YOLO"]["OVERWRITE"]
-): 
-    filepath = os.path.dirname(infile) + "/" + os.path.splitext(os.path.basename(infile))[0] + CONFIG["FILETYPES"]["DETECT"]
+):
+    filepath = (
+        os.path.dirname(infile)
+        + "/"
+        + os.path.splitext(os.path.basename(infile))[0]
+        + CONFIG["FILETYPES"]["DETECT"]
+    )
     exists = os.path.isfile(filepath)
     if overwrite or not exists:
         infile_path = Path(infile)
@@ -147,11 +152,11 @@ def save_detections(
         with open(outfile, "w") as f:
             json.dump(detections, f, indent=4)
         if exists:
-            print("Detections file (" + os.path.basename(filepath) + ") overwritten") 
+            print("Detections file (" + os.path.basename(filepath) + ") overwritten")
         else:
             print("Detections as " + os.path.basename(filepath) + " saved")
     else:
-        print(os.path.basename(infile)+" already exists, was not overwritten")
+        print(os.path.basename(infile) + " already exists, was not overwritten")
 
 
 # TODO: detect to df or gdf (geopandas)
