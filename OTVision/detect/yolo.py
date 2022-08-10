@@ -276,8 +276,6 @@ def loadmodel(weights, conf=0.25, iou=0.25):
         # model = torch.jit.load(weights) ?
     elif weights in torch.hub.list(github="ultralytics/yolov5", force_reload=True):
 
-        print(torch.hub.list(github="ultralytics/yolov5", force_reload=True))
-
         if torch.cuda.is_available():
             model = torch.hub.load(
                 repo_or_dir="ultralytics/yolov5",
