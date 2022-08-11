@@ -1,7 +1,7 @@
 """
 OTVision helpers for filehandling
 """
-# Copyright (C) 2020 OpenTrafficCam Contributors
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #

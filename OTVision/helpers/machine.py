@@ -1,5 +1,5 @@
 """
-OTVision helper to gather information about the machine and the system
+OTVision helpers to gather information about the machine and the system
 """
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam

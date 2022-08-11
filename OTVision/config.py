@@ -1,7 +1,6 @@
 """
-OTVision main module for converting videos to other formats and frame rates.
+OTVision config module for setting default values
 """
-
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -19,12 +18,10 @@ OTVision main module for converting videos to other formats and frame rates.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
+
 from pathlib import Path
 
 from .helpers.files import _get_testdatafolder
-
-logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 
 # sourcery skip: merge-dict-assign
 CONFIG = {}

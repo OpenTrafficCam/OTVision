@@ -1,5 +1,5 @@
 """
-OTVision main module for tracking objects in successive frames of videos.
+OTVision main module for tracking objects in successive frames of videos
 """
 # points and transform tracksectory points from pixel into world coordinates.
 

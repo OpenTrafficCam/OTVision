@@ -1,7 +1,6 @@
 """
 OTVision module for calculating a homography from reference points
 """
-
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>

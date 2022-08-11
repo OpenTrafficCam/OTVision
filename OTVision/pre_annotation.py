@@ -1,4 +1,7 @@
-# Copyright (C) 2021 OpenTrafficCam Contributors
+"""
+OTVision module to pre-annotate images using detect.py
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #

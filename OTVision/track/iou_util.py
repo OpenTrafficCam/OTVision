@@ -1,7 +1,12 @@
+"""
+Utils for using iou tracker
+"""
 # ---------------------------------------------------------
 # IOU Tracker
 # Copyright (c) 2017 TU Berlin, Communication Systems Group
-# Licensed under The MIT License [see LICENSE for details]
+# Licensed under The MIT License, see
+# https://github.com/bochinski/iou-tracker/blob/master/LICENSE
+# for details.
 # Written by Erik Bochinski
 # ---------------------------------------------------------
 

@@ -1,5 +1,5 @@
 """
-OTVision main module for transforming tracks from pixel to world coordinates.
+OTVision main module for transforming tracks from pixel to world coordinates
 """
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
