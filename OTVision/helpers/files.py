@@ -1,4 +1,6 @@
-# OTVision: helpers for filehandling
+"""
+OTVision helpers for filehandling
+"""
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
