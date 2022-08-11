@@ -291,7 +291,8 @@ def loadmodel(weights, conf=0.25, iou=0.25):
             ).cpu()
     else:
         raise AttributeError(
-            "weights has to be path to .pt or valid model name from https://pytorch.org/hub/ultralytics_yolov5/"
+            "weights has to be path to .pt or valid model name "
+            "from https://pytorch.org/hub/ultralytics_yolov5/"
         )
 
     model.conf = conf
