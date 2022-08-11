@@ -58,7 +58,7 @@ def test_transform(test_data_tmp_dir: Path, single_refpts_file):
     )
 
     # Transform list of .ottrk files using otrefpts
-    transform(paths=test_tracks_files, single_refpts_file=single_refpts_file)
+    transform(paths=test_tracks_files, refpts_file=single_refpts_file)
 
     # Compare gpkg files for all test data
     for true_ottrk_file in true_ottrk_files:

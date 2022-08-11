@@ -20,7 +20,6 @@ OTVision script to call the detect main with arguments parsed from command line
 
 
 import argparse
-from pathlib import Path
 
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.log import log

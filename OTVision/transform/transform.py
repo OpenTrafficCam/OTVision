@@ -42,13 +42,13 @@ from .get_homography import get_homography
 
 def main(
     paths,
-    single_refpts_file=None,
+    refpts_file=None,
     overwrite=CONFIG["TRANSFORM"]["OVERWRITE"],
     debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
 ):
     """Transforms .ottrk file containing trajectories in pixel coordinates
     to .gpkg file with trajectories in utm coordinates
-    using either a single .otrfpts file for all .ottrk files
+    using either one single .otrfpts file for all .ottrk files
     containing corresponding reference points in both pixel and utm coordinates
     or using specific .otrfpts files for each .ottrk file
     (path must be the same except for the extension).
@@ -65,8 +65,8 @@ def main(
         log.setLevel("DEBUG")
         log.debug("Debug mode on")
 
-    if single_refpts_file:
-        refpts = read_refpts(reftpts_file=single_refpts_file)
+    if refpts_file:
+        refpts = read_refpts(reftpts_file=refpts_file)
         (
             homography,
             refpts_utm_upshift_predecimal,
@@ -75,12 +75,12 @@ def main(
             hemisphere,
             homography_eval_dict,
         ) = get_homography(refpts=refpts)
-        log.info(f"Read {single_refpts_file}")
+        log.info(f"Read {refpts_file}")
     tracks_files = get_files(paths=paths, filetypes=CONFIG["FILETYPES"]["TRACK"])
     for tracks_file in tracks_files:
         log.info(f"Try transforming {tracks_file}")
         # Try reading refpts and getting homography if not done above
-        if not single_refpts_file:
+        if not refpts_file:
             refpts_file = get_files(
                 paths=tracks_file,
                 filetypes=CONFIG["DEFAULT_FILETYPE"]["REFPTS"],
