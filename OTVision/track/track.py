@@ -45,7 +45,7 @@ def main(
     log.info("Start tracking")
     if debug:
         log.setLevel("DEBUG")
-        log.debug("Logging track.main() in debug mode")
+        log.debug("Debug mode on")
 
     filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
     detections_files = get_files(paths, filetype)
