@@ -1,4 +1,6 @@
-# OTVision: Helper to gather information about the machine and the system
+"""
+OTVision helper to gather information about the machine and the system
+"""
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -18,6 +20,8 @@
 
 
 import platform
+
+from OTVision.helpers.log import log
 
 OS = platform.system().replace("Darwin", "Mac")
 """OS OTVision is currently running on"""
@@ -61,11 +65,11 @@ def _has_cuda():
     return torch.cuda.is_available()
 
 
-def print_has_cuda():
+def log_has_cuda():
     """Returns True if CUDA is installed on machine
 
     Returns:
         Bool: If CUDA is installed on machine or not
     """
 
-    print(f"This system has cuda: {_has_cuda()}")
+    log.info(f"This system has cuda: {_has_cuda()}")
