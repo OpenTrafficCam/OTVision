@@ -2,6 +2,7 @@ import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.track.track import main as track
 from OTVision.view.view_helpers import FrameRun
 
@@ -78,7 +79,7 @@ class FrameRunTracking(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        print("---Starting tracking---")
+        log.debug("---Starting tracking from gui---")
         paths = get_files(
             paths=self.master.master.frame_files.get_tree_files(),
             filetypes=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
@@ -100,4 +101,3 @@ class FrameRunTracking(FrameRun):
             overwrite=overwrite,
         )
         self.master.master.frame_files.update_files_dict()
-        print("---Tracking successful---")

@@ -4,6 +4,7 @@ import tkinter.ttk as ttk
 from OTVision.config import CONFIG, PAD
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.view.view_helpers import FrameRun
 
 
@@ -86,7 +87,7 @@ class FrameRunDetection(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        print("---Starting detection---")
+        log.debug("---Starting detection from gui---")
         input_filetype = f".{self.master.master.frame_files.combo_vid_filetype.get()}"
         paths = get_files(
             paths=self.master.master.frame_files.get_tree_files(),
@@ -114,4 +115,3 @@ class FrameRunDetection(FrameRun):
         )
 
         self.master.master.frame_files.update_files_dict()
-        print("---Detection successful---")
