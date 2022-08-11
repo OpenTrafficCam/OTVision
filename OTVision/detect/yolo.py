@@ -250,14 +250,37 @@ def loadmodel(weights, conf, iou):
     log.info(f"Try loading model {weights}")
     t1 = perf_counter()
 
-    if torch.cuda.is_available():
+    if Path(weights).is_file() and Path(weights).suffix == ".pt":
         model = torch.hub.load(
-            "ultralytics/yolov5", weights, pretrained=True, force_reload=True
-        ).cuda()
+            repo_or_dir="ultralytics/yolov5",  # cv516Buaa/tph-yolov5 ?
+            model="custom",
+            path=weights,
+            # source="local",
+            force_reload=True,
+        )
+        # cv516Buaa/tph-yolov5: model.amp = False ?
+        # cv516Buaa/tph-yolov5: model = torch.jit.load(weights) ?
+    elif weights in torch.hub.list(github="ultralytics/yolov5", force_reload=True):
+
+        if torch.cuda.is_available():
+            model = torch.hub.load(
+                repo_or_dir="ultralytics/yolov5",
+                model=weights,
+                pretrained=True,
+                force_reload=True,
+            ).cuda()
+        else:
+            model = torch.hub.load(
+                repo_or_dir="ultralytics/yolov5",
+                model=weights,
+                pretrained=True,
+                force_reload=True,
+            ).cpu()
     else:
-        model = torch.hub.load(
-            "ultralytics/yolov5", weights, pretrained=True, force_reload=True
-        ).cpu()
+        raise AttributeError(
+            "weights has to be path to .pt or valid model name "
+            "from https://pytorch.org/hub/ultralytics_yolov5/"
+        )
 
     model.conf = conf
     model.iou = iou
