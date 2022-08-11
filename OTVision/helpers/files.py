@@ -106,7 +106,7 @@ def remove_dir(dir_to_remove: Union[str, Path]):
             path.unlink()
         else:
             remove_dir(path)
-    dir.rmdir()
+    dir_to_remove.rmdir()
 
 
 def read_json(json_file, extension=".json"):
