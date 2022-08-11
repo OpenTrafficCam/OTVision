@@ -1,4 +1,6 @@
-# OTVision: Python module to calculate a homography from reference points
+"""
+OTVision module for calculating a homography from reference points
+"""
 
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -136,6 +138,7 @@ def evaluate_homography(
     eval_df["delta_abs"] = eval_df["delta"].abs()
     print("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
     print("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+    # sourcery skip: merge-dict-assign
     eval_dict = {}
     eval_dict["Mean transformation error [m]"] = eval_df["delta_abs"].mean()
     eval_dict["Maximum transformation error [m]"] = eval_df["delta_abs"].max()
