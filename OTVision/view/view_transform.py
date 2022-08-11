@@ -90,7 +90,7 @@ class FrameTransformOptions(tk.Frame):
             print("click and save refpts for selected files")
 
             # Get refpts from picker tool
-            refpts = ReferencePointsPicker(video_path=selected_files[0]).refpts
+            refpts = ReferencePointsPicker(video_file=selected_files[0]).refpts
 
             if refpts:
 
