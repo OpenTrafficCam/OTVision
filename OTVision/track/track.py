@@ -135,7 +135,7 @@ def track(
 def write(
     tracks_px,
     detections_file,
-    overwrite=CONFIG["TRACK"]["IOU"]["OVERWRITE"],
+    overwrite=CONFIG["TRACK"]["OVERWRITE"],
 ):
     # ?: Check overwrite before tracking instead of before writing tracking?
     # TODO: Export also as csv, trj and alternative json
