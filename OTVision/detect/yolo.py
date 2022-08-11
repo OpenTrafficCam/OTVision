@@ -17,7 +17,6 @@
 
 # TODO: docstrings in yolo
 
-import logging
 from pathlib import Path
 from time import perf_counter
 
@@ -75,7 +74,7 @@ def detect_video(
     cap = VideoCapture(file_path)
     batch_no = 0
 
-    print(f"Run detection on video: {file_path}")
+    log.info(f"Run detection on video: {file_path}")
 
     got_frame = True
     while got_frame:
@@ -99,7 +98,7 @@ def detect_video(
 
         t_list = perf_counter()
 
-        _print_batch_performances_stats(
+        _log_batch_performances_stats(
             batch_no, t_start, t_trans, t_det, t_list, len(img_batch)
         )
         batch_no += 1
@@ -112,7 +111,7 @@ def detect_video(
     t2 = perf_counter()
     duration = t2 - t1
     det_fps = len(yolo_detections) / duration
-    _print_overall_performance_stats(duration, det_fps)
+    _log_overall_performance_stats(duration, det_fps)
 
     class_names = results.names
 
@@ -177,7 +176,7 @@ def detect_images(
     t2 = perf_counter()
     duration = t2 - t1
     det_fps = len(yolo_detections) / duration
-    _print_overall_performance_stats(duration, det_fps)
+    _log_overall_performance_stats(duration, det_fps)
     names = results.names
     if ot_labels_enabled:
         return [yolo_detections, names]
@@ -208,11 +207,11 @@ def _get_batch_of_frames(video_capture, batch_size):
     return gotFrame, batch
 
 
-def _print_overall_performance_stats(duration, det_fps):
+def _log_overall_performance_stats(duration, det_fps):
     log.info("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
 
 
-def _print_batch_performances_stats(
+def _log_batch_performances_stats(
     batch_no, t_start, t_trans, t_det, t_list, batch_size
 ):
     batch_no = "batch_no: {:d}".format(batch_no)
@@ -247,7 +246,7 @@ def _add_detection_results(detections, results, normalized):
 
 
 def loadmodel(weights, conf, iou):
-    logging.info(f"Try loading model {weights}")
+    log.info(f"Try loading model {weights}")
     t1 = perf_counter()
 
     if torch.cuda.is_available():
@@ -263,7 +262,7 @@ def loadmodel(weights, conf, iou):
     model.iou = iou
 
     t2 = perf_counter()
-    logging.info(f"Model loaded in {round(t2 - t1)} sec")
+    log.info(f"Model loaded in {round(t2 - t1)} sec")
     return model
 
 
