@@ -137,7 +137,7 @@ def _create_chunks(files, chunksize):
 
 def write(detections, img_or_video_file, overwrite=CONFIG["DETECT"]["OVERWRITE"]):
     # ?: Check overwrite before detecting instead of before writing detections?
-    detection_file = Path(img_or_video_file).with_suffix(CONFIG["FILETYPES"]["DETECT"])
+    detection_file = Path(img_or_video_file).with_suffix(CONFIG["DEFAULT_FILETYPE"]["DETECT"])
     detections_file_already_exists = detection_file.is_file()
     if overwrite or not detections_file_already_exists:
         # Write JSON

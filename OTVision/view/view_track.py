@@ -88,7 +88,7 @@ class FrameTrackOptions(tk.Frame):
             master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
         )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
-        if CONFIG["TRACK"]["IOU"]["OVERWRITE"]:
+        if CONFIG["TRACK"]["OVERWRITE"]:
             self.checkbutton_overwrite.select()
 
 

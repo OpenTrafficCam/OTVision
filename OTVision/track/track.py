@@ -73,7 +73,6 @@ def main(
 
             write(
                 tracks_px=tracks_px,
-                trajectories_geojson=trajectories_geojson,
                 detections_file=detections_file,
                 overwrite=overwrite,
             )
@@ -139,7 +138,7 @@ def write(
 ):
     # ?: Check overwrite before tracking instead of before writing tracking?
     # TODO: Export also as csv, trj and alternative json
-    tracks_file = Path(detections_file).with_suffix(CONFIG["FILETYPES"]["TRACK"])
+    tracks_file = Path(detections_file).with_suffix(CONFIG["DEFAULT_FILETYPE"]["TRACK"])
     tracks_file_already_exists = tracks_file.is_file()
     if overwrite or not tracks_file_already_exists:
         # Write JSON

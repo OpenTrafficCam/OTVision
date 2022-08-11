@@ -96,7 +96,7 @@ class FrameDetectOptions(tk.Frame):
             master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
         )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
-        if CONFIG["DETECT"]["YOLO"]["OVERWRITE"]:
+        if CONFIG["DETECT"]["OVERWRITE"]:
             self.checkbutton_overwrite.select()
 
 
