@@ -223,12 +223,10 @@ def _log_batch_performances_stats(
     add_list = "list: {:0.4f}".format(t_list - t_det)
     batch_len = "batch_size: {:d}".format(batch_size)
     fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
-
+    log_msg = f"{batch_no}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
     log.info(
-        "{0}, {1}, {2}, {3}, {4}, {5}".format(
-            batch_no, transformed_batch, det, add_list, batch_len, fps
-        )
-    )
+        log_msg
+    )  # BUG: #162 Logs twice from yolo.py (with and without formatting)
 
 
 def _add_detection_results(detections, results, normalized):
