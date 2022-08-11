@@ -99,9 +99,9 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     return sorted(list(files))
 
 
-def remove_dir(dir_path: Union[str, Path]):
-    dir = Path(dir_path)
-    for path in dir.glob("*"):
+def remove_dir(dir_to_remove: Union[str, Path]):
+    dir_to_remove = Path(dir_to_remove)
+    for path in dir_to_remove.glob("*"):
         if path.is_file():
             path.unlink()
         else:
