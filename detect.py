@@ -1,4 +1,7 @@
-# Copyright (C) 2021 OpenTrafficCam Contributors
+"""
+OTVision script to call the detect main with arguments parsed from command line 
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #
@@ -16,20 +19,36 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import argparse
 from pathlib import Path
 
-from OTVision import detect
+from OTVision.detect.detect import main as detect
+from OTVision.helpers.log import log
+
+
+def parse():
+    parser = argparse.ArgumentParser(description="Detect objects in videos or images")
+    parser.add_argument(
+        "-p",
+        "--paths",
+        nargs="+",
+        type=str,
+        help="Path or list of paths to image or video or folder containing videos/images",
+        required=True,
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Logging in debug mode"
+    )
+    return parser.parse_args()
+
+
+def main():
+    kwargs = vars(parse())
+    log.info("Starting detection from command line")
+    log.info(f"Arguments: {kwargs}")
+    detect(**kwargs)
+    log.info("Finished detection from command line")
+
 
 if __name__ == "__main__":
-    test_path = Path(__file__).parents[0] / "tests" / "data"
-    test_path = str(test_path)
-    det_config = {
-        "weights": "yolov5s",
-        "conf": 0.25,
-        "iou": 0.45,
-        "size": 640,
-        "chunksize": 5,
-        "normalized": False,
-        "ot_labels_enabled": True,
-    }
-    detect(test_path, [".mp4", ".jpeg", ".jpg"], **det_config)
+    main()
