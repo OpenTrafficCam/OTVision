@@ -19,7 +19,6 @@
 
 from pathlib import Path
 from time import perf_counter
-from xml.dom.minidom import Attr
 
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
