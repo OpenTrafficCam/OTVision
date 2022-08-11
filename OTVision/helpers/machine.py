@@ -65,11 +65,11 @@ def _has_cuda():
     return torch.cuda.is_available()
 
 
-def log_has_cuda():
+def print_has_cuda():
     """Returns True if CUDA is installed on machine
 
     Returns:
         Bool: If CUDA is installed on machine or not
     """
 
-    log.info(f"This system has cuda: {_has_cuda()}")
+    print(f"This system has cuda: {_has_cuda()}")
