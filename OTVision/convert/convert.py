@@ -56,8 +56,7 @@ def main(
 
     log.info("Start conversion")
     if debug:
-        log.setLevel("DEBUG")
-        log.debug("Debug mode on")
+        set_debug()
 
     check_ffmpeg()
     h264_files = get_files(paths, ".h264")
@@ -70,6 +69,8 @@ def main(
             fps_from_filename,
             overwrite,
         )
+    if debug:
+        reset_debug()
 
 
 def convert(
@@ -101,9 +102,13 @@ def convert(
     Returns:
         [type]: [description]
     """
+    if debug:
+        set_debug()
 
     if not ON_WINDOWS:
         log.warning("Conversion of h264 videos only works on windows machines for now")
+        if debug:
+            reset_debug()
         return
 
     log.info(f"Try converting {input_video_file} to {output_filetype}")
@@ -113,6 +118,8 @@ def convert(
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
     if not overwrite and output_video_file.is_file:
+        if debug:
+            reset_debug()
         return None
     vid_filetypes = CONFIG["FILETYPES"]["VID"] + [".h264"]
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
@@ -152,6 +159,9 @@ def convert(
         raise TypeError("Output video filetype is not supported")
     elif output_filetype in vid_filetypes:
         raise TypeError("Input video filetype is not supported")
+
+    if debug:
+        reset_debug()
 
 
 def check_ffmpeg():
