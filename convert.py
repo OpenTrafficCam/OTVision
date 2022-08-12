@@ -32,7 +32,7 @@ def parse():
         "--paths",
         nargs="+",
         type=str,
-        help="Path or list of paths to detections files",
+        help="Path or list of paths to h264 (or other) video files",
         required=True,
     )
     parser.add_argument(
