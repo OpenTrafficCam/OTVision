@@ -49,6 +49,7 @@ CONFIG["FILETYPES"]["VID"] = [
     ".wmv",
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
+CONFIG["FILETYPES"]["VID_IMG"] = CONFIG["FILETYPES"]["VID"] + CONFIG["FILETYPES"]["IMG"]
 CONFIG["FILETYPES"]["DETECT"] = ".otdet"
 CONFIG["FILETYPES"]["TRACK"] = [".ottrk", ".gpkg"]
 CONFIG["FILETYPES"]["REFPTS"] = [".otrfpts", ".csv"]
@@ -80,6 +81,7 @@ CONFIG["CONVERT"]["DEBUG"] = False
 # DETECT
 CONFIG["DETECT"] = {}
 CONFIG["DETECT"]["RUN_CHAINED"] = True
+CONFIG["DETECT"]["OTLABELS_ENABLES"] = False
 CONFIG["DETECT"]["YOLO"] = {}
 CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
 CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
