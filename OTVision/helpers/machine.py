@@ -39,9 +39,6 @@ OS_RELEASE = platform.release()
 OS_VERSION = platform.version()
 """Specific version of the OS OTVision is currently running on"""
 
-PY_VERSION = 1
-"""Full Python version number"""
-
 PY_MAJOR_VERSION = int(platform.python_version_tuple()[0])
 """Python major version digit (e.g. 3 for 3.9.5) OTVision is currently running with"""
 
