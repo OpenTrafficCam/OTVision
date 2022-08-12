@@ -14,6 +14,7 @@ SINGLE_REFPTS_FILE = Path(CONFIG["TESTDATAFOLDER"]) / "Testvideo_FR20.otrfpts"
 
 @pytest.mark.parametrize("single_refpts_file", [None, SINGLE_REFPTS_FILE])
 def test_transform(test_data_tmp_dir: Path, single_refpts_file):
+    # sourcery skip: remove-assert-true, remove-redundant-pass
     """Tests the main function of OTVision/transform/transform.py
     transforming test tracks files from pixel to world coordinates based
     on a set of reference points in both pixel and world coordinates
@@ -57,7 +58,7 @@ def test_transform(test_data_tmp_dir: Path, single_refpts_file):
     )
 
     # Transform list of .ottrk files using otrefpts
-    transform(tracks_files=test_tracks_files, single_refpts_file=single_refpts_file)
+    transform(paths=test_tracks_files, refpts_file=single_refpts_file)
 
     # Compare gpkg files for all test data
     for true_ottrk_file in true_ottrk_files:

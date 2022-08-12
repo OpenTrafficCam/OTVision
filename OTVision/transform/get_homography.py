@@ -1,5 +1,6 @@
-# OTVision: Python module to calculate a homography from reference points
-
+"""
+OTVision module for calculating a homography from reference points
+"""
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -21,6 +22,8 @@
 import cv2
 import numpy as np
 import pandas as pd
+
+from OTVision.helpers.log import log
 
 
 def get_homography(refpts):
@@ -79,8 +82,8 @@ def get_homography(refpts):
     homography, mask = cv2.findHomography(
         refpts_px, refpts_utm_upshifted_disassembled, cv2.RANSAC, 3.0
     )  # RANSAC: Otulier/Inlier definieren??? # FEHLER:
-    print(homography)
-    print(mask)
+    log.debug(homography)
+    log.debug(mask)
 
     eval_dict = evaluate_homography(
         refpts_px, refpts_utm_upshifted_disassembled, homography
@@ -134,8 +137,9 @@ def evaluate_homography(
     # Normalize error vectors using sentence of pythagoras
     eval_df["delta"] = np.linalg.norm(eval_df[["x_delta", "y_delta"]].values, axis=1)
     eval_df["delta_abs"] = eval_df["delta"].abs()
-    print("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
-    print("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+    log.info("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
+    log.info("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+    # sourcery skip: merge-dict-assign
     eval_dict = {}
     eval_dict["Mean transformation error [m]"] = eval_df["delta_abs"].mean()
     eval_dict["Maximum transformation error [m]"] = eval_df["delta_abs"].max()

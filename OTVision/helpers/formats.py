@@ -1,4 +1,6 @@
-# OTVision: Helpers to change formats and retrieve information
+"""
+OTVision helpers to change formats and retrieve information
+"""
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>

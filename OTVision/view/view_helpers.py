@@ -1,3 +1,24 @@
+"""
+OTVision helper gui module
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from pathlib import Path
@@ -5,6 +26,7 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.helpers.machine import ON_WINDOWS
 
 
@@ -112,13 +134,13 @@ class FrameFileTree(tk.LabelFrame):
         # NOTE: h264 is only included on Windows for now
         new_paths = get_files(
             new_dir,
-            filetypes=([".h264"] if ON_WINDOWS else [])
-            + [
-                "." + self.vid_filetype,
-                CONFIG["DEFAULT_FILETYPE"]["DETECT"],
-            ],
+            filetypes=(
+                ([".h264"] if ON_WINDOWS else [])
+                + [f".{self.vid_filetype}", CONFIG["DEFAULT_FILETYPE"]["DETECT"]]
+            ),
             search_subdirs=self.checkbutton_subdir_var.get(),
         )
+
         unique_new_paths = []
         for elem in new_paths:
             if str(Path(elem).with_suffix("")) not in [
@@ -231,9 +253,12 @@ class FrameFileTree(tk.LabelFrame):
         ]
 
     def get_selected_files(self):
-        return [
+        selected_files = [
             self.tree_files.item(item)["text"] for item in self.tree_files.selection()
         ]
+        log.debug("Selected files:")
+        log.debug(selected_files)
+        return selected_files
 
     def deselect_tree_files(self, events):
         for item in self.tree_files.selection():
@@ -324,7 +349,7 @@ class FrameFiles(tk.LabelFrame):
             self.listbox_files.delete(first=file_to_remove)
 
     def debug(self, event):
-        print(event)
+        log.debug(event)
 
 
 class FrameRun(tk.Frame):

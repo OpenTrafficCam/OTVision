@@ -1,3 +1,24 @@
+"""
+OTVision gui module for transform.py
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import shutil
 import tkinter as tk
 from pathlib import Path
@@ -5,6 +26,7 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
 from OTVision.transform.transform import main as transform
 from OTVision.transform.transform import write_refpts
@@ -51,11 +73,9 @@ class FrameTransformOptions(tk.Frame):
 
         # Get selected files from files frame
         selected_files = self.master.master.frame_files.get_selected_files()
-        print("Selected files:")
-        print(selected_files)
 
         if selected_files:
-            print("choose refpts file for selected files")
+            log.debug("choose refpts file for selected files")
 
             # Show filedialog
             refpts_file = filedialog.askopenfilename(
@@ -66,7 +86,7 @@ class FrameTransformOptions(tk.Frame):
 
             # Check paths
             refpts_file = get_files(refpts_file)[0]
-            print(refpts_file)
+            log.debug(refpts_file)
 
             # Copy refpts file for all selected
             for selected_file in selected_files:
@@ -83,16 +103,12 @@ class FrameTransformOptions(tk.Frame):
 
         # Get selected files from files frame
         selected_files = self.master.master.frame_files.get_selected_files()
-        print("Selected files:")
-        print(selected_files)
 
         if selected_files:
-            print("click and save refpts for selected files")
+            log.debug("click and save refpts for selected files")
 
             # Get refpts from picker tool
-            refpts = ReferencePointsPicker(
-                video_path=selected_files[0]
-            ).refpts
+            refpts = ReferencePointsPicker(video_file=selected_files[0]).refpts
 
             if refpts:
 
@@ -104,7 +120,7 @@ class FrameTransformOptions(tk.Frame):
                 # Update dict and treeview in files frame
                 self.master.master.frame_files.update_files_dict()
         else:
-            print("No files selected")
+            log.debug("No files selected")
 
 
 class FrameRunTransformation(FrameRun):
@@ -115,11 +131,10 @@ class FrameRunTransformation(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        print("---Starting transformation---")
+        log.info("---Starting transformation from gui---")
         tracks_files = get_files(
             paths=self.master.master.frame_files.get_tree_files(),
             filetypes=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
             replace_filetype=True,
         )
-        transform(tracks_files=tracks_files)
-        print("---Conversion successful---")
+        transform(paths=tracks_files)

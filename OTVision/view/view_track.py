@@ -1,7 +1,29 @@
+"""
+OTVision gui module for track.py
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.track.track import main as track
 from OTVision.view.view_helpers import FrameRun
 
@@ -66,7 +88,7 @@ class FrameTrackOptions(tk.Frame):
             master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
         )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
-        if CONFIG["TRACK"]["IOU"]["OVERWRITE"]:
+        if CONFIG["TRACK"]["OVERWRITE"]:
             self.checkbutton_overwrite.select()
 
 
@@ -78,7 +100,7 @@ class FrameRunTracking(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        print("---Starting tracking---")
+        log.debug("---Starting tracking from gui---")
         paths = get_files(
             paths=self.master.master.frame_files.get_tree_files(),
             filetypes=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
@@ -100,4 +122,3 @@ class FrameRunTracking(FrameRun):
             overwrite=overwrite,
         )
         self.master.master.frame_files.update_files_dict()
-        print("---Tracking successful---")

@@ -1,5 +1,7 @@
-# OTVision: helpers for filehandling
-# Copyright (C) 2020 OpenTrafficCam Contributors
+"""
+OTVision helpers for filehandling
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #
@@ -17,13 +19,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
-import logging
 import shutil
 from pathlib import Path
 from typing import Union
 
+from OTVision.helpers.log import log
+
 
 def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
+    # sourcery skip: low-code-quality
     """
     Generates a list of files ending with filename based on filenames or the
     (recursive) content of folders.
@@ -43,41 +47,28 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     Returns:
         [list]: [list of filenames as str]
     """
-
     files = set()
-
-    # Check, if paths is a str or a list
     if type(paths) is str or isinstance(paths, Path):
         paths = [paths]
-    elif type(paths) is not list and not isinstance(paths, Path):
+    elif type(paths) is not list:
         raise TypeError("Paths needs to be a str, a list of str, or Path object")
-
-    # Check if filetypes is str or a list and transform it
     if filetypes:
         if type(filetypes) is not list:
             filetypes = [filetypes]
-
         for idx, filetype in enumerate(filetypes):
             if type(filetype) is not str:
                 raise TypeError("Filetype needs to be a str or a list of str")
-
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
-                    filetype = "." + filetype
+                    filetype = f".{filetype}"
                 filetypes[idx] = filetype.lower()
-
-    # add all files to a single list _files_
     for path in paths:
         path = Path(path)
-        # If path is a real file add it to return list
         if path.is_file():
-            # Replace filetype in path if replace_filetype is given as argument
-            # and path has suffix and only one filetype was given and new path exists
             if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
                 path_with_filetype_replaced = path.with_suffix(filetypes[0])
                 if path_with_filetype_replaced.is_file():
                     path = path.with_suffix(filetypes[0])
-            # Add path to list of returned paths if filetype meets requirements
             file = str(path)
             if filetypes:
                 for filetype in filetypes:
@@ -85,7 +76,6 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
                         files.add(str(path))
             else:
                 files.add(str(path))
-        # If path is a real file add it to return list
         elif path.is_dir():
             for filetype in filetypes:
                 for file in path.glob("**/*" if search_subdirs else "*"):
@@ -99,14 +89,14 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     return sorted(list(files))
 
 
-def remove_dir(dir_path: Union[str, Path]):
-    dir = Path(dir_path)
-    for path in dir.glob("*"):
+def remove_dir(dir_to_remove: Union[str, Path]):
+    dir_to_remove = Path(dir_to_remove)
+    for path in dir_to_remove.glob("*"):
         if path.is_file():
             path.unlink()
         else:
             remove_dir(path)
-    dir.rmdir()
+    dir_to_remove.rmdir()
 
 
 def read_json(json_file, extension=".json"):
@@ -119,22 +109,18 @@ def read_json(json_file, extension=".json"):
         with open(json_file) as f:
             dict_from_json_file = json.load(f)
     except OSError as oe:
-        logging.error(
-            (
-                f'Could not open "{json_file}". '
-                f"Following exception occured: {str(oe)}"
-            )
-        )
+        log.error(f"Could not open {json_file}")
+        log.exception(oe)
     except json.JSONDecodeError as je:
-        logging.error(
+        log.exception(
             (
                 f'Unable to decode "{json_file}" as JSON.'
                 f"Following exception occured: {str(je)}"
             )
         )
+        log.exception(je)
     except Exception as e:
-        logging.error(e)
-        print(e)
+        log.exception(e)
     # BUG: "UnboundLocalError: local variable 'dict_from_json_file' referenced bef ass"
     return dict_from_json_file
 
@@ -146,10 +132,16 @@ def write_json(
     overwrite=False,
 ):
     outfile = Path(file).with_suffix(extension)
-    if overwrite or not get_files(outfile):
+    outfile_already_exists = outfile.is_file()
+    if overwrite or not outfile_already_exists:
         with open(outfile, "w") as f:
             json.dump(dict_to_write, f, indent=4)
-        logging.info("JSON written")
+        if not outfile_already_exists:
+            log.debug(f"{outfile} written")
+        else:
+            log.debug(f"{outfile} overwritten")
+    else:
+        log.debug(f"{outfile} already exists, not overwritten")
 
 
 def denormalize(otdict, keys_width=None, keys_height=None):
@@ -161,9 +153,9 @@ def denormalize(otdict, keys_width=None, keys_height=None):
         direction = "denormalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
         otdict["det_config"]["normalized"] = False
-        logging.info("Dict denormalized!")
+        log.debug("Dict denormalized")
     else:
-        logging.info("Dict was not normalized!")
+        log.debug("Dict was already denormalized")
     return otdict
 
 
@@ -176,9 +168,9 @@ def normalize(otdict, keys_width=None, keys_height=None):
         direction = "normalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
         otdict["det_config"]["normalized"] = True
-        logging.info("Dict normalized!")
+        log.debug("Dict normalized")
     else:
-        logging.info("Dict was already normalized!")
+        log.debug("Dict was already normalized")
     return otdict
 
 
@@ -218,18 +210,13 @@ def is_in_format(file_path, file_formats):
         True if path is of format specified in file_formats.
         Otherwise False.
     """
-
     file = Path(file_path)
-
-    if file.suffix.lower() in [
+    return file.suffix.lower() in [
         file_format.lower()
         if file_format.startswith(".")
         else f".{file_format.lower()}"
         for file_format in file_formats
-    ]:
-        return True
-    else:
-        return False
+    ]
 
 
 def unzip(file):
@@ -237,20 +224,3 @@ def unzip(file):
     directory = file.with_suffix("")
     shutil.unpack_archive(file, directory)
     return directory
-
-
-if __name__ == "__main__":
-    paths = "D:/tmp/"
-    # paths = ["D:/tmp/tmp1", "D:\\tmp\\tmp2"]
-    # paths = ["D:/tmp/tmp1/", "D:\\tmp/tmp2\\", "D:/tmp/test_objects.csv"]
-    # paths = "D:/tmp/test_objects.csv"
-
-    # filetype = "csv"
-    # filetype = "CSV"
-    # filetype = "_objects.csv"
-    filetype = ".csv"
-
-    files = get_files(paths, filetype)
-    for file in files:
-        print(file)
-    print(_get_testdatafolder())
