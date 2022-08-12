@@ -71,7 +71,9 @@ CONFIG["CONVERT"]["FFMPEG_PATH"] = str(
     Path(__file__).parents[0] / r"convert" / r"ffmpeg.exe"
 )
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".mp4"
-CONFIG["CONVERT"]["FPS"] = 20.0
+CONFIG["CONVERT"]["INPUT_FPS"] = 20.0
+CONFIG["CONVERT"]["OUTPUT_FPS"] = 20.0
+CONFIG["CONVERT"]["FPS_FROM_FILENAME"] = True
 CONFIG["CONVERT"]["OVERWRITE"] = True
 CONFIG["CONVERT"]["DEBUG"] = False
 

@@ -22,36 +22,45 @@ OTVision main module for converting videos to other formats and frame rates.
 import os
 import subprocess
 from pathlib import Path
+from typing import Union
 from urllib.request import urlretrieve
 from zipfile import ZipFile
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, remove_dir
 from OTVision.helpers.formats import _get_fps_from_filename
-from OTVision.helpers.log import log
+from OTVision.helpers.log import log, reset_debug, set_debug
 from OTVision.helpers.machine import ON_WINDOWS
 
 
 def main(
-    paths,
+    paths: Union[Path, str, list],
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
-    input_fps: float = None,
-    output_fps: float = None,
-    fps_from_filename: bool = True,
+    input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
+    output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
+    fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
     # TODO: #111 Set more parameters as global variables in config.py
 ):
-    """Converts multiple h264-based videos into other formats and/or other frame rates.
+    """Converts multiple h264-based videos into other formats and/or frame rates.
 
     Currently only works for windows as ffmpeg.exe is utilized.
 
     Args:
-        paths ([type]): [description]
-        output_filetype (str, optional): [description]. Defaults to None.
-        input_fps (float, optional): [description]. Defaults to None.
-        output_fps (float, optional): [description]. Defaults to None.
-        overwrite (bool, optional): [description]. Defaults to True.
+        paths (Union[Path, str, list]): Path or list of paths to detections files
+        output_filetype (str, optional): Type of video file created.
+            Defaults to CONFIG["CONVERT"]["OUTPUT_FILETYPE"].
+        input_fps (float, optional): Frame rate of input video.
+            Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
+        output_fps (float, optional): Frame rate of output video.
+            Defaults to CONFIG["CONVERT"]["OUTPUT_FPS"].
+        fps_from_filename (bool, optional): Whether or not trying to parse frame rate
+            from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
+        overwrite (bool, optional): Whether or not to overwrite existing video files.
+            Defaults to CONFIG["CONVERT"]["OVERWRITE"].
+        debug (bool, optional): Whether or not logging in debug mode.
+            Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
 
     log.info("Start conversion")
@@ -74,33 +83,43 @@ def main(
 
 
 def convert(
-    input_video_file: str,
+    input_video_file: Union[Path, str],
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
-    input_fps: float = None,
-    output_fps: float = None,
-    fps_from_filename: bool = True,
-    overwrite: bool = True,
-):  # sourcery skip: inline-variable, simplify-fstring-formatting
-    """Converts h264-based videos into other formats and/or other frame rates. Also
-    input frame rates can be given. If input video file is raw h264 and no input frame
-    rate is given it tries to read "FR" from filename and otherwise sets default frame
-    rate of 25.
+    input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
+    output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
+    fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
+    overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
+    debug: bool = CONFIG["CONVERT"]["DEBUG"],
+):
+    """Converts h264-based videos into other formats and/or other frame rates.
+    Also input frame rates can be given.
+    If input video file is raw h264 and no input frame rate is given convert
+    tries to parse frame rate from filename, otherwise sets default frame.
 
     Currently only works for windows as ffmpeg.exe is utilized.
 
     Args:
-        input_video (str): [description]
-        output_filetype (str, optional): [description]. Defaults to ".avi".
-        input_fps (float, optional): [description]. Defaults to None.
-        output_fps (float, optional): [description]. Defaults to None.
-        overwrite (bool, optional): [description]. Defaults to True.
+        input_video_file (Union[Path, str]): Path to h264 video file (or other format).
+        output_filetype (str, optional): Type of video file created.
+            Defaults to CONFIG["CONVERT"]["OUTPUT_FILETYPE"].
+        input_fps (float, optional): Frame rate of input video.
+            Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
+        output_fps (float, optional): Frame rate of output video.
+            Defaults to CONFIG["CONVERT"]["OUTPUT_FPS"].
+        fps_from_filename (bool, optional): Whether or not trying to parse frame rate
+            from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
+        overwrite (bool, optional): Whether or not to overwrite existing video files.
+            Defaults to CONFIG["CONVERT"]["OVERWRITE"].
+        debug (bool, optional): Whether or not logging in debug mode.
+            Defaults to CONFIG["CONVERT"]["DEBUG"].
 
     Raises:
-        TypeError: [description]
-        TypeError: [description]
+        TypeError: If output video filetype is not supported.
+        TypeError: If input video filetype is not supported.
 
     Returns:
-        [type]: [description]
+        None: If not on a windows machine.
+        None: If output video file already exists and overwrite is not enabled.
     """
     if debug:
         set_debug()
@@ -165,10 +184,7 @@ def convert(
 
 
 def check_ffmpeg():
-    """Checks, if ffmpeg is available, otherwise downloads it.
-    Args:
-        ffmpeg_path (str): path, where to save ffmpeg
-    """
+    """Checks, if ffmpeg is available, otherwise downloads it."""
 
     if not ON_WINDOWS:
         log.warning("Sorry, this function only works on windows machines for now")
@@ -182,10 +198,7 @@ def check_ffmpeg():
 
 
 def download_ffmpeg():
-    """Download ffmpeg to a specific path.
-    Args:
-        ffmpeg_path (str): path to ffmpeg.exe
-    """
+    """Downloads ffmpeg to a specific path."""
 
     if not ON_WINDOWS:
         log.info("Sorry, this function only works on windows machines for now")
