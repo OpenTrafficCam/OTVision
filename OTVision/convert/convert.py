@@ -22,7 +22,7 @@ OTVision main module for converting videos to other formats and frame rates.
 import os
 import subprocess
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 from urllib.request import urlretrieve
 from zipfile import ZipFile
 
@@ -34,7 +34,7 @@ from OTVision.helpers.machine import ON_WINDOWS
 
 
 def main(
-    paths: Union[Path, str, list],
+    paths: Union[Path, str, List],
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
@@ -48,7 +48,8 @@ def main(
     Currently only works for windows as ffmpeg.exe is utilized.
 
     Args:
-        paths (Union[Path, str, list]): Path or list of paths to detections files
+        paths (Union[Path, str, list]): Path or list of paths to .h264 files
+            (or other video files)
         output_filetype (str, optional): Type of video file created.
             Defaults to CONFIG["CONVERT"]["OUTPUT_FILETYPE"].
         input_fps (float, optional): Frame rate of input video.
