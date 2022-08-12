@@ -21,8 +21,6 @@ OTVision helpers to gather information about the machine and the system
 
 import platform
 
-from OTVision.helpers.log import log
-
 OS = platform.system().replace("Darwin", "Mac")
 """OS OTVision is currently running on"""
 
