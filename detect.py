@@ -1,5 +1,5 @@
 """
-OTVision script to call the detect main with arguments parsed from command line 
+OTVision script to call the detect main with arguments parsed from command line
 """
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -32,7 +32,7 @@ def parse():
         "--paths",
         nargs="+",
         type=str,
-        help="Path or list of paths to image or video or folder containing videos/images",
+        help="Path/list of paths to image or video or folder containing videos/images",
         required=True,
     )
     parser.add_argument(

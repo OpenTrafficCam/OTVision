@@ -1,5 +1,5 @@
 """
-OTVision script to call the track main with arguments parsed from command line 
+OTVision script to call the track main with arguments parsed from command line
 """
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
