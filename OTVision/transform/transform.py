@@ -35,7 +35,7 @@ from OTVision.helpers.formats import (
     _get_time_from_frame_number,
     _ottrk_dict_to_df,
 )
-from OTVision.helpers.log import log
+from OTVision.helpers.log import log, reset_debug, set_debug
 
 from .get_homography import get_homography
 
@@ -62,8 +62,7 @@ def main(
 
     log.info("Start transformation from pixel to world coordinates")
     if debug:
-        log.setLevel("DEBUG")
-        log.debug("Debug mode on")
+        set_debug()
 
     if refpts_file:
         refpts = read_refpts(reftpts_file=refpts_file)
@@ -134,6 +133,8 @@ def main(
                 tracks_file=tracks_file,
             )
         log.info("Transformation successful")
+    if debug:
+        reset_debug()
 
 
 def read_tracks(tracks_file):

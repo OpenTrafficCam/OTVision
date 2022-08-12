@@ -25,7 +25,7 @@ from typing import Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
-from OTVision.helpers.log import log
+from OTVision.helpers.log import log, reset_debug, set_debug
 
 from . import yolo
 
@@ -46,8 +46,7 @@ def main(
 ):
     log.info("Start detection")
     if debug:
-        log.setLevel("DEBUG")
-        log.debug("Debug mode on")
+        set_debug()
 
     if not model:
         yolo_model = yolo.loadmodel(weights, conf, iou)
@@ -92,9 +91,13 @@ def main(
     log.info("Images detected")
 
     if ot_labels_enabled:
+        if debug:
+            reset_debug()
         return detections_img_file_chunks
     for img_file, detection in zip(img_files, detections_img_file_chunks):
         write(detection, img_file)
+    if debug:
+        reset_debug()
 
 
 def _split_to_video_img_paths(

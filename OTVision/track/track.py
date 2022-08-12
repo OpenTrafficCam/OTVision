@@ -26,7 +26,7 @@ from pathlib import Path
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import denormalize, get_files
-from OTVision.helpers.log import log
+from OTVision.helpers.log import log, reset_debug, set_debug
 
 from .iou import track_iou
 
@@ -44,8 +44,7 @@ def main(
 ):
     log.info("Start tracking")
     if debug:
-        log.setLevel("DEBUG")
-        log.debug("Debug mode on")
+        set_debug()
 
     filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
     detections_files = get_files(paths, filetype)
@@ -90,6 +89,8 @@ def main(
                     f"Following exception occured: {str(je)}"
                 )
             )
+    if debug:
+        reset_debug()
 
 
 def track(
