@@ -84,7 +84,7 @@ class FrameConvertOptions(tk.Frame):
         self.label_framerate.grid(row=2, column=0, sticky="w")
         self.entry_framerate = tk.Entry(master=self, width=4)
         self.entry_framerate.grid(row=2, column=1, sticky="w")
-        self.entry_framerate.insert(index=0, string=CONFIG["CONVERT"]["FPS"])
+        self.entry_framerate.insert(index=0, string=CONFIG["CONVERT"]["INPUT_FPS"])
         self.entry_framerate.configure(state="disabled")
         # Overwrite
         self.checkbutton_overwrite_var = tk.BooleanVar()
