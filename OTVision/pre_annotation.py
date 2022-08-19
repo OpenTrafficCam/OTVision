@@ -50,7 +50,7 @@ def _write_class_labels(cvat_yolo_dir, class_labels):
     obj_names = cvat_yolo_dir / "obj.names"
     with open(obj_names, "w") as f:
         for name in class_labels:
-            f.write((name + "\n"))
+            f.write((str(name) + "\n"))
 
 
 def _write_bbox(cvat_yolo_dir: str, img_type: str, xywhn: list):
