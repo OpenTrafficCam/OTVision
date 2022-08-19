@@ -21,7 +21,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
@@ -136,7 +136,7 @@ def _split_to_video_img_paths(
     files: Union[List[Path], List[str]],
     video_formats: List[str] = CONFIG["FILETYPES"]["VID"],
     img_formats: List[str] = CONFIG["FILETYPES"]["IMG"],
-) -> Tuple(Union[List[Path], List[str]], Union[List[Path], List[str]]):
+) -> tuple[Union[List[Path], List[str]], Union[List[Path], List[str]]]:
     """
     Divides a list of files in video files and image files.
 
@@ -153,7 +153,7 @@ def _split_to_video_img_paths(
             video_formats or img_formats.
 
     Returns:
-        Tuple(Union[List[Path], List[str]], Union[List[Path], List[str]]):
+        tuple[Union[List[Path], List[str]], Union[List[Path], List[str]]]:
             List of video paths and list of image paths
     """
 
