@@ -24,8 +24,7 @@ def test_resources_dir():
 
 @pytest.fixture
 def example_image(test_data_dir):
-    img_1 = Path(test_data_dir, "Testvideo_CamView_Cars-Cyclist.png")
-    return img_1
+    return Path(test_data_dir, "Testvideo_CamView_Cars-Cyclist.png")
 
 
 @pytest.fixture
@@ -97,8 +96,7 @@ def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
     cvat_dir_unzipped = unzip(cvat_dir_zipped)
     obj_train_data = cvat_dir_unzipped / "obj_train_data"
     obj_names = cvat_dir_unzipped / "obj.names"
-    files = [f for f in obj_train_data.iterdir()]
-
+    files = list(obj_train_data.iterdir())
     assert len(files) == 1
     assert "Testvideo_CamView_Cars-Cyclist" in [f.stem for f in files]
     assert Path(files[0]).suffix == ".txt"
@@ -167,4 +165,4 @@ def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped):
     assert Path(annotated_unzipped, "obj.names").exists()
     assert Path(annotated_unzipped, "obj.data").exists()
     assert Path(annotated_unzipped, "train.txt").exists()
-    assert len(annotated_obj_train_data_content) == 0, "Method should remove all images"
+    assert not annotated_obj_train_data_content, "Method should remove all images"
