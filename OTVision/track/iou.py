@@ -1,8 +1,11 @@
-# OTVision: Python module to track road users in frames detected by OTVision
+"""
+OTVision module to track road users in frames detected by OTVision
+"""
 # based on IOU Tracker written by Erik Bochinski originally licensed under the
-# MIT License, see <https://github.com/bochinski/iou-tracker>.
+# MIT License, see
+# https://github.com/bochinski/iou-tracker/blob/master/LICENSE.
 
-# Copyright (C) 2021 OpenTrafficCam Contributors
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #

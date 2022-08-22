@@ -1,9 +1,31 @@
+"""
+OTVision gui module for convert.py
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import tkinter as tk
 import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.view.view_helpers import FrameRun
 
 
@@ -92,7 +114,7 @@ class FrameRunConversion(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        print("---Starting conversion---")
+        log.debug("---Starting conversion from gui---")
         fps_from_filename = (
             self.master.frame_options.checkbutton_use_framerate_var.get()
         )
@@ -101,7 +123,7 @@ class FrameRunConversion(FrameRun):
             filetypes=".h264",
             replace_filetype=True,
         )
-        output_filetype = "." + self.master.frame_options.combo_filtype.get()
+        output_filetype = f".{self.master.frame_options.combo_filtype.get()}"
         input_fps = self.master.frame_options.entry_framerate.get()
         output_fps = self.master.frame_options.entry_framerate.get()
         overwrite = self.master.frame_options.checkbutton_use_framerate_var.get()
@@ -114,4 +136,3 @@ class FrameRunConversion(FrameRun):
             overwrite=overwrite,
         )
         self.master.master.frame_files.update_files_dict()
-        print("---Conversion successful---")

@@ -1,6 +1,7 @@
-# OTVision: Python module to read and write configuration dict
-
-# Copyright (C) 2020 OpenTrafficCam Contributors
+"""
+OTVision config module for setting default values
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #
@@ -17,14 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
-import logging
+
 from pathlib import Path
 
 from .helpers.files import _get_testdatafolder
 
-logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
-
+# sourcery skip: merge-dict-assign
 CONFIG = {}
 
 # FOLDERS
@@ -74,6 +73,7 @@ CONFIG["CONVERT"]["FFMPEG_PATH"] = str(
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".mp4"
 CONFIG["CONVERT"]["FPS"] = 20.0
 CONFIG["CONVERT"]["OVERWRITE"] = True
+CONFIG["CONVERT"]["DEBUG"] = False
 
 # DETECT
 CONFIG["DETECT"] = {}
@@ -91,7 +91,8 @@ CONFIG["DETECT"]["YOLO"]["IOU"] = 0.45
 CONFIG["DETECT"]["YOLO"]["IMGSIZE"] = 640
 CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 1
 CONFIG["DETECT"]["YOLO"]["NORMALIZED"] = False
-CONFIG["DETECT"]["YOLO"]["OVERWRITE"] = True
+CONFIG["DETECT"]["OVERWRITE"] = True
+CONFIG["DETECT"]["DEBUG"] = False
 
 # TRACK
 CONFIG["TRACK"] = {}
@@ -102,16 +103,18 @@ CONFIG["TRACK"]["IOU"]["SIGMA_H"] = 0.42  # 0.420
 CONFIG["TRACK"]["IOU"]["SIGMA_IOU"] = 0.38  # 0.381
 CONFIG["TRACK"]["IOU"]["T_MIN"] = 5
 CONFIG["TRACK"]["IOU"]["T_MISS_MAX"] = 51  # 51
-CONFIG["TRACK"]["IOU"]["OVERWRITE"] = True
+CONFIG["TRACK"]["DEBUG"] = False
 
 # UNDISTORT
 CONFIG["UNDISTORT"] = {}
 CONFIG["UNDISTORT"]["OVERWRTIE"] = False
+CONFIG["UNDISTORT"]["DEBUG"] = False
 
 # TRANSFORM
 CONFIG["TRANSFORM"] = {}
 CONFIG["TRANSFORM"]["RUN_CHAINED"] = True
 CONFIG["TRANSFORM"]["OVERWRITE"] = True
+CONFIG["TRANSFORM"]["DEBUG"] = False
 
 # GUI
 CONFIG["GUI"] = {}
@@ -129,40 +132,3 @@ PAD = {"padx": 10, "pady": 10}
 
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)
-def _read(config_name: str = "user"):
-    config_path = get_path(config_name=config_name)
-    if config_path.suffix == ".otconf":
-        if not config_path.is_file():
-            print(f"{config_name}.otconf doesn't exist, load default.otconf instead")
-            config_path = get_path(config_name="default")
-            if not config_path.is_file():
-                raise FileNotFoundError()
-        with open(str(config_path)) as f:
-            config = json.load(f)
-        return config
-    else:
-        raise ValueError("Filetype for configuration has to be .otconf")
-
-
-def _write(config: dict, config_name: str = "user"):
-    config_path = get_path(config_name=config_name)
-    if config_name == "default":
-        answer = input("Sure you wanna overwrite default.otconf? [y/n]")
-        if answer != "y":
-            print("Configuration not saved, default.otconf not overwritten")
-            return None
-        print("default.otconf overwritten")
-    with open(str(config_path), "w") as f:
-        json.dump(config, f, indent=4)
-
-
-def get_path(config_name="default"):
-    config_path = Path(__file__).parents[0] / f"{config_name}.otconf"
-    return config_path
-
-
-if __name__ == "__main__":
-    # config_dict = _read()
-    # print(f"Config dict: {config_dict}")
-    # _write(config_dict, config_name="user")
-    pass

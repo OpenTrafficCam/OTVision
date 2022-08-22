@@ -1,6 +1,7 @@
-# OTVision: Python module to testwise run OTVision/detect/detect.py
-
-# Copyright (C) 2020 OpenTrafficCam Contributors
+"""
+OTVision script to call the convert main with arguments parsed from command line
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
 #
@@ -18,14 +19,35 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from pathlib import Path
+import argparse
 
-from OTVision.convert import main as convert
+from OTVision.convert.convert import main as convert
+from OTVision.helpers.log import log
+
+
+def parse():
+    parser = argparse.ArgumentParser(description="Track objects in detections")
+    parser.add_argument(
+        "-p",
+        "--paths",
+        nargs="+",
+        type=str,
+        help="Path or list of paths to detections files",
+        required=True,
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Logging in debug mode"
+    )
+    return parser.parse_args()
+
+
+def main():
+    kwargs = vars(parse())
+    log.info("Starting conversion from command line")
+    log.info(f"Arguments: {kwargs}")
+    convert(**kwargs)
+    log.info("Finished conversion from command line")
+
 
 if __name__ == "__main__":
-    convert(
-        str(
-            Path(__file__).parents[1]
-            / r"tests/data/testvideo_FR20_2020-02-20_12-00-00.h264"
-        )
-    )
+    main()

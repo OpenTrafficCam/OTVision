@@ -1,5 +1,5 @@
 """
-OTVision init module
+OTVision helpers for logging
 """
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -19,11 +19,10 @@ OTVision init module
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-# TODO: Might need to change this
-from .convert.convert import main as convert
-from .detect.detect import main as detect
-from .track.track import main as track
+import logging
 
-# from .view.view import main as view
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s %(filename)s:%(message)s", level=logging.INFO
+)
 
-__all__ = [detect, track, convert]
+log = logging.getLogger(__name__)

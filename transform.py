@@ -1,5 +1,6 @@
-# OTVision: Python module to testwise run OTVision/transform/transform.py
-
+"""
+OTVision script to call the transform main with arguments parsed from command line
+"""
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -17,18 +18,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
 
+import argparse
+
+from OTVision.helpers.log import log
 from OTVision.transform.transform import main as transform
 
-if __name__ == "__main__":
-    transform(
-        tracks_files=Path(__file__).parents[0]
-        / r"tests"
-        / r"data"
-        / r"Testvideo_FR20_Cars-Cyclist.ottrk",
-        refpts_file=Path(__file__).parents[0]
-        / r"tests"
-        / r"data"
-        / r"Testvideo_FR20_Cars-Cyclist.otrfpts",
+
+def parse():
+    parser = argparse.ArgumentParser(description="Track objects in detections")
+    parser.add_argument(
+        "-p",
+        "--paths",
+        nargs="+",
+        type=str,
+        help="Path or list of paths to tracks files",
+        required=True,
     )
+    parser.add_argument(
+        "-r",
+        "--refpts_file",
+        type=str,
+        help="Path to refpts file. If not given, each tracks file should have one",
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Logging in debug mode"
+    )
+    return parser.parse_args()
+
+
+def main():
+    kwargs = vars(parse())
+    log.info("Starting transforming to world coordinates from command line")
+    log.info(f"Arguments: {kwargs}")
+    transform(**kwargs)
+    log.info("Finished transforming to world coordinates  from command line")
+
+
+if __name__ == "__main__":
+    main()

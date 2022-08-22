@@ -1,9 +1,31 @@
+"""
+OTVision gui module for detect.py
+"""
+# Copyright (C) 2022 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import tkinter as tk
 import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.files import get_files
+from OTVision.helpers.log import log
 from OTVision.view.view_helpers import FrameRun
 
 
@@ -74,7 +96,7 @@ class FrameDetectOptions(tk.Frame):
             master=self, text="Overwrite", variable=self.checkbutton_overwrite_var
         )
         self.checkbutton_overwrite.grid(row=6, column=0, columnspan=2, sticky="w")
-        if CONFIG["DETECT"]["YOLO"]["OVERWRITE"]:
+        if CONFIG["DETECT"]["OVERWRITE"]:
             self.checkbutton_overwrite.select()
 
 
@@ -86,22 +108,23 @@ class FrameRunDetection(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        print("---Starting detection---")
-        input_filetype = "." + self.master.master.frame_files.combo_vid_filetype.get()
+        log.debug("---Starting detection from gui---")
+        input_filetype = f".{self.master.master.frame_files.combo_vid_filetype.get()}"
         paths = get_files(
             paths=self.master.master.frame_files.get_tree_files(),
             filetypes=input_filetype,
             replace_filetype=True,
         )
+
         weights = self.master.frame_options.combo_weights.get()
         conf = self.master.frame_options.scale_conf.get()
         iou = self.master.frame_options.scale_iou.get()
         size = self.master.frame_options.scale_imgsize.get()
         chunksize = self.master.frame_options.scale_chunksize.get()
         normalized = self.master.frame_options.checkbutton_normalized_var.get()
-        # overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
         detect(
-            files=paths,
+            paths=paths,
             filetypes=input_filetype,
             weights=weights,
             conf=conf,
@@ -109,6 +132,7 @@ class FrameRunDetection(FrameRun):
             size=size,
             chunksize=chunksize,
             normalized=normalized,
-        )  # TODO: Add overwrite parameter (first add argument to detect)
+            overwrite=overwrite,
+        )
+
         self.master.master.frame_files.update_files_dict()
-        print("---Detection successful---")
