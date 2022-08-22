@@ -56,7 +56,7 @@ class FrameTrackOptions(tk.Frame):
         self.label_t_miss_max = tk.Label(master=self, text="t miss max")
         self.label_t_miss_max.grid(row=4, column=0, sticky="sw")
         self.scale_t_miss_max = tk.Scale(
-            master=self, from_=0, to=10, resolution=1, orient="horizontal"
+            master=self, from_=0, to=100, resolution=1, orient="horizontal"
         )
         self.scale_t_miss_max.grid(row=4, column=1, sticky="w")
         self.scale_t_miss_max.set(CONFIG["TRACK"]["IOU"]["T_MISS_MAX"])
