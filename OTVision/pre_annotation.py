@@ -53,7 +53,13 @@ def _write_class_labels(cvat_yolo_dir, class_labels):
             f.write((name + "\n"))
 
 
-def _write_bbox(cvat_yolo_dir: str, img_type: str, xywhn: list, classes: dict):
+def _write_bbox(
+    cvat_yolo_dir: str,
+    img_type: str,
+    xywhn: list,
+    class_labels: dict,
+    filter_classes: dict,
+):
     image_paths = get_files(cvat_yolo_dir, filetypes=img_type)
     assert len(image_paths) == len(xywhn)
 
@@ -63,14 +69,27 @@ def _write_bbox(cvat_yolo_dir: str, img_type: str, xywhn: list, classes: dict):
         with open(annotation_txt, "w") as f:
             for detection in detections:
                 x, y, w, h, _, _cls = detection  # [x, y, w, h, conf, class]
-                if _cls in classes.keys():
+                if filter_classes is not None:
+                    cls_name = class_labels[_cls]
+                    if cls_name in list(filter_classes.values()):
+                        new_cls = list(filter_classes.keys())[
+                            list(filter_classes.values()).index(cls_name)
+                        ]
+                        if new_cls in filter_classes.keys():
+                            line = (
+                                "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
+                                    x=x, y=y, w=w, h=h, cls=new_cls
+                                )
+                            )
+                            f.write((line + "\n"))
+                else:
                     line = "{cls:0.0f} {x:0.6f} {y:0.6f} {w:0.6f} {h:0.6f}".format(
                         x=x, y=y, w=w, h=h, cls=_cls
                     )
                     f.write((line + "\n"))
 
 
-def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, classes, img_type):
+def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, filter_classes, img_type):
     yolo_cvat_dir = unzip(cvat_yolo_zip)
     bboxes_in_xywhn_format, class_labels = detect.main(
         paths=yolo_cvat_dir,
@@ -81,22 +100,25 @@ def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, classes, img_type):
         ot_labels_enabled=True,
     )
 
-    if classes != {}:
-        class_labels = classes
+    _write_bbox(
+        yolo_cvat_dir, img_type, bboxes_in_xywhn_format, class_labels, filter_classes
+    )
 
-    _write_bbox(yolo_cvat_dir, img_type, bboxes_in_xywhn_format, classes)
+    if filter_classes is not None:
+        class_labels = filter_classes
+
     _write_class_labels(yolo_cvat_dir, class_labels)
     return _zip_annotated_dir(yolo_cvat_dir, img_type, pngs=False)
 
 
-def main(file, model_weights, chunk_size, classes={}, img_type="png"):
+def main(file, model_weights, chunk_size=1000, filter_classes=None, img_type="png"):
     log.info("Starting")
     if os.path.isfile(file):
-        _pre_annotate(file, model_weights, chunk_size, classes, img_type)
+        _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
     elif os.path.isdir(file):
         zip_files = get_files(file, "zip")
         for file in progressbar.progressbar(zip_files):
-            _pre_annotate(file, model_weights, chunk_size, classes, img_type)
+            _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
     log.info("Done in {0:0.2f} s".format(perf_counter()))
 
 
@@ -108,13 +130,13 @@ if __name__ == "__main__":
     )
     model_weights = "yolov5s.pt"
     chunk_size = 200
-    classes = {
+    filter_classes = {
         0: "person",
         1: "bicycle",
         2: "car",
         3: "motorcycle",
-        5: "bus",
-        7: "truck",
+        4: "bus",
+        5: "truck",
     }
 
-    main(file_path, model_weights, chunk_size, classes)
+    main(file_path, model_weights, chunk_size, filter_classes)
