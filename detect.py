@@ -36,6 +36,21 @@ def parse():
         required=True,
     )
     parser.add_argument(
+        "-f",
+        "--filetypes",
+        type=str,
+        nargs="+",
+        help="Filetypes of files in folders to select for detection",
+        required=False,
+    )
+    parser.add_argument(
+        "-w",
+        "--weights",
+        type=str,
+        help="Name of weights from PyTorch hub or Path to weights file",
+        required=False,
+    )
+    parser.add_argument(
         "-d", "--debug", action="store_true", help="Logging in debug mode"
     )
     return parser.parse_args()
