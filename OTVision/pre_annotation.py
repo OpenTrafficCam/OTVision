@@ -20,10 +20,10 @@ OTVision module to pre-annotate images using detect.py
 
 # TODO: docstrings in pre_annotation
 
-import os
 import shutil
 from pathlib import Path
 from time import perf_counter
+from typing import Union
 
 import progressbar
 
@@ -32,7 +32,7 @@ from OTVision.helpers.files import get_files, unzip
 from OTVision.helpers.log import log
 
 
-def _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False):
+def _zip_annotated_dir(cvat_yolo_dir: Union[str, Path], img_type: str, pngs=False):
     to_be_zipped = Path(cvat_yolo_dir)
     if not pngs:
         img_paths = get_files(to_be_zipped, filetypes=img_type)
@@ -45,7 +45,7 @@ def _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False):
     return new_file.with_name(f"{new_file.stem}.zip")
 
 
-def _write_class_labels(cvat_yolo_dir, class_labels):
+def _write_class_labels(cvat_yolo_dir: Union[str, Path], class_labels: dict):
     cvat_yolo_dir = Path(cvat_yolo_dir)
     obj_names = cvat_yolo_dir / "obj.names"
     with open(obj_names, "w") as f:
@@ -89,7 +89,13 @@ def _write_bbox(
                     f.write((line + "\n"))
 
 
-def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, filter_classes, img_type):
+def _pre_annotate(
+    cvat_yolo_zip: Path,
+    model_weights: str,
+    chunk_size: int,
+    filter_classes: Union[None, dict],
+    img_type: str,
+):
     yolo_cvat_dir = unzip(cvat_yolo_zip)
     bboxes_in_xywhn_format, class_labels = detect.main(
         paths=yolo_cvat_dir,
@@ -111,11 +117,17 @@ def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, filter_classes, img_
     return _zip_annotated_dir(yolo_cvat_dir, img_type, pngs=False)
 
 
-def main(file, model_weights, chunk_size=1000, filter_classes=None, img_type="png"):
+def main(
+    file: Union[str, Path],
+    model_weights: str,
+    chunk_size: int = 1000,
+    filter_classes: Union[None, dict] = None,
+    img_type: str = "png",
+):
     log.info("Starting")
-    if os.path.isfile(file):
+    if Path(file).is_file():
         _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    elif os.path.isdir(file):
+    elif Path(file).is_dir():
         zip_files = get_files(file, "zip")
         for file in progressbar.progressbar(zip_files):
             _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
