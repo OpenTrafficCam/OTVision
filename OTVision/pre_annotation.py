@@ -20,7 +20,6 @@ OTVision module to pre-annotate images using detect.py
 
 # TODO: docstrings in pre_annotation
 
-import os
 import shutil
 from pathlib import Path
 from time import perf_counter
@@ -126,9 +125,9 @@ def main(
     img_type: str = "png",
 ):
     log.info("Starting")
-    if os.path.isfile(file):
+    if Path(file).is_file():
         _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    elif os.path.isdir(file):
+    elif Path(file).is_dir():
         zip_files = get_files(file, "zip")
         for file in progressbar.progressbar(zip_files):
             _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
