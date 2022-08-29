@@ -30,7 +30,7 @@ def example_image(test_data_dir) -> Path:
 
 @pytest.fixture
 def class_labels() -> list[str]:
-    return ["car", "person", "cat", "truck", "bicycle"]
+    return {0: "car", 1: "person", 2: "cat", 3: "truck", 4: "bicycle"}
 
 
 @pytest.fixture
@@ -92,6 +92,7 @@ def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
         model_weights="yolov5s",
         chunk_size=100,
         img_type="png",
+        filter_classes=None,
     )
 
     cvat_dir_unzipped = unzip(cvat_dir_zipped)
@@ -114,19 +115,22 @@ def test_write_class_labels_cvatYoloZipAsParam_writeLabels(
     _write_class_labels(cvat_yolo_dir=cvat_dir_unzipped, class_labels=class_labels)
     obj_names_content = []
     with open(obj_names_file_path) as f:
-        obj_names_content = [line.rstrip() for line in f.readlines()]
+        obj_names_content = {
+            cls_id: line.rstrip() for cls_id, line in enumerate(f.readlines())
+        }
 
     assert len(obj_names_content) == len(class_labels)
 
-    for obj_names_label, class_label in zip(obj_names_content, class_labels):
-        assert obj_names_label == class_label
+    for obj_names_id, cls_id in zip(obj_names_content, class_labels):
+        assert obj_names_id == cls_id
+        assert obj_names_content[obj_names_id] == class_labels[cls_id]
 
 
 def test_write_bbox_cvatYoloZipAs1stParam_validDetectionsAs2ndParam_writeBboxes(
-    cvat_yolo_example_dataset_zipped: Path, detections: list
+    cvat_yolo_example_dataset_zipped: Path, detections: list, class_labels: dict
 ):
     cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
-    _write_bbox(cvat_dir_unzipped, "png", detections)
+    _write_bbox(cvat_dir_unzipped, "png", detections, class_labels, None)
 
     obj_train_data = Path(cvat_dir_unzipped, "obj_train_data")
     cvat_anns = [f for f in obj_train_data.iterdir() if f.suffix == ".txt"]
