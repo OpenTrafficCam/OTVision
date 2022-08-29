@@ -219,7 +219,7 @@ def is_in_format(file_path, file_formats):
     ]
 
 
-def unzip(file):
+def unzip(file: Union[str, Path]) -> Path:
     file = Path(file)
     directory = file.with_suffix("")
     shutil.unpack_archive(file, directory)
