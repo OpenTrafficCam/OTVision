@@ -45,7 +45,7 @@ def _zip_annotated_dir(cvat_yolo_dir: Union[str, Path], img_type: str, pngs=Fals
     return new_file.with_name(f"{new_file.stem}.zip")
 
 
-def _write_class_labels(cvat_yolo_dir: Union[str, Path], class_labels: list[str]):
+def _write_class_labels(cvat_yolo_dir: Union[str, Path], class_labels: dict):
     cvat_yolo_dir = Path(cvat_yolo_dir)
     obj_names = cvat_yolo_dir / "obj.names"
     with open(obj_names, "w") as f:
