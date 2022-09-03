@@ -38,8 +38,9 @@ class WindowOTVision(tk.Tk):
         self.title("OTVision")
         if ON_WINDOWS:
             self.iconbitmap(CONFIG["GUI"]["OTC ICON"])
-        self.minsize(900, 620)
         self.set_layout()
+        self.minsize(900, 620)
+        self.state("zoomed")
 
     def set_layout(self):
         for col in range(3):
