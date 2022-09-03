@@ -43,9 +43,10 @@ class WindowOTVision(tk.Tk):
     def set_layout(self):
         for col in range(3):
             self.columnconfigure(index=col, weight=1)
+        self.rowconfigure(index=0, weight=1)  # Stretches frame_files only
         # Treeview files
         self.frame_files = FrameFileTree(master=self, text="Choose files")
-        self.frame_files.grid(**PAD, row=0, column=0, columnspan=4, sticky="ew")
+        self.frame_files.grid(**PAD, row=0, column=0, columnspan=4, sticky="nsew")
         # Settings
         # Convert (Only works on windows machines for now)
         if ON_WINDOWS:
