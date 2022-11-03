@@ -5,3 +5,4 @@ isort
 # mypy # don't use for now
 pytest-cov
 yamllint
+mypy
