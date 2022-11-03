@@ -170,18 +170,18 @@ class FormatNotSupportedError(Exception):
     pass
 
 
-def _create_chunks(files: list, chunksize: int) -> list[list]:
+def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
     """Splits list in several lists of certain chunksize.
 
     Args:
-        files (list): Full list.
+        files (list[Path]): Full list.
         chunksize (int): Chunksize to split list into.
 
     Returns:
-        list[list]: list of lists of certain chunksize.
+        list[list[Path]]: list of lists of certain chunksize.
     """
     if chunksize == 0:
-        return files
+        return [files]
     chunk_starts = range(0, len(files), chunksize)
     return [files[i : i + chunksize] for i in chunk_starts]
 
