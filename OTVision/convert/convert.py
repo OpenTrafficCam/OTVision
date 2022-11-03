@@ -132,7 +132,6 @@ def convert(
 
     log.info(f"Try converting {input_video_file} to {output_filetype}")
 
-    input_video_file = Path(input_video_file)
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
