@@ -68,7 +68,7 @@ def detect_video(
     if model is None:
         model = loadmodel(weights, conf, iou)
 
-    yolo_detections = []
+    yolo_detections: list = []
     t1 = perf_counter()
 
     if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
@@ -153,7 +153,7 @@ def detect_images(
     Returns:
         [type]: [description]
     """
-    yolo_detections = []
+    yolo_detections: list = []
     if not file_chunks:
         return [], [] if ot_labels_enabled else yolo_detections
     if model is None:
@@ -224,9 +224,7 @@ def _log_batch_performances_stats(
     batch_len = "batch_size: {:d}".format(batch_size)
     fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
     log_msg = f"{batch_no}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
-    log.info(
-        log_msg
-    )  # BUG: #162 Logs twice from yolo.py (with and without formatting)
+    log.info(log_msg)  # BUG: #162 Logs twice from yolo.py (with and without formatting)
 
 
 def _add_detection_results(detections, results, normalized):
