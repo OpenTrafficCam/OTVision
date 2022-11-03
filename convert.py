@@ -20,6 +20,7 @@ OTVision script to call the convert main with arguments parsed from command line
 
 
 import argparse
+from pathlib import Path
 
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.log import log
@@ -42,10 +43,12 @@ def parse():
 
 
 def main():
-    kwargs = vars(parse())
+    args = parse()
+    paths = [Path(str_path) for str_path in args.paths]
+    debug = args.debug
     log.info("Starting conversion from command line")
-    log.info(f"Arguments: {kwargs}")
-    convert(**kwargs)
+    log.info(f"Arguments: {vars(args)}")
+    convert(paths=paths, debug=debug)
     log.info("Finished conversion from command line")
 
 

@@ -20,6 +20,7 @@ OTVision script to call the track main with arguments parsed from command line
 
 
 import argparse
+from pathlib import Path
 
 from OTVision.helpers.log import log
 from OTVision.track.track import main as track
@@ -42,10 +43,12 @@ def parse():
 
 
 def main():
-    kwargs = vars(parse())
+    args = parse()
+    paths = [Path(str_path) for str_path in args.paths]
+    debug = args.debug
     log.info("Starting tracking from command line")
-    log.info(f"Arguments: {kwargs}")
-    track(**kwargs)
+    log.info(f"Arguments: {vars(args)}")
+    track(paths=paths, debug=debug)
     log.info("Finished tracking from command line")
 
 
