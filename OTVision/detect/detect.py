@@ -21,7 +21,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
@@ -31,8 +31,8 @@ from . import yolo
 
 
 def main(
-    paths: Union[List[Path], List[str], Path, str],
-    filetypes: List[str] = CONFIG["FILETYPES"]["VID_IMG"],
+    paths: Union[list[Path], list[str], Path, str],
+    filetypes: list[str] = CONFIG["FILETYPES"]["VID_IMG"],
     model=None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
@@ -48,9 +48,9 @@ def main(
     Writes detections to one file per video/object.
 
     Args:
-        paths (Union[List[Path], List[str], Path, str]): Path or list of paths
+        paths (Union[list[Path], list[str], Path, str]): Path or list of paths
             to video files.
-        filetypes (List[str], optional): Types of video/image files to be detected.
+        filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
         model (_type_, optional): YOLOv5 detection model.
             Defaults to None.
@@ -74,7 +74,7 @@ def main(
             Defaults to CONFIG["DETECT"]["DEBUG"].
 
     Returns:
-        List: Detections for images, if ot_labels_enable is set to True.
+        list: Detections for images, if ot_labels_enable is set to True.
     """
     log.info("Start detection")
     if debug:
@@ -133,19 +133,19 @@ def main(
 
 
 def _split_to_video_img_paths(
-    files: Union[List[Path], List[str]],
-    video_formats: List[str] = CONFIG["FILETYPES"]["VID"],
-    img_formats: List[str] = CONFIG["FILETYPES"]["IMG"],
-) -> Tuple(Union[List[Path], List[str]], Union[List[Path], List[str]]):
+    files: Union[list[Path], list[str]],
+    video_formats: list[str] = CONFIG["FILETYPES"]["VID"],
+    img_formats: list[str] = CONFIG["FILETYPES"]["IMG"],
+) -> tuple(Union[list[Path], list[str]], Union[list[Path], list[str]]):
     """
     Divides a list of files in video files and image files.
 
     Args:
-        files (Union[List[Path], List[str]]): The list of video
+        files (Union[list[Path], list[str]]): The list of video
             and/or image file paths.
-        video_formats (List[str], optional): _description_.
+        video_formats (list[str], optional): _description_.
             Defaults to CONFIG["FILETYPES"]["VID"].
-        img_formats (List[str], optional): _description_.
+        img_formats (list[str], optional): _description_.
             Defaults to CONFIG["FILETYPES"]["IMG"].
 
     Raises:
@@ -153,8 +153,8 @@ def _split_to_video_img_paths(
             video_formats or img_formats.
 
     Returns:
-        Tuple(Union[List[Path], List[str]], Union[List[Path], List[str]]):
-            List of video paths and list of image paths
+        tuple(Union[list[Path], list[str]], Union[list[Path], list[str]]):
+            list of video paths and list of image paths
     """
 
     video_files, img_files = [], []
@@ -174,15 +174,15 @@ class FormatNotSupportedError(Exception):
     pass
 
 
-def _create_chunks(files: List, chunksize: int) -> List[List]:
+def _create_chunks(files: list, chunksize: int) -> list[list]:
     """Splits list in several lists of certain chunksize.
 
     Args:
-        files (List): Full list.
+        files (list): Full list.
         chunksize (int): Chunksize to split list into.
 
     Returns:
-        List[List]: List of lists of certain chunksize.
+        list[list]: list of lists of certain chunksize.
     """
     if chunksize == 0:
         return files
@@ -191,14 +191,14 @@ def _create_chunks(files: List, chunksize: int) -> List[List]:
 
 
 def write(
-    detections: Dict,
+    detections: dict,
     img_or_video_file: Union[Path, str],
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
 ):
     """Writes detections of a video or image to a json-like file.
 
     Args:
-        detections (Dict): Detections of a video or image.
+        detections (dict): Detections of a video or image.
         img_or_video_file (Union[Path, str]): Path to image or video of detections.
         overwrite (bool, optional): Wheter or not to overwrite existing detections file.
             Defaults to CONFIG["DETECT"]["OVERWRITE"].
