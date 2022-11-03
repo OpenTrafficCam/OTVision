@@ -21,7 +21,6 @@ OTVision helpers to change formats and retrieve information
 
 import datetime as dt
 import re
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -105,7 +104,7 @@ def _get_time_from_frame_number(
     fps: int,
     return_yyyymmdd_hhmmss=True,
     return_milliseconds=True,
-) -> Union[pd.Series, pd.Series]:
+) -> pd.Series:
     """Get datetime series of detections from series of frame numbers of video
     the objects were detected using a start datetime of the video and
     the video frame rate (fps).

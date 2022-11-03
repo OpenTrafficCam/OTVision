@@ -21,7 +21,6 @@ OTVision helpers for filehandling
 import json
 import shutil
 from pathlib import Path
-from typing import Union
 
 from OTVision.helpers.log import log
 
@@ -89,7 +88,7 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     return sorted(list(files))
 
 
-def remove_dir(dir_to_remove: Union[str, Path]):
+def remove_dir(dir_to_remove: Path):
     dir_to_remove = Path(dir_to_remove)
     for path in dir_to_remove.glob("*"):
         if path.is_file():

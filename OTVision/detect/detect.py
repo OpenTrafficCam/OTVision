@@ -21,7 +21,6 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import json
 from pathlib import Path
-from typing import Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
@@ -31,7 +30,7 @@ from . import yolo
 
 
 def main(
-    paths: Union[list[Path], list[str], Path, str],
+    paths: list[Path],
     filetypes: list[str] = CONFIG["FILETYPES"]["VID_IMG"],
     model=None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
@@ -48,8 +47,7 @@ def main(
     Writes detections to one file per video/object.
 
     Args:
-        paths (Union[list[Path], list[str], Path, str]): Path or list of paths
-            to video files.
+        paths (list[Path]): List of paths to video files.
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
         model (_type_, optional): YOLOv5 detection model.
@@ -133,16 +131,15 @@ def main(
 
 
 def _split_to_video_img_paths(
-    files: Union[list[Path], list[str]],
+    files: list[Path],
     video_formats: list[str] = CONFIG["FILETYPES"]["VID"],
     img_formats: list[str] = CONFIG["FILETYPES"]["IMG"],
-) -> tuple(Union[list[Path], list[str]], Union[list[Path], list[str]]):
+) -> tuple[list[Path], list[Path]]:
     """
     Divides a list of files in video files and image files.
 
     Args:
-        files (Union[list[Path], list[str]]): The list of video
-            and/or image file paths.
+        files (list[Path]): List of video and/or image file paths.
         video_formats (list[str], optional): _description_.
             Defaults to CONFIG["FILETYPES"]["VID"].
         img_formats (list[str], optional): _description_.
@@ -153,8 +150,7 @@ def _split_to_video_img_paths(
             video_formats or img_formats.
 
     Returns:
-        tuple(Union[list[Path], list[str]], Union[list[Path], list[str]]):
-            list of video paths and list of image paths
+        tuple[list[Path], list[Path]]: List of video paths and list of image paths
     """
 
     video_files, img_files = [], []
@@ -192,14 +188,14 @@ def _create_chunks(files: list, chunksize: int) -> list[list]:
 
 def write(
     detections: dict,
-    img_or_video_file: Union[Path, str],
+    img_or_video_file: Path,
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
 ):
     """Writes detections of a video or image to a json-like file.
 
     Args:
         detections (dict): Detections of a video or image.
-        img_or_video_file (Union[Path, str]): Path to image or video of detections.
+        img_or_video_file (Path): Path to image or video of detections.
         overwrite (bool, optional): Wheter or not to overwrite existing detections file.
             Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
