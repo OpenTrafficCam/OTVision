@@ -36,13 +36,13 @@ def _get_fps_from_filename(filename: str) -> int:
     Returns:
         int or None: frame rate in frames per second or None
     """
-    # Get input fps frome filename
 
     match = re.search(r"_FR([\d]+)_", filename)
-    if not match:
-        return None
 
-    return int(match.group(1))
+    if not match:
+        raise ValueError("Cannot read frame rate from file name")
+
+    return int(match[1])
 
 
 def _get_datetime_from_filename(
@@ -65,7 +65,7 @@ def _get_datetime_from_filename(
         return epoch_datetime
 
     # Assume that there is only one timestamp in the file name
-    datetime_str = match.group(1)  # take group withtout underscore
+    datetime_str = match[1]
 
     try:
         dt.datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
@@ -127,12 +127,8 @@ def _get_time_from_frame_number(
         return datetime_yyyymmdd_hhmmss, datetime_milliseconds
     elif not return_milliseconds:
         return datetime_yyyymmdd_hhmmss
-    elif not return_yyyymmdd_hhmmss:
-        return datetime_milliseconds
     else:
-        raise ValueError(
-            "Either return_yyyymmdd_hhmmss or return_milliseconds has to be True"
-        )
+        return datetime_milliseconds
 
 
 def _get_epsg_from_utm_zone(utm_zone: int, hemisphere: str) -> int:
