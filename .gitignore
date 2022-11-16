@@ -170,3 +170,6 @@ Thumbs.db
 
 # Local History for Visual Studio Code
 .history/
+
+# Vim
+.vim
