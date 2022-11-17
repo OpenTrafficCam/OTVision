@@ -39,6 +39,7 @@ def main(
     output_fps: float = None,
     fps_from_filename: bool = True,
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
+    delete_input: bool = False,
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
     # TODO: #111 Set more parameters as global variables in config.py
 ):
@@ -69,6 +70,7 @@ def main(
             output_fps,
             fps_from_filename,
             overwrite,
+            delete_input,
         )
 
 
@@ -79,6 +81,7 @@ def convert(
     output_fps: float = None,
     fps_from_filename: bool = True,
     overwrite: bool = True,
+    delete_input: bool = False,
 ):  # sourcery skip: inline-variable, simplify-fstring-formatting
     """Converts h264-based videos into other formats and/or other frame rates. Also
     input frame rates can be given. If input video file is raw h264 and no input frame
@@ -124,9 +127,10 @@ def convert(
         if output_fps is not None:
             output_fps_cmd = f"-r {output_fps}"
             copy_cmd = ""
+            delete_input = False  # Never delete input if re-encoding file.
         else:
             output_fps_cmd = ""
-            copy_cmd = "-vcodec copy"  # No decoding, only demuxing
+            copy_cmd = "-vcodec copy"  # No re-encoding, only demuxing
         # Input file
         ffmpeg_cmd_in = f"{input_fps_cmd} -i '{input_video_file}'"
         # Filters (mybe necessary for special cases, insert )
@@ -145,6 +149,13 @@ def convert(
 
         subprocess.run(ffmpeg_cmd, shell=True)
         log.info(f"{output_video_file} created with {output_fps} fps")
+
+        if delete_input:
+            in_size = input_video_file.stat().st_size
+            out_size = output_video_file.stat().st_size
+            if in_size <= out_size:
+                log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
+                input_video_file.unlink()
 
     elif input_filetype in vid_filetypes:
         raise TypeError("Output video filetype is not supported")
