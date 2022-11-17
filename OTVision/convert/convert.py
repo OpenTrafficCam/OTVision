@@ -102,10 +102,6 @@ def convert(
         [type]: [description]
     """
 
-    if not ON_WINDOWS:
-        log.warning("Conversion of h264 videos only works on windows machines for now")
-        return
-
     log.info(f"Try converting {input_video_file} to {output_filetype}")
 
     input_video_file = Path(input_video_file)
@@ -132,20 +128,22 @@ def convert(
             output_fps_cmd = ""
             copy_cmd = "-vcodec copy"  # No decoding, only demuxing
         # Input file
-        ffmpeg_cmd_in = f"{input_fps_cmd} -i {input_video_file}"
+        ffmpeg_cmd_in = f"{input_fps_cmd} -i '{input_video_file}'"
         # Filters (mybe necessary for special cases, insert )
         # ffmpeg_cmd_filter = "-c:v libx264"
         ffmpeg_cmd_filter = ""
         # Output file
         ffmpeg_cmd_out = (
-            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y {output_video_file}"
+            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y '{output_video_file}'"
         )
         # Concat and run ffmpeg command
         FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
+        if not ON_WINDOWS:
+            FFMPEG_PATH = "ffmpeg"
         ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
-        subprocess.run(ffmpeg_cmd)
+        subprocess.run(ffmpeg_cmd, shell=True)
         log.info(f"{output_video_file} created with {output_fps} fps")
 
     elif input_filetype in vid_filetypes:
