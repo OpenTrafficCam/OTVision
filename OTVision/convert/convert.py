@@ -145,7 +145,7 @@ def convert(
         ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
-        subprocess.call(ffmpeg_cmd)
+        subprocess.run(ffmpeg_cmd)
         log.info(f"{output_video_file} created with {output_fps} fps")
 
     elif input_filetype in vid_filetypes:
