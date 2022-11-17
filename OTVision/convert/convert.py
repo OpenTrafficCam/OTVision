@@ -147,7 +147,13 @@ def convert(
         ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
-        subprocess.run(ffmpeg_cmd, shell=True)
+        subprocess.run(
+            ffmpeg_cmd,
+            shell=True,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
         log.info(f"{output_video_file} created with {output_fps} fps")
 
         if delete_input:
