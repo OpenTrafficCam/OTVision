@@ -1,3 +1,4 @@
+---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
@@ -27,6 +28,8 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-all]
+        # TODO: Remove when whole codebase is type hinted
+        args: [--follow-imports=silent]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
     hooks:
