@@ -112,7 +112,7 @@ def convert(
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
-    if not overwrite and output_video_file.is_file:
+    if not overwrite and output_video_file.is_file():
         return None
     vid_filetypes = CONFIG["FILETYPES"]["VID"] + [".h264"]
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
