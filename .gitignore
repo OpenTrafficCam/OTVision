@@ -1,4 +1,4 @@
-# OTVision 
+# OTVision
 OTVision/user.conf
 yolov5*.pt
 obj_train_data/*
@@ -170,3 +170,6 @@ Thumbs.db
 
 # Local History for Visual Studio Code
 .history/
+
+# Vim
+.vim

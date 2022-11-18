@@ -18,6 +18,8 @@ progressbar2==3.53.1
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.7.1+cu110
 torchvision==0.8.2+cu110
+IPython
+psutil
 
 # tracks ---------------------------------------
 https://github.com/OpenTrafficCam/downloads/blob/master/GDAL-3.2.3-cp39-cp39-win_amd64.whl?raw=true
