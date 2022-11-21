@@ -145,7 +145,7 @@ def write(detections, img_or_video_file, overwrite=CONFIG["DETECT"]["OVERWRITE"]
     if overwrite or not detections_file_already_exists:
         # Write JSON
         with open(detection_file, "w") as f:
-            ujson.dump(detections, f, indent=4)
+            ujson.dump(detections, f)
         if detections_file_already_exists:
             log.info(f"{detection_file} overwritten")
         else:
