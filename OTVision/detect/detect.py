@@ -19,9 +19,10 @@ OTVision main module to detect objects in single or multiple images or videos.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import json
 from pathlib import Path
 from typing import Union
+
+import ujson
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, is_in_format
@@ -144,7 +145,7 @@ def write(detections, img_or_video_file, overwrite=CONFIG["DETECT"]["OVERWRITE"]
     if overwrite or not detections_file_already_exists:
         # Write JSON
         with open(detection_file, "w") as f:
-            json.dump(detections, f, indent=4)
+            ujson.dump(detections, f, indent=4)
         if detections_file_already_exists:
             log.info(f"{detection_file} overwritten")
         else:
