@@ -68,7 +68,7 @@ def detect_video(
     if model is None:
         model = loadmodel(weights, conf, iou)
 
-    yolo_detections = []
+    yolo_detections: list[list[float]] = []
     t1 = perf_counter()
 
     if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
@@ -80,13 +80,15 @@ def detect_video(
     log.info(f"Run detection on video: {file_path}")
 
     got_frame = True
+    t_loop_overhead = 0.0
     while got_frame:
+        t_start = perf_counter()
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
+
+        t_get_batch = perf_counter()
 
         if not img_batch:
             break
-
-        t_start = perf_counter()
 
         # What purpose does this transformation have
         transformed_batch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
@@ -102,7 +104,14 @@ def detect_video(
         t_list = perf_counter()
 
         _log_batch_performances_stats(
-            batch_no, t_start, t_trans, t_det, t_list, len(img_batch)
+            batch_no,
+            t_start,
+            t_get_batch,
+            t_trans,
+            t_det,
+            t_list,
+            t_loop_overhead,
+            len(img_batch),
         )
         batch_no += 1
 
@@ -110,6 +119,7 @@ def detect_video(
         height = cap.get(4)  # float
         fps = cap.get(CAP_PROP_FPS)  # float
         frames = cap.get(7)  # float
+        t_loop_overhead = perf_counter() - t_list
 
     t2 = perf_counter()
     duration = t2 - t1
@@ -153,7 +163,7 @@ def detect_images(
     Returns:
         [type]: [description]
     """
-    yolo_detections = []
+    yolo_detections: list[list[float]] = []
     if not file_chunks:
         return [], [] if ot_labels_enabled else yolo_detections
     if model is None:
@@ -215,18 +225,21 @@ def _log_overall_performance_stats(duration, det_fps):
 
 
 def _log_batch_performances_stats(
-    batch_no, t_start, t_trans, t_det, t_list, batch_size
+    batch_no, t_start, t_get_batch, t_trans, t_det, t_list, t_loop_overhead, batch_size
 ):
     batch_no = "batch_no: {:d}".format(batch_no)
-    transformed_batch = "trans: {:0.4f}".format(t_trans - t_start)
-    det = "det: {:0.4f}".format(t_det - t_start)
+    batch = f"batch: {t_get_batch - t_start:0.4f}"
+    transformed_batch = "trans: {:0.4f}".format(t_trans - t_get_batch)
+    det = "det: {:0.4f}".format(t_det - t_trans)
     add_list = "list: {:0.4f}".format(t_list - t_det)
+    loop_overhead = f"loop_overhead: {t_loop_overhead:0.4f}"
     batch_len = "batch_size: {:d}".format(batch_size)
-    fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
-    log_msg = f"{batch_no}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
-    log.info(
-        log_msg
-    )  # BUG: #162 Logs twice from yolo.py (with and without formatting)
+    fps = "fps: {:0.1f}".format(batch_size / (t_list - t_start))
+    log_msg = (
+        f"{batch_no}, {batch}, {transformed_batch}, {det}, "
+        f"{add_list}, {loop_overhead}, {batch_len}, {fps}"
+    )
+    log.info(log_msg)  # BUG: #162 Logs twice from yolo.py (with and without formatting)
 
 
 def _add_detection_results(detections, results, normalized):

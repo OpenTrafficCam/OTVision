@@ -29,7 +29,7 @@ repos:
       - id: mypy
         additional_dependencies: [types-all]
         # TODO: Remove when whole codebase is type hinted
-        args: [--follow-imports=silent]
+        args: [--follow-imports=silent, --ignore-missing-imports]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
     hooks:
