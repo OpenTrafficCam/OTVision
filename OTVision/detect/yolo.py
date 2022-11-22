@@ -35,6 +35,10 @@ class NoVideoError(Exception):
     pass
 
 
+class YOLOv5ModelNotFoundError(Exception):
+    pass
+
+
 class VideoFoundError(Exception):
     pass
 
@@ -68,7 +72,7 @@ def detect_video(
     if model is None:
         model = loadmodel(weights, conf, iou)
 
-    yolo_detections = []
+    yolo_detections: list[list[float]] = []
     t1 = perf_counter()
 
     if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
@@ -153,7 +157,7 @@ def detect_images(
     Returns:
         [type]: [description]
     """
-    yolo_detections = []
+    yolo_detections: list[list[float]] = []
     if not file_chunks:
         return [], [] if ot_labels_enabled else yolo_detections
     if model is None:
@@ -224,9 +228,7 @@ def _log_batch_performances_stats(
     batch_len = "batch_size: {:d}".format(batch_size)
     fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
     log_msg = f"{batch_no}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
-    log.info(
-        log_msg
-    )  # BUG: #162 Logs twice from yolo.py (with and without formatting)
+    log.info(log_msg)  # BUG: #162 Logs twice from yolo.py (with and without formatting)
 
 
 def _add_detection_results(detections, results, normalized):
@@ -246,41 +248,47 @@ def _add_detection_results(detections, results, normalized):
         detections.extend([i.tolist() for i in results.xywh])
 
 
-def loadmodel(weights, conf, iou):
+def loadmodel(
+    weights: str, conf: float, iou: float, force_reload: bool = False
+) -> torch.nn.Module:
+    """Loads a custom or an existing and pretrained YOLOv5 model.
+
+    Args:
+        weights (str): Path to custom model weights
+        or model name i.e. 'yolov5s', 'yolov5m'.
+        conf (float): The confidence threshold.
+        iou (float): The IOU threshold.
+        force_reload (bool): Whether to force reload torch hub cache.
+
+    Raises:
+        ValueError: If the path to the model weights is not a .pt file.
+
+    Returns:
+        torch.nn.Module: The YOLOv5 model.
+    """
     log.info(f"Try loading model {weights}")
     t1 = perf_counter()
+    is_custom = Path(weights).is_file()
 
-    if Path(weights).is_file() and Path(weights).suffix == ".pt":
-        model = torch.hub.load(
-            repo_or_dir="ultralytics/yolov5",  # cv516Buaa/tph-yolov5 ?
-            model="custom",
-            path=weights,
-            # source="local",
-            force_reload=True,
-        )
-        # cv516Buaa/tph-yolov5: model.amp = False ?
-        # cv516Buaa/tph-yolov5: model = torch.jit.load(weights) ?
-    elif weights in torch.hub.list(github="ultralytics/yolov5", force_reload=True):
-
-        if torch.cuda.is_available():
-            model = torch.hub.load(
-                repo_or_dir="ultralytics/yolov5",
-                model=weights,
-                pretrained=True,
-                force_reload=True,
-            ).cuda()
+    try:
+        if is_custom:
+            model = _load_custom_model(weights=Path(weights), force_reload=force_reload)
         else:
-            model = torch.hub.load(
-                repo_or_dir="ultralytics/yolov5",
-                model=weights,
-                pretrained=True,
-                force_reload=True,
-            ).cpu()
-    else:
-        raise AttributeError(
-            "weights has to be path to .pt or valid model name "
-            "from https://pytorch.org/hub/ultralytics_yolov5/"
-        )
+            model = _load_existing_model(model_name=weights, force_reload=force_reload)
+    except ValueError:
+        raise
+    except YOLOv5ModelNotFoundError:
+        raise
+    except Exception as e:
+        if force_reload:
+            # cache already force reloaded
+            raise
+        log.error(e)
+        log.info("Force reload cache and try again.")
+        if is_custom:
+            model = _load_custom_model(weights=Path(weights), force_reload=True)
+        else:
+            model = _load_existing_model(model_name=weights, force_reload=True)
 
     model.conf = conf
     model.iou = iou
@@ -288,6 +296,68 @@ def loadmodel(weights, conf, iou):
     t2 = perf_counter()
     log.info(f"Model loaded in {round(t2 - t1)} sec")
     return model
+
+
+def _load_existing_model(model_name: str, force_reload: bool) -> torch.nn.Module:
+    """Load existing and pretrained YOLOv5 model from torch hub.
+
+    Args:
+        model_name (str): As in ['yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
+        force_reload (bool): Whether to force reload the cache.
+
+    Raises:
+        YOLOv5ModelNotFoundError: If YOLOv5 model could not be found on torch hub.
+        ValueError: If the path to custom the model weights is not a .pt file.
+
+    Returns:
+        torch.nn.Module: The YOLOv5 model.
+    """
+    try:
+        model = torch.hub.load(
+            repo_or_dir="ultralytics/yolov5",
+            model=model_name,
+            pretrained=True,
+            force_reload=force_reload,
+        )
+    except RuntimeError as re:
+        if str(re).startswith("Cannot find callable"):
+            raise YOLOv5ModelNotFoundError(
+                f"YOLOv5 model: {model_name} does not found!"
+            )
+        else:
+            raise
+    if torch.cuda.is_available():
+        return model.cuda()
+    else:
+        return model.cpu()
+
+
+def _load_custom_model(weights: Path, force_reload: bool) -> torch.nn.Module:
+    """Load custom trained YOLOv5 model.
+
+    Args:
+        weights (Path): Path to model weights.
+        force_reload (bool): Whether to force reload the cache.
+
+    Raises:
+        ValueError: If the path to the model weights is not a .pt file.
+
+    Returns:
+        torch.nn.Module: The YOLOv5 torch model.
+    """
+    if not weights.suffix == ".pt":
+        raise ValueError(f"Weights at '{weights}' is not a pt file!")
+
+    model = torch.hub.load(
+        repo_or_dir="ultralytics/yolov5",
+        model="custom",
+        path=weights,
+        force_reload=force_reload,
+    )
+    if torch.cuda.is_available():
+        return model.cuda()
+    else:
+        return model.cpu()
 
 
 def _get_vidconfig(file, width, height, fps, frames):

@@ -1,9 +1,16 @@
 from pathlib import Path
 
 import pytest
+import torch
 from cv2 import VideoCapture
 
-from OTVision.detect.yolo import _get_batch_of_frames
+from OTVision.detect.yolo import (
+    YOLOv5ModelNotFoundError,
+    _get_batch_of_frames,
+    _load_custom_model,
+    _load_existing_model,
+    loadmodel,
+)
 
 
 @pytest.fixture
@@ -70,9 +77,39 @@ def test_get_batch_of_frames_chunksize0(video_path):
     assert not frames
 
 
-def test_yolo_detect():
-    pass
+class TestLoadModel:
+    CONF_THRESH: float = 0.25
+    IOU_THRESH: float = 0.25
 
+    @pytest.fixture
+    def text_file(self, test_data_tmp_dir: Path):
+        text_file = Path(test_data_tmp_dir, "text_file.txt")
+        text_file.touch(exist_ok=True)
+        yield text_file
 
-if __name__ == "__main__":
-    video_path()
+    def test_load_existing_model_notExistingModelName_raiseAttributeException(self):
+        with pytest.raises(YOLOv5ModelNotFoundError):
+            _load_existing_model("NotExistingModelName", False)
+
+    def test_load_existing_model_withCorrectParams(self):
+        model = _load_existing_model("yolov5s", False)
+        assert isinstance(model, torch.nn.Module)
+
+    def test_load_custom_model_notAPtFileAsParam_raiseAttributeError(
+        self, text_file: Path
+    ):
+        with pytest.raises(
+            ValueError, match=f"Weights at '{text_file}' is not a pt file!"
+        ):
+            _load_custom_model(text_file, False)
+
+    def test_load_model_notExistingModelName_raiseYOLOv5ModelNotFoundError(self):
+        model_name = "NotExistingModelName"
+        with pytest.raises(YOLOv5ModelNotFoundError):
+            loadmodel(model_name, self.CONF_THRESH, self.IOU_THRESH)
+
+    def test_load_model_notAPtFileAsParam_raiseAttributeError(self, text_file: Path):
+        with pytest.raises(
+            ValueError, match=f"Weights at '{text_file}' is not a pt file!"
+        ):
+            loadmodel(str(text_file), self.CONF_THRESH, self.IOU_THRESH)

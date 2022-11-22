@@ -44,6 +44,7 @@ def main(
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
     ot_labels_enabled: bool = False,
     debug: bool = CONFIG["DETECT"]["DEBUG"],
+    force_reload_torch_hub_cache: bool = False,
 ):
     log.info("Start detection")
     if debug:
@@ -51,7 +52,9 @@ def main(
         log.debug("Debug mode on")
 
     if not model:
-        yolo_model = yolo.loadmodel(weights, conf, iou)
+        yolo_model = yolo.loadmodel(
+            weights, conf, iou, force_reload=force_reload_torch_hub_cache
+        )
     else:
         yolo_model = model
         yolo_model.conf = conf
