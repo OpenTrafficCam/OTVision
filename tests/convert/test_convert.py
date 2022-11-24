@@ -45,8 +45,8 @@ def test_convert(test_data_tmp_dir: Path):
         return
 
     # Get reference data
-    h264_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="h264")
-    mp4_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="mp4")
+    h264_ref_videos = get_files(paths=[CONFIG["TESTDATAFOLDER"]], filetypes=[".h264"])
+    mp4_ref_videos = get_files(paths=[CONFIG["TESTDATAFOLDER"]], filetypes=[".mp4"])
 
     # Copy input data to temporary folder and start conversion
     for h264_ref_video in h264_ref_videos:
@@ -57,8 +57,8 @@ def test_convert(test_data_tmp_dir: Path):
             / Path(h264_ref_video).name,
         )
     h264_test_videos = get_files(
-        paths=test_data_tmp_dir,
-        filetypes="h264",
+        paths=[test_data_tmp_dir],
+        filetypes=[".h264"],
     )
     convert(h264_test_videos)
 

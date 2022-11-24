@@ -23,7 +23,7 @@ import json
 from pathlib import Path
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, is_in_format
+from OTVision.helpers.files import get_files, has_filetype
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from . import yolo
@@ -155,9 +155,9 @@ def _split_to_video_img_paths(
 
     video_files, img_files = [], []
     for file in files:
-        if is_in_format(file, video_formats):
+        if has_filetype(file, video_formats):
             video_files.append(file)
-        elif is_in_format(file, img_formats):
+        elif has_filetype(file, img_formats):
             img_files.append(file)
         else:
             raise FormatNotSupportedError(

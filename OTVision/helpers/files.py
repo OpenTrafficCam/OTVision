@@ -25,7 +25,11 @@ from pathlib import Path
 from OTVision.helpers.log import log
 
 
-def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
+def get_files(
+    paths: list[Path],
+    filetypes: list[str] = None,
+    search_subdirs: bool = True,
+) -> list[Path]:
     # sourcery skip: low-code-quality
     """
     Generates a list of files ending with filename based on filenames or the
@@ -37,9 +41,6 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
         filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
-        replace_filetype ([bool]): Wheter or not to replace the filetype in file paths
-            with the filetype given. Currently only applied when one filetype was given.
-            Defaults to False.
         search_subdirs ([bool]): Wheter or not to search subdirs of dirs given as paths.
             Defaults to True.
 
@@ -47,16 +48,14 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
         [list]: [list of filenames as str]
     """
     files = set()
-    if type(paths) is str or isinstance(paths, Path):
-        paths = [paths]
-    elif type(paths) is not list:
-        raise TypeError("Paths needs to be a str, a list of str, or Path object")
+    if type(paths) is not list:
+        raise TypeError("Paths needs to a list of pathlib.Path")
     if filetypes:
         if type(filetypes) is not list:
-            filetypes = [filetypes]
+            raise TypeError("Filetypes needs to be a list of str")
         for idx, filetype in enumerate(filetypes):
             if type(filetype) is not str:
-                raise TypeError("Filetype needs to be a str or a list of str")
+                raise TypeError("Filetypes needs to be a list of str")
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
                     filetype = f".{filetype}"
@@ -64,28 +63,64 @@ def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True
     for path in paths:
         path = Path(path)
         if path.is_file():
-            if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
-                path_with_filetype_replaced = path.with_suffix(filetypes[0])
-                if path_with_filetype_replaced.is_file():
-                    path = path.with_suffix(filetypes[0])
-            file = str(path)
+            file = path
             if filetypes:
                 for filetype in filetypes:
                     if path.suffix.lower() == filetype:
-                        files.add(str(path))
+                        files.add(path)
             else:
-                files.add(str(path))
+                files.add(path)
         elif path.is_dir():
-            for filetype in filetypes:
-                for file in path.glob("**/*" if search_subdirs else "*"):
-                    if file.is_file and file.suffix.lower() == filetype:
-                        files.add(str(file))
+            if filetypes:
+                for filetype in filetypes:
+                    for file in path.glob("**/*" if search_subdirs else "*"):
+                        if file.is_file and file.suffix.lower() == filetype:
+                            files.add(file)
         else:
-            raise TypeError(
-                "Paths needs to be a path as a pathlib.Path() or a str or a list of str"
-            )
+            raise TypeError("Paths needs to be a list of pathlib.Path")
 
     return sorted(list(files))
+
+
+def replace_filetype(
+    files: list[Path], new_filetype: str, old_filetype: str = None
+) -> list[Path]:
+    """In a list of files, replace the filetype of all files of a certain old_filetype
+    by a new_filetype. If no old_filetype is given, replace tha filetype of all files.
+    Directories remain unchanged in the new list.
+
+    Args:
+        paths (list[Path]): List of paths (can be files or directories).
+        new_filetype (str): New file type after replacement.
+        old_filetype (str): File type to be replaced. If None, filetypes of all files
+            will be replaced.
+            Defaults to None.
+
+    Raises:
+        TypeError: If files is not a list of pathlib.Path
+        TypeError: If one of the files is not a file (but, for example, a dir)
+
+    Returns:
+        list[Path]: List of paths with file type replaced
+    """
+
+    if type(files) is not list:
+        raise TypeError("Paths needs to a list of pathlib.Path")
+    new_paths = []
+    for path in files:
+        if type(path) is not Path:
+            raise TypeError("Paths needs to a list of pathlib.Path")
+        if path.is_file():
+            if old_filetype and path.suffix.lower() != old_filetype.lower():
+                continue
+            new_path = path.with_suffix(new_filetype)
+            new_paths.append(new_path)
+        elif path.is_dir():
+            raise TypeError("files has to be a list of files without dirs")
+        else:
+            raise TypeError("files has to be a list of existing files")
+
+    return new_paths
 
 
 def remove_dir(dir_to_remove: Path):
@@ -196,25 +231,23 @@ def _get_testdatafolder():
     return str(Path(__file__).parents[2] / r"tests/data")
 
 
-def is_in_format(file_path, file_formats):
-    """Checks if a file path is in specified format.
+def has_filetype(file: Path, filetypes: list[str]) -> bool:
+    """Checks if a file has a specified filetype.
 
-    The case of a file format is ignored.
+    The case of a filetype is ignored.
 
     Args:
-        pathToVideo (str): the file path
-        file_formats(list(str)): the file formats
+        file (Path): The path to the file
+        file_formats(list(str)): The valid filetypes
 
     Returns:
-        True if path is of format specified in file_formats.
+        True if file is of filetype specified in filetypes.
         Otherwise False.
     """
-    file = Path(file_path)
+
     return file.suffix.lower() in [
-        file_format.lower()
-        if file_format.startswith(".")
-        else f".{file_format.lower()}"
-        for file_format in file_formats
+        filetype.lower() if filetype.startswith(".") else f".{filetype.lower()}"
+        for filetype in filetypes
     ]
 
 

@@ -26,8 +26,8 @@ def test_transform(test_data_tmp_dir: Path, single_refpts_file):
 
     # Get true ottrk and otrpfts files from tests/data
     true_ottrk_files = get_files(
-        paths=Path(CONFIG["TESTDATAFOLDER"]),
-        filetypes=".ottrk",
+        paths=[Path(CONFIG["TESTDATAFOLDER"])],
+        filetypes=[".ottrk"],
     )
     for true_ottrk_file in true_ottrk_files:
         # Copy ottrk file to tests/data_tmp
@@ -53,8 +53,8 @@ def test_transform(test_data_tmp_dir: Path, single_refpts_file):
 
     # Get test ottrk and otrpfts files from tests/data_tmp
     test_tracks_files = get_files(
-        paths=Path(test_data_tmp_dir),
-        filetypes=".ottrk",
+        paths=[Path(test_data_tmp_dir)],
+        filetypes=[".ottrk"],
     )
 
     # Transform list of .ottrk files using otrefpts

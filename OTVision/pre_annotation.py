@@ -32,16 +32,16 @@ from OTVision.helpers.files import get_files, unzip
 from OTVision.helpers.log import log
 
 
-def _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False):
-    to_be_zipped = Path(cvat_yolo_dir)
+def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs=False):
+    to_be_zipped = cvat_yolo_dir
     if not pngs:
-        img_paths = get_files(to_be_zipped, filetypes=img_type)
+        img_paths = get_files(paths=[to_be_zipped], filetypes=[img_type])
         for img_path in img_paths:
             img = Path(img_path)
             img.unlink()
     new_file = to_be_zipped.parent / f"{to_be_zipped.name}_annotated"
-    shutil.make_archive(new_file, "zip", root_dir=to_be_zipped)
-    shutil.rmtree(to_be_zipped)
+    shutil.make_archive(base_name=str(new_file), format="zip", root_dir=to_be_zipped)
+    shutil.rmtree(path=to_be_zipped)
     return new_file.with_name(f"{new_file.stem}.zip")
 
 
@@ -53,8 +53,8 @@ def _write_class_labels(cvat_yolo_dir, class_labels):
             f.write((name + "\n"))
 
 
-def _write_bbox(cvat_yolo_dir: str, img_type: str, xywhn: list):
-    image_paths = get_files(cvat_yolo_dir, filetypes=img_type)
+def _write_bbox(cvat_yolo_dir: Path, img_type: str, xywhn: list):
+    image_paths = get_files(paths=[cvat_yolo_dir], filetypes=[img_type])
     assert len(image_paths) == len(xywhn)
 
     for img_path, detections in zip(image_paths, xywhn):
@@ -85,11 +85,14 @@ def _pre_annotate(cvat_yolo_zip, model_weights, chunk_size, img_type):
 
 
 def main(file, model_weights, chunk_size, img_type="png"):
+    # TODO: rename file with path, as it can also be a dir. Check possible conflicts
+    # TODO: Type hints (decide if str or Path!)
     log.info("Starting")
+    file = Path(file)
     if os.path.isfile(file):
         _pre_annotate(file, model_weights, chunk_size, img_type)
     elif os.path.isdir(file):
-        zip_files = get_files(file, "zip")
+        zip_files = get_files([file], "zip")
         for file in progressbar.progressbar(zip_files):
             _pre_annotate(file, model_weights, chunk_size, img_type)
     log.info("Done in {0:0.2f} s".format(perf_counter()))

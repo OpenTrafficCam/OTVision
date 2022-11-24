@@ -25,9 +25,10 @@ from pathlib import Path
 import cv2
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, read_json, write_json
+from OTVision.helpers.files import get_files, read_json, replace_filetype, write_json
 from OTVision.helpers.formats import (
     _get_datetime_from_filename,
     _get_epsg_from_utm_zone,
@@ -41,23 +42,29 @@ from .get_homography import get_homography
 
 
 def main(
-    paths,
-    refpts_file=None,
-    overwrite=CONFIG["TRANSFORM"]["OVERWRITE"],
+    paths: list[Path],
+    refpts_file: Path = None,
+    overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
     debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
 ):
-    """Transforms .ottrk file containing trajectories in pixel coordinates
-    to .gpkg file with trajectories in utm coordinates
-    using either one single .otrfpts file for all .ottrk files
-    containing corresponding reference points in both pixel and utm coordinates
-    or using specific .otrfpts files for each .ottrk file
+    """Transform tracks files containing trajectories in pixel coordinates to .gpkg
+    files with trajectories in utm coordinates using either one single refpts file for
+    all tracks files containing corresponding reference points in both pixel and utm
+    coordinates or using specific refpts files for each tracks file
     (path must be the same except for the extension).
-
-    Info: .otrfpts file can be created using OTVision.transform.reference_points_picker
+    Info: refpts file can be created using OTVision.transform.reference_points_picker
 
     Args:
-        tracks_files (str or Path or list): (List of) Path(s) to .ottrk file
-        single_refpts_file (str or Path, optional): Path to .otrfpts file. Default: None
+        paths (list[Path]): List of paths to tracks files.
+        refpts_file (Path, optional): Path to reference points file.
+            If given, this file will be used for transformation of all tracks files.
+            If not given, for every tracks file a refpts file with same stem is needed.
+            Defaults to None.
+        overwrite (bool, optional): Whether or not to overwrite existing tracks files in
+            world coordinates.
+            Defaults to CONFIG["TRANSFORM"]["OVERWRITE"].
+        debug (bool, optional): Whether or not to run in debug mode.
+            Defaults to CONFIG["TRANSFORM"]["DEBUG"].
     """
 
     log.info("Start transformation from pixel to world coordinates")
@@ -80,13 +87,11 @@ def main(
         log.info(f"Try transforming {tracks_file}")
         # Try reading refpts and getting homography if not done above
         if not refpts_file:
-            refpts_file = get_files(
-                paths=tracks_file,
-                filetypes=CONFIG["DEFAULT_FILETYPE"]["REFPTS"],
-                replace_filetype=True,
+            associated_refpts_file = replace_filetype(
+                files=[tracks_file], new_filetype=CONFIG["DEFAULT_FILETYPE"]["REFPTS"]
             )[0]
             log.info(f"Found refpts file {refpts_file}")
-            refpts = read_refpts(reftpts_file=refpts_file)
+            refpts = read_refpts(reftpts_file=associated_refpts_file)
             log.info("Refpts read")
             (
                 homography,
@@ -127,7 +132,7 @@ def main(
             # Write tracks
             write_tracks(
                 tracks_utm_df=tracks_utm_df,
-                config_dict=config_dict,
+                metadata_dict=config_dict,
                 utm_zone=utm_zone,
                 hemisphere=hemisphere,
                 tracks_file=tracks_file,
@@ -137,7 +142,7 @@ def main(
         reset_debug()
 
 
-def read_tracks(tracks_file):
+def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     """Reads .ottrk file, returns pandas DataFrame of trajectories
     in pixel coordinates and dict of metadata
 
@@ -153,18 +158,18 @@ def read_tracks(tracks_file):
     tracks_dict = read_json(tracks_file, extension=CONFIG["FILETYPES"]["TRACK"])
     tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
     fps = _get_fps_from_filename(filename=str(tracks_file))
-    config_dict = {key: value for key, value in tracks_dict.items() if key != "data"}
+    metadata_dict = tracks_dict["metadata"]
 
     # Create datetime column from frame number
-    fps = int(config_dict["vid_config"]["fps"])
+    fps = int(metadata_dict["vid"]["fps"])
     start_datetime = _get_datetime_from_filename(filename=str(tracks_file))
     tracks_df["datetime"], tracks_df["datetime_ms"] = _get_time_from_frame_number(
         frame_series=tracks_df["frame"], start_datetime=start_datetime, fps=fps
     )
-    return tracks_df, config_dict
+    return tracks_df, metadata_dict
 
 
-def read_refpts(reftpts_file):
+def read_refpts(reftpts_file: Path) -> dict:
     """Reads .otrfpts file, returns dict of matching reference points
     in both pixel and utm coordinates
 
@@ -179,18 +184,18 @@ def read_refpts(reftpts_file):
 
 
 def transform(
-    tracks_px,
-    homography,
-    refpts_utm_upshifted_predecimal_pt1_1row,
-    upshift_utm,
-    x_col="x",
-    y_col="y",
-    lon_col="lon_utm",
-    lat_col="lat_utm",
-):
+    tracks_px: pd.DataFrame,
+    homography: np.ndarray,
+    refpts_utm_upshifted_predecimal_pt1_1row: np.ndarray,
+    upshift_utm: np.ndarray,
+    x_col: str = "x",
+    y_col: str = "y",
+    lon_col: str = "lon_utm",
+    lat_col: str = "lat_utm",
+) -> pd.DataFrame:
     """Transforms trajectories from pixel to utm coordinates using homography from
-    get_homography using corresponding reference points,
-    adds utm coordinates to trajectories
+    get_homography using corresponding reference points, adds utm coordinates to
+    trajectories
 
     Args:
         tracks_px (pandas.DataFrame): Trajectories in pixel coordinates
@@ -236,7 +241,7 @@ def transform(
     return tracks_utm
 
 
-def write_refpts(refpts, refpts_file):
+def write_refpts(refpts: dict, refpts_file: Path):
     """Writes corresponding reference points in both pixel and utm coordinates
     to a json-like .otrfpts file
 
@@ -253,13 +258,13 @@ def write_refpts(refpts, refpts_file):
 
 
 def write_tracks(
-    tracks_utm_df,
-    config_dict,
-    utm_zone,
-    hemisphere,
-    tracks_file,
-    filetype="gpkg",
-    overwrite=CONFIG["TRANSFORM"]["OVERWRITE"],
+    tracks_utm_df: pd.DataFrame,
+    metadata_dict: dict,
+    utm_zone: int,
+    hemisphere: str,
+    tracks_file: Path,
+    filetype: str = "gpkg",
+    overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
 ):
     """Writes tracks as .gpkg and in specific epsg projection
     according to UTM zone and hemisphere
@@ -276,7 +281,7 @@ def write_tracks(
     # TODO: Write config dict
 
     if filetype == "gpkg":  # TODO: Extend guard with overwrite parameter
-        gpkg_file = Path(tracks_file).with_suffix(".gpkg")
+        gpkg_file = tracks_file.with_suffix(".gpkg")
         gpkg_file_already_exists = gpkg_file.is_file()
         if overwrite or not gpkg_file_already_exists:
             # Get CRS UTM EPSG number

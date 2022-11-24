@@ -125,7 +125,7 @@ def test_write_class_labels_cvatYoloZipAsParam_writeLabels(
 def test_write_bbox_cvatYoloZipAs1stParam_validDetectionsAs2ndParam_writeBboxes(
     cvat_yolo_example_dataset_zipped, detections
 ):
-    cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
+    cvat_dir_unzipped = list(Path(unzip(cvat_yolo_example_dataset_zipped)))
     _write_bbox(cvat_dir_unzipped, "png", detections)
 
     obj_train_data = Path(cvat_dir_unzipped, "obj_train_data")

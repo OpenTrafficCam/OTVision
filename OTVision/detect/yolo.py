@@ -26,7 +26,7 @@ import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import is_in_format
+from OTVision.helpers.files import has_filetype
 from OTVision.helpers.log import log
 
 
@@ -70,7 +70,7 @@ def detect_video(
     yolo_detections: list = []
     t1 = perf_counter()
 
-    if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
+    if not has_filetype(file_path, CONFIG["FILETYPES"]["VID"]):
         raise NoVideoError(f"The file: {file_path} is not a video!")
 
     cap = VideoCapture(file_path)

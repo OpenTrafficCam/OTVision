@@ -65,17 +65,17 @@ def main(
             continuing a track. If more detections are missing, the track will not be
             continued.
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
-        overwrite (bool, optional): _description_.
+        overwrite (bool, optional): Whether or not to overwrite existing tracks files.
             Defaults to CONFIG["TRACK"]["OVERWRITE"].
-        debug (bool, optional):
-            _description_. Defaults to CONFIG["TRACK"]["DEBUG"].
+        debug (bool, optional): Whether or not to run in debug mode.
+            Defaults to CONFIG["TRACK"]["DEBUG"].
     """
     log.info("Start tracking")
     if debug:
         set_debug()
 
     filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
-    detections_files = get_files(paths, filetype)
+    detections_files = get_files(paths=paths, filetypes=[filetype])
     for detections_file in detections_files:
         log.info(f"Try tracking {detections_file}")
 

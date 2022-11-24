@@ -68,7 +68,7 @@ def main(
         set_debug()
 
     check_ffmpeg()
-    h264_files = get_files(paths, ".h264")
+    h264_files = get_files(paths, [".h264"])
     for h264_file in h264_files:
         convert(
             h264_file,
