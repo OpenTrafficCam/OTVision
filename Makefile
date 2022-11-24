@@ -13,14 +13,13 @@ $(VENV)/bin/activate: requirements_m1.txt
 	python$(PY_VERSION) -m venv $(VENV); \
 	if [ $(UNAME_S) = Linux ]; then \
 		sudo apt-get install python3-tk; \
-		$(PIP) install -r requirements_linux.txt; \
+		$(PIP) install -r requirements.txt; \
 	fi ; \
 	if [ $(UNAME_S) = Darwin ]; then \
 		if [ $(shell uname -m) = arm64 ]; then \
 			brew install gdal; \
-			brew install proj; \
 			brew install python-tk@$(PY_VERSION); \
-			$(PIP) install -r requirements_m1.txt; \
+			$(PIP) install -r requirements.txt; \
 		fi ; \
 	fi
 
