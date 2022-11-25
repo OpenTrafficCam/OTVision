@@ -19,7 +19,6 @@ OTVision main module for converting videos to other formats and frame rates.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
 import subprocess
 from pathlib import Path
 from urllib.request import urlretrieve
@@ -204,13 +203,12 @@ def download_ffmpeg():
         return
 
     log.info("Try downloading ffmpeg zip archive (patience: may take a while...)")
-    FFMPEG_DIR = str(Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0])
-    if not Path(str(Path(FFMPEG_DIR) / "tmp")).is_dir():
-        os.mkdir(str(Path(FFMPEG_DIR) / "tmp"))
-    FFMPEG_ZIP = str(Path(FFMPEG_DIR) / "tmp" / r"ffmpeg.zip")
-    FFMPEG_ZIP_DIR = str(Path(FFMPEG_ZIP).parents[0])
+    ffmpeg_dir = Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0]
+    ffmpeg_zip_dir = ffmpeg_dir / "tmp"
+    ffmpeg_zip_dir.mkdir(parents=True, exist_ok=True)
+    ffmpeg_zip = ffmpeg_zip_dir / r"ffmpeg.zip"
     try:
-        urlretrieve(CONFIG["CONVERT"]["FFMPEG_URL"], FFMPEG_ZIP)
+        urlretrieve(CONFIG["CONVERT"]["FFMPEG_URL"], ffmpeg_zip)
         log.info("Successfully downloaded ffmpeg zip archive")
     except Exception as inst:
         log.warning(inst)
@@ -218,21 +216,18 @@ def download_ffmpeg():
     else:
         try:
             log.info("Extracting ffmpeg.exe from ffmpeg zip archive")
-            with ZipFile(FFMPEG_ZIP, "r") as zip:
+            with ZipFile(ffmpeg_zip, "r") as zip:
                 for name in zip.namelist():
                     if Path(name).name == r"ffmpeg.exe":
                         log.info("next: Extract")
                         zip.extract(
                             member=name,
-                            path=FFMPEG_ZIP_DIR,
+                            path=ffmpeg_zip_dir,
                         )
                         ffmpeg_exe = Path(name)
                         break
-            os.rename(
-                str(Path(FFMPEG_ZIP_DIR) / str(ffmpeg_exe)),
-                str(Path(FFMPEG_DIR) / "ffmpeg.exe"),
-            )
-            remove_dir(dir=FFMPEG_ZIP_DIR)
+            Path(ffmpeg_zip_dir, ffmpeg_exe).replace(ffmpeg_dir / "ffmpeg.exe")
+            remove_dir(dir=ffmpeg_zip_dir)
             log.info("Successfully extracted ffmpeg.exe from ffmpeg zip archive")
         except Exception as inst:
             log.warning(inst)
