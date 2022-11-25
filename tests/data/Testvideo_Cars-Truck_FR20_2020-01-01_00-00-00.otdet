@@ -1,20 +1,22 @@
 {
-    "vid_config": {
-        "file": "Testvideo_FR20_Cars-Truck",
-        "filetype": ".mp4",
-        "width": 800.0,
-        "height": 600.0,
-        "fps": 20.0,
-        "frames": 60.0
-    },
-    "det_config": {
-        "detector": "YOLOv5",
-        "weights": "yolov5s",
-        "conf": 0.25,
-        "iou": 0.45,
-        "size": 640,
-        "chunksize": 4,
-        "normalized": false
+    "metadata": {
+        "vid": {
+            "file": "Testvideo_FR20_Cars-Truck",
+            "filetype": ".mp4",
+            "width": 800.0,
+            "height": 600.0,
+            "fps": 20.0,
+            "frames": 60.0
+        },
+        "det": {
+            "detector": "YOLOv5",
+            "weights": "yolov5s",
+            "conf": 0.25,
+            "iou": 0.45,
+            "size": 640,
+            "chunksize": 4,
+            "normalized": false
+        },
     },
     "data": {
         "1": {

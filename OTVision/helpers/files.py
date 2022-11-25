@@ -22,6 +22,7 @@ import json
 import shutil
 from pathlib import Path
 
+from OTVision.config import CONFIG
 from OTVision.helpers.log import log
 
 
@@ -124,7 +125,6 @@ def replace_filetype(
 
 
 def remove_dir(dir_to_remove: Path):
-    dir_to_remove = Path(dir_to_remove)
     for path in dir_to_remove.glob("*"):
         if path.is_file():
             path.unlink()
@@ -133,39 +133,35 @@ def remove_dir(dir_to_remove: Path):
     dir_to_remove.rmdir()
 
 
-def read_json(json_file, extension=".json"):
-    if isinstance(extension, str):
-        extension = [extension]
-    filetype = Path(json_file).suffix
-    if filetype not in extension:
-        raise ValueError(f"Wrong filetype {filetype}, has to be {extension}")
+def read_json(json_file: Path, filetype: str = ".json") -> dict:
+    if not isinstance(json_file, Path):
+        raise TypeError("json_file has to be of type pathlib.Path")
+    filetype = json_file.suffix
+    if json_file.suffix != filetype:
+        raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
     try:
         with open(json_file) as f:
             dict_from_json_file = json.load(f)
-    except OSError as oe:
-        log.error(f"Could not open {json_file}")
-        log.exception(oe)
-    except json.JSONDecodeError as je:
-        log.exception(
-            (
-                f'Unable to decode "{json_file}" as JSON.'
-                f"Following exception occured: {str(je)}"
-            )
-        )
-        log.exception(je)
-    except Exception as e:
-        log.exception(e)
-    # BUG: "UnboundLocalError: local variable 'dict_from_json_file' referenced bef ass"
-    return dict_from_json_file
+        log.info(f"{json_file} read")
+        return dict_from_json_file
+    except OSError:
+        log.exception(f"Could not open {json_file}")
+        raise
+    except json.JSONDecodeError:
+        log.exception(f'Unable to decode "{json_file}" as JSON.')
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 def write_json(
-    dict_to_write,
-    file,
-    extension=".json",
-    overwrite=False,
+    dict_to_write: dict,
+    file: Path,
+    filetype: str = ".json",
+    overwrite: bool = False,
 ):
-    outfile = Path(file).with_suffix(extension)
+    outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
         with open(outfile, "w") as f:
@@ -175,33 +171,59 @@ def write_json(
         else:
             log.debug(f"{outfile} overwritten")
     else:
-        log.debug(f"{outfile} already exists, not overwritten")
+        log.debug(f"{outfile} already exists, not overwritten. Set overwrite=True")
 
 
-def denormalize(otdict, keys_width=None, keys_height=None):
+def _check_and_update_metadata_inplace(otdict: dict):
+    """Check if dict of detections or tracks has subdict metadata.
+        If not, try to convert from historic format.
+        Atttention: Updates the input dict inplace.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+    """
+    if "metadata" in otdict:
+        return
+    try:
+        otdict["metadata"] = {}
+        if "vid_config" in otdict:
+            otdict["metadata"]["vid"] = otdict["vid_config"]
+        if "det_config" in otdict:
+            otdict["metadata"]["det"] = otdict["det_config"]
+        if "trk_config" in otdict:
+            otdict["metadata"]["trk"] = otdict["trk_config"]
+        log.info("metadata updated from historic format to new format")
+    except Exception:
+        log.exception("metadata not found and not in historic config format")
+        raise
+
+
+def _denormalize_bbox(
+    otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
+):
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
         keys_height = ["y", "h"]
-    if otdict["det_config"]["normalized"]:
+    if otdict["metadata"]["det"]["normalized"]:
         direction = "denormalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
-        otdict["det_config"]["normalized"] = False
+        otdict["metadata"]["det"]["normalized"] = False
         log.debug("Dict denormalized")
     else:
         log.debug("Dict was already denormalized")
     return otdict
 
 
-def normalize(otdict, keys_width=None, keys_height=None):
+def _normalize_bbox(otdict, keys_width=None, keys_height=None):
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
         keys_height = ["y", "h"]
-    if not otdict["det_config"]["normalized"]:
+    if not otdict["metadata"]["normalized"]:
         direction = "normalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
-        otdict["det_config"]["normalized"] = True
+        otdict["metadata"]["normalized"] = True
         log.debug("Dict normalized")
     else:
         log.debug("Dict was already normalized")
@@ -209,8 +231,8 @@ def normalize(otdict, keys_width=None, keys_height=None):
 
 
 def _normal_transformation(otdict, direction, keys_width, keys_height):
-    width = otdict["vid_config"]["width"]
-    height = otdict["vid_config"]["height"]
+    width = otdict["metadata"]["vid"]["width"]
+    height = otdict["metadata"]["vid"]["height"]
     for detection in otdict["data"]:
         for bbox in otdict["data"][detection]["classified"]:
             for key in bbox:
@@ -225,10 +247,6 @@ def _normal_transformation(otdict, direction, keys_width, keys_height):
                     elif direction == "denormalize":
                         bbox[key] = bbox[key] * height
     return otdict
-
-
-def _get_testdatafolder():
-    return str(Path(__file__).parents[2] / r"tests/data")
 
 
 def has_filetype(file: Path, filetypes: list[str]) -> bool:

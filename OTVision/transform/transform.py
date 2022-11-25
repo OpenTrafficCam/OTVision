@@ -28,7 +28,13 @@ import numpy as np
 import pandas as pd
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, read_json, replace_filetype, write_json
+from OTVision.helpers.files import (
+    _check_and_update_metadata_inplace,
+    get_files,
+    read_json,
+    replace_filetype,
+    write_json,
+)
 from OTVision.helpers.formats import (
     _get_datetime_from_filename,
     _get_epsg_from_utm_zone,
@@ -155,7 +161,8 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     """
 
     # Read dicts and turn tracks into DataFrame
-    tracks_dict = read_json(tracks_file, extension=CONFIG["FILETYPES"]["TRACK"])
+    tracks_dict = read_json(tracks_file, filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"])
+    _check_and_update_metadata_inplace(tracks_dict)
     tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
     fps = _get_fps_from_filename(filename=str(tracks_file))
     metadata_dict = tracks_dict["metadata"]
@@ -180,7 +187,7 @@ def read_refpts(reftpts_file: Path) -> dict:
         dict: Matching reference points in both pixel and utm coordinates
     """
 
-    return read_json(reftpts_file, extension=CONFIG["FILETYPES"]["REFPTS"])
+    return read_json(reftpts_file, filetype=CONFIG["DEFAULT_FILETYPE"]["REFPTS"])
 
 
 def transform(
@@ -252,7 +259,7 @@ def write_refpts(refpts: dict, refpts_file: Path):
     write_json(
         dict_to_write=refpts,
         file=refpts_file,
-        extension=CONFIG["DEFAULT_FILETYPE"]["REFPTS"],
+        filetype=CONFIG["DEFAULT_FILETYPE"]["REFPTS"],
         overwrite=True,
     )
 
@@ -278,7 +285,7 @@ def write_tracks(
         filetype (str, optional): _description_. Defaults to "gpkg".
     """
 
-    # TODO: Write config dict
+    # TODO: Write metadata
 
     if filetype == "gpkg":  # TODO: Extend guard with overwrite parameter
         gpkg_file = tracks_file.with_suffix(".gpkg")

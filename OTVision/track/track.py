@@ -21,11 +21,16 @@ OTVision main module for tracking objects in successive frames of videos
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import json
 from pathlib import Path
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import denormalize, get_files
+from OTVision.helpers.files import (
+    _check_and_update_metadata_inplace,
+    _denormalize_bbox,
+    get_files,
+    read_json,
+    write_json,
+)
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from .iou import track_iou
@@ -79,43 +84,28 @@ def main(
     for detections_file in detections_files:
         log.info(f"Try tracking {detections_file}")
 
-        try:
-            with open(detections_file) as f:
-                detections = json.load(f)
-            log.info(f"{filetype} read")
+        detections = read_json(json_file=detections_file, filetype=filetype)
 
-            detections_denormalized = denormalize(detections)
-            log.info("Detections denormalized")
+        _check_and_update_metadata_inplace(otdict=detections)
 
-            tracks_px = track(
-                detections=detections_denormalized,
-                sigma_l=sigma_l,
-                sigma_h=sigma_h,
-                sigma_iou=sigma_iou,
-                t_min=t_min,
-                t_miss_max=t_miss_max,
-            )
-            log.info("Detections tracked")
+        detections_denormalized = _denormalize_bbox(detections)
 
-            write(
-                tracks_px=tracks_px,
-                detections_file=detections_file,
-                overwrite=overwrite,
-            )
-        except OSError as oe:
-            log.error(
-                (
-                    f'Could not open "{detections_file}". '
-                    f"Following exception occured: {str(oe)}"
-                )
-            )
-        except json.JSONDecodeError as je:
-            log.error(
-                (
-                    f'Unable to decode "{detections_file}" as JSON.'
-                    f"Following exception occured: {str(je)}"
-                )
-            )
+        tracks_px = track(
+            detections=detections_denormalized,
+            sigma_l=sigma_l,
+            sigma_h=sigma_h,
+            sigma_iou=sigma_iou,
+            t_min=t_min,
+            t_miss_max=t_miss_max,
+        )
+
+        write_json(
+            dict_to_write=tracks_px,
+            file=detections_file,
+            filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
+            overwrite=overwrite,
+        )
+
     if debug:
         reset_debug()
 
@@ -131,7 +121,7 @@ def track(
     """Perform tracking using track_iou with arguments and add metadata to tracks.
 
     Args:
-        paths (list[Path]): Dict of detections in otdet format.
+        detections (dict): Dict of detections in .otdet format.
         sigma_l (float, optional): Lower confidence threshold. Detections with
             confidences below sigma_l are not even considered for tracking.
             Defaults to CONFIG["TRACK"]["IOU"]["SIGMA_L"].
@@ -151,14 +141,11 @@ def track(
             continuing a track. If more detections are missing, the track will not be
             continued.
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
-        overwrite (bool, optional): _description_.
-            Defaults to CONFIG["TRACK"]["OVERWRITE"].
-        debug (bool, optional):
-            _description_. Defaults to CONFIG["TRACK"]["DEBUG"].
 
     Returns:
         dict[str, dict]: Dict of dict of metadata and dict of tracks in ottrk format.
     """
+
     new_detections = track_iou(
         detections=detections["data"],
         sigma_l=sigma_l,
@@ -168,7 +155,9 @@ def track(
         t_miss_max=t_miss_max,
     )
 
-    trk_config = {
+    metadata = detections["metadata"]
+
+    metadata["trk"] = {
         "tracker": "IOU",
         "sigma_l": sigma_l,
         "sigma_h": sigma_h,
@@ -177,41 +166,9 @@ def track(
         "t_miss_max": t_miss_max,
     }
 
+    log.info("Detections tracked")
+
     return {
-        "metadata": {
-            "vid": detections["vid_config"],
-            "det": detections["det_config"],
-            "trk": trk_config,
-        },
+        "metadata": metadata,
         "data": new_detections,
     }
-
-
-def write(
-    tracks_px: dict[str, dict],
-    detections_file: Path,
-    overwrite: bool = CONFIG["TRACK"]["OVERWRITE"],
-):
-    """Write or overwrite (or not) tracks using detections file name with different
-        suffix.
-
-    Args:
-        tracks_px (dict[str, dict]): Dict of tracks including metadata.
-        detections_file (Path): File path of the corresponding detections.
-        overwrite (bool, optional): Wheter or not to overwrite existing tracks file.
-            Defaults to CONFIG["TRACK"]["OVERWRITE"].
-    """
-    # ?: Check overwrite before tracking instead of before writing tracking?
-    # TODO: Export also as csv, trj and alternative json
-    tracks_file = Path(detections_file).with_suffix(CONFIG["DEFAULT_FILETYPE"]["TRACK"])
-    tracks_file_already_exists = tracks_file.is_file()
-    if overwrite or not tracks_file_already_exists:
-        # Write JSON
-        with open(tracks_file, "w") as f:
-            json.dump(tracks_px, f, indent=4)
-        if tracks_file_already_exists:
-            log.info(f"{tracks_file} overwritten")
-        else:
-            log.info(f"{tracks_file}  file written")
-    else:
-        log.info(f"{tracks_file} already exists. To overwrite, set overwrite=True")

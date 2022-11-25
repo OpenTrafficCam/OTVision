@@ -378,7 +378,7 @@ def _convert_detections(
             }
             detection.append(bbox)
         data[str(no + 1)] = {"classified": detection}
-    return {"vid_config": vid_config, "det_config": det_config, "data": data}
+    return {"metadata": {"vid": vid_config, "det": det_config}, "data": data}
 
 
 def _containsvideo(file_chunks: list[list[Path]]) -> bool:
