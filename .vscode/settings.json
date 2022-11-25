@@ -8,8 +8,8 @@
     "python.formatting.blackArgs": [
         "--line-length=88"
     ],
-    "python.sortImports.args": [
-        "--profile=black",
+    "isort.args": [
+        "--profile=black"
     ],
     "[python]": {
         "editor.codeActionsOnSave": {

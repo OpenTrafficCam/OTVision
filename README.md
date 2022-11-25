@@ -32,7 +32,7 @@ This command will automatically install all needed project dependencies if neede
 The default python version is set to 3.9.
 
 ```bash
-make run 
+make run
 ```
 
 To only install the OTVision's project dependencies with, run the following command in the OTVision directory:
@@ -48,7 +48,7 @@ make PY_VERSION=3.10 run
 ```
 
 ```bash
-make PY_VERSION=3.10 install 
+make PY_VERSION=3.10 install
 ```
 
 ## Development
