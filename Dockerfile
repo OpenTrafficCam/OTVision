@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y python3-tk python3-opencv gdal-bin libg
 COPY requirements_linux.txt requirements_linux.txt
 RUN pip install --upgrade PIP
 RUN pip install -r requirements_linux.txt
+ENV PYTHONPATH /platomo/otvalidate
 
 # ------- Run configuration
 FROM python-project-development as python-project-application
