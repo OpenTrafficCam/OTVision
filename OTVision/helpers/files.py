@@ -31,7 +31,6 @@ def get_files(
     filetypes: list[str] = None,
     search_subdirs: bool = True,
 ) -> list[Path]:
-    # sourcery skip: low-code-quality
     """
     Generates a list of files ending with filename based on filenames or the
     (recursive) content of folders.
@@ -124,16 +123,35 @@ def replace_filetype(
     return new_paths
 
 
-def remove_dir(dir_to_remove: Path):
+def _remove_dir(dir_to_remove: Path):
+    """Helper to remove a directory and all of its subdirectories.
+
+    Args:
+        dir_to_remove (Path): directory to remove
+    """
     for path in dir_to_remove.glob("*"):
         if path.is_file():
             path.unlink()
         else:
-            remove_dir(path)
+            _remove_dir(path)
     dir_to_remove.rmdir()
 
 
 def read_json(json_file: Path, filetype: str = ".json") -> dict:
+    """Read a json file of a specific filetype to a dict.
+
+    Args:
+        json_file (Path): json file to read
+        filetype (str, optional): filetype to check json file against.
+            Defaults to ".json".
+
+    Raises:
+        TypeError: If file is not pathlib.Path
+        ValueError: If file is not of filetype given
+
+    Returns:
+        dict: dict read from json file
+    """
     if not isinstance(json_file, Path):
         raise TypeError("json_file has to be of type pathlib.Path")
     filetype = json_file.suffix
@@ -161,6 +179,16 @@ def write_json(
     filetype: str = ".json",
     overwrite: bool = False,
 ):
+    """Write a json file from a dict to a specific filetype.
+
+    Args:
+        dict_to_write (dict): dict to write
+        file (Path): file path. Can have other filetype, which will be overwritten.
+        filetype (str, optional): filetype of file to be written.
+            Defaults to ".json".
+        overwrite (bool, optional): Whether or not to overwrite an existing file.
+            Defaults to False.
+    """
     outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
@@ -198,9 +226,21 @@ def _check_and_update_metadata_inplace(otdict: dict):
         raise
 
 
-def _denormalize_bbox(
+def denormalize_bbox(
     otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
 ):
+    """Denormalize all bbox references in detections or tracks dict from percent to px.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        keys_width (list[str], optional): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str], optional): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+
+    Returns:
+        _type_: Denormalized dict.
+    """
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
@@ -215,7 +255,21 @@ def _denormalize_bbox(
     return otdict
 
 
-def _normalize_bbox(otdict, keys_width=None, keys_height=None):
+def normalize_bbox(
+    otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
+):
+    """Normalize all bbox references in detections or tracks dict from percent to px.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        keys_width (list[str], optional): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str], optional): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+
+    Returns:
+        _type_: Normalized dict.
+    """
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
@@ -230,7 +284,23 @@ def _normalize_bbox(otdict, keys_width=None, keys_height=None):
     return otdict
 
 
-def _normal_transformation(otdict, direction, keys_width, keys_height):
+def _normal_transformation(
+    otdict: dict, direction: str, keys_width: list[str], keys_height: list[str]
+) -> dict:
+    """Helper to do the actual normalization or denormalization.
+        (Reduces duplicate code snippets)
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        direction (str): "normalize" or "denormalize"
+        keys_width (list[str]): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str]): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+
+    Returns:
+        dict: Normalized or denormalized dict
+    """
     width = otdict["metadata"]["vid"]["width"]
     height = otdict["metadata"]["vid"]["height"]
     for detection in otdict["data"]:

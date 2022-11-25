@@ -25,7 +25,7 @@ from urllib.request import urlretrieve
 from zipfile import ZipFile
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, remove_dir
+from OTVision.helpers.files import _remove_dir, get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import log, reset_debug, set_debug
 from OTVision.helpers.machine import ON_WINDOWS
@@ -227,7 +227,7 @@ def download_ffmpeg():
                         ffmpeg_exe = Path(name)
                         break
             Path(ffmpeg_zip_dir, ffmpeg_exe).replace(ffmpeg_dir / "ffmpeg.exe")
-            remove_dir(dir=ffmpeg_zip_dir)
+            _remove_dir(dir=ffmpeg_zip_dir)
             log.info("Successfully extracted ffmpeg.exe from ffmpeg zip archive")
         except Exception as inst:
             log.warning(inst)

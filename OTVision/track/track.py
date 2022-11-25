@@ -26,7 +26,7 @@ from pathlib import Path
 from OTVision.config import CONFIG
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
-    _denormalize_bbox,
+    denormalize_bbox,
     get_files,
     read_json,
     write_json,
@@ -88,7 +88,7 @@ def main(
 
         _check_and_update_metadata_inplace(otdict=detections)
 
-        detections_denormalized = _denormalize_bbox(detections)
+        detections_denormalized = denormalize_bbox(detections)
 
         tracks_px = track(
             detections=detections_denormalized,
