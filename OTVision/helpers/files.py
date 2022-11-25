@@ -339,8 +339,7 @@ def has_filetype(file: Path, filetypes: list[str]) -> bool:
     ]
 
 
-def unzip(file):
-    file = Path(file)
+def unzip(file:Path) -> Path:
     directory = file.with_suffix("")
     shutil.unpack_archive(file, directory)
     return directory
