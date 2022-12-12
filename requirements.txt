@@ -1,7 +1,8 @@
 numpy==1.23.5
 pandas==1.5.2
-torch==1.13.0
-torchvision==0.14.0
+# Follow instructions at https://pytorch.org to install torch with CUDA
+torch==1.13.0 #  NOTE: Omit if using torch with CUDA and install manually
+torchvision==0.14.0 # NOTE: Omit if using torch with CUDA and install manually
 opencv-python==4.6.0.66
 IPython==8.6.0
 psutil==5.9.4
