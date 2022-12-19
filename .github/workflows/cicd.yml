@@ -44,7 +44,7 @@ jobs:
           import print_has_cuda; print_has_cuda()'
       - name: Lint codebase
         run: |
-          flake8 hbsbuddy
+          flake8 OTVision
           flake8 tests
       - name: Execute static type checking
         run: |
