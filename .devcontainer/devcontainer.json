@@ -22,7 +22,19 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "donjayamanne.python-extension-pack"
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "eamodio.gitlens",
+                "GitHub.vscode-pull-request-github",
+                "VisualStudioExptTeam.vscodeintellicode-completions",
+                "christian-kohler.path-intellisense",
+                "redhat.vscode-yaml",
+                "njpwerner.autodocstring",
+                "github.vscode-pull-request-github",
+                "yzhang.markdown-all-in-one",
+                "davidanson.vscode-markdownlint",
+                "stylelint.vscode-stylelint",
+                "mechatroner.rainbow-csv"
             ]
         }
     }
