@@ -41,5 +41,12 @@ jobs:
           pip install pytest
           python -c 'from OTVision.helpers.machine \
           import print_has_cuda; print_has_cuda()'
+      - name: Lint codebase
+        run: |
+          flake8 hbsbuddy
+          flake8 tests
+      - name: Execute static type checking
+        run: |
+          mypy .
       - name: Test with pytest
         run: pytest --cov=OTVision tests/
