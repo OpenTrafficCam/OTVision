@@ -1,9 +1,9 @@
 # ------- Development configuration
 FROM python:3.9 as python-project-development
 RUN apt-get update && apt-get install -y python3-tk python3-opencv gdal-bin libgdal-dev
+WORKDIR /platomo/ptvalidate
 COPY requirements_linux.txt requirements_linux.txt
-RUN pip install --upgrade PIP
-RUN pip install -r requirements_linux.txt
+RUN pip install --no-cache-dir --upgrade pip==22.3 && pip install --no-cache-dir -r requirements_linux.txt
 ENV PYTHONPATH /opt/otc/otvision
 
 # ------- Run configuration
