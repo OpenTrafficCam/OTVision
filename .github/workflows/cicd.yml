@@ -35,10 +35,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements_win-py39.txt
+      - name: Install development dependencies
+        run: |
+          pip install -r requirements_dev.txt
       - name: Install test dependencies
         run: |
-          pip install pytest-cov
-          pip install pytest
           python -c 'from OTVision.helpers.machine \
           import print_has_cuda; print_has_cuda()'
       - name: Lint codebase
