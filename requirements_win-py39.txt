@@ -7,6 +7,7 @@ pandas==1.2.2
 # image/video ---------------------------------
 opencv-python==4.5.3.56
 Pillow==8.3.1
+ujson==5.7.0
 
 # yolo ---------------------------------------
 requests==2.25.1  # File "C:\Users\Baerwolff/.cache\torch\hub\ultralytics_yolov5_master\models\common.py", line 7, in <module>

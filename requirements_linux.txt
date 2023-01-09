@@ -9,6 +9,7 @@ shapely
 --extra-index-url https://download.pytorch.org/whl/cu113
 torch
 torchvision
+ujson==5.7.0
 
 # YOLOv5
 requests
