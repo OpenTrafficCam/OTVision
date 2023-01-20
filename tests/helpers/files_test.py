@@ -10,12 +10,12 @@ from OTVision.helpers.files import get_files, has_filetype, replace_filetype
 def test_dir_with_files():
     test_dir = Path(__file__).parents[1] / "resources" / "test_dir"
     file_names = [
-        "readme.txt",
-        "cities.json",
-        "config.xml",
-        "img_1.PNG",
-        "img_2.png",
-        "img_3.PnG",
+        Path("readme.txt"),
+        Path("cities.json"),
+        Path("config.xml"),
+        Path("img_1.PNG"),
+        Path("img_2.png"),
+        Path("img_3.PnG"),
     ]
 
     if test_dir.exists():

@@ -32,7 +32,7 @@ from OTVision.helpers.files import get_files, unzip
 from OTVision.helpers.log import log
 
 
-def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs:bool=False) -> Path:
+def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs: bool = False) -> Path:
     to_be_zipped = cvat_yolo_dir
     if not pngs:
         img_paths = get_files(paths=[to_be_zipped], filetypes=[img_type])
@@ -49,7 +49,7 @@ def _write_class_labels(cvat_yolo_dir: Path, class_labels: list[str]):
     obj_names = cvat_yolo_dir / "obj.names"
     with open(obj_names, "w") as f:
         for name in class_labels:
-            f.write((name + "\n"))
+            f.write((str(name) + "\n"))
 
 
 def _write_bbox(cvat_yolo_dir: Path, img_type: str, bboxes_xywhn: list):
@@ -89,7 +89,7 @@ def _pre_annotate(
     return _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False)
 
 
-def main(path:Path, model_weights:str, chunk_size:int, img_type:str="png"):
+def main(path: Path, model_weights: str, chunk_size: int, img_type: str = "png"):
     # TODO: rename file with path, as it can also be a dir. Check possible conflicts
     # TODO: @Randy docstrings and type hints (decide if str or Path!)
     log.info("Starting")

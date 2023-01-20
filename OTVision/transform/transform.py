@@ -165,7 +165,6 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     tracks_dict = read_json(tracks_file, filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"])
     _check_and_update_metadata_inplace(tracks_dict)
     tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
-    fps = _get_fps_from_filename(filename=str(tracks_file))
     metadata_dict = tracks_dict["metadata"]
 
     # Create datetime column from frame number

@@ -83,10 +83,9 @@ def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
     # IDEA: Just test if file sizes of both mp4 files are equal
     for mp4_ref_video in mp4_ref_videos:
         assert np.array_equal(
-            array_from_video(Path(mp4_ref_video)),
+            array_from_video(mp4_ref_video),
             array_from_video(
-                Path(mp4_ref_video).parents[1]
-                / test_data_tmp_dir.name
-                / Path(mp4_ref_video).name
+                test_data_tmp_dir
+                / mp4_ref_video.name
             ),
         )

@@ -45,9 +45,10 @@ def get_files(
 
     Raises:
         TypeError: If type of paths is not list
-        TypeError: If type of path in paths is not Path
+        TypeError: If type of path in paths is not Path or subclass
         TypeError: If type of filetypes is not list
         TypeError: If type of filetype in filetypes is not str
+        TypeError: If path in paths is neither valid file nor dir
 
     Returns:
         list[Path]: List of files
@@ -66,7 +67,8 @@ def get_files(
                     filetype = f".{filetype}"
                 filetypes[idx] = filetype.lower()
     for path in paths:
-        path = Path(path)
+        if not isinstance(path, Path):
+            raise TypeError("Paths needs to be a list of pathlib.Path")
         if path.is_file():
             file = path
             if filetypes:
@@ -113,7 +115,7 @@ def replace_filetype(
         raise TypeError("Paths needs to a list of pathlib.Path")
     new_paths = []
     for path in files:
-        if type(path) is not Path:
+        if not isinstance(path, Path):
             raise TypeError("Paths needs to a list of pathlib.Path")
         if path.is_file():
             if old_filetype and path.suffix.lower() != old_filetype.lower():
