@@ -60,13 +60,13 @@ def center(obj: dict) -> tuple[float, float]:
 
 
 def track_iou(
-    detections: list,
+    detections: list,  # TODO: Type hint nested list during refactoring
     sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
     sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
     sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
     t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
     t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-):  # sourcery skip: low-code-quality
+) -> dict:  # sourcery skip: low-code-quality
     """
     Simple IOU based tracker.
     See "High-Speed Tracking-by-Detection Without Using Image Information

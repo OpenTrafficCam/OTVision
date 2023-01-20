@@ -13,7 +13,7 @@ SINGLE_REFPTS_FILE = Path(CONFIG["TESTDATAFOLDER"]) / "Testvideo_FR20.otrfpts"
 
 
 @pytest.mark.parametrize("single_refpts_file", [None, SINGLE_REFPTS_FILE])
-def test_transform(test_data_tmp_dir: Path, single_refpts_file):
+def test_transform(test_data_tmp_dir: Path, single_refpts_file: Path):
     # sourcery skip: remove-assert-true, remove-redundant-pass
     """Tests the main function of OTVision/transform/transform.py
     transforming test tracks files from pixel to world coordinates based

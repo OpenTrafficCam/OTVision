@@ -36,16 +36,21 @@ def get_files(
     (recursive) content of folders.
 
     Args:
-        paths ([str or list of str or Path or list of Path]): where to find
-        the files.
-        filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
+        paths (list[Path]): where to find the files.
+        filetype (list[str]): ending of files to find. Preceding "_" prevents adding a '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
-        search_subdirs ([bool]): Wheter or not to search subdirs of dirs given as paths.
+        search_subdirs (bool): Wheter or not to search subdirs of dirs given as paths.
             Defaults to True.
 
+    Raises:
+        TypeError: If type of paths is not list
+        TypeError: If type of path in paths is not Path
+        TypeError: If type of filetypes is not list
+        TypeError: If type of filetype in filetypes is not str
+
     Returns:
-        [list]: [list of filenames as str]
+        list[Path]: List of files
     """
     files = set()
     if type(paths) is not list:
@@ -202,6 +207,7 @@ def write_json(
         log.debug(f"{outfile} already exists, not overwritten. Set overwrite=True")
 
 
+# TODO: Type hint nested dict during refactoring
 def _check_and_update_metadata_inplace(otdict: dict):
     """Check if dict of detections or tracks has subdict metadata.
         If not, try to convert from historic format.
@@ -226,6 +232,7 @@ def _check_and_update_metadata_inplace(otdict: dict):
         raise
 
 
+# TODO: Type hint nested dict during refactoring
 def denormalize_bbox(
     otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
 ):
@@ -255,6 +262,7 @@ def denormalize_bbox(
     return otdict
 
 
+# TODO: Type hint nested dict during refactoring
 def normalize_bbox(
     otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
 ):
@@ -284,6 +292,7 @@ def normalize_bbox(
     return otdict
 
 
+# TODO: Type hint nested dict during refactoring
 def _normal_transformation(
     otdict: dict, direction: str, keys_width: list[str], keys_height: list[str]
 ) -> dict:
@@ -337,6 +346,30 @@ def has_filetype(file: Path, filetypes: list[str]) -> bool:
         filetype.lower() if filetype.startswith(".") else f".{filetype.lower()}"
         for filetype in filetypes
     ]
+
+
+def is_video(file: Path) -> bool:
+    """Checks if a file is a video according to its filetype
+
+    Args:
+        file (Path): file to check
+
+    Returns:
+        bool: whether or not the file is a video
+    """
+    return file.suffix.lower() in CONFIG["FILETYPES"]["VID"]
+
+
+def is_image(file: Path) -> bool:
+    """Checks if a file is an image according to its filetype
+
+    Args:
+        file (Path): file to check
+
+    Returns:
+        bool: whether or not the file is an image
+    """
+    return file.suffix.lower() in CONFIG["FILETYPES"]["IMG"]
 
 
 def unzip(file: Path) -> Path:

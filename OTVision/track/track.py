@@ -111,13 +111,13 @@ def main(
 
 
 def track(
-    detections: dict,
+    detections: dict,  # TODO: Type hint nested dict during refactoring
     sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
     sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
     sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
     t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
     t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-) -> dict[str, dict]:
+) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Perform tracking using track_iou with arguments and add metadata to tracks.
 
     Args:

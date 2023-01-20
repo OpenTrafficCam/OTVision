@@ -26,7 +26,10 @@ import pandas as pd
 from OTVision.helpers.log import log
 
 
-def get_homography(refpts):
+# TODO: Type hint nested dict during refactoring
+def get_homography(
+    refpts: dict,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, int, str, dict]:
     """Calculate homography matrix using pixel and world coordinates of corresponding
     reference points.
 
@@ -104,8 +107,10 @@ def get_homography(refpts):
 
 
 def evaluate_homography(
-    refpts_pixel, refpts_world_upshifted_disassembled, homography_matrix
-):
+    refpts_pixel: dict,
+    refpts_world_upshifted_disassembled: np.ndarray,
+    homography_matrix: np.ndarray,
+) -> dict:  # TODO: Type hint nested dict during refactoring
     """Calculates transformation error of homography
 
     Args:
@@ -141,6 +146,6 @@ def evaluate_homography(
     log.info("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
     # sourcery skip: merge-dict-assign
     eval_dict = {}
-    eval_dict["Mean transformation error [m]"] = eval_df["delta_abs"].mean()
-    eval_dict["Maximum transformation error [m]"] = eval_df["delta_abs"].max()
+    eval_dict["mean_transformation_error_m"] = eval_df["delta_abs"].mean()
+    eval_dict["Maximum_transformation_error_m"] = eval_df["delta_abs"].max()
     return eval_dict

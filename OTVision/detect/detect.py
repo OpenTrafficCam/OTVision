@@ -22,6 +22,8 @@ OTVision main module to detect objects in single or multiple images or videos.
 import json
 from pathlib import Path
 
+import torch
+
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, has_filetype
 from OTVision.helpers.log import log, reset_debug, set_debug
@@ -32,7 +34,7 @@ from . import yolo
 def main(
     paths: list[Path],
     filetypes: list[str] = CONFIG["FILETYPES"]["VID_IMG"],
-    model=None,
+    model: torch.nn.Module = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
@@ -50,7 +52,7 @@ def main(
         paths (list[Path]): List of paths to video files.
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
-        model (_type_, optional): YOLOv5 detection model.
+        model (torch.nn.Module, optional): YOLOv5 detection model.
             Defaults to None.
         weights (str, optional): (Pre-)trained weights for YOLOv5 detection model.
             Defaults to CONFIG["DETECT"]["YOLO"]["WEIGHTS"].
@@ -93,7 +95,7 @@ def main(
     for video_file in video_files:
         log.info(f"Try detecting {video_file}")
         detections_video = yolo.detect_video(
-            file_path=video_file,
+            file=video_file,
             model=yolo_model,
             weights=weights,
             conf=conf,
@@ -187,7 +189,7 @@ def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
 
 
 def write(
-    detections: dict,
+    detections: dict,  # TODO: Type hint nested dict during refactoring"
     img_or_video_file: Path,
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
 ):

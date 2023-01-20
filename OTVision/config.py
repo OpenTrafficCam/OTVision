@@ -21,13 +21,14 @@ OTVision config module for setting default values
 
 from pathlib import Path
 
-from .helpers.files import _get_testdatafolder
-
 # sourcery skip: merge-dict-assign
 CONFIG = {}
 
 # FOLDERS
-CONFIG["TESTDATAFOLDER"] = _get_testdatafolder()
+# TODO: 
+def _get_testadatafolder():
+    return Path(__file__).parents[0] / r"tests/data"
+CONFIG["TESTDATAFOLDER"] = _get_testadatafolder()
 CONFIG["SEARCH_SUBDIRS"] = True
 
 # FILETYPES

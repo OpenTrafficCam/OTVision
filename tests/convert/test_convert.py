@@ -7,6 +7,7 @@ from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files
 from OTVision.helpers.machine import ON_WINDOWS
+from tests.conftest import test_data_tmp_dir
 
 
 def test_check_ffmpeg():
@@ -45,8 +46,12 @@ def test_convert(test_data_tmp_dir: Path):
         return
 
     # Get reference data
-    h264_ref_videos = get_files(paths=[CONFIG["TESTDATAFOLDER"]], filetypes=[".h264"])
-    mp4_ref_videos = get_files(paths=[CONFIG["TESTDATAFOLDER"]], filetypes=[".mp4"])
+    h264_ref_videos = get_files(
+        paths=[Path(CONFIG["TESTDATAFOLDER"])], filetypes=[".h264"]
+    )
+    mp4_ref_videos = get_files(
+        paths=[Path(CONFIG["TESTDATAFOLDER"])], filetypes=[".mp4"]
+    )
 
     # Copy input data to temporary folder and start conversion
     for h264_ref_video in h264_ref_videos:
@@ -66,7 +71,7 @@ def test_convert(test_data_tmp_dir: Path):
     import cv2
     import numpy as np
 
-    def array_from_video(path):
+    def array_from_video(path: Path):
         frames = []
         cap = cv2.VideoCapture(str(path))
         ret = True

@@ -32,7 +32,7 @@ from OTVision.helpers.files import get_files, unzip
 from OTVision.helpers.log import log
 
 
-def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs=False) -> Path:
+def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs:bool=False) -> Path:
     to_be_zipped = cvat_yolo_dir
     if not pngs:
         img_paths = get_files(paths=[to_be_zipped], filetypes=[img_type])
@@ -89,11 +89,10 @@ def _pre_annotate(
     return _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False)
 
 
-def main(file, model_weights, chunk_size, img_type="png"):
+def main(path:Path, model_weights:str, chunk_size:int, img_type:str="png"):
     # TODO: rename file with path, as it can also be a dir. Check possible conflicts
     # TODO: @Randy docstrings and type hints (decide if str or Path!)
     log.info("Starting")
-    path = Path(file)  # ?: @Randy delete?
     if path.is_file():
         _pre_annotate(
             cvat_yolo_zip=path,
@@ -102,7 +101,7 @@ def main(file, model_weights, chunk_size, img_type="png"):
             img_type=img_type,
         )
     elif path.is_dir():
-        zip_files = get_files(paths=[file], filetypes=["zip"])
+        zip_files = get_files(paths=[path], filetypes=["zip"])
         for file in progressbar.progressbar(zip_files):
             _pre_annotate(
                 cvat_yolo_zip=file,

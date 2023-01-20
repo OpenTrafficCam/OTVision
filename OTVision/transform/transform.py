@@ -148,6 +148,7 @@ def main(
         reset_debug()
 
 
+# TODO: Type hint nested dict during refactoring
 def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     """Reads .ottrk file, returns pandas DataFrame of trajectories
     in pixel coordinates and dict of metadata
@@ -176,7 +177,9 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     return tracks_df, metadata_dict
 
 
-def read_refpts(reftpts_file: Path) -> dict:
+def read_refpts(
+    reftpts_file: Path,
+) -> dict:  # TODO: Type hint nested dict during refactoring
     """Reads .otrfpts file, returns dict of matching reference points
     in both pixel and utm coordinates
 
@@ -208,7 +211,7 @@ def transform(
         tracks_px (pandas.DataFrame): Trajectories in pixel coordinates
         homography (numpy.ndarry): Homography matrix between pixel and utm coordinates
         refpts_utm_upshifted_predecimal_pt1_1row (numpy.ndarry): Thousands digits
-        of reference points in utm coorindates
+            of reference points in utm coorindates
         upshift_utm (numpy.ndarry): Upshift of reference points coordinates
         x_col (str, optional): Column name of x-pixel values. Defaults to "x".
         y_col (str, optional): Column name of y-pixel values. Defaults to "y".
@@ -248,6 +251,7 @@ def transform(
     return tracks_utm
 
 
+# TODO: Type hint nested dict during refactoring
 def write_refpts(refpts: dict, refpts_file: Path):
     """Writes corresponding reference points in both pixel and utm coordinates
     to a json-like .otrfpts file
@@ -264,6 +268,7 @@ def write_refpts(refpts: dict, refpts_file: Path):
     )
 
 
+# TODO: Type hint nested dict during refactoring
 def write_tracks(
     tracks_utm_df: pd.DataFrame,
     metadata_dict: dict,

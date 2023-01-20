@@ -39,7 +39,6 @@ def main(
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
-    # TODO: #111 Set more parameters as global variables in config.py
 ):
     """Converts multiple h264-based videos into other formats and/or frame rates.
 

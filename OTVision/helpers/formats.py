@@ -75,6 +75,7 @@ def _get_datetime_from_filename(
     return datetime_str
 
 
+# TODO: Type hint nested dict during refactoring
 def _ottrk_dict_to_df(nested_dict: dict) -> pd.DataFrame:
     """Turns a dict of tracks into a dataframe
 
