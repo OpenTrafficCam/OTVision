@@ -25,9 +25,11 @@ from pathlib import Path
 CONFIG = {}
 
 # FOLDERS
-# TODO: 
+# TODO:
 def _get_testadatafolder():
     return Path(__file__).parents[0] / r"tests/data"
+
+
 CONFIG["TESTDATAFOLDER"] = _get_testadatafolder()
 CONFIG["SEARCH_SUBDIRS"] = True
 

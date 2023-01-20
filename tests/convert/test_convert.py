@@ -7,7 +7,6 @@ from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files
 from OTVision.helpers.machine import ON_WINDOWS
-from tests.conftest import test_data_tmp_dir
 
 
 def test_check_ffmpeg():
@@ -36,7 +35,7 @@ def test_check_ffmpeg():
     assert ffmpeg_creation_time_before == ffmpeg_creation_time_after
 
 
-def test_convert(test_data_tmp_dir: Path):
+def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
     """Tests the main function of OTVision/convert/convert.py
     transforming short test videos from h264 to mp4 based on
     framerate specified as part of the file path using ffmpeg.exe
@@ -46,12 +45,8 @@ def test_convert(test_data_tmp_dir: Path):
         return
 
     # Get reference data
-    h264_ref_videos = get_files(
-        paths=[Path(CONFIG["TESTDATAFOLDER"])], filetypes=[".h264"]
-    )
-    mp4_ref_videos = get_files(
-        paths=[Path(CONFIG["TESTDATAFOLDER"])], filetypes=[".mp4"]
-    )
+    h264_ref_videos = get_files(paths=[test_data_dir], filetypes=[".h264"])
+    mp4_ref_videos = get_files(paths=[test_data_dir], filetypes=[".mp4"])
 
     # Copy input data to temporary folder and start conversion
     for h264_ref_video in h264_ref_videos:

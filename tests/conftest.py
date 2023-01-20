@@ -11,3 +11,8 @@ def test_data_tmp_dir() -> Generator[Path, None, None]:
     test_data_tmp_dir.mkdir(exist_ok=True)
     yield test_data_tmp_dir
     shutil.rmtree(test_data_tmp_dir)
+
+
+@pytest.fixture
+def test_data_dir() -> Generator[Path, None, None]:
+    yield Path(__file__).parent / "data"
