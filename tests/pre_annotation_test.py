@@ -176,8 +176,8 @@ def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped: Path) -> None:
     assert not annotated_obj_train_data_content, "Method should remove all images"
 
 
-def test_main_notExistingPathAsParam_raiseOSError() -> None:
-    path = Path("file/not/exists")
+def test_main_notExistingPathAsParam_raiseOSError(test_data_dir: Path) -> None:
+    path = Path(test_data_dir, "file_not_exists.png")
 
     with pytest.raises(OSError, match=f"Path at: '{path}' does not exist!"):
         main(path, "yolov5s")
