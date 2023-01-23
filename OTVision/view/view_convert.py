@@ -24,7 +24,7 @@ import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.convert.convert import main as convert
-from OTVision.helpers.files import get_files
+from OTVision.helpers.files import get_files, replace_filetype
 from OTVision.helpers.log import log
 from OTVision.view.view_helpers import FrameRun
 
@@ -118,17 +118,19 @@ class FrameRunConversion(FrameRun):
         fps_from_filename = (
             self.master.frame_options.checkbutton_use_framerate_var.get()
         )
-        paths = get_files(
-            paths=self.master.master.frame_files.get_tree_files(),
-            filetypes=".h264",
-            replace_filetype=True,
+        files = replace_filetype(
+            files=self.master.master.frame_files.get_tree_files(), new_filetype=".h264"
+        )
+        files = get_files(
+            paths=files,
+            filetypes=[".h264"],
         )
         output_filetype = f".{self.master.frame_options.combo_filtype.get()}"
         input_fps = self.master.frame_options.entry_framerate.get()
         output_fps = self.master.frame_options.entry_framerate.get()
         overwrite = self.master.frame_options.checkbutton_use_framerate_var.get()
         convert(
-            paths=paths,
+            paths=files,
             output_filetype=output_filetype,
             input_fps=input_fps,
             output_fps=output_fps,

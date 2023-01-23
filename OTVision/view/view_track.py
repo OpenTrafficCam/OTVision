@@ -22,7 +22,7 @@ OTVision gui module for track.py
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
-from OTVision.helpers.files import get_files
+from OTVision.helpers.files import get_files, replace_filetype
 from OTVision.helpers.log import log
 from OTVision.track.track import main as track
 from OTVision.view.view_helpers import FrameRun
@@ -101,10 +101,13 @@ class FrameRunTracking(FrameRun):
 
     def run(self, event):
         log.debug("---Starting tracking from gui---")
-        paths = get_files(
-            paths=self.master.master.frame_files.get_tree_files(),
+        files = replace_filetype(
+            files=self.master.master.frame_files.get_tree_files(),
+            new_filetype=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
+        )
+        files = get_files(
+            paths=files,
             filetypes=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
-            replace_filetype=True,
         )
         sigma_l = self.master.frame_options.scale_sigma_l.get()
         sigma_h = self.master.frame_options.scale_sigma_h.get()
@@ -113,7 +116,7 @@ class FrameRunTracking(FrameRun):
         t_miss_max = self.master.frame_options.scale_t_miss_max.get()
         overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
         track(
-            paths=paths,
+            paths=files,
             sigma_l=sigma_l,
             sigma_h=sigma_h,
             sigma_iou=sigma_iou,

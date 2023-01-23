@@ -35,7 +35,7 @@ def test_check_ffmpeg():
     assert ffmpeg_creation_time_before == ffmpeg_creation_time_after
 
 
-def test_convert(test_data_tmp_dir: Path):
+def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
     """Tests the main function of OTVision/convert/convert.py
     transforming short test videos from h264 to mp4 based on
     framerate specified as part of the file path using ffmpeg.exe
@@ -45,8 +45,8 @@ def test_convert(test_data_tmp_dir: Path):
         return
 
     # Get reference data
-    h264_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="h264")
-    mp4_ref_videos = get_files(paths=CONFIG["TESTDATAFOLDER"], filetypes="mp4")
+    h264_ref_videos = get_files(paths=[test_data_dir], filetypes=[".h264"])
+    mp4_ref_videos = get_files(paths=[test_data_dir], filetypes=[".mp4"])
 
     # Copy input data to temporary folder and start conversion
     for h264_ref_video in h264_ref_videos:
@@ -57,8 +57,8 @@ def test_convert(test_data_tmp_dir: Path):
             / Path(h264_ref_video).name,
         )
     h264_test_videos = get_files(
-        paths=test_data_tmp_dir,
-        filetypes="h264",
+        paths=[test_data_tmp_dir],
+        filetypes=[".h264"],
     )
     convert(h264_test_videos)
 
@@ -66,7 +66,7 @@ def test_convert(test_data_tmp_dir: Path):
     import cv2
     import numpy as np
 
-    def array_from_video(path):
+    def array_from_video(path: Path):
         frames = []
         cap = cv2.VideoCapture(str(path))
         ret = True
@@ -83,10 +83,9 @@ def test_convert(test_data_tmp_dir: Path):
     # IDEA: Just test if file sizes of both mp4 files are equal
     for mp4_ref_video in mp4_ref_videos:
         assert np.array_equal(
-            array_from_video(Path(mp4_ref_video)),
+            array_from_video(mp4_ref_video),
             array_from_video(
-                Path(mp4_ref_video).parents[1]
-                / test_data_tmp_dir.name
-                / Path(mp4_ref_video).name
+                test_data_tmp_dir
+                / mp4_ref_video.name
             ),
         )

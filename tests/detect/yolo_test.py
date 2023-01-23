@@ -8,10 +8,7 @@ from OTVision.detect.yolo import _get_batch_of_frames
 
 @pytest.fixture
 def video_path():
-    in_path = str(
-        Path(__file__).parents[1] / "data" / "Testvideo_FR20_Cars-Cyclist.mp4"
-    )
-    return in_path
+    return str(Path(__file__).parents[1] / "data" / "Testvideo_FR20_Cars-Cyclist.mp4")
 
 
 @pytest.fixture

@@ -26,9 +26,11 @@ from pathlib import Path
 from random import randrange
 from tkinter import ttk
 from tkinter.simpledialog import Dialog
+from typing import Any, Union
 
 import cv2
 
+from OTVision.helpers.files import is_image, is_video
 from OTVision.helpers.log import log
 
 
@@ -48,20 +50,18 @@ class ReferencePointsPicker:
 
     def __init__(
         self,
-        title="Reference Points Picker",
-        image_file=None,
-        video_file=None,
-        popup_root=None,
+        file: Path,
+        title: str = "Reference Points Picker",
+        popup_root: tk.Tk = None,
     ):
 
         # Attributes
         self.title = title
         self.left_button_down = False
-        self.refpts = {}
-        self.historic_refpts = {}
-        self.image_file = image_file
-        self.video_file = video_file
-        self.refpts_path = Path(image_file or video_file).with_suffix(".otrfpts")
+        self.refpts: dict = {}
+        self.historic_refpts: dict = {}
+        self.file = file
+        self.refpts_file = file.with_suffix(".otrfpts")
         self.image = None
         self.video = None
         self.popup_root = popup_root
@@ -72,20 +72,45 @@ class ReferencePointsPicker:
 
     # ----------- Handle OpenCV gui -----------
 
-    def update_base_image(self, random_frame=False):
+    def update_base_image(self, random_frame: bool = False):
         log.debug("update base image")
-        if self.image_file:
-            try:
-                self.base_image = cv2.imread(self.image_file)
-            except Exception as e:
-                raise ImageWontOpenError(
-                    f"Error opening this image file: {self.image_file}"
-                ) from e
+        if is_image(self.file):
+            self.get_image()
             self.video = None
-        elif self.video_file:
-            if not self.video:
-                self.video = cv2.VideoCapture(self.video_file)
-            if not self.video.isOpened():
+        elif is_video(self.file):
+            self.get_frame_frome_video(random_frame=random_frame)
+        else:
+            raise ValueError("The file path provided has to be an image or a video")
+        self.draw_refpts()
+
+    def get_image(self):
+        """Set base_image with image from a file
+
+        Raises:
+            ImageWontOpenError: If image wont open
+        """
+        try:
+            self.base_image = cv2.imread(self.image_file)
+        except Exception as e:
+            raise ImageWontOpenError(
+                f"Error opening this image file: {self.image_file}"
+            ) from e
+
+    def get_frame_frome_video(self, random_frame: bool):
+        """Set base image with next or random frame from a video
+
+        Args:
+            random_frame (bool): If true gets a random frame from the video.
+                If false gets the next frame of the video.
+
+        Raises:
+            VideoWontOpenError: If video wont open
+            FrameNotAvailableError: If frame cannt be read
+        """
+        if not self.video:
+            self.video = cv2.VideoCapture(self.file)
+        else:
+            if self.video.isOpened():
                 raise VideoWontOpenError(
                     f"Error opening this video file: {self.video_file}"
                 )
@@ -100,17 +125,15 @@ class ReferencePointsPicker:
             ret, self.base_image = self.video.read()
             if not ret:
                 raise FrameNotAvailableError("Video Frame cannot be read correctly")
-        else:
-            raise NoPathError("Neither image nor video path was specified")
-        self.draw_refpts()
 
     def update_image(self):
+        """Show the current image"""
         if not self.left_button_down:
             log.debug("update image")
             cv2.imshow(self.title, self.image)
 
     def show(self):
-
+        """Enter OpenCV event loop"""
         cv2.imshow(self.title, self.image)
         cv2.setMouseCallback(self.title, self.handle_mouse_events)
 
@@ -129,8 +152,15 @@ class ReferencePointsPicker:
 
         cv2.destroyAllWindows()
 
-    def handle_mouse_events(self, event, x_px, y_px, flags, params):
-        """Reads the current mouse position with a left click and writes it
+    def handle_mouse_events(
+        self,
+        event: int,
+        x_px: int,
+        y_px: int,
+        flags,  # TODO: Correct type hint
+        params: Any,  # TODO: Correct type hint
+    ):
+        """Read the current mouse position with a left click and write it
         to the end of the array refpkte and increases the counter by one"""
         if event == cv2.EVENT_LBUTTONUP:
             self.left_button_down = False
@@ -144,7 +174,7 @@ class ReferencePointsPicker:
             if self.left_button_down:
                 self.zoom_magnifier(x_px, y_px)
 
-    def handle_keystrokes(self, key):
+    def handle_keystrokes(self, key: int):
         if key == 26:  # ctrl + z
             self.undo_last_refpt()
         elif key == 25:  # ctrl + y
@@ -158,7 +188,13 @@ class ReferencePointsPicker:
 
     # ----------- Handle connections -----------
 
-    def add_refpt(self, x_px, y_px):
+    def add_refpt(self, x_px: int, y_px: int):
+        """Add a reference point
+
+        Args:
+            x_px (int): x coordinate [px] (horizontal distance from the left)
+            y_px (int): y coordinate [px] (vertical distance from the top)
+        """
         log.debug("add refpt")
         new_refpt_px = {"x_px": x_px, "y_px": y_px}
         self.draw_refpts(temp_refpt=new_refpt_px)
@@ -169,7 +205,7 @@ class ReferencePointsPicker:
         self.draw_refpts()
 
     def undo_last_refpt(self):
-
+        """Remove the last reference point"""
         if self.refpts:
             log.debug("undo last refpt")
             self.refpts, undone_refpt = self.pop_refpt(refpts=self.refpts)
@@ -184,6 +220,7 @@ class ReferencePointsPicker:
             log.debug("refpts empty, cannot undo last refpt")
 
     def redo_last_refpt(self):
+        """Again add the last removed reference point"""
         if self.historic_refpts:
             log.debug("redo last refpt")
             self.historic_refpts, redone_refpt = self.pop_refpt(
@@ -195,10 +232,16 @@ class ReferencePointsPicker:
         else:
             log.debug("no historc refpts, cannot redo last refpt")
 
-    def get_refpt_utm_from_popup(self):
+    def get_refpt_utm_from_popup(self) -> dict:
+        """Open a popup to enter utm lat and lon coordinates of the reference point
+
+        Returns:
+            dict: dict of utm coordinates including hemisphere and utm zone
+        """
+        # TODO: Refactor to smaller methods
         if not self.popup_root:
             self.popup_root = tk.Tk()
-            self.popup_root.overrideredirect(1)
+            self.popup_root.overrideredirect(True)
             self.popup_root.withdraw()
         refpt_utm_correct = False
         try_again = False
@@ -210,7 +253,7 @@ class ReferencePointsPicker:
             # Check utm part of refpt
             log.debug(new_refpt_utm)
             if new_refpt_utm:  # BUG: ValueError: could not convert string to float: ''
-                # TODO: Cancel cancels whole refpt
+                # BUG: Cancel cancels whole refpt
                 # (even pixel coordinates, otherwise stuck in infinite loop)
                 hemisphere_correct = isinstance(
                     new_refpt_utm["hemisphere"], str
@@ -239,13 +282,33 @@ class ReferencePointsPicker:
 
     # ----------- Edit refpts dict -----------
 
-    def append_refpt(self, refpts, new_refpt):
+    def append_refpt(self, refpts: dict, new_refpt: dict) -> dict:
+        """Append a reference point to a dict of reference points.
+            Used for valid reference points as well as for deleted reference points.
+
+        Args:
+            refpts (dict): old reference points
+            new_refpt (dict): new reference point
+
+        Returns:
+            dict: updated reference points
+        """
         log.debug("append refpts")
         new_idx = len(refpts) + 1
         refpts[new_idx] = new_refpt
         return refpts
 
-    def pop_refpt(self, refpts):
+    def pop_refpt(self, refpts: dict) -> tuple[dict, dict]:
+        """Remove reference point from a dict of reference points.
+            Used for valid reference points as well as for deleted reference points.
+
+        Args:
+            refpts (dict): old reference points
+
+        Returns:
+            dict: new reference points
+            dict: removed reference point
+        """
         log.debug("pop refpts")
         popped_refpt = refpts.popitem()[1]
         return refpts, popped_refpt
@@ -258,7 +321,13 @@ class ReferencePointsPicker:
     def zoom_magnifier(self, x_px, y_px):
         log.debug(" # TODO: zoom magnifier")
 
-    def draw_refpts(self, temp_refpt=None):
+    def draw_refpts(self, temp_refpt: dict = None):
+        """Draw all the reference points an self.image
+
+        Args:
+            temp_refpt (dict, optional): possible reference point from left button down.
+                Defaults to None.
+        """
         FONT = cv2.FONT_ITALIC
         FONT_SIZE_REL = 0.02
         MARKER_SIZE_REL = 0.02
@@ -293,9 +362,10 @@ class ReferencePointsPicker:
     # ----------- Complete job -----------
 
     def _write_refpts(self):
+        """Write reference points to a json file"""
         log.debug("write refpts")
         # Only necessary if the reference points picker is used as standalone tool
-        with open(self.refpts_path, "w") as f:
+        with open(self.refpts_file, "w") as f:
             json.dump(self.refpts, f, indent=4)
 
     def write_image(self):
@@ -304,9 +374,10 @@ class ReferencePointsPicker:
         # Problem: Ctrl+S shortcut is occupied by this
         pass
 
-    # ----------- Helper function -----------
+    # ----------- Helper functions -----------
 
     def _log_refpts(self):
+        """Helper for logging"""
         log.debug("-------------------------")
         log.debug("refpts:")
         log.debug(self.refpts)
@@ -317,12 +388,18 @@ class ReferencePointsPicker:
 
 
 class DialogUTMCoordinates(Dialog):
+    """Modificatoin of tkinter.simpledialog.Dialog to get utm coordinates and zone and
+    hemisphere of sreference point
+    """
+
     def __init__(self, try_again=False, **kwargs):
         self.coords_utm = None
         self.try_again = try_again
         super().__init__(**kwargs)
 
-    def body(self, master):  # sourcery skip: assign-if-exp, swap-if-expression
+    def body(
+        self, master: tk.Frame
+    ):  # sourcery skip: assign-if-exp, swap-if-expression
 
         # Labels
         if not self.try_again:
@@ -335,7 +412,7 @@ class DialogUTMCoordinates(Dialog):
         tk.Label(master, text="Latitude (N):").grid(row=3, sticky="e")
 
         # Zone
-        zones = list(range(1, 61))
+        zones: list = list(range(1, 61))
         self.combo_zone = ttk.Combobox(
             master=master, values=zones, width=3, state="readonly"
         )

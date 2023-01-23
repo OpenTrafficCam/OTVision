@@ -1,9 +1,10 @@
-# OTVision 
+# OTVision
 OTVision/user.conf
 yolov5*.pt
 obj_train_data/*
 *.mp4
 *ffmpeg.exe
+*ffmpeg.zip
 tests/resources/
 
 # Byte-compiled / optimized / DLL files
@@ -170,3 +171,6 @@ Thumbs.db
 
 # Local History for Visual Studio Code
 .history/
+
+# Vim
+.vim

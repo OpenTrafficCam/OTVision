@@ -67,5 +67,5 @@ def test_get_fps_from_filename_validFpsAsParam(fname: str, expected: int):
     ],
 )
 def test_get_fps_from_filename_invalidFilenameAsParam(fname):
-    result = _get_fps_from_filename(fname)
-    assert result is None
+    with pytest.raises(ValueError):
+        result = _get_fps_from_filename(fname)

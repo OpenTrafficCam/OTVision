@@ -30,7 +30,15 @@ from OTVision.config import CONFIG
 from .iou_util import iou
 
 
-def make_bbox(obj):
+def make_bbox(obj: dict) -> tuple[float, float, float, float]:
+    """Calculates xyxy coordinates from dict of xywh.
+
+    Args:
+        obj (dict): dict of pixel values for xcenter, ycenter, width and height
+
+    Returns:
+        tuple[float, float, float, float]: xmin, ymin, xmay, ymax
+    """
     return (
         obj["x"] - obj["w"] / 2,
         obj["y"] - obj["h"] / 2,
@@ -39,50 +47,59 @@ def make_bbox(obj):
     )
 
 
-def center(obj):
+def center(obj: dict) -> tuple[float, float]:
+    """Retrieves center coordinates from dict.
+
+    Args:
+        obj (dict): _description_
+
+    Returns:
+        tuple[float, float]: _description_
+    """
     return obj["x"], obj["y"]
 
 
 def track_iou(
-    detections,
-    sigma_l=CONFIG["TRACK"]["IOU"]["SIGMA_L"],
-    sigma_h=CONFIG["TRACK"]["IOU"]["SIGMA_H"],
-    sigma_iou=CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
-    t_min=CONFIG["TRACK"]["IOU"]["T_MIN"],
-    t_miss_max=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-):
+    detections: list,  # TODO: Type hint nested list during refactoring
+    sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
+    sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
+    sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
+    t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
+    t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+) -> dict:  # sourcery skip: low-code-quality
     """
     Simple IOU based tracker.
     See "High-Speed Tracking-by-Detection Without Using Image Information
     by E. Bochinski, V. Eiselein, T. Sikora" for
     more information.
+
     Args:
-         detections (list): list of detections per frame, usually generated
-         by util.load_mot
-         sigma_l (float): low detection threshold.
-         sigma_h (float): high detection threshold.
-         sigma_iou (float): IOU threshold.
-         t_min (float): minimum track length in frames.
+        detections (list): list of detections per frame, usually generated
+        by util.load_mot
+        sigma_l (float): low detection threshold.
+        sigma_h (float): high detection threshold.
+        sigma_iou (float): IOU threshold.
+        t_min (float): minimum track length in frames.
+
     Returns:
         list: list of tracks.
     """
 
-    tracks_active = []
+    tracks_active: list = []
     # tracks_finished = []
-    tracks_geojson = {"type": "FeatureCollection", "features": []}
-    vehID = 0
-    vehIDs_finished = []
-    new_detections = {}
+    vehID: int = 0
+    vehIDs_finished: list = []
+    new_detections: dict = {}
 
     for frame_num in detections:
         detections_frame = detections[frame_num]["classified"]
         # apply low threshold to detections
         dets = [det for det in detections_frame if det["conf"] >= sigma_l]
         new_detections[frame_num] = {}
-        updated_tracks = []
-        saved_tracks = []
+        updated_tracks: list = []
+        saved_tracks: list = []
         for track in tracks_active:
-            if len(dets) > 0:
+            if dets:
                 # get det with highest iou
                 best_match = max(
                     dets, key=lambda x: iou(track["bboxes"][-1], make_bbox(x))
@@ -105,7 +122,7 @@ def track_iou(
                     new_detections[frame_num][track["vehID"]] = best_match
 
             # if track was not updated
-            if len(updated_tracks) == 0 or track is not updated_tracks[-1]:
+            if not updated_tracks or track is not updated_tracks[-1]:
                 # finish track when the conditions are met
                 if track["age"] < t_miss_max:
                     track["age"] += 1
@@ -116,20 +133,6 @@ def track_iou(
                 ):
                     # tracks_finished.append(track)
                     vehIDs_finished.append(track["vehID"])
-                    tracks_geojson["features"].append(
-                        {
-                            "type": "Feature",
-                            "geometry": {
-                                "type": "LineString",
-                                "coordinates": track["center"],
-                            },
-                            "properties": {
-                                "max_conf": track["max_conf"],
-                                "ID": track["vehID"],
-                                "start_frame": track["frames"][0],
-                            },
-                        }
-                    )
         # TODO: Alter der Tracks
         # create new tracks
         new_tracks = []
@@ -163,46 +166,14 @@ def track_iou(
     #         and track["frames"][-1] - track["frames"][0] >= t_min
     #     )
     # ]
-    tracks_geojson["features"] += [
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "LineString",
-                "coordinates": track["center"],
-            },
-            "properties": {
-                "max_conf": track["max_conf"],
-                "ID": track["vehID"],
-                "start_frame": track["frames"][0],
-            },
-        }
-        for track in tracks_active
-        if (
-            track["max_conf"] >= sigma_h
-            and track["frames"][-1] - track["frames"][0] >= t_min
-        )
-    ]
 
     # for track in tracks_finished:
     #     track["max_class"] = pd.Series(track["class"]).mode().iat[0]
-    for track_geojson in tracks_geojson["features"]:
-        track_geojson["properties"]["max_class"] = (
-            pd.Series(track["class"]).mode().iat[0]
-        )
-    detections = new_detections
-    # TODO: #82 Use dict comprehensions in track_iou
-    for frame_num, frame_det in new_detections.items():
-        for vehID, det in frame_det.items():
-            if vehID not in vehIDs_finished:
-                det["finished"] = False
-            else:
-                det["finished"] = True
-                # det["label"] = tracks[tracks["vehID"] == det["vehID"]]["max_label"]
 
+    # TODO: #82 Use dict comprehensions in track_iou
+    for frame_det in new_detections.values():
+        for vehID, det in frame_det.items():
+            det["finished"] = vehID in vehIDs_finished
     # return tracks_finished
     # TODO: #83 Remove unnessecary code (e.g. for tracks_finished) from track_iou
-    return (
-        new_detections,
-        tracks_geojson,
-        vehIDs_finished,
-    )
+    return new_detections

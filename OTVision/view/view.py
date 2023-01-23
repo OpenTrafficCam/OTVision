@@ -22,7 +22,7 @@ OTVision main gui module
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
-from OTVision.helpers.machine import ON_WINDOWS
+from OTVision.helpers.machine import ON_LINUX, ON_WINDOWS
 from OTVision.view.view_convert import FrameConvert, FrameConvertDummy
 from OTVision.view.view_detect import FrameDetect
 from OTVision.view.view_helpers import FrameFileTree, FrameRunChained
@@ -40,7 +40,10 @@ class WindowOTVision(tk.Tk):
             self.iconbitmap(CONFIG["GUI"]["OTC ICON"])
         self.set_layout()
         self.minsize(900, 620)
-        self.state("zoomed")
+        if ON_LINUX:
+            self.state("normal")
+        else:
+            self.state("zoomed")
 
     def set_layout(self):
         for col in range(3):

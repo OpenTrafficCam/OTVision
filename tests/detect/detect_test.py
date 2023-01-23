@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from OTVision.detect.detect import FormatNotSupportedError, _split_to_video_img_paths
@@ -6,22 +8,22 @@ from OTVision.detect.detect import FormatNotSupportedError, _split_to_video_img_
 @pytest.fixture
 def paths_with_legal_fileformats():
     return [
-        "vid_a.mov",
-        "vid_b.mkv",
-        "vid_c.avi",
-        "vid_d.mpg",
-        "vid_e.mpeg",
-        "vid_f.m4v",
-        "vid_g.wmv",
-        "img_h.jpeg",
-        "img_i.jpg",
-        "img_j.png",
+        Path("vid_a.mov"),
+        Path("vid_b.mkv"),
+        Path("vid_c.avi"),
+        Path("vid_d.mpg"),
+        Path("vid_e.mpeg"),
+        Path("vid_f.m4v"),
+        Path("vid_g.wmv"),
+        Path("img_h.jpeg"),
+        Path("img_i.jpg"),
+        Path("img_j.png"),
     ]
 
 
 @pytest.fixture
 def paths_with_illegal_fileformats():
-    return ["err_a.video", "err_b.image"]
+    return [Path("err_a.video"), Path("err_b.image")]
 
 
 def test_split_to_video_img_paths_legalPathsParam(paths_with_legal_fileformats):

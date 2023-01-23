@@ -20,6 +20,7 @@ OTVision script to call the transform main with arguments parsed from command li
 
 
 import argparse
+from pathlib import Path
 
 from OTVision.helpers.log import log
 from OTVision.transform.transform import main as transform
@@ -48,10 +49,12 @@ def parse():
 
 
 def main():
-    kwargs = vars(parse())
+    args = parse()
+    paths = [Path(str_path) for str_path in args.paths]
+    debug = args.debug
     log.info("Starting transforming to world coordinates from command line")
-    log.info(f"Arguments: {kwargs}")
-    transform(**kwargs)
+    log.info(f"Arguments: {vars(args)}")
+    transform(paths=paths, debug=debug)
     log.info("Finished transforming to world coordinates  from command line")
 
 

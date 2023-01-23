@@ -17,8 +17,8 @@ We appreciate your support in the form of both code and comments. First, please 
 ### Windows
 
 1. Clone this repository
-2. Klick on .\OTVision\Install.bat (a venv will be created and packages from requirements.txt will be installed including PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/))
-3. Klick on .\OTVision\OTVision.bat (venv will be activated and OTVision gui will be started)
+2. Click on .\OTVision\Install.bat (a venv will be created and packages from requirements.txt will be installed including PyTorch versions published on [pytorch.org](https://pytorch.org/get-started/locally/))
+3. Click on .\OTVision\OTVision.bat (venv will be activated and OTVision gui will be started)
 
 ### Apple M1 macOS
 
@@ -32,7 +32,7 @@ This command will automatically install all needed project dependencies if neede
 The default python version is set to 3.9.
 
 ```bash
-make run 
+make run
 ```
 
 To only install the OTVision's project dependencies with, run the following command in the OTVision directory:
@@ -48,7 +48,7 @@ make PY_VERSION=3.10 run
 ```
 
 ```bash
-make PY_VERSION=3.10 install 
+make PY_VERSION=3.10 install
 ```
 
 ## Development
