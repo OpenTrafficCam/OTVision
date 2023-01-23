@@ -117,7 +117,7 @@ def _pre_annotate(
 
 
 def main(
-    file: Path,
+    path: Path,
     model_weights: str,
     chunk_size: int = 1000,
     filter_classes: Union[None, dict] = None,
@@ -125,10 +125,16 @@ def main(
 ):
     log.info("Starting")
 
-    if file.is_file():
-        _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    elif file.is_dir():
-        zip_files = get_files([file], ["zip"])
+    if not path.exists():
+        raise OSError(f"Path at: '{path}' does not exist!")
+
+    if path.is_file():
+        _pre_annotate(path, model_weights, chunk_size, filter_classes, img_type)
+    elif path.is_dir():
+        zip_files = get_files([path], ["zip"])
         for f in progressbar.progressbar(zip_files):
             _pre_annotate(f, model_weights, chunk_size, filter_classes, img_type)
+    else:
+        raise OSError(f"Path at: '{path}' is neither a file nor a directory!")
+
     log.info("Done in {0:0.2f} s".format(perf_counter()))
