@@ -2,11 +2,14 @@ import os
 import shutil
 from pathlib import Path
 
+import cv2
+import numpy as np
+import numpy.testing as np_tst
+
 from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files
-from OTVision.helpers.machine import ON_WINDOWS
 
 
 def test_check_ffmpeg():
@@ -19,9 +22,6 @@ def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
     transforming short test videos from h264 to mp4 based on
     framerate specified as part of the file path using ffmpeg.exe
     """
-
-    if not ON_WINDOWS:
-        return
 
     # Get reference data
     h264_ref_videos = get_files(paths=[test_data_dir], filetypes=[".h264"])
@@ -42,10 +42,15 @@ def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
     convert(h264_test_videos)
 
     # Local function to turn videos into np arrays for comparison
-    import cv2
-    import numpy as np
+    def array_from_video(path: Path) -> np.ndarray:
+        """Turn videos into np arrays for comparison
 
-    def array_from_video(path: Path):
+        Args:
+            path (Path): Path to the video file
+
+        Returns:
+            np.ndarray: Video file as numpy array
+        """
         frames = []
         cap = cv2.VideoCapture(str(path))
         ret = True
@@ -59,12 +64,15 @@ def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
         return np.stack(frames, axis=0)
 
     # Turn test and reference mp4 videos into np arrays and compare them
-    # IDEA: Just test if file sizes of both mp4 files are equal
+    # Other idea: Just test if file sizes of both mp4 files are equal
+    precision = 5
     for mp4_ref_video in mp4_ref_videos:
-        assert np.array_equal(
+
+        mp4_test_video = test_data_tmp_dir / mp4_ref_video.name
+
+        # Assert ref and test video (for exact assertion use assert np.array_equal())
+        np_tst.assert_array_almost_equal(
             array_from_video(mp4_ref_video),
-            array_from_video(
-                test_data_tmp_dir
-                / mp4_ref_video.name
-            ),
+            array_from_video(mp4_test_video),
+            decimal=precision,
         )
