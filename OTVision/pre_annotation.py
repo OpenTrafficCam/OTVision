@@ -117,39 +117,18 @@ def _pre_annotate(
 
 
 def main(
-    file: Union[str, Path],
+    file: Path,
     model_weights: str,
     chunk_size: int = 1000,
     filter_classes: Union[None, dict] = None,
     img_type: str = "png",
 ):
     log.info("Starting")
-    f = Path(file)  # convert to Path object if file is of type str
 
-    if f.is_file():
-        _pre_annotate(f, model_weights, chunk_size, filter_classes, img_type)
-    elif f.is_dir():
-        zip_files = get_files([f], ["zip"])
-        for _f in progressbar.progressbar(zip_files):
-            _pre_annotate(_f, model_weights, chunk_size, filter_classes, img_type)
+    if file.is_file():
+        _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
+    elif file.is_dir():
+        zip_files = get_files([file], ["zip"])
+        for f in progressbar.progressbar(zip_files):
+            _pre_annotate(f, model_weights, chunk_size, filter_classes, img_type)
     log.info("Done in {0:0.2f} s".format(perf_counter()))
-
-
-if __name__ == "__main__":
-    file_path = (
-        "/Users/michaelheilig/Downloads/task_800x600_cloudy_h5m_aov60deg_"
-        + "intersection_priority_mondercangeintersection5-2022_08_19_10_23_31"
-        + "-yolo 1.1.zip"
-    )
-    model_weights = "yolov5s.pt"
-    chunk_size = 200
-    filter_classes = {
-        0: "person",
-        1: "bicycle",
-        2: "car",
-        3: "motorcycle",
-        4: "bus",
-        5: "truck",
-    }
-
-    main(file_path, model_weights, chunk_size, filter_classes)
