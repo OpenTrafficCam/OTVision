@@ -10,29 +10,8 @@ from OTVision.helpers.machine import ON_WINDOWS
 
 
 def test_check_ffmpeg():
-    """Tests if ffmpeg.exe is checked and downloaded correctly"""
-
-    if not ON_WINDOWS:
-        return
-
-    ffmpeg_exe_path = Path(CONFIG["CONVERT"]["FFMPEG_PATH"])
-
-    # Deletes ffmpeg.exe, tests if missing ffmpeg.exe is detected and downloaded again
-    if ffmpeg_exe_path.is_file():
-        ffmpeg_creation_time_before = os.path.getctime(ffmpeg_exe_path)
-    else:
-        ffmpeg_creation_time_before = 0
-    ffmpeg_exe_path.unlink(missing_ok=True)  # Delete ffmpeg.exe
+    """Tests if ffmpeg can be called as a subprocess"""
     check_ffmpeg()
-    ffmpeg_creation_time_after = os.path.getctime(ffmpeg_exe_path)
-    assert ffmpeg_creation_time_before != ffmpeg_creation_time_after
-    assert ffmpeg_exe_path.is_file()
-
-    # Test if exsting ffmpeg.exe is detected and therefore not downloaded again
-    ffmpeg_creation_time_before = os.path.getctime(ffmpeg_exe_path)
-    check_ffmpeg()
-    ffmpeg_creation_time_after = os.path.getctime(ffmpeg_exe_path)
-    assert ffmpeg_creation_time_before == ffmpeg_creation_time_after
 
 
 def test_convert(test_data_tmp_dir: Path, test_data_dir: Path):
