@@ -78,8 +78,7 @@ def test_convert(test_data_tmp_dir: Path, test_data_dir: Path) -> None:
             mp4_test_video.stat().st_size, rel=0.01
         )
 
-        # TODO: Assert ref and test video array´s color values
-        # (for exact assertion use assert np.array_equal())
+        # BUG: Asserting reference and test video's color values fails
         # import numpy.testing as np_tst
         # precision = 5
         # np_tst.assert_array_almost_equal(
@@ -87,3 +86,4 @@ def test_convert(test_data_tmp_dir: Path, test_data_dir: Path) -> None:
         #     array_mp4_test_video,
         #     decimal=precision,
         # )
+        # (for exact assertion use assert np.array_equal() instead)
