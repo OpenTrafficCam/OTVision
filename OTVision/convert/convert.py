@@ -21,15 +21,11 @@ OTVision main module for converting videos to other formats and frame rates.
 
 import subprocess
 from pathlib import Path
-from urllib.request import urlretrieve
-from zipfile import ZipFile
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import _remove_dir, get_files
+from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import log, reset_debug, set_debug
-from OTVision.helpers.machine import ON_WINDOWS
-
 
 def main(
     paths: list[Path],
