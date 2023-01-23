@@ -21,6 +21,7 @@ OTVision helpers for filehandling
 import json
 import shutil
 from pathlib import Path
+from typing import Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.log import log
@@ -28,7 +29,7 @@ from OTVision.helpers.log import log
 
 def get_files(
     paths: list[Path],
-    filetypes: list[str] = None,
+    filetypes: Union[list[str], None] = None,
     search_subdirs: bool = True,
 ) -> list[Path]:
     """
@@ -37,7 +38,8 @@ def get_files(
 
     Args:
         paths (list[Path]): where to find the files.
-        filetype (list[str]): ending of files to find. Preceding "_" prevents adding a '.'
+        filetype (list[str]): ending of files to find. Preceding "_" prevents adding a
+        '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
         search_subdirs (bool): Wheter or not to search subdirs of dirs given as paths.
@@ -90,7 +92,7 @@ def get_files(
 
 
 def replace_filetype(
-    files: list[Path], new_filetype: str, old_filetype: str = None
+    files: list[Path], new_filetype: str, old_filetype: Union[str, None] = None
 ) -> list[Path]:
     """In a list of files, replace the filetype of all files of a certain old_filetype
     by a new_filetype. If no old_filetype is given, replace tha filetype of all files.

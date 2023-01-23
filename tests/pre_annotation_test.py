@@ -13,12 +13,12 @@ from OTVision.pre_annotation import (
 
 
 @pytest.fixture
-def test_data_dir():
+def test_data_dir() -> Path:
     return Path(__file__).parent / "data"
 
 
 @pytest.fixture
-def test_resources_dir():
+def test_resources_dir() -> Path:
     return Path(__file__).parent / "resources"
 
 
@@ -28,12 +28,12 @@ def example_image(test_data_dir):
 
 
 @pytest.fixture
-def class_labels():
-    return ["car", "person", "cat", "truck", "bicycle"]
+def class_labels() -> list[str]:
+    return {0: "car", 1: "person", 2: "cat", 3: "truck", 4: "bicycle"}
 
 
 @pytest.fixture
-def detections():
+def detections() -> list:
     return [
         [
             [0.1, 0.2, 0.512, 0.1234, 0.42, 10.0],
@@ -43,7 +43,7 @@ def detections():
 
 
 @pytest.fixture
-def cvat_yolo_example_dataset_zipped(test_resources_dir, example_image):
+def cvat_yolo_example_dataset_zipped(test_resources_dir, example_image) -> Path:
     # Set up
     pre_annotation_dir = Path(test_resources_dir, "pre_annotation")
     example_dataset = Path(pre_annotation_dir, "example_dataset")
@@ -84,13 +84,14 @@ def cvat_yolo_example_dataset_zipped(test_resources_dir, example_image):
 
 
 def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
-    cvat_yolo_example_dataset_zipped,
+    cvat_yolo_example_dataset_zipped: Path,
 ):
     cvat_dir_zipped = _pre_annotate(
         cvat_yolo_zip=cvat_yolo_example_dataset_zipped,
         model_weights="yolov5s",
         chunk_size=100,
         img_type="png",
+        filter_classes=None,
     )
 
     cvat_dir_unzipped = unzip(cvat_dir_zipped)
@@ -105,7 +106,7 @@ def test_pre_annotate_validDirPassedAsParam_returnsCorrectAnnotationZipFile(
 
 
 def test_write_class_labels_cvatYoloZipAsParam_writeLabels(
-    cvat_yolo_example_dataset_zipped, class_labels
+    cvat_yolo_example_dataset_zipped: Path, class_labels: list[str]
 ):
     cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
     obj_names_file_path = Path(cvat_dir_unzipped, "obj.names")
@@ -113,19 +114,22 @@ def test_write_class_labels_cvatYoloZipAsParam_writeLabels(
     _write_class_labels(cvat_yolo_dir=cvat_dir_unzipped, class_labels=class_labels)
     obj_names_content = []
     with open(obj_names_file_path) as f:
-        obj_names_content = [line.rstrip() for line in f.readlines()]
+        obj_names_content = {
+            cls_id: line.rstrip() for cls_id, line in enumerate(f.readlines())
+        }
 
     assert len(obj_names_content) == len(class_labels)
 
-    for obj_names_label, class_label in zip(obj_names_content, class_labels):
-        assert obj_names_label == class_label
+    for obj_names_id, cls_id in zip(obj_names_content, class_labels):
+        assert obj_names_id == cls_id
+        assert obj_names_content[obj_names_id] == class_labels[cls_id]
 
 
 def test_write_bbox_cvatYoloZipAs1stParam_validDetectionsAs2ndParam_writeBboxes(
-    cvat_yolo_example_dataset_zipped, detections
+    cvat_yolo_example_dataset_zipped: Path, detections: list, class_labels: dict
 ):
     cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
-    _write_bbox(cvat_dir_unzipped, "png", detections)
+    _write_bbox(cvat_dir_unzipped, "png", detections, class_labels, None)
 
     obj_train_data = Path(cvat_dir_unzipped, "obj_train_data")
     cvat_anns = [f for f in obj_train_data.iterdir() if f.suffix == ".txt"]
@@ -147,7 +151,7 @@ def test_write_bbox_cvatYoloZipAs1stParam_validDetectionsAs2ndParam_writeBboxes(
                 assert int(_cls) == int(cvat_cls)
 
 
-def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped):
+def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped: Path):
     cvat_dir_unzipped = unzip(cvat_yolo_example_dataset_zipped)
     annotated_zip = _zip_annotated_dir(cvat_dir_unzipped, "png")
     annotated_unzipped = unzip(annotated_zip)

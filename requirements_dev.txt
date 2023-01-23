@@ -1,8 +1,8 @@
-pytest>=6.2.4
-flake8
 black
+flake8
 isort
-# mypy # don't use for now
+mypy
+pre-commit
+pytest
 pytest-cov
 yamllint
-mypy

@@ -109,23 +109,36 @@ def main(
 
     log.info(f"Try detecting {len(img_files)} images")
     img_file_chunks = _create_chunks(img_files, chunksize)
-    detections_img_file_chunks = yolo.detect_images(
-        file_chunks=img_file_chunks,
-        model=yolo_model,
-        weights=weights,
-        conf=conf,
-        iou=iou,
-        size=size,
-        chunksize=chunksize,
-        normalized=normalized,
-        ot_labels_enabled=ot_labels_enabled,
-    )
-    log.info("Images detected")
 
-    if ot_labels_enabled:
+    if not ot_labels_enabled:
+        detections_img_file_chunks = yolo.detect_images(
+            file_chunks=img_file_chunks,
+            model=yolo_model,
+            weights=weights,
+            conf=conf,
+            iou=iou,
+            size=size,
+            chunksize=chunksize,
+            normalized=normalized,
+            ot_labels_enabled=ot_labels_enabled,
+        )
+        log.info("Images detected")
+    else:
+        detections_img_file_chunks, class_labels = yolo.detect_images(
+            file_chunks=img_file_chunks,
+            model=yolo_model,
+            weights=weights,
+            conf=conf,
+            iou=iou,
+            size=size,
+            chunksize=chunksize,
+            normalized=normalized,
+            ot_labels_enabled=ot_labels_enabled,
+        )
+        log.info("Images detected")
         if debug:
             reset_debug()
-        return detections_img_file_chunks
+        return detections_img_file_chunks, class_labels
     for img_file, detection in zip(img_files, detections_img_file_chunks):
         write(detection, img_file)
     if debug:

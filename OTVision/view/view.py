@@ -22,7 +22,7 @@ OTVision main gui module
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
-from OTVision.helpers.machine import ON_WINDOWS
+from OTVision.helpers.machine import ON_LINUX, ON_WINDOWS
 from OTVision.view.view_convert import FrameConvert, FrameConvertDummy
 from OTVision.view.view_detect import FrameDetect
 from OTVision.view.view_helpers import FrameFileTree, FrameRunChained
@@ -39,13 +39,19 @@ class WindowOTVision(tk.Tk):
         if ON_WINDOWS:
             self.iconbitmap(CONFIG["GUI"]["OTC ICON"])
         self.set_layout()
+        self.minsize(900, 620)
+        if ON_LINUX:
+            self.state("normal")
+        else:
+            self.state("zoomed")
 
     def set_layout(self):
         for col in range(3):
             self.columnconfigure(index=col, weight=1)
+        self.rowconfigure(index=0, weight=1)  # Stretches frame_files only
         # Treeview files
         self.frame_files = FrameFileTree(master=self, text="Choose files")
-        self.frame_files.grid(**PAD, row=0, column=0, columnspan=4, sticky="ew")
+        self.frame_files.grid(**PAD, row=0, column=0, columnspan=4, sticky="nsew")
         # Settings
         # Convert (Only works on windows machines for now)
         if ON_WINDOWS:

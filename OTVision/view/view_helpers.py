@@ -86,10 +86,12 @@ class FrameFileTree(tk.LabelFrame):
 
         # Frame for treeview
         self.frame_tree = tk.Frame(master=self)
-        self.frame_tree.pack(**PAD, fill="x")  # BUG: Treeview fills only to the left
+        self.frame_tree.pack(
+            **PAD, fill="both", expand=True
+        )  # BUG: Treeview fills only to the left
 
         # Files treeview
-        self.tree_files = ttk.Treeview(master=self.frame_tree)
+        self.tree_files = ttk.Treeview(master=self.frame_tree, height=5)
         self.tree_files.bind("<ButtonRelease-3>", self.deselect_tree_files)
         tree_files_cols = {
             "#0": "File",
@@ -105,15 +107,30 @@ class FrameFileTree(tk.LabelFrame):
         for tree_files_col_id, tree_files_col_text in tree_files_cols.items():
             if tree_files_col_id == "#0":
                 anchor = "w"
-                width = 700
+                width = 2000
+                minwidth = 200
+                stretch = True
+                self.tree_files.column(
+                    tree_files_col_id,
+                    minwidth=minwidth,
+                    stretch=stretch,
+                    anchor=anchor,
+                )
             else:
                 anchor = "center"
-                width = 50
-            self.tree_files.column(tree_files_col_id, width=width, anchor=anchor)
+                width = 45
+                minwidth = 45
+                stretch = False
+                self.tree_files.column(
+                    tree_files_col_id,
+                    width=width,
+                    stretch=stretch,
+                    anchor=anchor,
+                )
             self.tree_files.heading(
                 tree_files_col_id, text=tree_files_col_text, anchor=anchor
             )
-        self.tree_files.pack(side="left")
+        self.tree_files.pack(side="left", fill="both", expand=True)
 
         # Scrollbar for treeview
         self.tree_scrollbar = ttk.Scrollbar(

@@ -147,7 +147,7 @@ def detect_images(
         (False). Defaults to False.
         ot_labels_enabled (bool, optional): returns [detections, names] where detections
         consist of bounding boxes but without any annotations and the class name index
-        (True) or returns the detections in otdet format(False). Defaults to False.
+        (True) or returns the dœetections in otdet format(False). Defaults to False.
 
     Returns:
         [type]: [description]
@@ -179,11 +179,11 @@ def detect_images(
     duration = t2 - t1
     det_fps = len(yolo_detections) / duration
     _log_overall_performance_stats(duration, det_fps)
-    names = results.names
+    class_labels: dict = results.names
     if ot_labels_enabled:
-        return [yolo_detections, names]
+        return (yolo_detections, class_labels)
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-    return _convert_detections_chunks(yolo_detections, names, det_config)
+    return _convert_detections_chunks(yolo_detections, class_labels, det_config)
 
 
 def _get_batch_of_frames(video_capture: VideoCapture, batch_size: int):
