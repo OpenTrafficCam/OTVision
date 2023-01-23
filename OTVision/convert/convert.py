@@ -27,6 +27,7 @@ from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import log, reset_debug, set_debug
 
+
 def main(
     paths: list[Path],
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
