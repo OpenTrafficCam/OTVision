@@ -9,7 +9,7 @@ run: install
 
 install: $(VENV)/bin/activate
 
-$(VENV)/bin/activate: requirements_m1.txt
+$(VENV)/bin/activate: requirements.txt
 	python$(PY_VERSION) -m venv $(VENV); \
 	if [ $(UNAME_S) = Linux ]; then \
 		sudo apt-get install python3-tk; \
