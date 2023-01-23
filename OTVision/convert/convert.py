@@ -179,7 +179,6 @@ def convert(
 
         subprocess.run(
             ffmpeg_cmd,
-            shell=True,
             check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
