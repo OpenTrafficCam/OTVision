@@ -21,6 +21,7 @@ OTVision main module for transforming tracks from pixel to world coordinates
 
 from copy import deepcopy
 from pathlib import Path
+from typing import Union
 
 import cv2
 import geopandas as gpd
@@ -49,7 +50,7 @@ from .get_homography import get_homography
 
 def main(
     paths: list[Path],
-    refpts_file: Path = None,
+    refpts_file: Union[Path, None] = None,
     overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
     debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
 ):
