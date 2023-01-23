@@ -207,56 +207,14 @@ def convert(
 
 
 def check_ffmpeg():
-    """Checks, if ffmpeg is available, otherwise downloads it."""
-
-    if not ON_WINDOWS:
-        log.warning("Sorry, this function only works on windows machines for now")
-        return
+    """Checks, if ffmpeg is available"""
 
     try:
-        subprocess.call(CONFIG["CONVERT"]["FFMPEG_PATH"])
-        log.info("ffmpeg.exe was found")
-    except FileNotFoundError:
-        download_ffmpeg()
-
-
-def download_ffmpeg():
-    """Downloads ffmpeg to a specific path."""
-
-    if not ON_WINDOWS:
-        log.info("Sorry, this function only works on windows machines for now")
-        return
-
-    log.info("Try downloading ffmpeg zip archive (patience: may take a while...)")
-    ffmpeg_dir = Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0]
-    ffmpeg_zip_dir = ffmpeg_dir / "tmp"
-    ffmpeg_zip_dir.mkdir(parents=True, exist_ok=True)
-    ffmpeg_zip = ffmpeg_zip_dir / r"ffmpeg.zip"
-    try:
-        urlretrieve(CONFIG["CONVERT"]["FFMPEG_URL"], ffmpeg_zip)
-        log.info("Successfully downloaded ffmpeg zip archive")
-    except Exception as inst:
-        log.warning(inst)
-        log.warning("Can't download ffmpeg zip archive. Please download manually")
-    else:
-        try:
-            log.info("Extracting ffmpeg.exe from ffmpeg zip archive")
-            with ZipFile(ffmpeg_zip, "r") as zip:
-                for name in zip.namelist():
-                    if Path(name).name == r"ffmpeg.exe":
-                        log.info("next: Extract")
-                        zip.extract(
-                            member=name,
-                            path=ffmpeg_zip_dir,
-                        )
-                        ffmpeg_exe = Path(name)
-                        break
-            Path(ffmpeg_zip_dir, ffmpeg_exe).replace(ffmpeg_dir / "ffmpeg.exe")
-            _remove_dir(dir=ffmpeg_zip_dir)
-            log.info("Successfully extracted ffmpeg.exe from ffmpeg zip archive")
-        except Exception as inst:
-            log.warning(inst)
-            log.warning("Can't extract ffmpeg.exe, please extract manual")
+        subprocess.call("ffmpeg")
+        log.info("ffmpeg was found")
+    except FileNotFoundError as e:
+        error_message = "ffmpeg could not be called, make sure ffmpeg is in path"
+        raise FileNotFoundError(error_message) from e
 
 
 # Useful ffmpeg commands:
