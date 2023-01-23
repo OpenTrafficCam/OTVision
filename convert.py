@@ -39,6 +39,17 @@ def parse():
     parser.add_argument(
         "-d", "--debug", action="store_true", help="Logging in debug mode"
     )
+    parser.add_argument(
+        "--delete_input",
+        action="store_true",
+        help="Delete input files after convert",
+    )
+    parser.add_argument(
+        "-o",
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output files",
+    )
     return parser.parse_args()
 
 

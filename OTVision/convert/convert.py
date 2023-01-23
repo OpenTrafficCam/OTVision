@@ -38,6 +38,7 @@ def main(
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
+    delete_input: bool = False,
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ):
     """Converts multiple h264-based videos into other formats and/or frame rates.
@@ -75,6 +76,7 @@ def main(
             output_fps,
             fps_from_filename,
             overwrite,
+            delete_input,
         )
     if debug:
         reset_debug()
@@ -87,12 +89,13 @@ def convert(
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
+    delete_input: bool = False,
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ):
     """Converts h264-based videos into other formats and/or other frame rates.
     Also input frame rates can be given.
     If input video file is raw h264 and no input frame rate is given convert
-    tries to parse frame rate from filename, otherwise sets default frame.
+    tries to parse frame rate from filename, otherwise sets default frame rate.
 
     Currently only works for windows as ffmpeg.exe is utilized.
 
@@ -108,6 +111,8 @@ def convert(
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
         overwrite (bool, optional): Whether or not to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
+        delete_input (bool, optional): Whether or not to delete the input h264.
+          Defaults to False.
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["CONVERT"]["DEBUG"].
 
@@ -122,18 +127,12 @@ def convert(
     if debug:
         set_debug()
 
-    if not ON_WINDOWS:
-        log.warning("Conversion of h264 videos only works on windows machines for now")
-        if debug:
-            reset_debug()
-        return
-
     log.info(f"Try converting {input_video_file} to {output_filetype}")
 
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
-    if not overwrite and output_video_file.is_file:
+    if not overwrite and output_video_file.is_file():
         if debug:
             reset_debug()
         return None
@@ -151,25 +150,41 @@ def convert(
         if output_fps is not None:
             output_fps_cmd = f"-r {output_fps}"
             copy_cmd = ""
+            delete_input = False  # Never delete input if re-encoding file.
         else:
             output_fps_cmd = ""
-            copy_cmd = "-vcodec copy"  # No decoding, only demuxing
+            copy_cmd = "-vcodec copy"  # No re-encoding, only demuxing
         # Input file
-        ffmpeg_cmd_in = f"{input_fps_cmd} -i {input_video_file}"
+        ffmpeg_cmd_in = f"{input_fps_cmd} -i '{input_video_file}'"
         # Filters (mybe necessary for special cases, insert )
         # ffmpeg_cmd_filter = "-c:v libx264"
         ffmpeg_cmd_filter = ""
         # Output file
         ffmpeg_cmd_out = (
-            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y {output_video_file}"
+            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y '{output_video_file}'"
         )
         # Concat and run ffmpeg command
         FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
+        if not ON_WINDOWS:
+            FFMPEG_PATH = "ffmpeg"
         ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
-        subprocess.call(ffmpeg_cmd)
+        subprocess.run(
+            ffmpeg_cmd,
+            shell=True,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
         log.info(f"{output_video_file} created with {output_fps} fps")
+
+        if delete_input:
+            in_size = input_video_file.stat().st_size
+            out_size = output_video_file.stat().st_size
+            if in_size <= out_size:
+                log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
+                input_video_file.unlink()
 
     elif input_filetype in vid_filetypes:
         raise TypeError("Output video filetype is not supported")
