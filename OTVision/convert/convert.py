@@ -144,30 +144,41 @@ def convert(
             input_fps = CONFIG["CONVERT"]["FPS"]
 
         # Create ffmpeg command
-        input_fps_cmd = (
-            f"-framerate {input_fps}" if input_fps is not None else ""
-        )  # ? Change -framerate to -r?
+
+        # Input frame rate
+        # ? Change -framerate to -r?
+        input_fps_cmds = ["-framerate", str(input_fps)] if input_fps is not None else []
+
+        # Output frame rate and copy commands
         if output_fps is not None:
-            output_fps_cmd = f"-r {output_fps}"
-            copy_cmd = ""
+            output_fps_cmds = ["-r", str(output_fps)]
+            copy_cmds: list[str] = []
             delete_input = False  # Never delete input if re-encoding file.
         else:
-            output_fps_cmd = ""
-            copy_cmd = "-vcodec copy"  # No re-encoding, only demuxing
+            output_fps_cmds = ""
+            copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
+
         # Input file
-        ffmpeg_cmd_in = f"{input_fps_cmd} -i '{input_video_file}'"
-        # Filters (mybe necessary for special cases, insert )
+        input_file_cmds = ["-i", str(input_video_file)]
+
+        # Filters (mybe necessary for special cases, insert if needed)
         # ffmpeg_cmd_filter = "-c:v libx264"
-        ffmpeg_cmd_filter = ""
+        filter_cmds: list[str] = []
+
         # Output file
-        ffmpeg_cmd_out = (
-            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y '{output_video_file}'"
-        )
+        output_file_cmds = ["-y", str(output_video_file)]
+
         # Concat and run ffmpeg command
-        FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
-        if not ON_WINDOWS:
-            FFMPEG_PATH = "ffmpeg"
-        ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
+        # ffmpeg_cmd = rf"ffmpeg {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
+        ffmpeg_cmd = (
+            ["ffmpeg"]
+            + input_fps_cmds
+            + input_file_cmds
+            + filter_cmds
+            + output_fps_cmds
+            + copy_cmds
+            + output_file_cmds
+        )
         log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
         subprocess.run(
