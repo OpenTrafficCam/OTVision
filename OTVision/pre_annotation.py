@@ -57,7 +57,7 @@ def _write_bbox(
     img_type: str,
     bboxes_xywhn: list,
     class_labels: dict,
-    filter_classes: dict,
+    filter_classes: Union[dict, None],
 ):
     image_paths = get_files([cvat_yolo_dir], filetypes=[img_type])
     assert len(image_paths) == len(bboxes_xywhn)
@@ -124,12 +124,14 @@ def main(
     img_type: str = "png",
 ):
     log.info("Starting")
-    if Path(file).is_file():
-        _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    elif Path(file).is_dir():
-        zip_files = get_files(file, "zip")
-        for file in progressbar.progressbar(zip_files):
-            _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
+    f = Path(file)  # convert to Path object if file is of type str
+
+    if f.is_file():
+        _pre_annotate(f, model_weights, chunk_size, filter_classes, img_type)
+    elif f.is_dir():
+        zip_files = get_files([f], ["zip"])
+        for _f in progressbar.progressbar(zip_files):
+            _pre_annotate(_f, model_weights, chunk_size, filter_classes, img_type)
     log.info("Done in {0:0.2f} s".format(perf_counter()))
 
 

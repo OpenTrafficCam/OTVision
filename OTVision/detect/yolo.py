@@ -40,7 +40,7 @@ class VideoFoundError(Exception):
 
 def detect_video(
     file: Path,
-    model: torch.nn.Module = None,
+    model: Union[torch.nn.Module, None] = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
@@ -124,7 +124,7 @@ def detect_video(
 
 def detect_images(
     file_chunks: list[list[Path]],
-    model: torch.nn.Module = None,
+    model: Union[torch.nn.Module, None] = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
