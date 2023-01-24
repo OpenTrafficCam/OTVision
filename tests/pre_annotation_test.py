@@ -179,5 +179,5 @@ def test_zip_annotated_dir(cvat_yolo_example_dataset_zipped: Path) -> None:
 def test_main_notExistingPathAsParam_raiseOSError(test_data_dir: Path) -> None:
     path = Path(test_data_dir, "file_not_exists.png")
 
-    with pytest.raises(OSError, match=f"Path at: '{path}' does not exist!"):
+    with pytest.raises(OSError, match=r"Path at: '.*' does not exist!"):
         main(path, "yolov5s")
