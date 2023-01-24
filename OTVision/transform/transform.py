@@ -39,7 +39,6 @@ from OTVision.helpers.files import (
 from OTVision.helpers.formats import (
     _get_datetime_from_filename,
     _get_epsg_from_utm_zone,
-    _get_fps_from_filename,
     _get_time_from_frame_number,
     _ottrk_dict_to_df,
 )
