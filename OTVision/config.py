@@ -24,12 +24,14 @@ from pathlib import Path
 # sourcery skip: merge-dict-assign
 CONFIG = {}
 
-# FOLDERS
-# TODO:
+
 def _get_testadatafolder():
+    # NOTE: This folder might not be found depending from where
+    # __main__ script is started
     return Path(__file__).parents[0] / r"tests/data"
 
 
+# FOLDERS
 CONFIG["TESTDATAFOLDER"] = _get_testadatafolder()
 CONFIG["SEARCH_SUBDIRS"] = True
 
