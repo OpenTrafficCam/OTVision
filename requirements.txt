@@ -12,3 +12,4 @@ matplotlib==3.6.2
 seaborn==0.12.1
 geopandas==0.12.1
 progressbar==2.5
+pyogrio==0.5.0
