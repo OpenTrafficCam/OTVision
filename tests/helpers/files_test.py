@@ -4,10 +4,11 @@ from pathlib import Path
 import pytest
 
 from OTVision.helpers.files import get_files, has_filetype, replace_filetype
+from tests.conftest import YieldFixture
 
 
 @pytest.fixture
-def test_dir_with_files():
+def test_dir_with_files() -> YieldFixture[Path]:
     test_dir = Path(__file__).parents[1] / "resources" / "test_dir"
     file_names = [
         Path("readme.txt"),
@@ -35,9 +36,9 @@ def test_dir_with_files():
     shutil.rmtree(test_dir)
 
 
-def test_get_files_dirPathAsListOfPosixPathObjectAs1stParam_returnsCorrectList(
-    test_dir_with_files,
-):
+def test_get_files_dirPathAsListOfPathObjectAs1stParam_returnsCorrectList(
+    test_dir_with_files: Path,
+) -> None:
     json_file_path = Path(test_dir_with_files, "cities.json")
     xml_file_path = Path(test_dir_with_files, "config.xml")
 
@@ -47,7 +48,9 @@ def test_get_files_dirPathAsListOfPosixPathObjectAs1stParam_returnsCorrectList(
     assert xml_file_path in files
 
 
-def test_get_files_dirPathsAsListOfString_RaiseTypeError(test_dir_with_files):
+def test_get_files_dirPathsAsListOfString_RaiseTypeError(
+    test_dir_with_files: Path,
+) -> None:
     list_of_str = [
         str(Path(test_dir_with_files, "img_1.PNG")),
         Path(test_dir_with_files, "img_2.png"),
@@ -55,39 +58,47 @@ def test_get_files_dirPathsAsListOfString_RaiseTypeError(test_dir_with_files):
     ]
 
     with pytest.raises(TypeError):
-        get_files(paths=list_of_str)
+        get_files(paths=list_of_str)  # type: ignore
 
 
-def test_get_files_dirPathsAsPosixPath_RaiseTypeError(test_dir_with_files):
+def test_get_files_dirPathsAsParam_RaiseTypeError(test_dir_with_files: Path) -> None:
     with pytest.raises(TypeError):
-        get_files(paths=test_dir_with_files, filetypes=[".json", ".xml"])
+        get_files(
+            paths=test_dir_with_files,  # type: ignore
+            filetypes=[".json", ".xml"],
+        )
 
 
-def test_get_files_dirPathsAsString_RaiseTypeError(test_dir_with_files):
+def test_get_files_dirPathsAsString_RaiseTypeError(test_dir_with_files: Path) -> None:
     with pytest.raises(TypeError):
-        get_files(paths=str(test_dir_with_files), filetypes=[".json", ".xml"])
+        get_files(
+            paths=str(test_dir_with_files),  # type: ignore
+            filetypes=[".json", ".xml"],
+        )
 
 
-def test_get_files_noFilenamesAs2ndParam_ReturnEmptyList(test_dir_with_files):
+def test_get_files_noFilenamesAs2ndParam_ReturnEmptyList(
+    test_dir_with_files: Path,
+) -> None:
     files = get_files(paths=[test_dir_with_files], filetypes=[])
     assert [] == files
 
 
-def test_get_files_invalidTypeListOfNumbersAs1stParam_RaiseTypeError():
+def test_get_files_invalidTypeListOfNumbersAs1stParam_RaiseTypeError() -> None:
     numbers = [1, 2, 3]
     with pytest.raises(TypeError):
-        get_files(paths=numbers, filetypes=[".json"])
+        get_files(paths=numbers, filetypes=[".json"])  # type: ignore
 
 
-def test_get_files_dictAs1stParam_RaiseTypeError():
-    _dict = {}
+def test_get_files_dictAs1stParam_RaiseTypeError() -> None:
+    _dict: dict = {}
     with pytest.raises(TypeError):
-        get_files(paths=_dict, filetypes=[".json"])
+        get_files(paths=_dict, filetypes=[".json"])  # type: ignore
 
 
 def test_get_files_sameFiletypeWithDifferentCasesAsParam_returnsCorrectList(
-    test_dir_with_files,
-):
+    test_dir_with_files: Path,
+) -> None:
     img_1_path = Path(test_dir_with_files, "img_1.PNG")
     img_2_path = Path(test_dir_with_files, "img_2.png")
     img_3_path = Path(test_dir_with_files, "img_3.PnG")
@@ -98,7 +109,7 @@ def test_get_files_sameFiletypeWithDifferentCasesAsParam_returnsCorrectList(
     assert img_3_path in files
 
 
-def test_replace_filetype_certainOldFiletype(test_dir_with_files):
+def test_replace_filetype_certainOldFiletype(test_dir_with_files: Path) -> None:
     files = get_files(paths=[test_dir_with_files])
     new_filetype = ".fancypng"
     replaced_files = replace_filetype(
@@ -109,7 +120,7 @@ def test_replace_filetype_certainOldFiletype(test_dir_with_files):
             assert path.suffix.lower() != ".png"
 
 
-def test_replace_filetype_noOldFiletype(test_dir_with_files):
+def test_replace_filetype_noOldFiletype(test_dir_with_files: Path) -> None:
     files = get_files([test_dir_with_files])
     new_filetype = ".fancypng"
     replaced_files = replace_filetype(files=files, new_filetype=new_filetype)
@@ -118,25 +129,25 @@ def test_replace_filetype_noOldFiletype(test_dir_with_files):
             assert path.suffix.lower() == new_filetype
 
 
-def test_has_filetype_fileFormatStartsWithDotAs2ndParam_returnsTrue():
+def test_has_filetype_fileFormatStartsWithDotAs2ndParam_returnsTrue() -> None:
     file = Path("path/to/file/f.yaml")
     filetypes = [".yaml"]
     assert has_filetype(file=file, filetypes=filetypes)
 
 
-def test_has_filetype_fileFormatStartsWithoutDotAs2ndParam_returnsTrue():
+def test_has_filetype_fileFormatStartsWithoutDotAs2ndParam_returnsTrue() -> None:
     file = Path("path/to/file/f.yaml")
     filetypes = ["yaml"]
     assert has_filetype(file=file, filetypes=filetypes)
 
 
-def test_has_filetype_fileWithNotDefinedFileFormatAs1stParam_returnsFalse():
+def test_has_filetype_fileWithNotDefinedFileFormatAs1stParam_returnsFalse() -> None:
     file = Path("path/to/file/f.yaml")
     filetypes = [".txt"]
     assert not has_filetype(file=file, filetypes=filetypes)
 
 
-def test_has_filetype_filesWithFileFormatsWithDifferentCasesAs1stParam_returns_True():
+def test_has_filetype_fileFormatsWithDifferentCaseAsParam_returns_True() -> None:
     yaml_1 = Path("path/to/file/f.yaml")
     yaml_2 = Path("path/to/file/f.YAML")
     yaml_3 = Path("path/to/file/f.yAmL")
