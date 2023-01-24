@@ -73,7 +73,7 @@ def detect_video(
     if not has_filetype(file, CONFIG["FILETYPES"]["VID"]):
         raise NoVideoError(f"The file: {file} is not a video!")
 
-    cap = VideoCapture(file)
+    cap = VideoCapture(str(file))
     batch_no = 0
 
     log.info(f"Run detection on video: {file}")
