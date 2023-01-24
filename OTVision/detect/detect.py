@@ -21,6 +21,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import json
 from pathlib import Path
+from typing import Union
 
 import torch
 
@@ -34,7 +35,7 @@ from . import yolo
 def main(
     paths: list[Path],
     filetypes: list[str] = CONFIG["FILETYPES"]["VID_IMG"],
-    model: torch.nn.Module = None,
+    model: Union[torch.nn.Module, None] = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
