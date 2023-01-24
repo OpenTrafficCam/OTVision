@@ -109,14 +109,12 @@ def main(
             ) = get_homography(refpts=refpts)
             log.info("Homography matrix created")
         # Read tracks
-        tracks_px_df, config_dict = read_tracks(tracks_file)
+        tracks_px_df, metadata_dict = read_tracks(tracks_file)
         log.info("Tracks read")
         # Check if transformation is actually needed
-        already_utm = (
-            "utm" in config_dict["trk_config"] and config_dict["trk_config"]["utm"]
-        )
+        already_utm = "utm" in metadata_dict["trk"] and metadata_dict["trk"]["utm"]
         if overwrite or not already_utm:
-            config_dict["trk_config"]["utm"] = False  # ? or not?
+            metadata_dict["trk"]["utm"] = False  # ? or not?
             # Actual transformation
             tracks_utm_df = transform(
                 tracks_px=tracks_px_df,
@@ -125,20 +123,20 @@ def main(
                 upshift_utm=upshift_utm,
             )
             log.info("Tracks transformed")
-            # Add crs information tp config dict
-            config_dict["trk_config"]["utm"] = True
-            config_dict["trk_config"]["utm_zone"] = utm_zone
-            config_dict["trk_config"]["hemisphere"] = hemisphere
-            config_dict["trk_config"]["epsg"] = _get_epsg_from_utm_zone(
+            # Add crs information tp metadata dict
+            metadata_dict["trk"]["utm"] = True
+            metadata_dict["trk"]["utm_zone"] = utm_zone
+            metadata_dict["trk"]["hemisphere"] = hemisphere
+            metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
                 utm_zone=utm_zone, hemisphere=hemisphere
             )
-            config_dict["trk_config"]["transformation accuracy"] = homography_eval_dict
+            metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
             log.info("Meta infos created")
-            log.debug(f"config_dict: {config_dict}")
+            log.debug(f"config_dict: {metadata_dict}")
             # Write tracks
             write_tracks(
                 tracks_utm_df=tracks_utm_df,
-                metadata_dict=config_dict,
+                metadata_dict=metadata_dict,
                 utm_zone=utm_zone,
                 hemisphere=hemisphere,
                 tracks_file=tracks_file,
