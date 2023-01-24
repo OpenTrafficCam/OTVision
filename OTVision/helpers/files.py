@@ -83,7 +83,7 @@ def get_files(
             if filetypes:
                 for filetype in filetypes:
                     for file in path.glob("**/*" if search_subdirs else "*"):
-                        if file.is_file and file.suffix.lower() == filetype:
+                        if file.is_file() and file.suffix.lower() == filetype:
                             files.add(file)
         else:
             raise TypeError("Paths needs to be a list of pathlib.Path")
@@ -238,7 +238,9 @@ def _check_and_update_metadata_inplace(otdict: dict):
 
 # TODO: Type hint nested dict during refactoring
 def denormalize_bbox(
-    otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
+    otdict: dict,
+    keys_width: Union[list[str], None] = None,
+    keys_height: Union[list[str], None] = None,
 ):
     """Denormalize all bbox references in detections or tracks dict from percent to px.
 
@@ -268,7 +270,9 @@ def denormalize_bbox(
 
 # TODO: Type hint nested dict during refactoring
 def normalize_bbox(
-    otdict: dict, keys_width: list[str] = None, keys_height: list[str] = None
+    otdict: dict,
+    keys_width: Union[list[str], None] = None,
+    keys_height: Union[list[str], None] = None,
 ):
     """Normalize all bbox references in detections or tracks dict from percent to px.
 
