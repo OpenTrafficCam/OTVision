@@ -57,7 +57,7 @@ def _write_bbox(
     img_type: str,
     bboxes_xywhn: list,
     class_labels: dict,
-    filter_classes: dict,
+    filter_classes: Union[dict, None],
 ):
     image_paths = get_files([cvat_yolo_dir], filetypes=[img_type])
     assert len(image_paths) == len(bboxes_xywhn)
@@ -117,37 +117,24 @@ def _pre_annotate(
 
 
 def main(
-    file: Union[str, Path],
+    path: Path,
     model_weights: str,
     chunk_size: int = 1000,
     filter_classes: Union[None, dict] = None,
     img_type: str = "png",
 ):
     log.info("Starting")
-    if Path(file).is_file():
-        _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    elif Path(file).is_dir():
-        zip_files = get_files(file, "zip")
-        for file in progressbar.progressbar(zip_files):
-            _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
+
+    if not path.exists():
+        raise OSError(f"Path at: '{path}' does not exist!")
+
+    if path.is_file():
+        _pre_annotate(path, model_weights, chunk_size, filter_classes, img_type)
+    elif path.is_dir():
+        zip_files = get_files([path], ["zip"])
+        for f in progressbar.progressbar(zip_files):
+            _pre_annotate(f, model_weights, chunk_size, filter_classes, img_type)
+    else:
+        raise OSError(f"Path at: '{path}' is neither a file nor a directory!")
+
     log.info("Done in {0:0.2f} s".format(perf_counter()))
-
-
-if __name__ == "__main__":
-    file_path = (
-        "/Users/michaelheilig/Downloads/task_800x600_cloudy_h5m_aov60deg_"
-        + "intersection_priority_mondercangeintersection5-2022_08_19_10_23_31"
-        + "-yolo 1.1.zip"
-    )
-    model_weights = "yolov5s.pt"
-    chunk_size = 200
-    filter_classes = {
-        0: "person",
-        1: "bicycle",
-        2: "car",
-        3: "motorcycle",
-        4: "bus",
-        5: "truck",
-    }
-
-    main(file_path, model_weights, chunk_size, filter_classes)
