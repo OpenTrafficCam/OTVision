@@ -18,6 +18,7 @@ $(VENV)/bin/activate: requirements.txt
 	if [ $(UNAME_S) = Darwin ]; then \
 		if [ $(shell uname -m) = arm64 ]; then \
 			brew install python-tk@$(PY_VERSION); \
+			brew install gdal; \
 			$(PIP) install -r requirements.txt; \
 		fi ; \
 	fi
