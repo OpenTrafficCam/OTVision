@@ -40,6 +40,7 @@ def parse():
     parser.add_argument(
         "-f",
         "--filetypes",
+        default=CONFIG["FILETYPES"]["VID_IMG"],
         type=str,
         nargs="+",
         help="Filetypes of files in folders to select for detection",
@@ -48,12 +49,18 @@ def parse():
     parser.add_argument(
         "-w",
         "--weights",
+        default=CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
         type=str,
         help="Name of weights from PyTorch hub or Path to weights file",
         required=False,
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Logging in debug mode"
+        "-d",
+        "--debug",
+        default=CONFIG["DETECT"]["DEBUG"],
+        type=bool,
+        action="store_true",
+        help="Logging in debug mode",
     )
     return parser.parse_args()
 
@@ -61,13 +68,12 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
-    weights = args.weights if args.weights else CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
-    filetypes = args.filetypes if args.filetypes else CONFIG["FILETYPES"]["VID_IMG"]
-    debug = args.debug
 
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
-    detect(paths=paths, weights=weights, filetypes=filetypes, debug=debug)
+    detect(
+        paths=paths, weights=args.weights, filetypes=args.filetypes, debug=args.debug
+    )
     log.info("Finished detection from command line")
 
 

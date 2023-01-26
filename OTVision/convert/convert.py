@@ -35,7 +35,7 @@ def main(
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
-    delete_input: bool = False,
+    delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ):
     """Converts multiple h264-based videos into other formats and/or frame rates.
@@ -55,6 +55,8 @@ def main(
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
         overwrite (bool, optional): Whether or not to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
+        delete_input (bool, optional): Whether or not to delete the input h264.
+            Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
@@ -86,7 +88,7 @@ def convert(
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
-    delete_input: bool = False,
+    delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ):
     """Converts h264-based videos into other formats and/or other frame rates.
@@ -109,7 +111,7 @@ def convert(
         overwrite (bool, optional): Whether or not to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether or not to delete the input h264.
-          Defaults to False.
+          Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["CONVERT"]["DEBUG"].
 

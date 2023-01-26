@@ -22,6 +22,7 @@ OTVision script to call the transform main with arguments parsed from command li
 import argparse
 from pathlib import Path
 
+from OTVision.config import CONFIG
 from OTVision.helpers.log import log
 from OTVision.transform.transform import main as transform
 
@@ -43,7 +44,12 @@ def parse():
         help="Path to refpts file. If not given, each tracks file should have one",
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Logging in debug mode"
+        "-d",
+        "--debug",
+        type=bool,
+        default=CONFIG["TRANSFORM"]["DEBUG"],
+        action="store_true",
+        help="Logging in debug mode",
     )
     return parser.parse_args()
 
@@ -51,10 +57,9 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
-    debug = args.debug
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
-    transform(paths=paths, refpts_file=args.refpts_file, debug=debug)
+    transform(paths=paths, refpts_file=args.refpts_file, debug=args.debug)
     log.info("Finished transforming to world coordinates  from command line")
 
 
