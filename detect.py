@@ -22,6 +22,7 @@ OTVision script to call the detect main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
+from OTVision.config import CONFIG
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.log import log
 
@@ -60,10 +61,13 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
+    weights = args.weights if args.weights else CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
+    filetypes = args.filetypes if args.filetypes else CONFIG["FILETYPES"]["VID_IMG"]
     debug = args.debug
+
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
-    detect(paths=paths, debug=debug)
+    detect(paths=paths, weights=weights, filetypes=filetypes, debug=debug)
     log.info("Finished detection from command line")
 
 
