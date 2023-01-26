@@ -60,7 +60,7 @@ def main():
     overwrite = not args.no_overwrite
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
-    track(paths=paths, doverwrite=overwrite, ebug=args.debug)
+    track(paths=paths, overwrite=overwrite, debug=args.debug)
     log.info("Finished tracking from command line")
 
 
