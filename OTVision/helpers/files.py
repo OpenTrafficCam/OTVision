@@ -132,7 +132,7 @@ def replace_filetype(
     return new_paths
 
 
-def _remove_dir(dir_to_remove: Path):
+def _remove_dir(dir_to_remove: Path) -> None:
     """Helper to remove a directory and all of its subdirectories.
 
     Args:
@@ -187,7 +187,7 @@ def write_json(
     file: Path,
     filetype: str = ".json",
     overwrite: bool = False,
-):
+) -> None:
     """Write a json file from a dict to a specific filetype.
 
     Args:
@@ -212,7 +212,7 @@ def write_json(
 
 
 # TODO: Type hint nested dict during refactoring
-def _check_and_update_metadata_inplace(otdict: dict):
+def _check_and_update_metadata_inplace(otdict: dict) -> None:
     """Check if dict of detections or tracks has subdict metadata.
         If not, try to convert from historic format.
         Atttention: Updates the input dict inplace.
@@ -241,7 +241,7 @@ def denormalize_bbox(
     otdict: dict,
     keys_width: Union[list[str], None] = None,
     keys_height: Union[list[str], None] = None,
-):
+) -> dict:
     """Denormalize all bbox references in detections or tracks dict from percent to px.
 
     Args:
@@ -273,7 +273,7 @@ def normalize_bbox(
     otdict: dict,
     keys_width: Union[list[str], None] = None,
     keys_height: Union[list[str], None] = None,
-):
+) -> dict:
     """Normalize all bbox references in detections or tracks dict from percent to px.
 
     Args:
