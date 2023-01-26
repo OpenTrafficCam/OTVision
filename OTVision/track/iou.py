@@ -23,8 +23,6 @@ OTVision module to track road users in frames detected by OTVision
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import pandas as pd
-
 from OTVision.config import CONFIG
 
 from .iou_util import iou
