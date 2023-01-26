@@ -28,7 +28,7 @@ from OTVision.helpers.log import log
 
 
 def parse():
-    parser = argparse.ArgumentParser(description="Track objects in detections")
+    parser = argparse.ArgumentParser(description="Convert h264 to mp4")
     parser.add_argument(
         "-p",
         "--paths",
@@ -38,6 +38,21 @@ def parse():
         required=True,
     )
     parser.add_argument(
+        "--delete_input",
+        default=CONFIG["CONVERT"]["DELETE_INPUT"],
+        type=bool,
+        action="store_true",
+        help="Delete input files after convert",
+    )
+    parser.add_argument(
+        "-n",
+        "--no_overwrite",
+        default=CONFIG["CONVERT"]["OVERWRITE"],
+        type=bool,
+        action="store_true",
+        help="Do not overwrite existing output files",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         default=CONFIG["CONVERT"]["DEBUG"],
@@ -45,31 +60,19 @@ def parse():
         action="store_true",
         help="Logging in debug mode",
     )
-    parser.add_argument(
-        "--delete_input",
-        default=CONFIG["CONVERT"]["DELETE_INPUT"],
-        action="store_true",
-        help="Delete input files after convert",
-    )
-    parser.add_argument(
-        "-o",
-        "--overwrite",
-        default=CONFIG["CONVERT"]["OVERWRITE"],
-        action="store_true",
-        help="Overwrite existing output files",
-    )
     return parser.parse_args()
 
 
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
+    overwrite = not args.no_overwrite
     log.info("Starting conversion from command line")
     log.info(f"Arguments: {vars(args)}")
     convert(
         paths=paths,
         delete_input=args.delete_input,
-        overwrite=args.overwrite,
+        overwrite=overwrite,
         debug=args.debug,
     )
     log.info("Finished conversion from command line")

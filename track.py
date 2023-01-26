@@ -28,7 +28,7 @@ from OTVision.track.track import main as track
 
 
 def parse():
-    parser = argparse.ArgumentParser(description="Track objects in detections")
+    parser = argparse.ArgumentParser(description="Track objects through detections")
     parser.add_argument(
         "-p",
         "--paths",
@@ -36,6 +36,14 @@ def parse():
         type=str,
         help="Path or list of paths to detections files",
         required=True,
+    )
+    parser.add_argument(
+        "-n",
+        "--no_overwrite",
+        default=CONFIG["TRACK"]["OVERWRITE"],
+        type=bool,
+        action="store_true",
+        help="Do not overwrite existing output files",
     )
     parser.add_argument(
         "-d",
@@ -51,9 +59,10 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
+    overwrite = not args.no_overwrite
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
-    track(paths=paths, debug=args.debug)
+    track(paths=paths, doverwrite=overwrite, ebug=args.debug)
     log.info("Finished tracking from command line")
 
 

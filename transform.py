@@ -28,7 +28,7 @@ from OTVision.transform.transform import main as transform
 
 
 def parse():
-    parser = argparse.ArgumentParser(description="Track objects in detections")
+    parser = argparse.ArgumentParser(description="Transform tracks to UTM coordinates")
     parser.add_argument(
         "-p",
         "--paths",
@@ -44,6 +44,14 @@ def parse():
         help="Path to refpts file. If not given, each tracks file should have one",
     )
     parser.add_argument(
+        "-n",
+        "--no_overwrite",
+        default=CONFIG["TRANSFORM"]["OVERWRITE"],
+        type=bool,
+        action="store_true",
+        help="Do not overwrite existing output files",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         type=bool,
@@ -57,9 +65,12 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
+    overwrite = not args.no_overwrite
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
-    transform(paths=paths, refpts_file=args.refpts_file, debug=args.debug)
+    transform(
+        paths=paths, refpts_file=args.refpts_file, overwrite=overwrite, debug=args.debug
+    )
     log.info("Finished transforming to world coordinates  from command line")
 
 

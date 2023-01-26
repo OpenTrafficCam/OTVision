@@ -55,6 +55,14 @@ def parse():
         required=False,
     )
     parser.add_argument(
+        "-n",
+        "--no_overwrite",
+        default=CONFIG["DETECT"]["OVERWRITE"],
+        type=bool,
+        action="store_true",
+        help="Do not overwrite existing output files",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         default=CONFIG["DETECT"]["DEBUG"],
@@ -68,11 +76,15 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
-
+    overwrite = not args.no_overwrite
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
     detect(
-        paths=paths, weights=args.weights, filetypes=args.filetypes, debug=args.debug
+        paths=paths,
+        weights=args.weights,
+        filetypes=args.filetypes,
+        overwrite=overwrite,
+        debug=args.debug,
     )
     log.info("Finished detection from command line")
 
