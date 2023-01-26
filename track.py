@@ -41,14 +41,12 @@ def parse():
         "-n",
         "--no_overwrite",
         default=CONFIG["TRACK"]["OVERWRITE"],
-        type=bool,
         action="store_true",
         help="Do not overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
-        type=bool,
         default=CONFIG["TRACK"]["DEBUG"],
         action="store_true",
         help="Logging in debug mode",

@@ -58,7 +58,6 @@ def parse():
         "-n",
         "--no_overwrite",
         default=CONFIG["DETECT"]["OVERWRITE"],
-        type=bool,
         action="store_true",
         help="Do not overwrite existing output files",
     )
@@ -66,7 +65,6 @@ def parse():
         "-d",
         "--debug",
         default=CONFIG["DETECT"]["DEBUG"],
-        type=bool,
         action="store_true",
         help="Logging in debug mode",
     )

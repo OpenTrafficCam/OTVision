@@ -47,14 +47,12 @@ def parse():
         "-n",
         "--no_overwrite",
         default=CONFIG["TRANSFORM"]["OVERWRITE"],
-        type=bool,
         action="store_true",
         help="Do not overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
-        type=bool,
         default=CONFIG["TRANSFORM"]["DEBUG"],
         action="store_true",
         help="Logging in debug mode",

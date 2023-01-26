@@ -40,7 +40,6 @@ def parse():
     parser.add_argument(
         "--delete_input",
         default=CONFIG["CONVERT"]["DELETE_INPUT"],
-        type=bool,
         action="store_true",
         help="Delete input files after convert",
     )
@@ -48,7 +47,6 @@ def parse():
         "-n",
         "--no_overwrite",
         default=CONFIG["CONVERT"]["OVERWRITE"],
-        type=bool,
         action="store_true",
         help="Do not overwrite existing output files",
     )
@@ -56,7 +54,6 @@ def parse():
         "-d",
         "--debug",
         default=CONFIG["CONVERT"]["DEBUG"],
-        type=bool,
         action="store_true",
         help="Logging in debug mode",
     )
