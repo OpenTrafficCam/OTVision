@@ -132,7 +132,7 @@ def detect_images(
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     ot_labels_enabled: bool = False,
-):
+) -> Union[tuple[list, dict], list]:
     """Detect and classify bounding boxes in images/frames using YOLOv5
 
     Args:
@@ -154,7 +154,7 @@ def detect_images(
     """
     yolo_detections: list = []
     if not file_chunks:
-        return [], [] if ot_labels_enabled else yolo_detections
+        return ([], {}) if ot_labels_enabled else yolo_detections
     if model is None:
         model = loadmodel(weights, conf, iou)
     t1 = perf_counter()
@@ -186,7 +186,9 @@ def detect_images(
     return _convert_detections_chunks(yolo_detections, class_labels, det_config)
 
 
-def _get_batch_of_frames(video_capture: VideoCapture, batch_size: int):
+def _get_batch_of_frames(
+    video_capture: VideoCapture, batch_size: int
+) -> tuple[bool, list]:
     """Reads the the next batch_size frames from VideoCapture.
 
     Args:
@@ -199,7 +201,7 @@ def _get_batch_of_frames(video_capture: VideoCapture, batch_size: int):
         batch(list): batch of frames.
     """
     batch = []
-    gotFrame = False
+    gotFrame: bool = False
     for _ in range(batch_size):
         gotFrame, img = video_capture.read()
         if gotFrame:
@@ -209,7 +211,7 @@ def _get_batch_of_frames(video_capture: VideoCapture, batch_size: int):
     return gotFrame, batch
 
 
-def _log_overall_performance_stats(duration: float, det_fps: float):
+def _log_overall_performance_stats(duration: float, det_fps: float) -> None:
     log.info("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
 
 
@@ -220,7 +222,7 @@ def _log_batch_performances_stats(
     t_det: float,
     t_list: float,
     batch_size: int,
-):
+) -> None:
     batch_no_str = "batch_no: {:d}".format(batch_no)
     transformed_batch = "trans: {:0.4f}".format(t_trans - t_start)
     det = "det: {:0.4f}".format(t_det - t_start)
@@ -237,7 +239,7 @@ def _add_detection_results(
     detections: list,  # TODO: Type hint nested list/dict during refactoring
     results: Any,  # ?: Type hint from YOLOv5 repo from yolov5.models.common.Detections
     normalized: bool,
-):
+) -> None:
     """Adds detection result to the list of detections provided.
 
     Args:
