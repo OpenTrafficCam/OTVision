@@ -79,12 +79,14 @@ def main(
     if debug:
         set_debug()
 
-    filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
-    detections_files = get_files(paths=paths, filetypes=[filetype])
+    filetypes = CONFIG["FILETYPES"]["DETECT"]
+    detections_files = get_files(paths=paths, filetypes=filetypes)
     for detections_file in detections_files:
         log.info(f"Try tracking {detections_file}")
 
-        detections = read_json(json_file=detections_file, filetype=filetype)
+        detections = read_json(
+            json_file=detections_file, filetype=detections_file.suffix
+        )
 
         _check_and_update_metadata_inplace(otdict=detections)
 
