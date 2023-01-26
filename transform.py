@@ -54,7 +54,7 @@ def main():
     debug = args.debug
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
-    transform(paths=paths, debug=debug)
+    transform(paths=paths, refpts_file=args.refpts_file, debug=debug)
     log.info("Finished transforming to world coordinates  from command line")
 
 
