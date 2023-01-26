@@ -110,12 +110,13 @@ class FrameRunDetection(FrameRun):
     def run(self, event):
         log.debug("---Starting detection from gui---")
         input_filetype = f".{self.master.master.frame_files.combo_vid_filetype.get()}"
+
         files = replace_filetype(
             files=self.master.master.frame_files.get_tree_files(),
             new_filetype=input_filetype,
         )
         files = get_files(
-            paths=self.master.master.frame_files.get_tree_files(),
+            paths=files,
             filetypes=[input_filetype],
         )
 
@@ -128,7 +129,7 @@ class FrameRunDetection(FrameRun):
         overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
         detect(
             paths=files,
-            filetypes=input_filetype,
+            filetypes=[input_filetype],
             weights=weights,
             conf=conf,
             iou=iou,

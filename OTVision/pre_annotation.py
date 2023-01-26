@@ -123,6 +123,40 @@ def main(
     filter_classes: Union[None, dict] = None,
     img_type: str = "png",
 ):
+    """_summary_
+    TODO: Write docstrings
+    Args:
+        path (Path): _description_
+        model_weights (str): _description_
+        chunk_size (int, optional): _description_. Defaults to 1000.
+        filter_classes (Union[None, dict], optional): _description_. Defaults to None.
+        img_type (str, optional): _description_. Defaults to "png".
+
+    Raises:
+        OSError: _description_
+        OSError: _description_
+
+    ### Example
+
+    ```python
+    from OTVision import pre_annotation
+
+    file_path = "/path/to/zip/file.zip"
+
+    model_weights = "yolov5s.pt"
+    chunk_size = 200
+    classes = {
+        0: "person",
+        1: "bicycle",
+        2: "car",
+        3: "motorcycle",
+        4: "bus",
+        5: "truck",
+    }
+
+    pre_annotation.main(file_path, model_weights, chunk_size, classes)
+    ```
+    """
     log.info("Starting")
 
     if not path.exists():
