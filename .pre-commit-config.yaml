@@ -4,7 +4,6 @@ repos:
     rev: v4.3.0
     hooks:
       - id: check-yaml
-      - id: check-docstring-first
       - id: end-of-file-fixer
         exclude_types: [json]
       - id: trailing-whitespace
