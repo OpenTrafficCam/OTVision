@@ -107,7 +107,7 @@ class FrameRunTracking(FrameRun):
         )
         files = get_files(
             paths=files,
-            filetypes=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+            filetypes=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
         )
         sigma_l = self.master.frame_options.scale_sigma_l.get()
         sigma_h = self.master.frame_options.scale_sigma_h.get()

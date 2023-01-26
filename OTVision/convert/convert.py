@@ -21,14 +21,11 @@ OTVision main module for converting videos to other formats and frame rates.
 
 import subprocess
 from pathlib import Path
-from urllib.request import urlretrieve
-from zipfile import ZipFile
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import _remove_dir, get_files
+from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import log, reset_debug, set_debug
-from OTVision.helpers.machine import ON_WINDOWS
 
 
 def main(
@@ -38,6 +35,7 @@ def main(
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
+    delete_input: bool = False,
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ):
     """Converts multiple h264-based videos into other formats and/or frame rates.
@@ -75,6 +73,7 @@ def main(
             output_fps,
             fps_from_filename,
             overwrite,
+            delete_input,
         )
     if debug:
         reset_debug()
@@ -87,12 +86,13 @@ def convert(
     output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
+    delete_input: bool = False,
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ):
     """Converts h264-based videos into other formats and/or other frame rates.
     Also input frame rates can be given.
     If input video file is raw h264 and no input frame rate is given convert
-    tries to parse frame rate from filename, otherwise sets default frame.
+    tries to parse frame rate from filename, otherwise sets default frame rate.
 
     Currently only works for windows as ffmpeg.exe is utilized.
 
@@ -108,6 +108,8 @@ def convert(
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
         overwrite (bool, optional): Whether or not to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
+        delete_input (bool, optional): Whether or not to delete the input h264.
+          Defaults to False.
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["CONVERT"]["DEBUG"].
 
@@ -122,18 +124,12 @@ def convert(
     if debug:
         set_debug()
 
-    if not ON_WINDOWS:
-        log.warning("Conversion of h264 videos only works on windows machines for now")
-        if debug:
-            reset_debug()
-        return
-
     log.info(f"Try converting {input_video_file} to {output_filetype}")
 
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
-    if not overwrite and output_video_file.is_file:
+    if not overwrite and output_video_file.is_file():
         if debug:
             reset_debug()
         return None
@@ -145,31 +141,57 @@ def convert(
             input_fps = CONFIG["CONVERT"]["FPS"]
 
         # Create ffmpeg command
-        input_fps_cmd = (
-            f"-framerate {input_fps}" if input_fps is not None else ""
-        )  # ? Change -framerate to -r?
+
+        # Input frame rate
+        # ? Change -framerate to -r?
+        input_fps_cmds = ["-framerate", str(input_fps)] if input_fps is not None else []
+
+        # Output frame rate and copy commands
         if output_fps is not None:
-            output_fps_cmd = f"-r {output_fps}"
-            copy_cmd = ""
+            output_fps_cmds = ["-r", str(output_fps)]
+            copy_cmds: list[str] = []
+            delete_input = False  # Never delete input if re-encoding file.
         else:
-            output_fps_cmd = ""
-            copy_cmd = "-vcodec copy"  # No decoding, only demuxing
+            output_fps_cmds = ""
+            copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
+
         # Input file
-        ffmpeg_cmd_in = f"{input_fps_cmd} -i {input_video_file}"
-        # Filters (mybe necessary for special cases, insert )
+        input_file_cmds = ["-i", str(input_video_file)]
+
+        # Filters (mybe necessary for special cases, insert if needed)
         # ffmpeg_cmd_filter = "-c:v libx264"
-        ffmpeg_cmd_filter = ""
+        filter_cmds: list[str] = []
+
         # Output file
-        ffmpeg_cmd_out = (
-            f"{ffmpeg_cmd_filter} {output_fps_cmd} {copy_cmd} -y {output_video_file}"
-        )
+        output_file_cmds = ["-y", str(output_video_file)]
+
         # Concat and run ffmpeg command
-        FFMPEG_PATH = CONFIG["CONVERT"]["FFMPEG_PATH"]
-        ffmpeg_cmd = rf"{FFMPEG_PATH} {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
+        # ffmpeg_cmd = rf"ffmpeg {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
+        ffmpeg_cmd = (
+            ["ffmpeg"]
+            + input_fps_cmds
+            + input_file_cmds
+            + filter_cmds
+            + output_fps_cmds
+            + copy_cmds
+            + output_file_cmds
+        )
         log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
-        subprocess.call(ffmpeg_cmd)
+        subprocess.run(
+            ffmpeg_cmd,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
         log.info(f"{output_video_file} created with {output_fps} fps")
+
+        if delete_input:
+            in_size = input_video_file.stat().st_size
+            out_size = output_video_file.stat().st_size
+            if in_size <= out_size:
+                log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
+                input_video_file.unlink()
 
     elif input_filetype in vid_filetypes:
         raise TypeError("Output video filetype is not supported")
@@ -181,56 +203,14 @@ def convert(
 
 
 def check_ffmpeg():
-    """Checks, if ffmpeg is available, otherwise downloads it."""
-
-    if not ON_WINDOWS:
-        log.warning("Sorry, this function only works on windows machines for now")
-        return
+    """Checks, if ffmpeg is available"""
 
     try:
-        subprocess.call(CONFIG["CONVERT"]["FFMPEG_PATH"])
-        log.info("ffmpeg.exe was found")
-    except FileNotFoundError:
-        download_ffmpeg()
-
-
-def download_ffmpeg():
-    """Downloads ffmpeg to a specific path."""
-
-    if not ON_WINDOWS:
-        log.info("Sorry, this function only works on windows machines for now")
-        return
-
-    log.info("Try downloading ffmpeg zip archive (patience: may take a while...)")
-    ffmpeg_dir = Path(CONFIG["CONVERT"]["FFMPEG_PATH"]).parents[0]
-    ffmpeg_zip_dir = ffmpeg_dir / "tmp"
-    ffmpeg_zip_dir.mkdir(parents=True, exist_ok=True)
-    ffmpeg_zip = ffmpeg_zip_dir / r"ffmpeg.zip"
-    try:
-        urlretrieve(CONFIG["CONVERT"]["FFMPEG_URL"], ffmpeg_zip)
-        log.info("Successfully downloaded ffmpeg zip archive")
-    except Exception as inst:
-        log.warning(inst)
-        log.warning("Can't download ffmpeg zip archive. Please download manually")
-    else:
-        try:
-            log.info("Extracting ffmpeg.exe from ffmpeg zip archive")
-            with ZipFile(ffmpeg_zip, "r") as zip:
-                for name in zip.namelist():
-                    if Path(name).name == r"ffmpeg.exe":
-                        log.info("next: Extract")
-                        zip.extract(
-                            member=name,
-                            path=ffmpeg_zip_dir,
-                        )
-                        ffmpeg_exe = Path(name)
-                        break
-            Path(ffmpeg_zip_dir, ffmpeg_exe).replace(ffmpeg_dir / "ffmpeg.exe")
-            _remove_dir(dir=ffmpeg_zip_dir)
-            log.info("Successfully extracted ffmpeg.exe from ffmpeg zip archive")
-        except Exception as inst:
-            log.warning(inst)
-            log.warning("Can't extract ffmpeg.exe, please extract manual")
+        subprocess.call("ffmpeg")
+        log.info("ffmpeg was found")
+    except FileNotFoundError as e:
+        error_message = "ffmpeg could not be called, make sure ffmpeg is in path"
+        raise FileNotFoundError(error_message) from e
 
 
 # Useful ffmpeg commands:

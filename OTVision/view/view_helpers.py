@@ -266,7 +266,7 @@ class FrameFileTree(tk.LabelFrame):
 
     def get_tree_files(self):
         return [
-            self.tree_files.item(item)["text"]
+            Path(self.tree_files.item(item)["text"])
             for item in self.tree_files.get_children()
         ]
 
@@ -346,7 +346,7 @@ class FrameFiles(tk.LabelFrame):
 
     def add_dirs(self, event):
         new_dir = filedialog.askdirectory(title="Select a folder")
-        new_paths = get_files(Path(new_dir), [self.filetype])
+        new_paths = get_files([Path(new_dir)], [self.filetype])
         self.add_to_listbox(new_paths)
 
     def add_to_listbox(self, new_paths):

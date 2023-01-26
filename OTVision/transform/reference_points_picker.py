@@ -52,7 +52,7 @@ class ReferencePointsPicker:
         self,
         file: Path,
         title: str = "Reference Points Picker",
-        popup_root: tk.Tk = None,
+        popup_root: Union[tk.Tk, None] = None,
     ):
 
         # Attributes
@@ -321,7 +321,7 @@ class ReferencePointsPicker:
     def zoom_magnifier(self, x_px, y_px):
         log.debug(" # TODO: zoom magnifier")
 
-    def draw_refpts(self, temp_refpt: dict = None):
+    def draw_refpts(self, temp_refpt: Union[dict, None] = None):
         """Draw all the reference points an self.image
 
         Args:

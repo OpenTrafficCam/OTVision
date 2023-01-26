@@ -360,7 +360,7 @@ def _convert_detections_chunks(
             detection.append(bbox)
         data = {str(no + 1): {"classified": detection}}
         # ?: Should every image have a det_config dict? Even if it is always the same?
-        result.append({"det_config": det_config, "data": data})
+        result.append({"metadata": {"det": det_config}, "data": data})
     return result
 
 
