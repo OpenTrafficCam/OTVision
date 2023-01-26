@@ -109,7 +109,5 @@ class TestLoadModel:
             loadmodel(model_name, self.CONF_THRESH, self.IOU_THRESH)
 
     def test_load_model_notAPtFileAsParam_raiseAttributeError(self, text_file: Path):
-        with pytest.raises(
-            ValueError, match=f"Weights at '{text_file}' is not a pt file!"
-        ):
+        with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
             loadmodel(str(text_file), self.CONF_THRESH, self.IOU_THRESH)
