@@ -63,11 +63,12 @@ def parse():
 def main():
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
+    refpts_file = Path(args.refpts_file) if args.refpts_file else None
     overwrite = not args.no_overwrite
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
     transform(
-        paths=paths, refpts_file=args.refpts_file, overwrite=overwrite, debug=args.debug
+        paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=args.debug
     )
     log.info("Finished transforming to world coordinates  from command line")
 
