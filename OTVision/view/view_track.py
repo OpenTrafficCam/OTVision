@@ -103,7 +103,7 @@ class FrameRunTracking(FrameRun):
         log.debug("---Starting tracking from gui---")
         files = replace_filetype(
             files=self.master.master.frame_files.get_tree_files(),
-            new_filetype=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
+            new_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
         )
         files = get_files(
             paths=files,

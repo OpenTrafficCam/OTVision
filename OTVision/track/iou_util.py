@@ -20,8 +20,8 @@ def nms(
     boxes: np.ndarray,
     scores: np.ndarray,
     overlapThresh: float,
-    classes: np.ndarray = None,
-) -> Union[tuple[list, list, list], tuple[list, list]]:
+    classes: Union[np.ndarray, None] = None,
+) -> Union[tuple[np.ndarray, np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
     """
     perform non-maximum suppression. based on Malisiewicz et al.
     Args:
@@ -89,7 +89,8 @@ def nms(
 
         # delete all indexes from the index list that have
         idxs = np.delete(
-            idxs, np.concatenate(([last], np.where(overlap > overlapThresh)[0]))
+            idxs,
+            np.concatenate((np.array([last]), np.where(overlap > overlapThresh)[0])),
         )
 
     if classes is not None:
