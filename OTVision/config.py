@@ -22,7 +22,7 @@ OTVision config module for setting default values
 from pathlib import Path
 
 # sourcery skip: merge-dict-assign
-CONFIG = {}
+CONFIG: dict = {}
 
 
 # FOLDERS
