@@ -97,9 +97,7 @@ class TestLoadModel:
     def test_load_custom_model_notAPtFileAsParam_raiseAttributeError(
         self, text_file: Path
     ) -> None:
-        with pytest.raises(
-            ValueError, match=f"Weights at '{text_file}' is not a pt file!"
-        ):
+        with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
             _load_custom_model(text_file, False)
 
     def test_load_model_notExistingModelName_raiseYOLOv5ModelNotFoundError(
