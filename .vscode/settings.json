@@ -1,5 +1,4 @@
 {
-    "python.pythonPath": "venv\\Scripts\\python.exe",
     "python.analysis.extraPaths": [
         "./OTVision"
     ],
@@ -25,4 +24,6 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "python.linting.mypyCategorySeverity.error": "Warning",
+    "python.linting.mypyEnabled": true
 }

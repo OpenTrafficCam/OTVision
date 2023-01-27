@@ -26,4 +26,4 @@ from .track.track import main as track
 
 # from .view.view import main as view
 
-__all__ = [detect, track, convert]
+__all__: list = [detect, track, convert]

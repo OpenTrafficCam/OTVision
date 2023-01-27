@@ -20,13 +20,15 @@ OTVision script to call the transform main with arguments parsed from command li
 
 
 import argparse
+from pathlib import Path
 
+from OTVision.config import CONFIG
 from OTVision.helpers.log import log
 from OTVision.transform.transform import main as transform
 
 
-def parse():
-    parser = argparse.ArgumentParser(description="Track objects in detections")
+def parse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Transform tracks to UTM coordinates")
     parser.add_argument(
         "-p",
         "--paths",
@@ -42,16 +44,31 @@ def parse():
         help="Path to refpts file. If not given, each tracks file should have one",
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Logging in debug mode"
+        "-o",
+        "--overwrite",
+        default=CONFIG["TRANSFORM"]["OVERWRITE"],
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        default=CONFIG["TRANSFORM"]["DEBUG"],
+        action=argparse.BooleanOptionalAction,
+        help="Logging in debug mode",
     )
     return parser.parse_args()
 
 
-def main():
-    kwargs = vars(parse())
+def main() -> None:
+    args = parse()
+    paths = [Path(str_path) for str_path in args.paths]
+    refpts_file = Path(args.refpts_file) if args.refpts_file else None
     log.info("Starting transforming to world coordinates from command line")
-    log.info(f"Arguments: {kwargs}")
-    transform(**kwargs)
+    log.info(f"Arguments: {vars(args)}")
+    transform(
+        paths=paths, refpts_file=refpts_file, overwrite=args.overwrite, debug=args.debug
+    )
     log.info("Finished transforming to world coordinates  from command line")
 
 

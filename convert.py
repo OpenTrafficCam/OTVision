@@ -20,32 +20,57 @@ OTVision script to call the convert main with arguments parsed from command line
 
 
 import argparse
+from pathlib import Path
 
+from OTVision.config import CONFIG
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.log import log
 
 
-def parse():
-    parser = argparse.ArgumentParser(description="Track objects in detections")
+def parse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Convert h264 to mp4")
     parser.add_argument(
         "-p",
         "--paths",
         nargs="+",
         type=str,
-        help="Path or list of paths to detections files",
+        help="Path or list of paths to h264 (or other) video files",
         required=True,
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Logging in debug mode"
+        "--delete_input",
+        default=CONFIG["CONVERT"]["DELETE_INPUT"],
+        action=argparse.BooleanOptionalAction,
+        help="Delete input files after convert",
+    )
+    parser.add_argument(
+        "-o",
+        "--overwrite",
+        default=CONFIG["CONVERT"]["OVERWRITE"],
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        default=CONFIG["CONVERT"]["DEBUG"],
+        action=argparse.BooleanOptionalAction,
+        help="Logging in debug mode",
     )
     return parser.parse_args()
 
 
-def main():
-    kwargs = vars(parse())
+def main() -> None:
+    args = parse()
+    paths = [Path(str_path) for str_path in args.paths]
     log.info("Starting conversion from command line")
-    log.info(f"Arguments: {kwargs}")
-    convert(**kwargs)
+    log.info(f"Arguments: {vars(args)}")
+    convert(
+        paths=paths,
+        delete_input=args.delete_input,
+        overwrite=args.overwrite,
+        debug=args.debug,
+    )
     log.info("Finished conversion from command line")
 
 

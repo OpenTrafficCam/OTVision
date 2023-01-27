@@ -21,7 +21,6 @@ OTVision helpers to change formats and retrieve information
 
 import datetime as dt
 import re
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -37,17 +36,17 @@ def _get_fps_from_filename(filename: str) -> int:
     Returns:
         int or None: frame rate in frames per second or None
     """
-    # Get input fps frome filename
 
     match = re.search(r"_FR([\d]+)_", filename)
-    if not match:
-        return None
 
-    return int(match.group(1))
+    if not match:
+        raise ValueError("Cannot read frame rate from file name")
+
+    return int(match[1])
 
 
 def _get_datetime_from_filename(
-    filename: str, epoch_datetime="1970-01-01_00-00-00"
+    filename: str, epoch_datetime: str = "1970-01-01_00-00-00"
 ) -> str:
     """Get date and time from file name.
     Searches for "_yyyy-mm-dd_hh-mm-ss".
@@ -66,7 +65,7 @@ def _get_datetime_from_filename(
         return epoch_datetime
 
     # Assume that there is only one timestamp in the file name
-    datetime_str = match.group(1)  # take group withtout underscore
+    datetime_str = match[1]
 
     try:
         dt.datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
@@ -76,6 +75,7 @@ def _get_datetime_from_filename(
     return datetime_str
 
 
+# TODO: Type hint nested dict during refactoring
 def _ottrk_dict_to_df(nested_dict: dict) -> pd.DataFrame:
     """Turns a dict of tracks into a dataframe
 
@@ -103,9 +103,9 @@ def _get_time_from_frame_number(
     frame_series: pd.Series,
     start_datetime: str,
     fps: int,
-    return_yyyymmdd_hhmmss=True,
-    return_milliseconds=True,
-) -> Union[pd.Series, pd.Series]:
+    return_yyyymmdd_hhmmss: bool = True,
+    return_milliseconds: bool = True,
+) -> pd.Series:
     """Get datetime series of detections from series of frame numbers of video
     the objects were detected using a start datetime of the video and
     the video frame rate (fps).
@@ -128,12 +128,8 @@ def _get_time_from_frame_number(
         return datetime_yyyymmdd_hhmmss, datetime_milliseconds
     elif not return_milliseconds:
         return datetime_yyyymmdd_hhmmss
-    elif not return_yyyymmdd_hhmmss:
-        return datetime_milliseconds
     else:
-        raise ValueError(
-            "Either return_yyyymmdd_hhmmss or return_milliseconds has to be True"
-        )
+        return datetime_milliseconds
 
 
 def _get_epsg_from_utm_zone(utm_zone: int, hemisphere: str) -> int:

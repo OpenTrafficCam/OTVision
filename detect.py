@@ -20,12 +20,14 @@ OTVision script to call the detect main with arguments parsed from command line
 
 
 import argparse
+from pathlib import Path
 
+from OTVision.config import CONFIG
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.log import log
 
 
-def parse():
+def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect objects in videos or images")
     parser.add_argument(
         "-p",
@@ -38,6 +40,7 @@ def parse():
     parser.add_argument(
         "-f",
         "--filetypes",
+        default=CONFIG["FILETYPES"]["VID_IMG"],
         type=str,
         nargs="+",
         help="Filetypes of files in folders to select for detection",
@@ -46,21 +49,40 @@ def parse():
     parser.add_argument(
         "-w",
         "--weights",
+        default=CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
         type=str,
         help="Name of weights from PyTorch hub or Path to weights file",
         required=False,
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Logging in debug mode"
+        "-o",
+        "--overwrite",
+        default=CONFIG["DETECT"]["OVERWRITE"],
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        default=CONFIG["DETECT"]["DEBUG"],
+        action=argparse.BooleanOptionalAction,
+        help="Logging in debug mode",
     )
     return parser.parse_args()
 
 
-def main():
-    kwargs = vars(parse())
+def main() -> None:
+    args = parse()
+    paths = [Path(str_path) for str_path in args.paths]
     log.info("Starting detection from command line")
-    log.info(f"Arguments: {kwargs}")
-    detect(**kwargs)
+    log.info(f"Arguments: {vars(args)}")
+    detect(
+        paths=paths,
+        weights=args.weights,
+        filetypes=args.filetypes,
+        overwrite=args.overwrite,
+        debug=args.debug,
+    )
     log.info("Finished detection from command line")
 
 
