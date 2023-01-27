@@ -13,3 +13,4 @@ seaborn==0.12.1
 torch==1.13.0 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.14.0 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.64.1
+ujson==5.7.0
