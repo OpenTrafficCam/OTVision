@@ -25,7 +25,7 @@ from pathlib import Path
 from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
-from OTVision.helpers.files import get_files
+from OTVision.helpers.files import get_files, replace_filetype
 from OTVision.helpers.log import log
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
 from OTVision.transform.transform import main as transform
@@ -85,7 +85,7 @@ class FrameTransformOptions(tk.Frame):
             )
 
             # Check paths
-            refpts_file = get_files(refpts_file)[0]
+            refpts_file = get_files(paths=[refpts_file])[0]
             log.debug(refpts_file)
 
             # Copy refpts file for all selected
@@ -108,7 +108,7 @@ class FrameTransformOptions(tk.Frame):
             log.debug("click and save refpts for selected files")
 
             # Get refpts from picker tool
-            refpts = ReferencePointsPicker(video_file=selected_files[0]).refpts
+            refpts = ReferencePointsPicker(video_file=Path(selected_files[0])).refpts
 
             if refpts:
 
@@ -132,9 +132,12 @@ class FrameRunTransformation(FrameRun):
 
     def run(self, event):
         log.info("---Starting transformation from gui---")
+        tracks_files = replace_filetype(
+            files=self.master.master.frame_files.get_tree_files(),
+            new_filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
+        )
         tracks_files = get_files(
-            paths=self.master.master.frame_files.get_tree_files(),
-            filetypes=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
-            replace_filetype=True,
+            paths=tracks_files,
+            filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]],
         )
         transform(paths=tracks_files)

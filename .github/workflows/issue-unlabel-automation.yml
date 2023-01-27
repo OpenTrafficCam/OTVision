@@ -39,8 +39,8 @@ jobs:
           column: public bugs
           repo-token: ${{ secrets.GHPROJECT_TOKEN }}
           action: delete
-
       # Move to other column if label is present
+
       - name: Move questions to Weekly-Discussion
         uses: alex-page/github-project-automation-plus@v0.8.1
         if: |

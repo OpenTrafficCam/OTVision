@@ -10,10 +10,18 @@ Utils for using iou tracker
 # Written by Erik Bochinski
 # ---------------------------------------------------------
 
+from typing import Union
+
 import numpy as np
 
 
-def nms(boxes, scores, overlapThresh, classes=None):
+# TODO: Remove if not needed
+def nms(
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    overlapThresh: float,
+    classes: Union[np.ndarray, None] = None,
+) -> Union[tuple[np.ndarray, np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
     """
     perform non-maximum suppression. based on Malisiewicz et al.
     Args:
@@ -81,7 +89,8 @@ def nms(boxes, scores, overlapThresh, classes=None):
 
         # delete all indexes from the index list that have
         idxs = np.delete(
-            idxs, np.concatenate(([last], np.where(overlap > overlapThresh)[0]))
+            idxs,
+            np.concatenate((np.array([last]), np.where(overlap > overlapThresh)[0])),
         )
 
     if classes is not None:
@@ -90,13 +99,16 @@ def nms(boxes, scores, overlapThresh, classes=None):
         return boxes[pick], scores[pick]
 
 
-def iou(bbox1, bbox2):
+def iou(
+    bbox1: Union[list[float], tuple[float, float, float, float]],
+    bbox2: Union[list[float], tuple[float, float, float, float]],
+) -> float:
     """
     Calculates the intersection-over-union of two bounding boxes.
 
     Args:
-        bbox1 (numpy.array, list of floats): bounding box in format x1,y1,x2,y2.
-        bbox2 (numpy.array, list of floats): bounding box in format x1,y1,x2,y2.
+        bbox1 (list of floats): bounding box in format x1,y1,x2,y2.
+        bbox2 (list of floats): bounding box in format x1,y1,x2,y2.
 
     Returns:
         int: intersection-over-onion of bbox1, bbox2

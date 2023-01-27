@@ -39,9 +39,6 @@ OS_RELEASE = platform.release()
 OS_VERSION = platform.version()
 """Specific version of the OS OTVision is currently running on"""
 
-PY_VERSION = 1
-"""Full Python version number"""
-
 PY_MAJOR_VERSION = int(platform.python_version_tuple()[0])
 """Python major version digit (e.g. 3 for 3.9.5) OTVision is currently running with"""
 
@@ -52,7 +49,7 @@ PY_PATCH_VERSION = int(platform.python_version_tuple()[2])
 """Python patch version digit (e.g. 5 for 3.9.5) OTVision is currently running with"""
 
 
-def _has_cuda():
+def _has_cuda() -> bool:
     """Returns True if CUDA is installed on machine
 
     Returns:
@@ -63,7 +60,7 @@ def _has_cuda():
     return torch.cuda.is_available()
 
 
-def print_has_cuda():
+def print_has_cuda() -> None:
     """Returns True if CUDA is installed on machine
 
     Returns:

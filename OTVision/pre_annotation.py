@@ -32,21 +32,20 @@ from OTVision.helpers.files import get_files, unzip
 from OTVision.helpers.log import log
 
 
-def _zip_annotated_dir(cvat_yolo_dir: Union[str, Path], img_type: str, pngs=False):
-    to_be_zipped = Path(cvat_yolo_dir)
+def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs: bool = False) -> Path:
+    to_be_zipped = cvat_yolo_dir
     if not pngs:
-        img_paths = get_files(to_be_zipped, filetypes=img_type)
+        img_paths = get_files(paths=[to_be_zipped], filetypes=[img_type])
         for img_path in img_paths:
             img = Path(img_path)
             img.unlink()
     new_file = to_be_zipped.parent / f"{to_be_zipped.name}_annotated"
-    shutil.make_archive(new_file, "zip", root_dir=to_be_zipped)
-    shutil.rmtree(to_be_zipped)
+    shutil.make_archive(base_name=str(new_file), format="zip", root_dir=to_be_zipped)
+    shutil.rmtree(path=to_be_zipped)
     return new_file.with_name(f"{new_file.stem}.zip")
 
 
-def _write_class_labels(cvat_yolo_dir: Union[str, Path], class_labels: dict):
-    cvat_yolo_dir = Path(cvat_yolo_dir)
+def _write_class_labels(cvat_yolo_dir: Path, class_labels: dict) -> None:
     obj_names = cvat_yolo_dir / "obj.names"
     with open(obj_names, "w") as f:
         for name in class_labels.values():
@@ -54,16 +53,16 @@ def _write_class_labels(cvat_yolo_dir: Union[str, Path], class_labels: dict):
 
 
 def _write_bbox(
-    cvat_yolo_dir: str,
+    cvat_yolo_dir: Path,
     img_type: str,
-    xywhn: list,
+    bboxes_xywhn: list,
     class_labels: dict,
-    filter_classes: dict,
-):
-    image_paths = get_files(cvat_yolo_dir, filetypes=img_type)
-    assert len(image_paths) == len(xywhn)
+    filter_classes: Union[dict, None],
+) -> None:
+    image_paths = get_files([cvat_yolo_dir], filetypes=[img_type])
+    assert len(image_paths) == len(bboxes_xywhn)
 
-    for img_path, detections in zip(image_paths, xywhn):
+    for img_path, detections in zip(image_paths, bboxes_xywhn):
         annotation_txt = Path(img_path).with_suffix(".txt")
 
         with open(annotation_txt, "w") as f:
@@ -95,54 +94,65 @@ def _pre_annotate(
     chunk_size: int,
     filter_classes: Union[None, dict],
     img_type: str,
-):
-    yolo_cvat_dir = unzip(cvat_yolo_zip)
-    bboxes_in_xywhn_format, class_labels = detect.main(
-        paths=yolo_cvat_dir,
-        filetypes=img_type,
+) -> Path:
+    cvat_yolo_dir = unzip(cvat_yolo_zip)
+
+    detect_results = detect.main(
+        paths=[cvat_yolo_dir],
+        filetypes=[img_type],
         weights=model_weights,
         chunksize=chunk_size,
         normalized=True,
         ot_labels_enabled=True,
     )
+    # Ensure that no unbound variables are passed to _write_bbox
+    bboxes_in_xywhn_format: list = []
+    class_labels: dict = {}
+
+    if detect_results:
+        bboxes_in_xywhn_format, class_labels = detect_results
 
     _write_bbox(
-        yolo_cvat_dir, img_type, bboxes_in_xywhn_format, class_labels, filter_classes
+        cvat_yolo_dir, img_type, bboxes_in_xywhn_format, class_labels, filter_classes
     )
 
     if filter_classes is not None:
         class_labels = filter_classes
 
-    _write_class_labels(yolo_cvat_dir, class_labels)
-    return _zip_annotated_dir(yolo_cvat_dir, img_type, pngs=False)
+    _write_class_labels(cvat_yolo_dir, class_labels)
+    return _zip_annotated_dir(cvat_yolo_dir, img_type, pngs=False)
 
 
 def main(
-    file: Union[str, Path],
+    path: Path,
     model_weights: str,
     chunk_size: int = 1000,
     filter_classes: Union[None, dict] = None,
     img_type: str = "png",
-):
-    log.info("Starting")
-    if Path(file).is_file():
-        _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    elif Path(file).is_dir():
-        zip_files = get_files(file, "zip")
-        for file in progressbar.progressbar(zip_files):
-            _pre_annotate(file, model_weights, chunk_size, filter_classes, img_type)
-    log.info("Done in {0:0.2f} s".format(perf_counter()))
+) -> None:
+    """_summary_
+    TODO: Write docstrings
+    Args:
+        path (Path): _description_
+        model_weights (str): _description_
+        chunk_size (int, optional): _description_. Defaults to 1000.
+        filter_classes (Union[None, dict], optional): _description_. Defaults to None.
+        img_type (str, optional): _description_. Defaults to "png".
 
+    Raises:
+        OSError: _description_
+        OSError: _description_
 
-if __name__ == "__main__":
-    file_path = (
-        "/Users/michaelheilig/Downloads/task_800x600_cloudy_h5m_aov60deg_"
-        + "intersection_priority_mondercangeintersection5-2022_08_19_10_23_31"
-        + "-yolo 1.1.zip"
-    )
+    ### Example
+
+    ```python
+    from OTVision import pre_annotation
+
+    file_path = "/path/to/zip/file.zip"
+
     model_weights = "yolov5s.pt"
     chunk_size = 200
-    filter_classes = {
+    classes = {
         0: "person",
         1: "bicycle",
         2: "car",
@@ -151,4 +161,21 @@ if __name__ == "__main__":
         5: "truck",
     }
 
-    main(file_path, model_weights, chunk_size, filter_classes)
+    pre_annotation.main(file_path, model_weights, chunk_size, classes)
+    ```
+    """
+    log.info("Starting")
+
+    if not path.exists():
+        raise OSError(f"Path at: '{path}' does not exist!")
+
+    if path.is_file():
+        _pre_annotate(path, model_weights, chunk_size, filter_classes, img_type)
+    elif path.is_dir():
+        zip_files = get_files([path], ["zip"])
+        for f in progressbar.progressbar(zip_files):
+            _pre_annotate(f, model_weights, chunk_size, filter_classes, img_type)
+    else:
+        raise OSError(f"Path at: '{path}' is neither a file nor a directory!")
+
+    log.info("Done in {0:0.2f} s".format(perf_counter()))

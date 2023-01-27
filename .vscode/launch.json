@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -43,7 +40,7 @@
             "program": "${workspaceFolder}/track.py",
             "args": [
                 "--paths",
-                "tests/data/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet",
+                "tests/data/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
             ],
             "console": "integratedTerminal",
             "justMyCode": false

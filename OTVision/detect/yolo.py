@@ -18,16 +18,15 @@ OTVision module to detect objects using yolov5
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# TODO: docstrings in yolo
-
 from pathlib import Path
 from time import perf_counter
+from typing import Any, Union
 
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import is_in_format
+from OTVision.helpers.files import has_filetype
 from OTVision.helpers.log import log
 
 
@@ -35,53 +34,51 @@ class NoVideoError(Exception):
     pass
 
 
-class YOLOv5ModelNotFoundError(Exception):
-    pass
-
-
 class VideoFoundError(Exception):
     pass
 
 
+class YOLOv5ModelNotFoundError(Exception):
+    pass
+
+
 def detect_video(
-    file_path,
-    model=None,
+    file: Path,
+    model: Union[torch.nn.Module, None] = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
     size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-):
+) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Detect and classify bounding boxes in videos using YOLOv5
-
     Args:
-        files (str ot list of str): files to detect.
-        model (yolo object): Yolo model to detect with.
+        file (Path): files to detect.
+        model (torch.nn.Module): Yolo model to detect with.
         weights (str, optional): Weigths, if no model passed. Defaults to "yolov5s".
         conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
         iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
         size (int, optional): Frame size for detection. Defaults to 640.
         chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
         normalized (bool, optional): Coords in % of image/frame size (True) or pixels
-        (False). Defaults to False.
-
+            (False). Defaults to False.
     Returns:
-        [type]: [description]
+        dict[str, dict]: Dict with subdicts of metadata and actual detections
     """
     if model is None:
         model = loadmodel(weights, conf, iou)
 
-    yolo_detections: list[list[float]] = []
+    yolo_detections: list = []
     t1 = perf_counter()
 
-    if not is_in_format(file_path, CONFIG["FILETYPES"]["VID"]):
-        raise NoVideoError(f"The file: {file_path} is not a video!")
+    if not has_filetype(file, CONFIG["FILETYPES"]["VID"]):
+        raise NoVideoError(f"The file: {file} is not a video!")
 
-    cap = VideoCapture(file_path)
+    cap = VideoCapture(str(file))
     batch_no = 0
 
-    log.info(f"Run detection on video: {file_path}")
+    log.info(f"Run detection on video: {file}")
 
     got_frame = True
     while got_frame:
@@ -123,13 +120,13 @@ def detect_video(
     class_names = results.names
 
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-    vid_config = _get_vidconfig(file_path, width, height, fps, frames)
+    vid_config = _get_vidconfig(file, width, height, fps, frames)
     return _convert_detections(yolo_detections, class_names, vid_config, det_config)
 
 
 def detect_images(
-    file_chunks,
-    model=None,
+    file_chunks: list[list[Path]],
+    model: Union[torch.nn.Module, None] = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
     iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
@@ -137,12 +134,12 @@ def detect_images(
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     ot_labels_enabled: bool = False,
-):
+) -> Union[tuple[list, dict], list]:
     """Detect and classify bounding boxes in images/frames using YOLOv5
 
     Args:
-        files (str ot list of str): files to detect.
-        model (yolo object): Yolo model to detect with.
+        file_chunks (list of list of Path): files to detect.
+        model (torch.nn.Module, optional): Yolo model to detect with.
         weights (str, optional): Weigths, if no model passed. Defaults to "yolov5s".
         conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
         iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
@@ -152,14 +149,14 @@ def detect_images(
         (False). Defaults to False.
         ot_labels_enabled (bool, optional): returns [detections, names] where detections
         consist of bounding boxes but without any annotations and the class name index
-        (True) or returns the detections in otdet format(False). Defaults to False.
+        (True) or returns the dœetections in otdet format(False). Defaults to False.
 
     Returns:
         [type]: [description]
     """
     yolo_detections: list[list[float]] = []
     if not file_chunks:
-        return [], [] if ot_labels_enabled else yolo_detections
+        return ([], {}) if ot_labels_enabled else yolo_detections
     if model is None:
         model = loadmodel(weights, conf, iou)
     t1 = perf_counter()
@@ -184,18 +181,20 @@ def detect_images(
     duration = t2 - t1
     det_fps = len(yolo_detections) / duration
     _log_overall_performance_stats(duration, det_fps)
-    names = results.names
+    class_labels: dict = results.names
     if ot_labels_enabled:
-        return [yolo_detections, names]
+        return (yolo_detections, class_labels)
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-    return _convert_detections_chunks(yolo_detections, names, det_config)
+    return _convert_detections_chunks(yolo_detections, class_labels, det_config)
 
 
-def _get_batch_of_frames(video_capture, batch_size):
+def _get_batch_of_frames(
+    video_capture: VideoCapture, batch_size: int
+) -> tuple[bool, list]:
     """Reads the the next batch_size frames from VideoCapture.
 
     Args:
-        video_capture (obj): VideoCapture instance.
+        video_capture (cv2.VideoCapture): VideoCapture instance.
         batch_size (int): batch size.
 
     Returns:
@@ -204,7 +203,7 @@ def _get_batch_of_frames(video_capture, batch_size):
         batch(list): batch of frames.
     """
     batch = []
-    gotFrame = False
+    gotFrame: bool = False
     for _ in range(batch_size):
         gotFrame, img = video_capture.read()
         if gotFrame:
@@ -214,33 +213,40 @@ def _get_batch_of_frames(video_capture, batch_size):
     return gotFrame, batch
 
 
-def _log_overall_performance_stats(duration, det_fps):
+def _log_overall_performance_stats(duration: float, det_fps: float) -> None:
     log.info("All Chunks done in {0:0.2f} s ({1:0.2f} fps)".format(duration, det_fps))
 
 
 def _log_batch_performances_stats(
-    batch_no, t_start, t_trans, t_det, t_list, batch_size
-):
-    batch_no = "batch_no: {:d}".format(batch_no)
-    transformed_batch = "trans: {:0.4f}".format(t_trans - t_start)
-    det = "det: {:0.4f}".format(t_det - t_start)
-    add_list = "list: {:0.4f}".format(t_list - t_det)
-    batch_len = "batch_size: {:d}".format(batch_size)
-    fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
-    log_msg = f"{batch_no}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
+    batch_no: int,
+    t_start: float,
+    t_trans: float,
+    t_det: float,
+    t_list: float,
+    batch_size: int,
+) -> None:
+    batch_no_str = f"batch_no: {batch_no:d}"
+    transformed_batch = f"trans: {t_trans- t_start:0.4f}"
+    det = f"det: {t_det - t_start:0.4f}"
+    add_list = f"list: {t_list - t_det:0.4f}"
+    batch_len = f"batch_size: {batch_size:d}"
+    fps = f"fps: {batch_size / (t_det - t_start):0.1f}"
+    log_msg = (
+        f"{batch_no_str}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
+    )
     log.info(log_msg)  # BUG: #162 Logs twice from yolo.py (with and without formatting)
 
 
-def _add_detection_results(detections, results, normalized):
-    """Adds detection result to an existing list.
-
+def _add_detection_results(
+    detections: list,  # TODO: Type hint nested list/dict during refactoring
+    results: Any,  # ?: Type hint from YOLOv5 repo from yolov5.models.common.Detections
+    normalized: bool,
+) -> None:
+    """Adds detection result to the list of detections provided.
     Args:
         detections (list): the existing list containing detections.
-        results (list): detection results.
+        results (Any): detection results.
         normalized (bool): True if results are normalized. False otherwise.
-
-    Returns:
-        list: the detections list with the newly added
     """
     if normalized:
         detections.extend([i.tolist() for i in results.xywhn])
@@ -248,9 +254,7 @@ def _add_detection_results(detections, results, normalized):
         detections.extend([i.tolist() for i in results.xywh])
 
 
-def loadmodel(
-    weights: str, conf: float, iou: float, force_reload: bool = False
-) -> torch.nn.Module:
+def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False) -> Any:
     """Loads a custom or an existing and pretrained YOLOv5 model.
 
     Args:
@@ -264,7 +268,7 @@ def loadmodel(
         ValueError: If the path to the model weights is not a .pt file.
 
     Returns:
-        torch.nn.Module: The YOLOv5 model.
+        Any: The YOLOv5 model.
     """
     log.info(f"Try loading model {weights}")
     t1 = perf_counter()
@@ -298,7 +302,7 @@ def loadmodel(
     return model
 
 
-def _load_existing_model(model_name: str, force_reload: bool) -> torch.nn.Module:
+def _load_existing_model(model_name: str, force_reload: bool) -> Any:
     """Load existing and pretrained YOLOv5 model from torch hub.
 
     Args:
@@ -310,7 +314,7 @@ def _load_existing_model(model_name: str, force_reload: bool) -> torch.nn.Module
         ValueError: If the path to custom the model weights is not a .pt file.
 
     Returns:
-        torch.nn.Module: The YOLOv5 model.
+        Any: The YOLOv5 model.
     """
     try:
         model = torch.hub.load(
@@ -332,7 +336,7 @@ def _load_existing_model(model_name: str, force_reload: bool) -> torch.nn.Module
         return model.cpu()
 
 
-def _load_custom_model(weights: Path, force_reload: bool) -> torch.nn.Module:
+def _load_custom_model(weights: Path, force_reload: bool) -> Any:
     """Load custom trained YOLOv5 model.
 
     Args:
@@ -343,7 +347,7 @@ def _load_custom_model(weights: Path, force_reload: bool) -> torch.nn.Module:
         ValueError: If the path to the model weights is not a .pt file.
 
     Returns:
-        torch.nn.Module: The YOLOv5 torch model.
+        Any: The YOLOv5 torch model.
     """
     if not weights.suffix == ".pt":
         raise ValueError(f"Weights at '{weights}' is not a pt file!")
@@ -360,7 +364,9 @@ def _load_custom_model(weights: Path, force_reload: bool) -> torch.nn.Module:
         return model.cpu()
 
 
-def _get_vidconfig(file, width, height, fps, frames):
+def _get_vidconfig(
+    file: Path, width: int, height: int, fps: float, frames: int
+) -> dict[str, Union[str, int, float]]:
     return {
         "file": str(Path(file).stem),
         "filetype": str(Path(file).suffix),
@@ -371,10 +377,17 @@ def _get_vidconfig(file, width, height, fps, frames):
     }
 
 
-def _get_det_config(weights, conf, iou, size, chunksize, normalized):
+def _get_det_config(
+    weights: Union[str, Path],
+    conf: float,
+    iou: float,
+    size: int,
+    chunksize: int,
+    normalized: bool,
+) -> dict[str, Union[str, int, float]]:
     return {
         "detector": "YOLOv5",
-        "weights": weights,
+        "weights": str(weights),
         "conf": conf,
         "iou": iou,
         "size": size,
@@ -383,10 +396,13 @@ def _get_det_config(weights, conf, iou, size, chunksize, normalized):
     }
 
 
-def _convert_detections_chunks(yolo_detections, names, det_config):
+# TODO: Type hint nested list/dict during refactoring
+def _convert_detections_chunks(
+    yolo_detections: list, names: dict, det_config: dict[str, Union[str, int, float]]
+) -> list:
     result = []
     for no, yolo_detection in enumerate(yolo_detections):
-        detection = []
+        detection: list = []
         for yolo_bbox in yolo_detection:
             bbox = {
                 "class": names[int(yolo_bbox[5])],
@@ -399,15 +415,22 @@ def _convert_detections_chunks(yolo_detections, names, det_config):
 
             detection.append(bbox)
         data = {str(no + 1): {"classified": detection}}
-        result.append({"det_config": det_config, "data": data})
+        # ?: Should every image have a det_config dict? Even if it is always the same?
+        result.append({"metadata": {"det": det_config}, "data": data})
     return result
 
 
-def _convert_detections(yolo_detections, names, vid_config, det_config):
+# TODO: Type hint nested list/dict during refactoring
+def _convert_detections(
+    yolo_detections: list,
+    names: dict,
+    vid_config: dict[str, Union[str, int, float]],
+    det_config: dict[str, Union[str, int, float]],
+) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     data = {}
     for no, yolo_detection in enumerate(yolo_detections):
         # TODO: #81 Detections: Nested dict instead of dict of lists of dicts
-        detection = []
+        detection: list = []
         for yolo_bbox in yolo_detection:
             bbox = {
                 "class": names[int(yolo_bbox[5])],
@@ -419,38 +442,27 @@ def _convert_detections(yolo_detections, names, vid_config, det_config):
             }
             detection.append(bbox)
         data[str(no + 1)] = {"classified": detection}
-    return {"vid_config": vid_config, "det_config": det_config, "data": data}
+    return {"metadata": {"vid": vid_config, "det": det_config}, "data": data}
 
 
-def _createchunks(chunksize, files):
-    # TODO: Remove method
-    if type(files) is str:
-        return [files]
-    elif _containsvideo(files):
-        return files
-    elif chunksize == 0:
-        return [files]
-    else:
-        chunk_starts = range(0, len(files), chunksize)
-        return [files[i : i + chunksize] for i in chunk_starts]
-
-
-def _containsvideo(file_chunks):
-    if len(file_chunks) == 0:
+def _containsvideo(file_chunks: list[list[Path]]) -> bool:
+    if not file_chunks:
         return False
 
-    if type(file_chunks[0]) is str:
-        file = Path(file_chunks[0])
-        vid_formats = [
-            ".mov",
-            ".avi",
-            ".mp4",
-            ".mpg",
-            ".mpeg",
-            ".m4v",
-            ".wmv",
-            ".mkv",
-        ]
-        if file.suffix in vid_formats:
-            return True
+    vid_formats = [
+        ".mov",
+        ".avi",
+        ".mp4",
+        ".mpg",
+        ".mpeg",
+        ".m4v",
+        ".wmv",
+        ".mkv",
+    ]
+
+    for file_chunk in file_chunks:
+        for file in file_chunk:
+            if file.suffix in vid_formats:
+                return True
+
     return False
