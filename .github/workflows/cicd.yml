@@ -1,7 +1,7 @@
 ---
 # This workflow will install Python dependencies, run tests
 
-name: Run tests
+name: Run CI/CD
 
 on: pull_request
 
@@ -28,9 +28,18 @@ jobs:
           pip install -r requirements.txt
       - name: Install test dependencies
         run: |
-          pip install pytest-cov
           pip install pytest
+          pip install pytest-cov
+          pip install flake8
+          pip install mypy
           python -c 'from OTVision.helpers.machine \
           import print_has_cuda; print_has_cuda()'
+      - name: Lint codebase
+        run: |
+          flake8 OTVision
+          flake8 tests
+      - name: Execute static type checking
+        run: |
+          mypy .
       - name: Test with pytest
         run: pytest --cov=OTVision tests/
