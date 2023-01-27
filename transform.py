@@ -44,17 +44,17 @@ def parse() -> argparse.Namespace:
         help="Path to refpts file. If not given, each tracks file should have one",
     )
     parser.add_argument(
-        "-n",
-        "--no_overwrite",
+        "-o",
+        "--overwrite",
         default=CONFIG["TRANSFORM"]["OVERWRITE"],
-        action="store_true",
-        help="Do not overwrite existing output files",
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
         default=CONFIG["TRANSFORM"]["DEBUG"],
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
     return parser.parse_args()
@@ -64,11 +64,10 @@ def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
     refpts_file = Path(args.refpts_file) if args.refpts_file else None
-    overwrite = not args.no_overwrite
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
     transform(
-        paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=args.debug
+        paths=paths, refpts_file=refpts_file, overwrite=args.overwrite, debug=args.debug
     )
     log.info("Finished transforming to world coordinates  from command line")
 

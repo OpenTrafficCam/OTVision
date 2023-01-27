@@ -38,17 +38,17 @@ def parse() -> argparse.Namespace:
         required=True,
     )
     parser.add_argument(
-        "-n",
-        "--no_overwrite",
+        "-o",
+        "--overwrite",
         default=CONFIG["TRACK"]["OVERWRITE"],
-        action="store_true",
-        help="Do not overwrite existing output files",
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
         default=CONFIG["TRACK"]["DEBUG"],
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
     return parser.parse_args()
@@ -57,10 +57,9 @@ def parse() -> argparse.Namespace:
 def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
-    overwrite = not args.no_overwrite
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
-    track(paths=paths, overwrite=overwrite, debug=args.debug)
+    track(paths=paths, overwrite=args.overwrite, debug=args.debug)
     log.info("Finished tracking from command line")
 
 

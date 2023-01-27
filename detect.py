@@ -55,17 +55,17 @@ def parse() -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "-n",
-        "--no_overwrite",
+        "-o",
+        "--overwrite",
         default=CONFIG["DETECT"]["OVERWRITE"],
-        action="store_true",
-        help="Do not overwrite existing output files",
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
         default=CONFIG["DETECT"]["DEBUG"],
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
     return parser.parse_args()
@@ -74,14 +74,13 @@ def parse() -> argparse.Namespace:
 def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
-    overwrite = not args.no_overwrite
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
     detect(
         paths=paths,
         weights=args.weights,
         filetypes=args.filetypes,
-        overwrite=overwrite,
+        overwrite=args.overwrite,
         debug=args.debug,
     )
     log.info("Finished detection from command line")

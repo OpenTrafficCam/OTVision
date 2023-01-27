@@ -40,21 +40,21 @@ def parse() -> argparse.Namespace:
     parser.add_argument(
         "--delete_input",
         default=CONFIG["CONVERT"]["DELETE_INPUT"],
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         help="Delete input files after convert",
     )
     parser.add_argument(
-        "-n",
-        "--no_overwrite",
+        "-o",
+        "--overwrite",
         default=CONFIG["CONVERT"]["OVERWRITE"],
-        action="store_true",
-        help="Do not overwrite existing output files",
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
         default=CONFIG["CONVERT"]["DEBUG"],
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
     return parser.parse_args()
@@ -63,13 +63,12 @@ def parse() -> argparse.Namespace:
 def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
-    overwrite = not args.no_overwrite
     log.info("Starting conversion from command line")
     log.info(f"Arguments: {vars(args)}")
     convert(
         paths=paths,
         delete_input=args.delete_input,
-        overwrite=overwrite,
+        overwrite=args.overwrite,
         debug=args.debug,
     )
     log.info("Finished conversion from command line")
