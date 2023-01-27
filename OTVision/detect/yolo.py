@@ -79,13 +79,15 @@ def detect_video(
     log.info(f"Run detection on video: {file}")
 
     got_frame = True
+    t_loop_overhead = 0.0
     while got_frame:
+        t_start = perf_counter()
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
+
+        t_get_batch = perf_counter()
 
         if not img_batch:
             break
-
-        t_start = perf_counter()
 
         # What purpose does this transformation have
         transformed_batch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
@@ -101,7 +103,14 @@ def detect_video(
         t_list = perf_counter()
 
         _log_batch_performances_stats(
-            batch_no, t_start, t_trans, t_det, t_list, len(img_batch)
+            batch_no,
+            t_start,
+            t_get_batch,
+            t_trans,
+            t_det,
+            t_list,
+            t_loop_overhead,
+            len(img_batch),
         )
         batch_no += 1
 
@@ -109,6 +118,7 @@ def detect_video(
         height = cap.get(4)  # float
         fps = cap.get(CAP_PROP_FPS)  # float
         frames = cap.get(7)  # float
+        t_loop_overhead = perf_counter() - t_list
 
     t2 = perf_counter()
     duration = t2 - t1
@@ -218,19 +228,24 @@ def _log_overall_performance_stats(duration: float, det_fps: float) -> None:
 def _log_batch_performances_stats(
     batch_no: int,
     t_start: float,
+    t_get_batch: float,
     t_trans: float,
     t_det: float,
     t_list: float,
+    t_loop_overhead: float,
     batch_size: int,
 ) -> None:
-    batch_no_str = "batch_no: {:d}".format(batch_no)
-    transformed_batch = "trans: {:0.4f}".format(t_trans - t_start)
-    det = "det: {:0.4f}".format(t_det - t_start)
-    add_list = "list: {:0.4f}".format(t_list - t_det)
-    batch_len = "batch_size: {:d}".format(batch_size)
-    fps = "fps: {:0.1f}".format(batch_size / (t_det - t_start))
+    batch_no_str = f"batch_no: {batch_no:d}"
+    batch = f"batch: {t_get_batch - t_start:0.4f}"
+    transformed_batch = f"trans: {t_trans - t_get_batch:0.4f}"
+    det = f"det: {t_det - t_trans:0.4f}"
+    add_list = f"list: {t_list - t_det:0.4f}"
+    loop_overhead = f"loop_overhead: {t_loop_overhead:0.4f}"
+    batch_len = f"batch_size: {batch_size:d}"
+    fps = f"fps: {batch_size / (t_list - t_start):0.1f}"
     log_msg = (
-        f"{batch_no_str}, {transformed_batch}, {det}, {add_list}, {batch_len}, {fps}"
+        f"{batch_no_str}, {batch}, {transformed_batch}, {det}, "
+        f"{add_list}, {loop_overhead}, {batch_len}, {fps}"
     )
     log.info(log_msg)  # BUG: #162 Logs twice from yolo.py (with and without formatting)
 
