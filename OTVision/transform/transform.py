@@ -115,8 +115,8 @@ def main(
         tracks_px_df, metadata_dict = read_tracks(tracks_file)
         log.info("Tracks read")
         # Check if transformation is actually needed
-        already_utm = "utm" in metadata_dict["trk"] and metadata_dict["trk"]["utm"]
-        if overwrite or not already_utm:
+        # already_utm = "utm" in metadata_dict["trk"] and metadata_dict["trk"]["utm"]
+        if overwrite:  # ? or not already_utm?
             metadata_dict["trk"]["utm"] = False  # ? or not?
             # Actual transformation
             tracks_utm_df = transform(
