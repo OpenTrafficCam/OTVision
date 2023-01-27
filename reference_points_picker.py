@@ -4,7 +4,7 @@ from OTVision.helpers.log import log
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
 
 
-def parse():
+def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Reference Points Picker")
     parser.add_argument(
         "-video_file",
@@ -19,7 +19,7 @@ def parse():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     kwargs = vars(parse())
     log.info("Start reference points picker gui")
     log.debug(kwargs)
