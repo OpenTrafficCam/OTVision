@@ -24,7 +24,7 @@ import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.detect.detect import main as detect
-from OTVision.helpers.files import get_files
+from OTVision.helpers.files import get_files, replace_filetype
 from OTVision.helpers.log import log
 from OTVision.view.view_helpers import FrameRun
 
@@ -110,10 +110,14 @@ class FrameRunDetection(FrameRun):
     def run(self, event):
         log.debug("---Starting detection from gui---")
         input_filetype = f".{self.master.master.frame_files.combo_vid_filetype.get()}"
-        paths = get_files(
-            paths=self.master.master.frame_files.get_tree_files(),
-            filetypes=input_filetype,
-            replace_filetype=True,
+
+        files = replace_filetype(
+            files=self.master.master.frame_files.get_tree_files(),
+            new_filetype=input_filetype,
+        )
+        files = get_files(
+            paths=files,
+            filetypes=[input_filetype],
         )
 
         weights = self.master.frame_options.combo_weights.get()
@@ -124,8 +128,8 @@ class FrameRunDetection(FrameRun):
         normalized = self.master.frame_options.checkbutton_normalized_var.get()
         overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
         detect(
-            paths=paths,
-            filetypes=input_filetype,
+            paths=files,
+            filetypes=[input_filetype],
             weights=weights,
             conf=conf,
             iou=iou,

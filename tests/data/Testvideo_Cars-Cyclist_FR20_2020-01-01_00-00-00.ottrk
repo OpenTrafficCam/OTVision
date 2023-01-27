@@ -1,30 +1,32 @@
 {
-    "vid_config": {
-        "file": "Testvideo_FR20_Cars-Cyclist",
-        "filetype": ".mp4",
-        "width": 800.0,
-        "height": 600.0,
-        "fps": 20.0,
-        "frames": 60.0
-    },
-    "det_config": {
-        "detector": "YOLOv5",
-        "weights": "yolov5s",
-        "conf": 0.25,
-        "iou": 0.45,
-        "size": 640,
-        "chunksize": 1,
-        "normalized": false
-    },
-    "trk_config": {
-        "yolo_mode": "spp",
-        "tracker": "IOU",
-        "sigma_l": 0.25,
-        "sigma_h": 0.8,
-        "sigma_iou": 0.3,
-        "t_min": 5,
-        "t_miss_max": 10,
-        "utm": false
+    "metadata": {
+        "vid": {
+            "file": "Testvideo_FR20_Cars-Cyclist",
+            "filetype": ".mp4",
+            "width": 800.0,
+            "height": 600.0,
+            "fps": 20.0,
+            "frames": 60.0
+        },
+        "det": {
+            "detector": "YOLOv5",
+            "weights": "yolov5s",
+            "conf": 0.25,
+            "iou": 0.45,
+            "size": 640,
+            "chunksize": 1,
+            "normalized": false
+        },
+        "trk": {
+            "yolo_mode": "spp",
+            "tracker": "IOU",
+            "sigma_l": 0.25,
+            "sigma_h": 0.8,
+            "sigma_iou": 0.3,
+            "t_min": 5,
+            "t_miss_max": 10,
+            "utm": false
+        }
     },
     "data": {
         "1": {
