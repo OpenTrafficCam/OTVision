@@ -52,7 +52,7 @@ def main(
     refpts_file: Union[Path, None] = None,
     overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
     debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
-):
+) -> None:
     """Transform tracks files containing trajectories in pixel coordinates to .gpkg
     files with trajectories in utm coordinates using either one single refpts file for
     all tracks files containing corresponding reference points in both pixel and utm
@@ -252,7 +252,7 @@ def transform(
 
 
 # TODO: Type hint nested dict during refactoring
-def write_refpts(refpts: dict, refpts_file: Path):
+def write_refpts(refpts: dict, refpts_file: Path) -> None:
     """Writes corresponding reference points in both pixel and utm coordinates
     to a json-like .otrfpts file
 
@@ -277,7 +277,7 @@ def write_tracks(
     tracks_file: Path,
     filetype: str = "gpkg",
     overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
-):
+) -> None:
     """Writes tracks as .gpkg and in specific epsg projection
     according to UTM zone and hemisphere
 

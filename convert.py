@@ -27,7 +27,7 @@ from OTVision.convert.convert import main as convert
 from OTVision.helpers.log import log
 
 
-def parse():
+def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert h264 to mp4")
     parser.add_argument(
         "-p",
@@ -60,7 +60,7 @@ def parse():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
     overwrite = not args.no_overwrite

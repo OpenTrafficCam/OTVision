@@ -27,7 +27,7 @@ from OTVision.helpers.log import log
 from OTVision.track.track import main as track
 
 
-def parse():
+def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Track objects through detections")
     parser.add_argument(
         "-p",
@@ -54,7 +54,7 @@ def parse():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
     overwrite = not args.no_overwrite

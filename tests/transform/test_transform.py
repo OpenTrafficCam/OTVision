@@ -13,7 +13,7 @@ from OTVision.transform.transform import main as transform
 @pytest.mark.parametrize("single_refpts_file", [None, "Testvideo_FR20.otrfpts"])
 def test_transform(
     test_data_tmp_dir: Path, test_data_dir: Path, single_refpts_file: Union[None, str]
-):
+) -> None:
     # sourcery skip: remove-assert-true, remove-redundant-pass
     """Tests the main function of OTVision/transform/transform.py
     transforming test tracks files from pixel to world coordinates based

@@ -45,7 +45,7 @@ def _zip_annotated_dir(cvat_yolo_dir: Path, img_type: str, pngs: bool = False) -
     return new_file.with_name(f"{new_file.stem}.zip")
 
 
-def _write_class_labels(cvat_yolo_dir: Path, class_labels: dict):
+def _write_class_labels(cvat_yolo_dir: Path, class_labels: dict) -> None:
     obj_names = cvat_yolo_dir / "obj.names"
     with open(obj_names, "w") as f:
         for name in class_labels.values():
@@ -58,7 +58,7 @@ def _write_bbox(
     bboxes_xywhn: list,
     class_labels: dict,
     filter_classes: Union[dict, None],
-):
+) -> None:
     image_paths = get_files([cvat_yolo_dir], filetypes=[img_type])
     assert len(image_paths) == len(bboxes_xywhn)
 
@@ -94,9 +94,10 @@ def _pre_annotate(
     chunk_size: int,
     filter_classes: Union[None, dict],
     img_type: str,
-):
+) -> Path:
     cvat_yolo_dir = unzip(cvat_yolo_zip)
-    bboxes_in_xywhn_format, class_labels = detect.main(
+
+    detect_results = detect.main(
         paths=[cvat_yolo_dir],
         filetypes=[img_type],
         weights=model_weights,
@@ -104,6 +105,12 @@ def _pre_annotate(
         normalized=True,
         ot_labels_enabled=True,
     )
+    # Ensure that no unbound variables are passed to _write_bbox
+    bboxes_in_xywhn_format: list = []
+    class_labels: dict = {}
+
+    if detect_results:
+        bboxes_in_xywhn_format, class_labels = detect_results
 
     _write_bbox(
         cvat_yolo_dir, img_type, bboxes_in_xywhn_format, class_labels, filter_classes
@@ -122,7 +129,7 @@ def main(
     chunk_size: int = 1000,
     filter_classes: Union[None, dict] = None,
     img_type: str = "png",
-):
+) -> None:
     """_summary_
     TODO: Write docstrings
     Args:

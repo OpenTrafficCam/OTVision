@@ -52,7 +52,7 @@ def test_get_datetime_from_filename_invalidDateAsParam(file_name: str) -> None:
         ("fname_FR0_-01-01_01-01-01", 0),
     ],
 )
-def test_get_fps_from_filename_validFpsAsParam(fname: str, expected: int):
+def test_get_fps_from_filename_validFpsAsParam(fname: str, expected: int) -> None:
     result = _get_fps_from_filename(fname)
     assert result == expected
 
@@ -66,6 +66,6 @@ def test_get_fps_from_filename_validFpsAsParam(fname: str, expected: int):
         "fname_FR_",
     ],
 )
-def test_get_fps_from_filename_invalidFilenameAsParam(fname: str):
+def test_get_fps_from_filename_invalidFilenameAsParam(fname: str) -> None:
     with pytest.raises(ValueError):
         _get_fps_from_filename(fname)

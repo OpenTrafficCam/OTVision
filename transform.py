@@ -27,7 +27,7 @@ from OTVision.helpers.log import log
 from OTVision.transform.transform import main as transform
 
 
-def parse():
+def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transform tracks to UTM coordinates")
     parser.add_argument(
         "-p",
@@ -60,7 +60,7 @@ def parse():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse()
     paths = [Path(str_path) for str_path in args.paths]
     refpts_file = Path(args.refpts_file) if args.refpts_file else None

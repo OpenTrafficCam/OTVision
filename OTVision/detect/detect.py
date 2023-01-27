@@ -45,7 +45,7 @@ def main(
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
     ot_labels_enabled: bool = CONFIG["DETECT"]["OTLABELS_ENABLES"],
     debug: bool = CONFIG["DETECT"]["DEBUG"],
-):
+) -> Union[tuple[list, dict], None]:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
 
@@ -144,6 +144,7 @@ def main(
         write(detection, img_file)
     if debug:
         reset_debug()
+    return None
 
 
 def _split_to_video_img_paths(
@@ -206,7 +207,7 @@ def write(
     detections: dict,  # TODO: Type hint nested dict during refactoring"
     img_or_video_file: Path,
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
-):
+) -> None:
     """Writes detections of a video or image to a json-like file.
 
     Args:

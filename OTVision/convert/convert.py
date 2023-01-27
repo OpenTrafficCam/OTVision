@@ -37,7 +37,7 @@ def main(
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
     delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
-):
+) -> None:
     """Converts multiple h264-based videos into other formats and/or frame rates.
 
     Currently only works for windows as ffmpeg.exe is utilized.
@@ -90,7 +90,7 @@ def convert(
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
     delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
-):
+) -> None:
     """Converts h264-based videos into other formats and/or other frame rates.
     Also input frame rates can be given.
     If input video file is raw h264 and no input frame rate is given convert
@@ -204,7 +204,7 @@ def convert(
         reset_debug()
 
 
-def check_ffmpeg():
+def check_ffmpeg() -> None:
     """Checks, if ffmpeg is available"""
 
     try:

@@ -46,7 +46,7 @@ def _get_fps_from_filename(filename: str) -> int:
 
 
 def _get_datetime_from_filename(
-    filename: str, epoch_datetime="1970-01-01_00-00-00"
+    filename: str, epoch_datetime: str = "1970-01-01_00-00-00"
 ) -> str:
     """Get date and time from file name.
     Searches for "_yyyy-mm-dd_hh-mm-ss".
@@ -103,8 +103,8 @@ def _get_time_from_frame_number(
     frame_series: pd.Series,
     start_datetime: str,
     fps: int,
-    return_yyyymmdd_hhmmss=True,
-    return_milliseconds=True,
+    return_yyyymmdd_hhmmss: bool = True,
+    return_milliseconds: bool = True,
 ) -> pd.Series:
     """Get datetime series of detections from series of frame numbers of video
     the objects were detected using a start datetime of the video and

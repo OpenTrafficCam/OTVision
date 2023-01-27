@@ -45,7 +45,7 @@ def main(
     t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
     overwrite: bool = CONFIG["TRACK"]["OVERWRITE"],
     debug: bool = CONFIG["TRACK"]["DEBUG"],
-):
+) -> None:
     """Read detections from otdet file, perform tracking using iou tracker and
         save tracks to ottrk file.
 

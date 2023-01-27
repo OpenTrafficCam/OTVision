@@ -29,7 +29,7 @@ def num_frames(video_path: str) -> int:
 
 def test_get_batch_of_frames_chunksizeGreaterThanVideoFramesParam(
     video_path: str, num_frames: int
-):
+) -> None:
     cap = VideoCapture(video_path)
     gotframe, frames = _get_batch_of_frames(cap, num_frames + 1)
     assert len(frames) == num_frames
@@ -65,10 +65,6 @@ def test_get_batch_of_frames_chunksize0(video_path: str) -> None:
     gotframe, frames = _get_batch_of_frames(cap, chunksize)
     assert gotframe is False
     assert not frames
-
-
-def test_yolo_detect():
-    pass
 
 
 if __name__ == "__main__":
