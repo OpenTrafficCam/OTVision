@@ -348,10 +348,7 @@ def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
             ) from re
         else:
             raise
-    if torch.cuda.is_available():
-        return model.cuda()
-    else:
-        return model.cpu()
+    return model.cuda() if torch.cuda.is_available() else model.cpu()
 
 
 def _load_custom_model(weights: Path, force_reload: bool) -> Any:
@@ -367,7 +364,7 @@ def _load_custom_model(weights: Path, force_reload: bool) -> Any:
     Returns:
         Any: The YOLOv5 torch model.
     """
-    if not weights.suffix == ".pt":
+    if weights.suffix != ".pt":
         raise ValueError(f"Weights at '{weights}' is not a pt file!")
 
     model = torch.hub.load(
@@ -376,10 +373,7 @@ def _load_custom_model(weights: Path, force_reload: bool) -> Any:
         path=weights,
         force_reload=force_reload,
     )
-    if torch.cuda.is_available():
-        return model.cuda()
-    else:
-        return model.cpu()
+    return model.cuda() if torch.cuda.is_available() else model.cpu()
 
 
 def _get_vidconfig(
