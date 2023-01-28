@@ -345,7 +345,7 @@ def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
         if str(re).startswith("Cannot find callable"):
             raise YOLOv5ModelNotFoundError(
                 f"YOLOv5 model: {model_name} does not found!"
-            )
+            ) from re
         else:
             raise
     if torch.cuda.is_available():
