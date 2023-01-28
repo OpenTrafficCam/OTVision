@@ -8,7 +8,7 @@ from OTVision.detect.yolo import (
     YOLOv5ModelNotFoundError,
     _get_batch_of_frames,
     _load_custom_model,
-    _load_existing_model,
+    _load_pretrained_model,
     loadmodel,
 )
 
@@ -88,10 +88,10 @@ class TestLoadModel:
         self,
     ) -> None:
         with pytest.raises(YOLOv5ModelNotFoundError):
-            _load_existing_model("NotExistingModelName", False)
+            _load_pretrained_model("NotExistingModelName", False)
 
     def test_load_existing_model_withCorrectParams(self) -> None:
-        model = _load_existing_model("yolov5s", False)
+        model = _load_pretrained_model("yolov5s", False)
         assert isinstance(model, torch.nn.Module)
 
     def test_load_custom_model_notAPtFileAsParam_raiseAttributeError(

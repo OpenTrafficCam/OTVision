@@ -270,7 +270,8 @@ def _add_detection_results(
 
 
 def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False) -> Any:
-    """Loads a custom or an existing and pretrained YOLOv5 model.
+    """Loads a local custom trained YOLOv5 model or a pretrained YOLOv5 model from torch
+    hub.
 
     Args:
         weights (str): Path to custom model weights
@@ -293,7 +294,9 @@ def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False)
         if is_custom:
             model = _load_custom_model(weights=Path(weights), force_reload=force_reload)
         else:
-            model = _load_existing_model(model_name=weights, force_reload=force_reload)
+            model = _load_pretrained_model(
+                model_name=weights, force_reload=force_reload
+            )
     except ValueError:
         raise
     except YOLOv5ModelNotFoundError:
@@ -307,7 +310,7 @@ def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False)
         if is_custom:
             model = _load_custom_model(weights=Path(weights), force_reload=True)
         else:
-            model = _load_existing_model(model_name=weights, force_reload=True)
+            model = _load_pretrained_model(model_name=weights, force_reload=True)
 
     model.conf = conf
     model.iou = iou
@@ -317,8 +320,8 @@ def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False)
     return model
 
 
-def _load_existing_model(model_name: str, force_reload: bool) -> Any:
-    """Load existing and pretrained YOLOv5 model from torch hub.
+def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
+    """Load pretrained YOLOv5 model from torch hub.
 
     Args:
         model_name (str): As in ['yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
