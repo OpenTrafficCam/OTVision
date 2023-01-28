@@ -84,13 +84,13 @@ class TestLoadModel:
         text_file.touch(exist_ok=True)
         return text_file
 
-    def test_load_existing_model_notExistingModelName_raiseAttributeException(
+    def test_load_pretrained_model_notPretrainedModelName_raiseAttributeException(
         self,
     ) -> None:
         with pytest.raises(YOLOv5ModelNotFoundError):
-            _load_pretrained_model("NotExistingModelName", False)
+            _load_pretrained_model("NotPretrainedModelName", False)
 
-    def test_load_existing_model_withCorrectParams(self) -> None:
+    def test_load_pretrained_model_withCorrectParams(self) -> None:
         model = _load_pretrained_model("yolov5s", False)
         assert isinstance(model, torch.nn.Module)
 
@@ -100,10 +100,10 @@ class TestLoadModel:
         with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
             _load_custom_model(text_file, False)
 
-    def test_load_model_notExistingModelName_raiseYOLOv5ModelNotFoundError(
+    def test_load_model_notPretrainedModelName_raiseYOLOv5ModelNotFoundError(
         self,
     ) -> None:
-        model_name = "NotExistingModelName"
+        model_name = "NotPretrainedModelName"
         with pytest.raises(YOLOv5ModelNotFoundError):
             loadmodel(model_name, self.CONF_THRESH, self.IOU_THRESH)
 
