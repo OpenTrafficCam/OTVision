@@ -1,7 +1,6 @@
 echo Setup debug environment.
 @echo off
 set "CURRENT_DIR=%cd%"
-for /f "delims=" %%i in ('cd') do set CURRENT_DIR=%%i
 set MP4_FILENAME=Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4
 set OTDET_FILENAME=Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet
 set MP4_FILE=%CURRENT_DIR%\tests\data\%MP4_FILENAME%
