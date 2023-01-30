@@ -270,7 +270,13 @@ def _add_detection_results(
 
 
 # TODO: loadmodel: Arg "local_weights" [Path](optional) that overrides "weights" [str]
-def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False) -> Any:
+def loadmodel(
+    weights: str,
+    conf: float,
+    iou: float,
+    force_reload: bool = False,
+    half_precision: bool = False,
+) -> Any:
     """Loads a local custom trained YOLOv5 model or a pretrained YOLOv5 model from torch
     hub.
 
@@ -279,7 +285,10 @@ def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False)
         or model name i.e. 'yolov5s', 'yolov5m'.
         conf (float): The confidence threshold.
         iou (float): The IOU threshold.
-        force_reload (bool): Whether to force reload torch hub cache.
+        force_reload (bool, optional): Whether to force reload torch hub cache.
+        Defaults to False.
+        half_precision (bool, optional): Whether to use half precision (FP 16) to speed
+        up inference. Only works for gpu. Defaults to False.
 
     Raises:
         ValueError: If the path to the model weights is not a .pt file.
@@ -318,7 +327,8 @@ def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False)
 
     t2 = perf_counter()
     log.info(f"Model loaded in {round(t2 - t1)} sec")
-    return model
+
+    return model.half() if torch.cuda.is_available() and half_precision else model
 
 
 def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
