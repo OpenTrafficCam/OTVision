@@ -21,15 +21,27 @@
             "name": "Python: Detect",
             "type": "python",
             "request": "launch",
+            "preLaunchTask": "Build detect debug environment",
+            "postDebugTask": "Tear down debug environment",
             "program": "${workspaceFolder}/detect.py",
             "args": [
                 "--path",
-                "tests/data/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
+                ".tmp/debug/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
                 "--filetypes",
                 "mp4",
                 "--weights",
                 "yolov5s"
             ],
+            "windows": {
+                "args": [
+                    "--path",
+                    ".tmp\\debug\\Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
+                    "--filetypes",
+                    "mp4",
+                    "--weights",
+                    "yolov5s"
+                ]
+            },
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -37,11 +49,19 @@
             "name": "Python: Track",
             "type": "python",
             "request": "launch",
+            "preLaunchTask": "Build detect debug environment",
+            "postDebugTask": "Tear down debug environment",
             "program": "${workspaceFolder}/track.py",
             "args": [
                 "--paths",
-                "tests/data/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
+                ".tmp/debug/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
             ],
+            "windows": {
+                "args": [
+                    "--path",
+                    ".tmp\\debug\\Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
+                ]
+            },
             "console": "integratedTerminal",
             "justMyCode": false
         }
