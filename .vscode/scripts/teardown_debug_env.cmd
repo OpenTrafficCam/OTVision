@@ -1,4 +1,6 @@
-for /f "delims=" %%i in ('cd') do set CURRENT_DIR=%%i
-set TMP_DIR=%CURRENT_DIR%/.tmp/
+echo Tear down debug environment.
+@echo off
+set "CURRENT_DIR=%cd%"
+set TMP_DIR=%CURRENT_DIR%\.tmp\
 
-rmdir "%TMP_DIR%"
+rmdir /s /q "%TMP_DIR%"

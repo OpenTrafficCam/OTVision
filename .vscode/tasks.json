@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "sh ${workspaceFolder}/.vscode/scripts/build_debug_env.sh",
             "windows": {
-                "command": "\\${workspaceFolder}\\.vscode\\scripts\\build_debug_env.cmd"
+                "command": "${workspaceFolder}\\.vscode\\scripts\\build_debug_env.cmd"
             },
             "group": "test",
             "presentation": {
@@ -19,7 +19,7 @@
             "type": "shell",
             "command": "sh ${workspaceFolder}/.vscode/scripts/teardown_debug_env.sh",
             "windows": {
-                "command": "\\${workspaceFolder}\\.vscode\\scripts\\teardown_debug_env.cmd"
+                "command": "${workspaceFolder}\\.vscode\\scripts\\teardown_debug_env.cmd"
             },
             "group": "test",
             "presentation": {
