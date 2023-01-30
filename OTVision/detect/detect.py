@@ -19,6 +19,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import time
 from pathlib import Path
 from typing import Union
 
@@ -157,6 +158,7 @@ def main(
         if debug:
             reset_debug()
         return detections_img_file_chunks, class_labels
+    log.info("")
     for img_file, detection in zip(img_files, detections_img_file_chunks):
         write(detection, img_file)
     if debug:
@@ -241,7 +243,10 @@ def write(
     if overwrite or not detections_file_already_exists:
         # Write JSON
         with open(detection_file, "w") as f:
-            ujson.dump(detections, f)
+            t_json_start = time.perf_counter()
+            ujson.dump(detections, f, indent=4)
+            t_json_end = time.perf_counter()
+            log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
         if detections_file_already_exists:
             log.info(f"{detection_file} overwritten")
         else:
