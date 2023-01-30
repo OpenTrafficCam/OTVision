@@ -77,8 +77,8 @@ def main(
         ot_labels_enabled (bool, optional): Whether or not to detect for pre-annotation.
             Defaults to CONFIG["DETECT"]["OTLABELS_ENABLES"].
         half_precision (bool, optional): Whether to use half precision (FP16) for
-            inference speed up. Only works for gpu. Defaults to CONFIG[""DETECT]
-            ["HALF_PRECISION"].
+            inference speed up. Only works for gpu.
+            Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
         force_reload_torch_hub_cache (bool, optional): Whether to force reload torch
             hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
         debug (bool, optional): Whether or not logging in debug mode.
