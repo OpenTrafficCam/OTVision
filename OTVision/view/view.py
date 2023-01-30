@@ -23,7 +23,7 @@ import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.machine import ON_LINUX, ON_WINDOWS
-from OTVision.view.view_convert import FrameConvert, FrameConvertDummy
+from OTVision.view.view_convert import FrameConvert
 from OTVision.view.view_detect import FrameDetect
 from OTVision.view.view_helpers import FrameFileTree, FrameRunChained
 from OTVision.view.view_track import FrameTrack
