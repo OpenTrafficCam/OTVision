@@ -269,6 +269,7 @@ def _add_detection_results(
         detections.extend([i.tolist() for i in results.xywh])
 
 
+# TODO: loadmodel: Arg "local_weights" [Path](optional) that overrides "weights" [str]
 def loadmodel(weights: str, conf: float, iou: float, force_reload: bool = False) -> Any:
     """Loads a local custom trained YOLOv5 model or a pretrained YOLOv5 model from torch
     hub.
