@@ -53,13 +53,9 @@ class WindowOTVision(tk.Tk):
         self.frame_files = FrameFileTree(master=self, text="Choose files")
         self.frame_files.grid(**PAD, row=0, column=0, columnspan=4, sticky="nsew")
         # Settings
-        # Convert (Only works on windows machines for now)
-        if ON_WINDOWS:
-            self.frame_convert = FrameConvert(master=self, text="Convert")
-            self.frame_convert.grid(**PAD, row=1, column=0, sticky="nsew")
-        else:
-            self.frame_convert_dummy = FrameConvertDummy(master=self, text="Convert")
-            self.frame_convert_dummy.grid(**PAD, row=1, column=0, sticky="nsew")
+        # Convert
+        self.frame_convert = FrameConvert(master=self, text="Convert")
+        self.frame_convert.grid(**PAD, row=1, column=0, sticky="nsew")
         # Detect
         self.frame_detect = FrameDetect(master=self, text="Detect")
         self.frame_detect.grid(**PAD, row=1, column=1, sticky="nsew")
