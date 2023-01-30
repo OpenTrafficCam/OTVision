@@ -45,7 +45,9 @@ def main(
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
     ot_labels_enabled: bool = CONFIG["DETECT"]["OTLABELS_ENABLES"],
     debug: bool = CONFIG["DETECT"]["DEBUG"],
-    force_reload_torch_hub_cache: bool = False,
+    force_reload_torch_hub_cache: bool = CONFIG["DETECT"][
+        "FORCE_RELOAD_TORCH_HUB_CACHE"
+    ],
 ) -> Union[tuple[list, dict], None]:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
