@@ -158,7 +158,6 @@ def main(
         if debug:
             reset_debug()
         return detections_img_file_chunks, class_labels
-    log.info("")
     for img_file, detection in zip(img_files, detections_img_file_chunks):
         write(detection, img_file)
     if debug:
