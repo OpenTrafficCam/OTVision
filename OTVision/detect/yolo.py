@@ -38,6 +38,10 @@ class VideoFoundError(Exception):
     pass
 
 
+class YOLOv5ModelNotFoundError(Exception):
+    pass
+
+
 def detect_video(
     file: Path,
     model: Union[torch.nn.Module, None] = None,
@@ -49,7 +53,6 @@ def detect_video(
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
 ) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Detect and classify bounding boxes in videos using YOLOv5
-
     Args:
         file (Path): files to detect.
         model (torch.nn.Module): Yolo model to detect with.
@@ -60,7 +63,6 @@ def detect_video(
         chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
         normalized (bool, optional): Coords in % of image/frame size (True) or pixels
             (False). Defaults to False.
-
     Returns:
         dict[str, dict]: Dict with subdicts of metadata and actual detections
     """
@@ -162,7 +164,7 @@ def detect_images(
     Returns:
         [type]: [description]
     """
-    yolo_detections: list = []
+    yolo_detections: list[list[float]] = []
     if not file_chunks:
         return ([], {}) if ot_labels_enabled else yolo_detections
     if model is None:
@@ -256,7 +258,6 @@ def _add_detection_results(
     normalized: bool,
 ) -> None:
     """Adds detection result to the list of detections provided.
-
     Args:
         detections (list): the existing list containing detections.
         results (Any): detection results.
@@ -269,60 +270,121 @@ def _add_detection_results(
 
 
 # TODO: loadmodel: Arg "local_weights" [Path](optional) that overrides "weights" [str]
-def loadmodel(weights: Union[Path, str], conf: float, iou: float) -> Any:
-    """Loads model from torch.hub using custom local weights or standard weights from
-        torch.hub
+def loadmodel(
+    weights: str,
+    conf: float,
+    iou: float,
+    force_reload: bool = False,
+    half_precision: bool = False,
+) -> Any:
+    """Loads a local custom trained YOLOv5 model or a pretrained YOLOv5 model from torch
+    hub.
 
     Args:
-        weights (Union[Path, str]): yolov5 weights file or default model name
-        conf (float): Confidence threshold for detection
-        iou (float): IOU threshold for detection
+        weights (str): Path to custom model weights
+        or model name i.e. 'yolov5s', 'yolov5m'.
+        conf (float): The confidence threshold.
+        iou (float): The IOU threshold.
+        force_reload (bool, optional): Whether to force reload torch hub cache.
+        Defaults to False.
+        half_precision (bool, optional): Whether to use half precision (FP 16) to speed
+        up inference. Only works for gpu. Defaults to False.
 
     Raises:
-        AttributeError: If weights is neither .pt-file nor valid model name
+        ValueError: If the path to the model weights is not a .pt file.
 
     Returns:
-        Any: yolov5 model
+        Any: The YOLOv5 model.
     """
-
     log.info(f"Try loading model {weights}")
     t1 = perf_counter()
+    is_custom = Path(weights).is_file()
 
-    if Path(weights).is_file() and Path(weights).suffix == ".pt":
-        model = torch.hub.load(
-            repo_or_dir="ultralytics/yolov5",
-            model="custom",
-            path=weights,
-            force_reload=True,
-        )
-    elif weights in torch.hub.list(github="ultralytics/yolov5", force_reload=True):
-
-        if torch.cuda.is_available():
-            model = torch.hub.load(
-                repo_or_dir="ultralytics/yolov5",
-                model=weights,
-                pretrained=True,
-                force_reload=True,
-            ).cuda()
+    try:
+        if is_custom:
+            model = _load_custom_model(weights=Path(weights), force_reload=force_reload)
         else:
-            model = torch.hub.load(
-                repo_or_dir="ultralytics/yolov5",
-                model=weights,
-                pretrained=True,
-                force_reload=True,
-            ).cpu()
-    else:
-        raise AttributeError(
-            "weights has to be path to .pt or valid model name "
-            "from https://pytorch.org/hub/ultralytics_yolov5/"
-        )
+            model = _load_pretrained_model(
+                model_name=weights, force_reload=force_reload
+            )
+    except ValueError:
+        raise
+    except YOLOv5ModelNotFoundError:
+        raise
+    except Exception as e:
+        if force_reload:
+            # cache already force reloaded
+            raise
+        log.error(e)
+        log.info("Force reload cache and try again.")
+        if is_custom:
+            model = _load_custom_model(weights=Path(weights), force_reload=True)
+        else:
+            model = _load_pretrained_model(model_name=weights, force_reload=True)
 
     model.conf = conf
     model.iou = iou
 
     t2 = perf_counter()
     log.info(f"Model loaded in {round(t2 - t1)} sec")
-    return model
+
+    return model.half() if torch.cuda.is_available() and half_precision else model
+
+
+def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
+    """Load pretrained YOLOv5 model from torch hub.
+
+    Args:
+        model_name (str): As in ['yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
+        force_reload (bool): Whether to force reload the cache.
+
+    Raises:
+        YOLOv5ModelNotFoundError: If YOLOv5 model could not be found on torch hub.
+        ValueError: If the path to custom the model weights is not a .pt file.
+
+    Returns:
+        Any: The YOLOv5 model.
+    """
+    try:
+        model = torch.hub.load(
+            repo_or_dir="ultralytics/yolov5",
+            model=model_name,
+            pretrained=True,
+            force_reload=force_reload,
+        )
+    except RuntimeError as re:
+        if str(re).startswith("Cannot find callable"):
+            raise YOLOv5ModelNotFoundError(
+                f"YOLOv5 model: {model_name} does not found!"
+            ) from re
+        else:
+            raise
+    return model.cuda() if torch.cuda.is_available() else model.cpu()
+
+
+def _load_custom_model(weights: Path, force_reload: bool) -> Any:
+    """Load custom trained YOLOv5 model.
+
+    Args:
+        weights (Path): Path to model weights.
+        force_reload (bool): Whether to force reload the cache.
+
+    Raises:
+        ValueError: If the path to the model weights is not a .pt file.
+
+    Returns:
+        Any: The YOLOv5 torch model.
+    """
+    if weights.suffix != ".pt":
+        raise ValueError(f"Weights at '{weights}' is not a pt file!")
+
+    model = torch.hub.load(
+        repo_or_dir="ultralytics/yolov5",
+        model="custom",
+        path=weights,
+        force_reload=force_reload,
+    )
+    return model.cuda() if torch.cuda.is_available() else model.cpu()
 
 
 def _get_vidconfig(

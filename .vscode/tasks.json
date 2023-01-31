@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build detect debug environment",
+            "type": "shell",
+            "command": "sh ${workspaceFolder}/.vscode/scripts/build_debug_env.sh",
+            "windows": {
+                "command": "${workspaceFolder}\\.vscode\\scripts\\build_debug_env.cmd"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Tear down debug environment",
+            "type": "shell",
+            "command": "sh ${workspaceFolder}/.vscode/scripts/teardown_debug_env.sh",
+            "windows": {
+                "command": "${workspaceFolder}\\.vscode\\scripts\\teardown_debug_env.cmd"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

@@ -27,7 +27,6 @@ from tkinter import filedialog
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
 from OTVision.helpers.log import log
-from OTVision.helpers.machine import ON_WINDOWS
 
 
 class FrameFileTree(tk.LabelFrame):
@@ -151,10 +150,11 @@ class FrameFileTree(tk.LabelFrame):
         # NOTE: h264 is only included on Windows for now
         new_files = get_files(
             [Path(new_dir)],
-            filetypes=(
-                ([".h264"] if ON_WINDOWS else [])
-                + [f".{self.vid_filetype}", CONFIG["DEFAULT_FILETYPE"]["DETECT"]]
-            ),
+            filetypes=[
+                ".h264",
+                f".{self.vid_filetype}",
+                CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+            ],
             search_subdirs=self.checkbutton_subdir_var.get(),
         )
 
@@ -172,8 +172,8 @@ class FrameFileTree(tk.LabelFrame):
             filedialog.askopenfilenames(
                 title="Select one or multiple files",
                 # NOTE: h264 is only included on Windows for now
-                filetypes=([(".h264", ".h264")] if ON_WINDOWS else [])
-                + [
+                filetypes=[
+                    (".h264", ".h264"),
                     (".mp4", ".mp4"),
                     (".otdet", ".otdet"),
                     (".ottrk", ".ottrk"),
@@ -188,7 +188,7 @@ class FrameFileTree(tk.LabelFrame):
 
     def remove_selected(self, event):
         for item in self.tree_files.selection():
-            del self.files_dict[self.tree_files.item(item)["text"]]
+            del self.files_dict[Path(self.tree_files.item(item)["text"])]
         self.update_tree_files()
 
     def remove_all(self, event):
@@ -403,10 +403,7 @@ class FrameRunChained(tk.LabelFrame):
         # self.progress.grid(row=1, column=0, sticky="ew")
 
     def run(self, event):
-        if (
-            ON_WINDOWS
-            and self.master.frame_convert.frame_run.checkbutton_run_chained_var.get()
-        ):
+        if self.master.frame_convert.frame_run.checkbutton_run_chained_var.get():
             self.master.frame_convert.frame_run.run(event)
         if self.master.frame_detect.frame_run.checkbutton_run_chained_var.get():
             self.master.frame_detect.frame_run.run(event)
