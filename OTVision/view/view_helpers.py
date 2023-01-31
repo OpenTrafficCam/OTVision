@@ -188,7 +188,7 @@ class FrameFileTree(tk.LabelFrame):
 
     def remove_selected(self, event):
         for item in self.tree_files.selection():
-            del self.files_dict[self.tree_files.item(item)["text"]]
+            del self.files_dict[Path(self.tree_files.item(item)["text"])]
         self.update_tree_files()
 
     def remove_all(self, event):
