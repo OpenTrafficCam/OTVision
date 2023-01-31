@@ -19,11 +19,12 @@ OTVision main module to detect objects in single or multiple images or videos.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import json
+import time
 from pathlib import Path
 from typing import Union
 
 import torch
+import ujson
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, has_filetype
@@ -45,6 +46,10 @@ def main(
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
     ot_labels_enabled: bool = CONFIG["DETECT"]["OTLABELS_ENABLES"],
     debug: bool = CONFIG["DETECT"]["DEBUG"],
+    half_precision: bool = CONFIG["DETECT"]["HALF_PRECISION"],
+    force_reload_torch_hub_cache: bool = CONFIG["DETECT"][
+        "FORCE_RELOAD_TORCH_HUB_CACHE"
+    ],
 ) -> Union[tuple[list, dict], None]:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
@@ -71,6 +76,11 @@ def main(
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
         ot_labels_enabled (bool, optional): Whether or not to detect for pre-annotation.
             Defaults to CONFIG["DETECT"]["OTLABELS_ENABLES"].
+        half_precision (bool, optional): Whether to use half precision (FP16) for
+            inference speed up. Only works for gpu.
+            Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
+        force_reload_torch_hub_cache (bool, optional): Whether to force reload torch
+            hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["DETECT"]["DEBUG"].
 
@@ -82,9 +92,17 @@ def main(
         set_debug()
 
     if not model:
-        yolo_model = yolo.loadmodel(weights, conf, iou)
+        yolo_model = yolo.loadmodel(
+            weights,
+            conf,
+            iou,
+            force_reload=force_reload_torch_hub_cache,
+            half_precision=half_precision,
+        )
     else:
-        yolo_model = model
+        yolo_model = (
+            model.half() if torch.cuda.is_available() and half_precision else model
+        )
         yolo_model.conf = conf
         yolo_model.iou = iou
     log.info("Model prepared")
@@ -224,7 +242,10 @@ def write(
     if overwrite or not detections_file_already_exists:
         # Write JSON
         with open(detection_file, "w") as f:
-            json.dump(detections, f, indent=4)
+            t_json_start = time.perf_counter()
+            ujson.dump(detections, f, indent=4)
+            t_json_end = time.perf_counter()
+            log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
         if detections_file_already_exists:
             log.info(f"{detection_file} overwritten")
         else:
