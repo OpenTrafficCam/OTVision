@@ -57,7 +57,7 @@ def get_files(
     """
     files = set()
     if type(paths) is not list:
-        raise TypeError("Paths needs to a list of pathlib.Path")
+        raise TypeError("Paths needs to be a list of pathlib.Path")
     if filetypes:
         if type(filetypes) is not list:
             raise TypeError("Filetypes needs to be a list of str")
@@ -114,11 +114,11 @@ def replace_filetype(
     """
 
     if type(files) is not list:
-        raise TypeError("Paths needs to a list of pathlib.Path")
+        raise TypeError("Paths needs to be a list of pathlib.Path")
     new_paths = []
     for path in files:
         if not isinstance(path, Path):
-            raise TypeError("Paths needs to a list of pathlib.Path")
+            raise TypeError("Paths needs to be a list of pathlib.Path")
         if path.is_file():
             if old_filetype and path.suffix.lower() != old_filetype.lower():
                 continue
