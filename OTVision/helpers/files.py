@@ -181,11 +181,10 @@ def read_json(
         decompress = False
     try:
         if decompress:
-            with bz2.open(json_file) as input:
-                data = input.read().decode(ENCODING)
-                dict_from_json_file = json.loads(data)
+            with bz2.open(json_file, "rt", encoding=ENCODING) as input:
+                dict_from_json_file = json.load(input)
         else:
-            with open(json_file) as input:
+            with open(json_file, "r", encoding=ENCODING) as input:
                 dict_from_json_file = json.load(input)
         log.info(f"{json_file} read")
         return dict_from_json_file
@@ -226,11 +225,10 @@ def write_json(
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
         if compress:
-            with bz2.open(outfile, "w") as output:
-                data = json.dumps(dict_to_write, indent=4).encode(ENCODING)
-                output.write(data)
+            with bz2.open(outfile, "wt", encoding=ENCODING) as output:
+                json.dump(dict_to_write, output, indent=4)
         else:
-            with open(outfile, "w") as output:
+            with open(outfile, "w", encoding=ENCODING) as output:
                 json.dump(dict_to_write, output, indent=4)
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
