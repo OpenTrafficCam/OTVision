@@ -27,7 +27,7 @@ import torch
 import ujson
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, has_filetype
+from OTVision.helpers.files import get_files
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from . import yolo
@@ -35,7 +35,7 @@ from . import yolo
 
 def main(
     paths: list[Path],
-    filetypes: list[str] = CONFIG["FILETYPES"]["VID_IMG"],
+    filetypes: list[str] = CONFIG["FILETYPES"]["VID"],
     model: Union[torch.nn.Module, None] = None,
     weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
     conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
@@ -101,9 +101,7 @@ def main(
         yolo_model.iou = iou
     log.info("Model prepared")
 
-    files = get_files(paths=paths, filetypes=filetypes)
-    video_files, img_files = _split_to_video_img_paths(files)
-    log.info("Files splitted in videos and images")
+    video_files = get_files(paths=paths, filetypes=filetypes)
 
     for video_file in video_files:
         log.info(f"Try detecting {video_file}")
@@ -123,42 +121,6 @@ def main(
     if debug:
         reset_debug()
     return None
-
-
-def _split_to_video_img_paths(
-    files: list[Path],
-    video_formats: list[str] = CONFIG["FILETYPES"]["VID"],
-    img_formats: list[str] = CONFIG["FILETYPES"]["IMG"],
-) -> tuple[list[Path], list[Path]]:
-    """
-    Divides a list of files in video files and image files.
-
-    Args:
-        files (list[Path]): List of video and/or image file paths.
-        video_formats (list[str], optional): _description_.
-            Defaults to CONFIG["FILETYPES"]["VID"].
-        img_formats (list[str], optional): _description_.
-            Defaults to CONFIG["FILETYPES"]["IMG"].
-
-    Raises:
-        FormatNotSupportedError: If format of a path is not in
-            video_formats or img_formats.
-
-    Returns:
-        tuple[list[Path], list[Path]]: List of video paths and list of image paths
-    """
-
-    video_files, img_files = [], []
-    for file in files:
-        if has_filetype(file, video_formats):
-            video_files.append(file)
-        elif has_filetype(file, img_formats):
-            img_files.append(file)
-        else:
-            raise FormatNotSupportedError(
-                f"The format of path is not supported ({file})"
-            )
-    return video_files, img_files
 
 
 class FormatNotSupportedError(Exception):

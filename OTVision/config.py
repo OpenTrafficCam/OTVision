@@ -47,7 +47,6 @@ CONFIG["FILETYPES"]["VID"] = [
     ".wmv",
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
-CONFIG["FILETYPES"]["VID_IMG"] = CONFIG["FILETYPES"]["VID"] + CONFIG["FILETYPES"]["IMG"]
 CONFIG["FILETYPES"]["DETECT"] = [".otdet"]
 CONFIG["FILETYPES"]["TRACK"] = [".ottrk"]
 CONFIG["FILETYPES"]["REFPTS"] = [".otrfpts"]
