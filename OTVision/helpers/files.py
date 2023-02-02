@@ -19,7 +19,6 @@ OTVision helpers for filehandling
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bz2
-import ujson
 import shutil
 from pathlib import Path
 from typing import Union
@@ -191,7 +190,7 @@ def read_json(
     except OSError:
         log.exception(f"Could not open {json_file}")
         raise
-    except json.JSONDecodeError:
+    except ujson.JSONDecodeError:
         log.exception(f'Unable to decode "{json_file}" as JSON.')
         raise
     except Exception:
