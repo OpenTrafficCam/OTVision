@@ -28,6 +28,7 @@ from OTVision.config import CONFIG
 from OTVision.helpers.log import log
 
 ENCODING = "UTF-8"
+COMPRESSED_FILETYPE = ".bz2"
 
 
 def get_files(
@@ -149,13 +150,20 @@ def _remove_dir(dir_to_remove: Path) -> None:
     dir_to_remove.rmdir()
 
 
-def read_json(json_file: Path, filetype: str = ".json") -> dict:
+def read_json(
+    json_file: Path,
+    filetype: str = ".json",
+    decompress: bool = True,
+) -> dict:
     """Read a json file of a specific filetype to a dict.
 
     Args:
         json_file (Path): json file to read
         filetype (str, optional): filetype to check json file against.
             Defaults to ".json".
+        decompress: (bool, optional): decompress output with bzip2.
+            If `filetype` is not `.bz2`, decompress will be set to False.
+            Defaults to True.
 
     Raises:
         TypeError: If file is not pathlib.Path
@@ -169,10 +177,16 @@ def read_json(json_file: Path, filetype: str = ".json") -> dict:
     filetype = json_file.suffix
     if json_file.suffix != filetype:
         raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
+    if filetype != COMPRESSED_FILETYPE:
+        decompress = False
     try:
-        with bz2.open(json_file) as input:
-            data = input.read().decode(ENCODING)
-            dict_from_json_file = json.loads(data)
+        if decompress:
+            with bz2.open(json_file) as input:
+                data = input.read().decode(ENCODING)
+                dict_from_json_file = json.loads(data)
+        else:
+            with open(json_file) as input:
+                dict_from_json_file = json.load(input)
         log.info(f"{json_file} read")
         return dict_from_json_file
     except OSError:
@@ -191,6 +205,7 @@ def write_json(
     file: Path,
     filetype: str = ".json",
     overwrite: bool = False,
+    compress: bool = True,
 ) -> None:
     """Write a json file from a dict to a specific filetype.
 
@@ -201,13 +216,22 @@ def write_json(
             Defaults to ".json".
         overwrite (bool, optional): Whether or not to overwrite an existing file.
             Defaults to False.
+        compress: (bool, optional): compress input with bzip2.
+            If `filetype` is not `.bz2`, compress will be set to False.
+            Defaults to True.
     """
+    if filetype != COMPRESSED_FILETYPE:
+        compress = False
     outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
-        with bz2.open(outfile, "w") as output:
-            data = json.dumps(dict_to_write, indent=4).encode(ENCODING)
-            output.write(data)
+        if compress:
+            with bz2.open(outfile, "w") as output:
+                data = json.dumps(dict_to_write, indent=4).encode(ENCODING)
+                output.write(data)
+        else:
+            with open(outfile, "w") as output:
+                json.dump(dict_to_write, output, indent=4)
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
         else:

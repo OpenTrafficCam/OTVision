@@ -190,7 +190,7 @@ def read_refpts(
         dict: Matching reference points in both pixel and utm coordinates
     """
 
-    return read_json(reftpts_file, filetype=reftpts_file.suffix)
+    return read_json(reftpts_file, filetype=reftpts_file.suffix, decompress=False)
 
 
 def transform(

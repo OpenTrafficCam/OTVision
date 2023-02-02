@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 from pathlib import Path
@@ -55,10 +54,9 @@ def test_write_compressed_json(
 
     json_path = Path(test_dir_with_files, "json_dump.json")
     compressed_path = Path(test_dir_with_files, "compressed_dump.json.bz2")
-    with open(json_path, "w") as json_output:
-        json.dump(data, json_output, indent=4)
 
-    write_json(data, compressed_path, ".bz2")
+    write_json(data, json_path, ".json", compress=False)
+    write_json(data, compressed_path, ".bz2", compress=True)
     json_size = os.path.getsize(json_path)
     compressed_size = os.path.getsize(compressed_path)
     assert json_path.exists()
@@ -76,9 +74,9 @@ def test_read_compressed_json(
     }
 
     compressed_path = Path(test_dir_with_files, "compressed_dump.json.bz2")
-    write_json(data, compressed_path, ".bz2")
+    write_json(data, compressed_path, ".bz2", compress=True)
 
-    read_data = read_json(compressed_path, ".bz2")
+    read_data = read_json(compressed_path, ".bz2", decompress=True)
 
     assert read_data == data
 
