@@ -44,13 +44,12 @@ def main(
     chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
     normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
-    ot_labels_enabled: bool = CONFIG["DETECT"]["OTLABELS_ENABLES"],
     debug: bool = CONFIG["DETECT"]["DEBUG"],
     half_precision: bool = CONFIG["DETECT"]["HALF_PRECISION"],
     force_reload_torch_hub_cache: bool = CONFIG["DETECT"][
         "FORCE_RELOAD_TORCH_HUB_CACHE"
     ],
-) -> Union[tuple[list, dict], None]:
+) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
 
@@ -74,8 +73,6 @@ def main(
             to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
         overwrite (bool, optional): Whether or not to overwrite
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
-        ot_labels_enabled (bool, optional): Whether or not to detect for pre-annotation.
-            Defaults to CONFIG["DETECT"]["OTLABELS_ENABLES"].
         half_precision (bool, optional): Whether to use half precision (FP16) for
             inference speed up. Only works for gpu.
             Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
@@ -83,9 +80,6 @@ def main(
             hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["DETECT"]["DEBUG"].
-
-    Returns:
-        list: Detections for images, if ot_labels_enable is set to True.
     """
     log.info("Start detection")
     if debug:
@@ -126,40 +120,6 @@ def main(
         log.info("Video detected")
         write(detections_video, video_file, overwrite=overwrite)
 
-    log.info(f"Try detecting {len(img_files)} images")
-    img_file_chunks = _create_chunks(img_files, chunksize)
-
-    if not ot_labels_enabled:
-        detections_img_file_chunks = yolo.detect_images(
-            file_chunks=img_file_chunks,
-            model=yolo_model,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=size,
-            chunksize=chunksize,
-            normalized=normalized,
-            ot_labels_enabled=ot_labels_enabled,
-        )
-        log.info("Images detected")
-    else:
-        detections_img_file_chunks, class_labels = yolo.detect_images(
-            file_chunks=img_file_chunks,
-            model=yolo_model,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=size,
-            chunksize=chunksize,
-            normalized=normalized,
-            ot_labels_enabled=ot_labels_enabled,
-        )
-        log.info("Images detected")
-        if debug:
-            reset_debug()
-        return detections_img_file_chunks, class_labels
-    for img_file, detection in zip(img_files, detections_img_file_chunks):
-        write(detection, img_file)
     if debug:
         reset_debug()
     return None
