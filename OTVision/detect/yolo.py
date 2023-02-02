@@ -249,7 +249,7 @@ def _log_batch_performances_stats(
         f"{batch_no_str}, {batch}, {transformed_batch}, {det}, "
         f"{add_list}, {loop_overhead}, {batch_len}, {fps}"
     )
-    log.info(log_msg)  # BUG: #162 Logs twice from yolo.py (with and without formatting)
+    log.info(log_msg)
 
 
 def _add_detection_results(

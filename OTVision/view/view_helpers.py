@@ -409,3 +409,5 @@ class FrameRunChained(tk.LabelFrame):
             self.master.frame_detect.frame_run.run(event)
         if self.master.frame_track.frame_run.checkbutton_run_chained_var.get():
             self.master.frame_track.frame_run.run(event)
+        if self.master.frame_transform.frame_run.checkbutton_run_chained_var.get():
+            self.master.frame_transform.frame_run.run(event)
