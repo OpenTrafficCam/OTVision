@@ -24,6 +24,8 @@ import shutil
 from pathlib import Path
 from typing import Union
 
+import ujson
+
 from OTVision.config import CONFIG
 from OTVision.helpers.log import log
 
