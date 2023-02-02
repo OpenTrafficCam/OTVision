@@ -239,13 +239,10 @@ def write(
     detections_file_already_exists = detection_file.is_file()
     if overwrite or not detections_file_already_exists:
         # Write JSON
-        with open(detection_file, "w") as f:
-            t_json_start = time.perf_counter()
-            write_json(
-                detections, detection_file, filetype=filetype, overwrite=overwrite
-            )
-            t_json_end = time.perf_counter()
-            log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
+        t_json_start = time.perf_counter()
+        write_json(detections, detection_file, filetype=filetype, overwrite=overwrite)
+        t_json_end = time.perf_counter()
+        log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
         if detections_file_already_exists:
             log.info(f"{detection_file} overwritten")
         else:
