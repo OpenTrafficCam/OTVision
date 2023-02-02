@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import Union
 
 import torch
-import ujson
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, has_filetype, write_json
