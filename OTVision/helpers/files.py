@@ -19,7 +19,7 @@ OTVision helpers for filehandling
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bz2
-import json
+import ujson
 import shutil
 from pathlib import Path
 from typing import Union
@@ -177,15 +177,13 @@ def read_json(
     filetype = json_file.suffix
     if json_file.suffix != filetype:
         raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
-    if filetype != COMPRESSED_FILETYPE:
-        decompress = False
     try:
         if decompress:
             with bz2.open(json_file, "rt", encoding=ENCODING) as input:
-                dict_from_json_file = json.load(input)
+                dict_from_json_file = ujson.load(input)
         else:
             with open(json_file, "r", encoding=ENCODING) as input:
-                dict_from_json_file = json.load(input)
+                dict_from_json_file = ujson.load(input)
         log.info(f"{json_file} read")
         return dict_from_json_file
     except OSError:
@@ -219,17 +217,15 @@ def write_json(
             If `filetype` is not `.bz2`, compress will be set to False.
             Defaults to True.
     """
-    if filetype != COMPRESSED_FILETYPE:
-        compress = False
     outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
         if compress:
             with bz2.open(outfile, "wt", encoding=ENCODING) as output:
-                json.dump(dict_to_write, output, indent=4)
+                ujson.dump(dict_to_write, output, indent=4)
         else:
             with open(outfile, "w", encoding=ENCODING) as output:
-                json.dump(dict_to_write, output, indent=4)
+                ujson.dump(dict_to_write, output, indent=4)
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
         else:

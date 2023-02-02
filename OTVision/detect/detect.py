@@ -27,7 +27,7 @@ import torch
 import ujson
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, has_filetype
+from OTVision.helpers.files import get_files, has_filetype, write_json
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from . import yolo
@@ -235,15 +235,16 @@ def write(
             Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
     # ?: Check overwrite before detecting instead of before writing detections?
-    detection_file = Path(img_or_video_file).with_suffix(
-        CONFIG["DEFAULT_FILETYPE"]["DETECT"]
-    )
+    filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
+    detection_file = Path(img_or_video_file).with_suffix(filetype)
     detections_file_already_exists = detection_file.is_file()
     if overwrite or not detections_file_already_exists:
         # Write JSON
         with open(detection_file, "w") as f:
             t_json_start = time.perf_counter()
-            ujson.dump(detections, f, indent=4)
+            write_json(
+                detections, detection_file, filetype=filetype, overwrite=overwrite
+            )
             t_json_end = time.perf_counter()
             log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
         if detections_file_already_exists:
