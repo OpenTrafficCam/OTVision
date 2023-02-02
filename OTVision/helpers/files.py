@@ -18,6 +18,7 @@ OTVision helpers for filehandling
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import bz2
 import json
 import shutil
 from pathlib import Path
@@ -25,6 +26,8 @@ from typing import Union
 
 from OTVision.config import CONFIG
 from OTVision.helpers.log import log
+
+ENCODING = "UTF-8"
 
 
 def get_files(
@@ -167,8 +170,9 @@ def read_json(json_file: Path, filetype: str = ".json") -> dict:
     if json_file.suffix != filetype:
         raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
     try:
-        with open(json_file) as f:
-            dict_from_json_file = json.load(f)
+        with bz2.open(json_file) as input:
+            data = input.read().decode(ENCODING)
+            dict_from_json_file = json.loads(data)
         log.info(f"{json_file} read")
         return dict_from_json_file
     except OSError:
@@ -201,8 +205,9 @@ def write_json(
     outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
-        with open(outfile, "w") as f:
-            json.dump(dict_to_write, f, indent=4)
+        with bz2.open(outfile, "w") as output:
+            data = json.dumps(dict_to_write, indent=4).encode(ENCODING)
+            output.write(data)
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
         else:

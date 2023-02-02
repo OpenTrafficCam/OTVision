@@ -1,9 +1,17 @@
+import json
+import os
 import shutil
 from pathlib import Path
 
 import pytest
 
-from OTVision.helpers.files import get_files, has_filetype, replace_filetype
+from OTVision.helpers.files import (
+    get_files,
+    has_filetype,
+    read_json,
+    replace_filetype,
+    write_json,
+)
 from tests.conftest import YieldFixture
 
 
@@ -34,6 +42,45 @@ def test_dir_with_files() -> YieldFixture[Path]:
 
     # Delete directory
     shutil.rmtree(test_dir)
+
+
+def test_write_compressed_json(
+    test_dir_with_files: Path,
+) -> None:
+    data = {
+        "some": "data",
+        "other": "data",
+        "nested": {"data_one": "one", "data_two": "two"},
+    }
+
+    json_path = Path(test_dir_with_files, "json_dump.json")
+    compressed_path = Path(test_dir_with_files, "compressed_dump.json.bz2")
+    with open(json_path, "w") as json_output:
+        json.dump(data, json_output, indent=4)
+
+    write_json(data, compressed_path, ".bz2")
+    json_size = os.path.getsize(json_path)
+    compressed_size = os.path.getsize(compressed_path)
+    assert json_path.exists()
+    assert compressed_path.exists()
+    assert json_size > compressed_size
+
+
+def test_read_compressed_json(
+    test_dir_with_files: Path,
+) -> None:
+    data = {
+        "some": "data",
+        "other": "data",
+        "nested": {"data_one": "one", "data_two": "two"},
+    }
+
+    compressed_path = Path(test_dir_with_files, "compressed_dump.json.bz2")
+    write_json(data, compressed_path, ".bz2")
+
+    read_data = read_json(compressed_path, ".bz2")
+
+    assert read_data == data
 
 
 def test_get_files_dirPathAsListOfPathObjectAs1stParam_returnsCorrectList(
