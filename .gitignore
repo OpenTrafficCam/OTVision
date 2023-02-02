@@ -4,6 +4,7 @@ yolov5*.pt
 obj_train_data/*
 *.mp4
 *ffmpeg.exe
+*ffmpeg.zip
 tests/resources/
 
 # Byte-compiled / optimized / DLL files
@@ -166,6 +167,7 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/scripts
 *.code-workspace
 
 # Local History for Visual Studio Code

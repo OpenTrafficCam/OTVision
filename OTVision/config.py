@@ -21,13 +21,11 @@ OTVision config module for setting default values
 
 from pathlib import Path
 
-from .helpers.files import _get_testdatafolder
-
 # sourcery skip: merge-dict-assign
-CONFIG = {}
+CONFIG: dict = {}
+
 
 # FOLDERS
-CONFIG["TESTDATAFOLDER"] = _get_testdatafolder()
 CONFIG["SEARCH_SUBDIRS"] = True
 
 # FILETYPES
@@ -49,9 +47,11 @@ CONFIG["FILETYPES"]["VID"] = [
     ".wmv",
 ]
 CONFIG["FILETYPES"]["IMG"] = [".jpg", ".jpeg", ".png"]
-CONFIG["FILETYPES"]["DETECT"] = ".otdet"
-CONFIG["FILETYPES"]["TRACK"] = [".ottrk", ".gpkg"]
-CONFIG["FILETYPES"]["REFPTS"] = [".otrfpts", ".csv"]
+CONFIG["FILETYPES"]["VID_IMG"] = CONFIG["FILETYPES"]["VID"] + CONFIG["FILETYPES"]["IMG"]
+CONFIG["FILETYPES"]["DETECT"] = [".otdet"]
+CONFIG["FILETYPES"]["TRACK"] = [".ottrk"]
+CONFIG["FILETYPES"]["REFPTS"] = [".otrfpts"]
+CONFIG["FILETYPES"]["TRANSFORM"] = [".gpkg"]
 
 # LAST PATHS
 CONFIG["LAST PATHS"] = {}
@@ -71,13 +71,17 @@ CONFIG["CONVERT"]["FFMPEG_PATH"] = str(
     Path(__file__).parents[0] / r"convert" / r"ffmpeg.exe"
 )
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".mp4"
-CONFIG["CONVERT"]["FPS"] = 20.0
+CONFIG["CONVERT"]["INPUT_FPS"] = 20.0
+CONFIG["CONVERT"]["OUTPUT_FPS"] = 20.0
+CONFIG["CONVERT"]["FPS_FROM_FILENAME"] = True
+CONFIG["CONVERT"]["DELETE_INPUT"] = False
 CONFIG["CONVERT"]["OVERWRITE"] = True
 CONFIG["CONVERT"]["DEBUG"] = False
 
 # DETECT
 CONFIG["DETECT"] = {}
 CONFIG["DETECT"]["RUN_CHAINED"] = True
+CONFIG["DETECT"]["OTLABELS_ENABLES"] = False
 CONFIG["DETECT"]["YOLO"] = {}
 CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
 CONFIG["DETECT"]["YOLO"]["AVAILABLEWEIGHTS"] = [
@@ -93,6 +97,8 @@ CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"] = 1
 CONFIG["DETECT"]["YOLO"]["NORMALIZED"] = False
 CONFIG["DETECT"]["OVERWRITE"] = True
 CONFIG["DETECT"]["DEBUG"] = False
+CONFIG["DETECT"]["HALF_PRECISION"] = False
+CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE"] = False
 
 # TRACK
 CONFIG["TRACK"] = {}

@@ -27,7 +27,6 @@ from tkinter import filedialog
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
 from OTVision.helpers.log import log
-from OTVision.helpers.machine import ON_WINDOWS
 
 
 class FrameFileTree(tk.LabelFrame):
@@ -149,31 +148,32 @@ class FrameFileTree(tk.LabelFrame):
     def add_dirs(self, event):
         new_dir = filedialog.askdirectory(title="Select a folder", mustexist=True)
         # NOTE: h264 is only included on Windows for now
-        new_paths = get_files(
-            new_dir,
-            filetypes=(
-                ([".h264"] if ON_WINDOWS else [])
-                + [f".{self.vid_filetype}", CONFIG["DEFAULT_FILETYPE"]["DETECT"]]
-            ),
+        new_files = get_files(
+            [Path(new_dir)],
+            filetypes=[
+                ".h264",
+                f".{self.vid_filetype}",
+                CONFIG["DEFAULT_FILETYPE"]["DETECT"],
+            ],
             search_subdirs=self.checkbutton_subdir_var.get(),
         )
 
-        unique_new_paths = []
-        for elem in new_paths:
-            if str(Path(elem).with_suffix("")) not in [
-                str(Path(p).with_suffix("")) for p in unique_new_paths
+        unique_new_files = []
+        for file in new_files:
+            if file.with_suffix("") not in [
+                f.with_suffix("") for f in unique_new_files
             ]:
-                unique_new_paths.append(elem)
-        self.add_to_files_dict(unique_new_paths)
+                unique_new_files.append(file)
+        self.add_to_files_dict(unique_new_files)
 
     def add_files(self, event):
         # Show filedialog
-        new_paths = list(
+        new_paths_str = list(
             filedialog.askopenfilenames(
                 title="Select one or multiple files",
                 # NOTE: h264 is only included on Windows for now
-                filetypes=([(".h264", ".h264")] if ON_WINDOWS else [])
-                + [
+                filetypes=[
+                    (".h264", ".h264"),
                     (".mp4", ".mp4"),
                     (".otdet", ".otdet"),
                     (".ottrk", ".ottrk"),
@@ -182,12 +182,13 @@ class FrameFileTree(tk.LabelFrame):
             )
         )
         # Check paths
+        new_paths = [Path(path_str) for path_str in new_paths_str]
         new_paths = get_files(new_paths)
         self.add_to_files_dict(new_paths)
 
     def remove_selected(self, event):
         for item in self.tree_files.selection():
-            del self.files_dict[self.tree_files.item(item)["text"]]
+            del self.files_dict[Path(self.tree_files.item(item)["text"])]
         self.update_tree_files()
 
     def remove_all(self, event):
@@ -235,7 +236,7 @@ class FrameFileTree(tk.LabelFrame):
             self.tree_files.insert(
                 parent="",
                 index="end",
-                text=path,
+                text=str(path),
                 values=(
                     file_values["h264"],
                     file_values["video"],
@@ -265,7 +266,7 @@ class FrameFileTree(tk.LabelFrame):
 
     def get_tree_files(self):
         return [
-            self.tree_files.item(item)["text"]
+            Path(self.tree_files.item(item)["text"])
             for item in self.tree_files.get_children()
         ]
 
@@ -330,7 +331,7 @@ class FrameFiles(tk.LabelFrame):
         return self.listbox_files.get(first=0, last=self.listbox_files.size() - 1)
 
     def add_files(self, event):
-        new_paths = list(
+        new_paths_str = list(
             filedialog.askopenfilenames(
                 title=f"Select one or multiple {self.filecategory}",
                 filetypes=[
@@ -339,12 +340,13 @@ class FrameFiles(tk.LabelFrame):
                 ],
             )
         )
-        new_paths = get_files(new_paths, self.filetype)
+        new_paths = [Path(path_str) for path_str in new_paths_str]
+        new_paths = get_files(new_paths, [self.filetype])
         self.add_to_listbox(new_paths)
 
     def add_dirs(self, event):
         new_dir = filedialog.askdirectory(title="Select a folder")
-        new_paths = get_files(new_dir, self.filetype)
+        new_paths = get_files([Path(new_dir)], [self.filetype])
         self.add_to_listbox(new_paths)
 
     def add_to_listbox(self, new_paths):
@@ -401,10 +403,7 @@ class FrameRunChained(tk.LabelFrame):
         # self.progress.grid(row=1, column=0, sticky="ew")
 
     def run(self, event):
-        if (
-            ON_WINDOWS
-            and self.master.frame_convert.frame_run.checkbutton_run_chained_var.get()
-        ):
+        if self.master.frame_convert.frame_run.checkbutton_run_chained_var.get():
             self.master.frame_convert.frame_run.run(event)
         if self.master.frame_detect.frame_run.checkbutton_run_chained_var.get():
             self.master.frame_detect.frame_run.run(event)

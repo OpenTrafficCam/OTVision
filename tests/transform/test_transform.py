@@ -1,19 +1,19 @@
 import shutil
 from pathlib import Path
+from typing import Union
 
 import geopandas as gpd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files
 from OTVision.transform.transform import main as transform
 
-SINGLE_REFPTS_FILE = Path(CONFIG["TESTDATAFOLDER"]) / "Testvideo_FR20.otrfpts"
 
-
-@pytest.mark.parametrize("single_refpts_file", [None, SINGLE_REFPTS_FILE])
-def test_transform(test_data_tmp_dir: Path, single_refpts_file):
+@pytest.mark.parametrize("single_refpts_file", [None, "Testvideo_FR20.otrfpts"])
+def test_transform(
+    test_data_tmp_dir: Path, test_data_dir: Path, single_refpts_file: Union[None, str]
+) -> None:
     # sourcery skip: remove-assert-true, remove-redundant-pass
     """Tests the main function of OTVision/transform/transform.py
     transforming test tracks files from pixel to world coordinates based
@@ -26,8 +26,8 @@ def test_transform(test_data_tmp_dir: Path, single_refpts_file):
 
     # Get true ottrk and otrpfts files from tests/data
     true_ottrk_files = get_files(
-        paths=Path(CONFIG["TESTDATAFOLDER"]),
-        filetypes=".ottrk",
+        paths=[test_data_dir],
+        filetypes=[".ottrk"],
     )
     for true_ottrk_file in true_ottrk_files:
         # Copy ottrk file to tests/data_tmp
@@ -53,12 +53,17 @@ def test_transform(test_data_tmp_dir: Path, single_refpts_file):
 
     # Get test ottrk and otrpfts files from tests/data_tmp
     test_tracks_files = get_files(
-        paths=Path(test_data_tmp_dir),
-        filetypes=".ottrk",
+        paths=[Path(test_data_tmp_dir)],
+        filetypes=[".ottrk"],
     )
 
     # Transform list of .ottrk files using otrefpts
-    transform(paths=test_tracks_files, refpts_file=single_refpts_file)
+    if single_refpts_file:
+        transform(
+            paths=test_tracks_files, refpts_file=test_data_dir / single_refpts_file
+        )
+    else:
+        transform(paths=test_tracks_files, refpts_file=None)
 
     # Compare gpkg files for all test data
     for true_ottrk_file in true_ottrk_files:

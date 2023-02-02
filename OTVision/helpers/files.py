@@ -23,115 +23,182 @@ import shutil
 from pathlib import Path
 from typing import Union
 
+from OTVision.config import CONFIG
 from OTVision.helpers.log import log
 
 
-def get_files(paths, filetypes=None, replace_filetype=False, search_subdirs=True):
-    # sourcery skip: low-code-quality
+def get_files(
+    paths: list[Path],
+    filetypes: Union[list[str], None] = None,
+    search_subdirs: bool = True,
+) -> list[Path]:
     """
     Generates a list of files ending with filename based on filenames or the
     (recursive) content of folders.
 
     Args:
-        paths ([str or list of str or Path or list of Path]): where to find
-        the files.
-        filetype ([str]): ending of files to find. Preceding "_" prevents adding a '.'
+        paths (list[Path]): where to find the files.
+        filetype (list[str]): ending of files to find. Preceding "_" prevents adding a
+        '.'
             If no filetype is given, filetypes of file paths given are used and
             directories are ignored. Defaults to None.
-        replace_filetype ([bool]): Wheter or not to replace the filetype in file paths
-            with the filetype given. Currently only applied when one filetype was given.
-            Defaults to False.
-        search_subdirs ([bool]): Wheter or not to search subdirs of dirs given as paths.
+        search_subdirs (bool): Wheter or not to search subdirs of dirs given as paths.
             Defaults to True.
 
+    Raises:
+        TypeError: If type of paths is not list
+        TypeError: If type of path in paths is not Path or subclass
+        TypeError: If type of filetypes is not list
+        TypeError: If type of filetype in filetypes is not str
+        TypeError: If path in paths is neither valid file nor dir
+
     Returns:
-        [list]: [list of filenames as str]
+        list[Path]: List of files
     """
     files = set()
-    if type(paths) is str or isinstance(paths, Path):
-        paths = [paths]
-    elif type(paths) is not list:
-        raise TypeError("Paths needs to be a str, a list of str, or Path object")
+    if type(paths) is not list:
+        raise TypeError("Paths needs to be a list of pathlib.Path")
     if filetypes:
         if type(filetypes) is not list:
-            filetypes = [filetypes]
+            raise TypeError("Filetypes needs to be a list of str")
         for idx, filetype in enumerate(filetypes):
             if type(filetype) is not str:
-                raise TypeError("Filetype needs to be a str or a list of str")
+                raise TypeError("Filetypes needs to be a list of str")
             if not filetype.startswith("_"):
                 if not filetype.startswith("."):
                     filetype = f".{filetype}"
                 filetypes[idx] = filetype.lower()
     for path in paths:
-        path = Path(path)
+        if not isinstance(path, Path):
+            raise TypeError("Paths needs to be a list of pathlib.Path")
         if path.is_file():
-            if filetypes and replace_filetype and len(filetypes) == 1 and path.suffix:
-                path_with_filetype_replaced = path.with_suffix(filetypes[0])
-                if path_with_filetype_replaced.is_file():
-                    path = path.with_suffix(filetypes[0])
-            file = str(path)
+            file = path
             if filetypes:
                 for filetype in filetypes:
                     if path.suffix.lower() == filetype:
-                        files.add(str(path))
+                        files.add(path)
             else:
-                files.add(str(path))
+                files.add(path)
         elif path.is_dir():
-            for filetype in filetypes:
-                for file in path.glob("**/*" if search_subdirs else "*"):
-                    if file.is_file and file.suffix.lower() == filetype:
-                        files.add(str(file))
+            if filetypes:
+                for filetype in filetypes:
+                    for file in path.glob("**/*" if search_subdirs else "*"):
+                        if file.is_file() and file.suffix.lower() == filetype:
+                            files.add(file)
         else:
-            raise TypeError(
-                "Paths needs to be a path as a pathlib.Path() or a str or a list of str"
-            )
+            raise TypeError("Paths needs to be a list of pathlib.Path")
 
     return sorted(list(files))
 
 
-def remove_dir(dir_to_remove: Union[str, Path]):
-    dir_to_remove = Path(dir_to_remove)
+def replace_filetype(
+    files: list[Path], new_filetype: str, old_filetype: Union[str, None] = None
+) -> list[Path]:
+    """In a list of files, replace the filetype of all files of a certain old_filetype
+    by a new_filetype. If no old_filetype is given, replace tha filetype of all files.
+    Directories remain unchanged in the new list.
+
+    Args:
+        paths (list[Path]): List of paths (can be files or directories).
+        new_filetype (str): New file type after replacement.
+        old_filetype (str): File type to be replaced. If None, filetypes of all files
+            will be replaced.
+            Defaults to None.
+
+    Raises:
+        TypeError: If files is not a list of pathlib.Path
+        TypeError: If one of the files is not a file (but, for example, a dir)
+
+    Returns:
+        list[Path]: List of paths with file type replaced
+    """
+
+    if type(files) is not list:
+        raise TypeError("Paths needs to be a list of pathlib.Path")
+    new_paths = []
+    for path in files:
+        if not isinstance(path, Path):
+            raise TypeError("Paths needs to be a list of pathlib.Path")
+        if path.is_file():
+            if old_filetype and path.suffix.lower() != old_filetype.lower():
+                continue
+            new_path = path.with_suffix(new_filetype)
+            new_paths.append(new_path)
+        elif path.is_dir():
+            raise TypeError("files has to be a list of files without dirs")
+        else:
+            raise TypeError("files has to be a list of existing files")
+
+    return new_paths
+
+
+def _remove_dir(dir_to_remove: Path) -> None:
+    """Helper to remove a directory and all of its subdirectories.
+
+    Args:
+        dir_to_remove (Path): directory to remove
+    """
     for path in dir_to_remove.glob("*"):
         if path.is_file():
             path.unlink()
         else:
-            remove_dir(path)
+            _remove_dir(path)
     dir_to_remove.rmdir()
 
 
-def read_json(json_file, extension=".json"):
-    if isinstance(extension, str):
-        extension = [extension]
-    filetype = Path(json_file).suffix
-    if filetype not in extension:
-        raise ValueError(f"Wrong filetype {filetype}, has to be {extension}")
+def read_json(json_file: Path, filetype: str = ".json") -> dict:
+    """Read a json file of a specific filetype to a dict.
+
+    Args:
+        json_file (Path): json file to read
+        filetype (str, optional): filetype to check json file against.
+            Defaults to ".json".
+
+    Raises:
+        TypeError: If file is not pathlib.Path
+        ValueError: If file is not of filetype given
+
+    Returns:
+        dict: dict read from json file
+    """
+    if not isinstance(json_file, Path):
+        raise TypeError("json_file has to be of type pathlib.Path")
+    filetype = json_file.suffix
+    if json_file.suffix != filetype:
+        raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
     try:
         with open(json_file) as f:
             dict_from_json_file = json.load(f)
-    except OSError as oe:
-        log.error(f"Could not open {json_file}")
-        log.exception(oe)
-    except json.JSONDecodeError as je:
-        log.exception(
-            (
-                f'Unable to decode "{json_file}" as JSON.'
-                f"Following exception occured: {str(je)}"
-            )
-        )
-        log.exception(je)
-    except Exception as e:
-        log.exception(e)
-    # BUG: "UnboundLocalError: local variable 'dict_from_json_file' referenced bef ass"
-    return dict_from_json_file
+        log.info(f"{json_file} read")
+        return dict_from_json_file
+    except OSError:
+        log.exception(f"Could not open {json_file}")
+        raise
+    except json.JSONDecodeError:
+        log.exception(f'Unable to decode "{json_file}" as JSON.')
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 def write_json(
-    dict_to_write,
-    file,
-    extension=".json",
-    overwrite=False,
-):
-    outfile = Path(file).with_suffix(extension)
+    dict_to_write: dict,
+    file: Path,
+    filetype: str = ".json",
+    overwrite: bool = False,
+) -> None:
+    """Write a json file from a dict to a specific filetype.
+
+    Args:
+        dict_to_write (dict): dict to write
+        file (Path): file path. Can have other filetype, which will be overwritten.
+        filetype (str, optional): filetype of file to be written.
+            Defaults to ".json".
+        overwrite (bool, optional): Whether or not to overwrite an existing file.
+            Defaults to False.
+    """
+    outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
         with open(outfile, "w") as f:
@@ -141,42 +208,118 @@ def write_json(
         else:
             log.debug(f"{outfile} overwritten")
     else:
-        log.debug(f"{outfile} already exists, not overwritten")
+        log.debug(f"{outfile} already exists, not overwritten. Set overwrite=True")
 
 
-def denormalize(otdict, keys_width=None, keys_height=None):
+# TODO: Type hint nested dict during refactoring
+def _check_and_update_metadata_inplace(otdict: dict) -> None:
+    """Check if dict of detections or tracks has subdict metadata.
+        If not, try to convert from historic format.
+        Atttention: Updates the input dict inplace.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+    """
+    if "metadata" in otdict:
+        return
+    try:
+        otdict["metadata"] = {}
+        if "vid_config" in otdict:
+            otdict["metadata"]["vid"] = otdict["vid_config"]
+        if "det_config" in otdict:
+            otdict["metadata"]["det"] = otdict["det_config"]
+        if "trk_config" in otdict:
+            otdict["metadata"]["trk"] = otdict["trk_config"]
+        log.info("metadata updated from historic format to new format")
+    except Exception:
+        log.exception("metadata not found and not in historic config format")
+        raise
+
+
+# TODO: Type hint nested dict during refactoring
+def denormalize_bbox(
+    otdict: dict,
+    keys_width: Union[list[str], None] = None,
+    keys_height: Union[list[str], None] = None,
+) -> dict:
+    """Denormalize all bbox references in detections or tracks dict from percent to px.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        keys_width (list[str], optional): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str], optional): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+
+    Returns:
+        _type_: Denormalized dict.
+    """
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
         keys_height = ["y", "h"]
-    if otdict["det_config"]["normalized"]:
+    if otdict["metadata"]["det"]["normalized"]:
         direction = "denormalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
-        otdict["det_config"]["normalized"] = False
+        otdict["metadata"]["det"]["normalized"] = False
         log.debug("Dict denormalized")
     else:
         log.debug("Dict was already denormalized")
     return otdict
 
 
-def normalize(otdict, keys_width=None, keys_height=None):
+# TODO: Type hint nested dict during refactoring
+def normalize_bbox(
+    otdict: dict,
+    keys_width: Union[list[str], None] = None,
+    keys_height: Union[list[str], None] = None,
+) -> dict:
+    """Normalize all bbox references in detections or tracks dict from percent to px.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        keys_width (list[str], optional): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str], optional): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+
+    Returns:
+        _type_: Normalized dict.
+    """
     if keys_width is None:
         keys_width = ["x", "w"]
     if keys_height is None:
         keys_height = ["y", "h"]
-    if not otdict["det_config"]["normalized"]:
+    if not otdict["metadata"]["normalized"]:
         direction = "normalize"
         otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
-        otdict["det_config"]["normalized"] = True
+        otdict["metadata"]["normalized"] = True
         log.debug("Dict normalized")
     else:
         log.debug("Dict was already normalized")
     return otdict
 
 
-def _normal_transformation(otdict, direction, keys_width, keys_height):
-    width = otdict["vid_config"]["width"]
-    height = otdict["vid_config"]["height"]
+# TODO: Type hint nested dict during refactoring
+def _normal_transformation(
+    otdict: dict, direction: str, keys_width: list[str], keys_height: list[str]
+) -> dict:
+    """Helper to do the actual normalization or denormalization.
+        (Reduces duplicate code snippets)
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        direction (str): "normalize" or "denormalize"
+        keys_width (list[str]): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str]): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+
+    Returns:
+        dict: Normalized or denormalized dict
+    """
+    width = otdict["metadata"]["vid"]["width"]
+    height = otdict["metadata"]["vid"]["height"]
     for detection in otdict["data"]:
         for bbox in otdict["data"][detection]["classified"]:
             for key in bbox:
@@ -193,34 +336,59 @@ def _normal_transformation(otdict, direction, keys_width, keys_height):
     return otdict
 
 
-def _get_testdatafolder():
-    return str(Path(__file__).parents[2] / r"tests/data")
+def has_filetype(file: Path, filetypes: list[str]) -> bool:
+    """Checks if a file has a specified filetype.
 
-
-def is_in_format(file_path, file_formats):
-    """Checks if a file path is in specified format.
-
-    The case of a file format is ignored.
+    The case of a filetype is ignored.
 
     Args:
-        pathToVideo (str): the file path
-        file_formats(list(str)): the file formats
+        file (Path): The path to the file
+        file_formats(list(str)): The valid filetypes
 
     Returns:
-        True if path is of format specified in file_formats.
+        True if file is of filetype specified in filetypes.
         Otherwise False.
     """
-    file = Path(file_path)
+
     return file.suffix.lower() in [
-        file_format.lower()
-        if file_format.startswith(".")
-        else f".{file_format.lower()}"
-        for file_format in file_formats
+        filetype.lower() if filetype.startswith(".") else f".{filetype.lower()}"
+        for filetype in filetypes
     ]
 
 
-def unzip(file: Union[str, Path]) -> Path:
-    file = Path(file)
+def is_video(file: Path) -> bool:
+    """Checks if a file is a video according to its filetype
+
+    Args:
+        file (Path): file to check
+
+    Returns:
+        bool: whether or not the file is a video
+    """
+    return file.suffix.lower() in CONFIG["FILETYPES"]["VID"]
+
+
+def is_image(file: Path) -> bool:
+    """Checks if a file is an image according to its filetype
+
+    Args:
+        file (Path): file to check
+
+    Returns:
+        bool: whether or not the file is an image
+    """
+    return file.suffix.lower() in CONFIG["FILETYPES"]["IMG"]
+
+
+def unzip(file: Path) -> Path:
+    """Unpack a zip archive to a directory of same name.
+
+    Args:
+        file (Path): zip to unpack
+
+    Returns:
+        Path: unzipped directory
+    """
     directory = file.with_suffix("")
     shutil.unpack_archive(file, directory)
     return directory
