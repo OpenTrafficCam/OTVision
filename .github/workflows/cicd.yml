@@ -5,6 +5,10 @@ name: Run CI/CD
 
 on: pull_request
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
