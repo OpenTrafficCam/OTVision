@@ -51,6 +51,36 @@ def parse() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
+    parser.add_argument(
+        "--sigma_l",
+        default=CONFIG["TRACK"]["IOU"]["SIGMA_L"],
+        type=float,
+        help="Set sigma_l paramter for tracking",
+    )
+    parser.add_argument(
+        "--sigma_h",
+        default=CONFIG["TRACK"]["IOU"]["SIGMA_H"],
+        type=float,
+        help="Set sigma_h paramter for tracking",
+    )
+    parser.add_argument(
+        "--sigma_iou",
+        default=CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
+        type=float,
+        help="Set sigma_iou paramter for tracking",
+    )
+    parser.add_argument(
+        "--t_min",
+        default=CONFIG["TRACK"]["IOU"]["T_MIN"],
+        type=float,
+        help="Set t_min paramter for tracking",
+    )
+    parser.add_argument(
+        "--t_miss_max",
+        default=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+        type=float,
+        help="Set t_miss_max paramter for tracking",
+    )
     return parser.parse_args()
 
 
@@ -59,7 +89,16 @@ def main() -> None:
     paths = [Path(str_path) for str_path in args.paths]
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
-    track(paths=paths, overwrite=args.overwrite, debug=args.debug)
+    track(
+        paths=paths,
+        overwrite=args.overwrite,
+        debug=args.debug,
+        sigma_l=args.sigma_l,
+        sigma_h=args.sigma_h,
+        sigma_iou=args.sigma_iou,
+        t_min=args.t_min,
+        t_miss_max=args.t_miss_max,
+    )
     log.info("Finished tracking from command line")
 
 
