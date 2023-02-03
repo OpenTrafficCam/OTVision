@@ -19,10 +19,45 @@ OTVision config module for setting default values
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import sys
 from pathlib import Path
+
+import yaml
+
+from OTVision.helpers.log import log
+
+
+class Config:
+    @staticmethod
+    def from_yaml(yaml_file: Path) -> dict:
+        """Parse OTVision yaml configuration file.
+
+        Args:
+            yaml_file (Path): The yaml config file.
+
+        Returns:
+            dict: The parsed config file as a dict.
+        """
+        with open(yaml_file, "r") as file:
+            try:
+                config = yaml.safe_load(file)
+            except yaml.YAMLError:
+                log.error("Unable to parse user config. Using default config.")
+                raise
+        return config
+
+
+def parse_user_config(yaml_file: str) -> None:
+    user_config_file = Path(yaml_file)
+    user_config = Config.from_yaml(user_config_file)
+    module = sys.modules[__name__]
+    CONFIG.update(user_config)
+    print(module)
+
 
 # sourcery skip: merge-dict-assign
 CONFIG: dict = {}
+CONFIG["PATHS"] = []
 
 
 # FOLDERS

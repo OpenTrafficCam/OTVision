@@ -22,9 +22,7 @@ OTVision script to call the detect main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
-from OTVision.config import CONFIG
-from OTVision.detect.detect import main as detect
-from OTVision.helpers.log import log
+import OTVision.config as config
 
 
 def parse() -> argparse.Namespace:
@@ -35,12 +33,18 @@ def parse() -> argparse.Namespace:
         nargs="+",
         type=str,
         help="Path/list of paths to image or video or folder containing videos/images",
-        required=True,
+        required=False,
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        help="Path to custom user configuration yaml file.",
+        required=False,
     )
     parser.add_argument(
         "-f",
         "--filetypes",
-        default=CONFIG["FILETYPES"]["VID"],
         type=str,
         nargs="+",
         help="Filetypes of files in folders to select for detection",
@@ -49,7 +53,6 @@ def parse() -> argparse.Namespace:
     parser.add_argument(
         "-w",
         "--weights",
-        default=CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
         type=str,
         help="Name of weights from PyTorch hub or Path to weights file",
         required=False,
@@ -57,14 +60,12 @@ def parse() -> argparse.Namespace:
     parser.add_argument(
         "-o",
         "--overwrite",
-        default=CONFIG["DETECT"]["OVERWRITE"],
         action=argparse.BooleanOptionalAction,
         help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
-        default=CONFIG["DETECT"]["DEBUG"],
         action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
@@ -73,15 +74,57 @@ def parse() -> argparse.Namespace:
 
 def main() -> None:
     args = parse()
-    paths = [Path(str_path) for str_path in args.paths]
+    if args.config:
+        config.parse_user_config(args.config)
+    else:
+        user_config_cwd = Path(__file__).parent / "user_config.otvision.yaml"
+
+        if user_config_cwd.exists():
+            config.parse_user_config(str(user_config_cwd))
+
+    if args.paths:
+        str_paths = args.paths
+    else:
+        if len(config.CONFIG["PATHS"]) == 0:
+            # log.error("No paths have been passed as command line args.")
+            # log.error("No paths have been defined in the user config.")
+            return
+        str_paths = config.CONFIG["PATHS"]
+
+    if args.weights:
+        weights = args.weights
+    else:
+        weights = config.CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
+
+    if args.filetypes:
+        filetypes = args.filetypes
+
+    else:
+        filetypes = config.CONFIG["FILETYPES"]["VID"]
+    if args.overwrite:
+        overwrite = args.overwrite
+    else:
+        overwrite = config.CONFIG["DETECT"]["OVERWRITE"]
+
+    if args.debug:
+        debug = args.debug
+    else:
+        debug = config.CONFIG["DETECT"]["DEBUG"]
+
+    paths = [Path(str_path) for str_path in str_paths]
+
+    import OTVision
+    from OTVision.helpers.log import log
+
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
-    detect(
+
+    OTVision.detect(
         paths=paths,
-        weights=args.weights,
-        filetypes=args.filetypes,
-        overwrite=args.overwrite,
-        debug=args.debug,
+        weights=weights,
+        filetypes=filetypes,
+        overwrite=overwrite,
+        debug=debug,
     )
     log.info("Finished detection from command line")
 
