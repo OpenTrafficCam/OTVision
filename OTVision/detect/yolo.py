@@ -22,6 +22,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any, Union
 
+import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
@@ -91,12 +92,11 @@ def detect_video(
         if not img_batch:
             break
 
-        # What purpose does this transformation have
-        transformed_batch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
+        rgb_transformed_batch = [convert_bgr_to_rgb(frame) for frame in img_batch]
 
         t_trans = perf_counter()
 
-        results = model(transformed_batch, size)
+        results = model(rgb_transformed_batch, size)
 
         t_det = perf_counter()
 
@@ -132,6 +132,10 @@ def detect_video(
     det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
     vid_config = _get_vidconfig(file, width, height, fps, frames)
     return _convert_detections(yolo_detections, class_names, vid_config, det_config)
+
+
+def convert_bgr_to_rgb(img_frame: numpy.ndarray) -> numpy.ndarray:
+    return img_frame[:, :, ::-1]
 
 
 def detect_images(
@@ -200,7 +204,7 @@ def detect_images(
 
 def _get_batch_of_frames(
     video_capture: VideoCapture, batch_size: int
-) -> tuple[bool, list]:
+) -> tuple[bool, list[numpy.ndarray]]:
     """Reads the the next batch_size frames from VideoCapture.
 
     Args:
