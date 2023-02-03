@@ -25,10 +25,10 @@ T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
         ("sigma_h_0_6", SIGMA_L, 0.6, SIGMA_IOU, T_MIN, T_MISS_MAX),
         ("sigma_iou_0_2", SIGMA_L, SIGMA_H, 0.2, T_MIN, T_MISS_MAX),
         ("sigma_iou_0_6", SIGMA_L, SIGMA_H, 0.6, T_MIN, T_MISS_MAX),
-        # ("t_min_3", SIGMA_L, SIGMA_H, SIGMA_IOU, 3, T_MISS_MAX),
-        # ("t_min_10", SIGMA_L, SIGMA_H, SIGMA_IOU, 10, T_MISS_MAX),
-        # ("t_miss_max_25", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 25),
-        # ("t_miss_max_75", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75),
+        ("t_min_3", SIGMA_L, SIGMA_H, SIGMA_IOU, 3, T_MISS_MAX),
+        ("t_min_10", SIGMA_L, SIGMA_H, SIGMA_IOU, 10, T_MISS_MAX),
+        ("t_miss_max_25", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 25),
+        ("t_miss_max_75", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75),
     ],
 )
 def test_track_pass(
