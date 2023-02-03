@@ -72,13 +72,13 @@ def parse() -> argparse.Namespace:
     parser.add_argument(
         "--t_min",
         default=CONFIG["TRACK"]["IOU"]["T_MIN"],
-        type=float,
+        type=int,
         help="Set t_min paramter for tracking",
     )
     parser.add_argument(
         "--t_miss_max",
         default=CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-        type=float,
+        type=int,
         help="Set t_miss_max paramter for tracking",
     )
     return parser.parse_args()
