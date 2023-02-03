@@ -1,9 +1,9 @@
 black
 flake8
+interrogate
 isort
 mypy
 pre-commit
 pytest
 pytest-cov
 yamllint
-interrogate
