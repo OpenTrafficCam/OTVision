@@ -40,7 +40,7 @@ def parse() -> argparse.Namespace:
     parser.add_argument(
         "-f",
         "--filetypes",
-        default=CONFIG["FILETYPES"]["VID_IMG"],
+        default=CONFIG["FILETYPES"]["VID"],
         type=str,
         nargs="+",
         help="Filetypes of files in folders to select for detection",
