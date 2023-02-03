@@ -34,7 +34,7 @@ T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
 def test_track_pass(
     test_data_tmp_dir: Path,
     test_data_dir: Path,
-    dir_name,
+    dir_name: str,
     sigma_l: float,
     sigma_h: float,
     sigma_iou: float,
