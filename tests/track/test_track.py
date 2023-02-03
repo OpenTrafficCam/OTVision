@@ -47,31 +47,31 @@ def test_track_pass(
     """
 
     # Define sub dirs and create tmp folder
-    test_tracks_dir = test_data_dir / "track" / dir_name
+    test_track_dir = test_data_dir / "track" / dir_name
     (test_data_tmp_dir / "track").mkdir(exist_ok=True)
-    test_tracks_tmp_dir = test_data_tmp_dir / "track" / dir_name
-    test_tracks_tmp_dir.mkdir(exist_ok=True)
+    test_track_tmp_dir = test_data_tmp_dir / "track" / dir_name
+    test_track_tmp_dir.mkdir(exist_ok=True)
 
     # Get reference data
     ref_detections_files = get_files(
-        paths=[test_tracks_dir],
+        paths=[test_track_dir],
         filetypes=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
     )
     ref_tracks_files = get_files(
-        paths=[test_tracks_dir], filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]]
+        paths=[test_track_dir], filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]]
     )
 
     # Copy input data to temporary folder and start conversion
     for ref_detections_file in ref_detections_files:
         # test_detections_file = test_data_tmp_dir / "track" / ref_detections_file.name
-        test_detections_file = test_tracks_tmp_dir / ref_detections_file.name
+        test_detections_file = test_track_tmp_dir / ref_detections_file.name
         shutil.copy2(
             ref_detections_file,
             test_detections_file,
         )
 
     # Track all test detections files
-    dir_to_track = test_tracks_tmp_dir
+    dir_to_track = test_track_tmp_dir
     track(
         paths=[dir_to_track],
         sigma_l=sigma_l,
@@ -84,8 +84,8 @@ def test_track_pass(
     # Compare all test tracks files to their respective reference tracks files
     tracks_file_names = [file.name for file in ref_tracks_files]
     equal_files, different_files, irregular_files = cmpfiles(
-        a=test_tracks_dir,
-        b=test_tracks_tmp_dir,
+        a=test_track_dir,
+        b=test_track_tmp_dir,
         common=tracks_file_names,
         shallow=False,
     )
