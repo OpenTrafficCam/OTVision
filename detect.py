@@ -22,7 +22,9 @@ OTVision script to call the detect main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
+import OTVision
 import OTVision.config as config
+from OTVision.helpers.log import log
 
 
 def parse() -> argparse.Namespace:
@@ -112,9 +114,6 @@ def main() -> None:
         debug = config.CONFIG["DETECT"]["DEBUG"]
 
     paths = [Path(str_path) for str_path in str_paths]
-
-    import OTVision
-    from OTVision.helpers.log import log
 
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
