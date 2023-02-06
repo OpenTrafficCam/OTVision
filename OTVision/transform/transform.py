@@ -163,7 +163,7 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     """
 
     # Read dicts and turn tracks into DataFrame
-    tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix)
+    tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix, decompress=False)
     _check_and_update_metadata_inplace(tracks_dict)
     tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
     metadata_dict = tracks_dict["metadata"]
@@ -190,7 +190,7 @@ def read_refpts(
         dict: Matching reference points in both pixel and utm coordinates
     """
 
-    return read_json(reftpts_file, filetype=reftpts_file.suffix)
+    return read_json(reftpts_file, filetype=reftpts_file.suffix, decompress=False)
 
 
 def transform(

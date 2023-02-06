@@ -18,13 +18,18 @@ OTVision helpers for filehandling
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
+import bz2
 import shutil
 from pathlib import Path
 from typing import Union
 
+import ujson
+
 from OTVision.config import CONFIG
 from OTVision.helpers.log import log
+
+ENCODING = "UTF-8"
+COMPRESSED_FILETYPE = ".bz2"
 
 
 def get_files(
@@ -146,13 +151,20 @@ def _remove_dir(dir_to_remove: Path) -> None:
     dir_to_remove.rmdir()
 
 
-def read_json(json_file: Path, filetype: str = ".json") -> dict:
+def read_json(
+    json_file: Path,
+    filetype: str = ".json",
+    decompress: bool = True,
+) -> dict:
     """Read a json file of a specific filetype to a dict.
 
     Args:
         json_file (Path): json file to read
         filetype (str, optional): filetype to check json file against.
             Defaults to ".json".
+        decompress: (bool, optional): decompress output with bzip2.
+            If `filetype` is not `.bz2`, decompress will be set to False.
+            Defaults to True.
 
     Raises:
         TypeError: If file is not pathlib.Path
@@ -167,14 +179,18 @@ def read_json(json_file: Path, filetype: str = ".json") -> dict:
     if json_file.suffix != filetype:
         raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
     try:
-        with open(json_file) as f:
-            dict_from_json_file = json.load(f)
+        if decompress:
+            with bz2.open(json_file, "rt", encoding=ENCODING) as input:
+                dict_from_json_file = ujson.load(input)
+        else:
+            with open(json_file, "r", encoding=ENCODING) as input:
+                dict_from_json_file = ujson.load(input)
         log.info(f"{json_file} read")
         return dict_from_json_file
     except OSError:
         log.exception(f"Could not open {json_file}")
         raise
-    except json.JSONDecodeError:
+    except ujson.JSONDecodeError:
         log.exception(f'Unable to decode "{json_file}" as JSON.')
         raise
     except Exception:
@@ -187,6 +203,7 @@ def write_json(
     file: Path,
     filetype: str = ".json",
     overwrite: bool = False,
+    compress: bool = True,
 ) -> None:
     """Write a json file from a dict to a specific filetype.
 
@@ -197,12 +214,19 @@ def write_json(
             Defaults to ".json".
         overwrite (bool, optional): Whether or not to overwrite an existing file.
             Defaults to False.
+        compress: (bool, optional): compress input with bzip2.
+            If `filetype` is not `.bz2`, compress will be set to False.
+            Defaults to True.
     """
     outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
-        with open(outfile, "w") as f:
-            json.dump(dict_to_write, f, indent=4)
+        if compress:
+            with bz2.open(outfile, "wt", encoding=ENCODING) as output:
+                ujson.dump(dict_to_write, output, indent=4)
+        else:
+            with open(outfile, "w", encoding=ENCODING) as output:
+                ujson.dump(dict_to_write, output, indent=4)
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
         else:
