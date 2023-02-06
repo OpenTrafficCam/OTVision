@@ -23,7 +23,8 @@ OTVision init module
 from .convert.convert import main as convert
 from .detect.detect import main as detect
 from .track.track import main as track
+from .transform.transform import main as transform
 
 # from .view.view import main as view
 
-__all__: list = ["detect", "track", "convert"]
+__all__: list = ["detect", "track", "convert", "transform"]
