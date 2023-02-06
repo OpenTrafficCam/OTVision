@@ -46,6 +46,10 @@ jobs:
           mypy .
       - name: Test with pytest
         run: pytest --cov=OTVision tests/
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
       - name: Log in to the Container registry
         uses: docker/login-action@v1
         with:
