@@ -92,9 +92,8 @@ def test_track_pass(
     copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
 
     # Track all test detections files
-    dir_to_track = test_track_tmp_dir
     track(
-        paths=[dir_to_track],
+        paths=[test_track_tmp_dir],
         sigma_l=sigma_l,
         sigma_h=sigma_h,
         sigma_iou=sigma_iou,
@@ -149,3 +148,74 @@ def test_track_overwrite(
             assert pre != post
         else:
             assert pre == post
+
+
+@pytest.mark.parametrize(
+    "paths",
+    [
+        (1),
+        ("some_str"),
+        (Path("some_str")),
+        ([Path("some_str"), Path("some_other_str")]),
+    ],
+)
+def test_track_fail_wrong_paths(paths) -> None:  # type: ignore
+    """Tests if the main function of OTVision/track/track.py raises errors when wrong
+    paths are given"""
+
+    # Check if TypeError is raised
+    with pytest.raises(TypeError, match=r"Paths needs to be a list of pathlib.Path"):
+        track(paths=paths)
+
+
+@pytest.mark.parametrize(
+    "dir_name, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
+    [
+        ("default", "some_str", SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("default", Path("some_str"), SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("default", SIGMA_L, "some_str", SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("default", SIGMA_L, Path("some_str"), SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("default", SIGMA_L, SIGMA_H, "some_str", T_MIN, T_MISS_MAX),
+        ("default", SIGMA_L, SIGMA_H, Path("some_str"), T_MIN, T_MISS_MAX),
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, "some_str", T_MISS_MAX),
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, Path("some_str"), T_MISS_MAX),
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, 10.5, T_MISS_MAX),
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, "some_str"),
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, Path("some_str")),
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75.5),
+    ],
+)
+def test_track_fail_wrong_parameters(
+    test_data_tmp_dir: Path,
+    test_data_dir: Path,
+    dir_name: str,
+    sigma_l: float,
+    sigma_h: float,
+    sigma_iou: float,
+    t_min: int,
+    t_miss_max: int,
+) -> None:
+    """Tests if the main function of OTVision/track/track.py raises errors when wrong
+    parameters are given"""
+
+    # Define sub dirs and create tmp folder
+    test_track_dir, test_track_tmp_dir = define_and_create_folders(
+        test_data_tmp_dir, test_data_dir, dir_name
+    )
+
+    # Get reference data
+    ref_detections_files, ref_tracks_files = get_reference_data(test_track_dir)
+
+    # Copy input data to temporary folder
+    copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
+
+    # Track all test detections files
+    with pytest.raises(ValueError):
+        track(
+            paths=[test_track_tmp_dir],
+            sigma_l=sigma_l,
+            sigma_h=sigma_h,
+            sigma_iou=sigma_iou,
+            t_min=t_min,
+            t_miss_max=t_miss_max,
+        )
