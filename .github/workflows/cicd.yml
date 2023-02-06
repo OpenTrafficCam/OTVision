@@ -50,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
+      - uses: actions/checkout@v3
       - name: Log in to the Container registry
         uses: docker/login-action@v1
         with:
