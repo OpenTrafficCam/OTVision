@@ -15,6 +15,40 @@ T_MIN = CONFIG["TRACK"]["IOU"]["T_MIN"]
 T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
 
 
+def define_and_create_folders(
+    test_data_tmp_dir: Path, test_data_dir: Path, dir_name: str
+) -> tuple[Path, Path]:
+    test_track_dir = test_data_dir / "track" / dir_name
+    (test_data_tmp_dir / "track").mkdir(exist_ok=True)
+    test_track_tmp_dir = test_data_tmp_dir / "track" / dir_name
+    test_track_tmp_dir.mkdir(exist_ok=True)
+    return test_track_dir, test_track_tmp_dir
+
+
+def get_reference_data(test_track_dir: Path) -> tuple[list[Path], list[Path]]:
+    ref_detections_files = get_files(
+        paths=[test_track_dir],
+        filetypes=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
+    )
+    ref_tracks_files = get_files(
+        paths=[test_track_dir], filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]]
+    )
+
+    return ref_detections_files, ref_tracks_files
+
+
+def copy_input_data_to_tmp_folder(
+    test_track_tmp_dir: Path, ref_detections_files: list[Path]
+) -> None:
+    for ref_detections_file in ref_detections_files:
+        # test_detections_file = test_data_tmp_dir / "track" / ref_detections_file.name
+        test_detections_file = test_track_tmp_dir / ref_detections_file.name
+        shutil.copy2(
+            ref_detections_file,
+            test_detections_file,
+        )
+
+
 @pytest.mark.parametrize(
     "dir_name, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
     [
@@ -47,28 +81,15 @@ def test_track_pass(
     """
 
     # Define sub dirs and create tmp folder
-    test_track_dir = test_data_dir / "track" / dir_name
-    (test_data_tmp_dir / "track").mkdir(exist_ok=True)
-    test_track_tmp_dir = test_data_tmp_dir / "track" / dir_name
-    test_track_tmp_dir.mkdir(exist_ok=True)
+    test_track_dir, test_track_tmp_dir = define_and_create_folders(
+        test_data_tmp_dir, test_data_dir, dir_name
+    )
 
     # Get reference data
-    ref_detections_files = get_files(
-        paths=[test_track_dir],
-        filetypes=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
-    )
-    ref_tracks_files = get_files(
-        paths=[test_track_dir], filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]]
-    )
+    ref_detections_files, ref_tracks_files = get_reference_data(test_track_dir)
 
-    # Copy input data to temporary folder and start conversion
-    for ref_detections_file in ref_detections_files:
-        # test_detections_file = test_data_tmp_dir / "track" / ref_detections_file.name
-        test_detections_file = test_track_tmp_dir / ref_detections_file.name
-        shutil.copy2(
-            ref_detections_file,
-            test_detections_file,
-        )
+    # Copy input data to temporary folder
+    copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
 
     # Track all test detections files
     dir_to_track = test_track_tmp_dir
@@ -92,3 +113,39 @@ def test_track_pass(
     assert tracks_file_names == equal_files
     assert not different_files
     assert not irregular_files
+
+
+@pytest.mark.parametrize("overwrite", [(True), (False)])
+def test_track_overwrite(
+    test_data_tmp_dir: Path, test_data_dir: Path, overwrite: bool
+) -> None:
+    """Tests if the main function of OTVision/track/track.py properly overwrites
+    existing files or not based on the overwrite parameter"""
+
+    # Define sub dirs and create tmp folder
+    test_track_dir, test_track_tmp_dir = define_and_create_folders(
+        test_data_tmp_dir, test_data_dir, dir_name="default"
+    )
+
+    # Get reference data
+    ref_detections_files, ref_tracks_files = get_reference_data(test_track_dir)
+
+    # Copy input data to temporary folder
+    copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
+
+    test_tracks_files = [test_track_tmp_dir / file.name for file in ref_tracks_files]
+
+    # Track all test detections files for a first time and get file statistics
+    track(paths=[test_track_tmp_dir])
+    pre_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
+
+    # Track all test detections files for a second time and get file statistics
+    track(paths=[test_track_tmp_dir], overwrite=overwrite)
+    post_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
+
+    # Check if file statistics are different
+    for pre, post in zip(pre_test_file_stats, post_test_file_stats):
+        if overwrite:
+            assert pre != post
+        else:
+            assert pre == post
