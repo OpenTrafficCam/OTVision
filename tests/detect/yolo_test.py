@@ -1,21 +1,27 @@
 from pathlib import Path
 
+import numpy
 import pytest
 import torch
-from cv2 import VideoCapture
+from cv2 import COLOR_BGR2RGB, VideoCapture, cvtColor
 
 from OTVision.detect.yolo import (
     YOLOv5ModelNotFoundError,
     _get_batch_of_frames,
     _load_custom_model,
     _load_pretrained_model,
+    convert_bgr_to_rgb,
     loadmodel,
 )
 
 
 @pytest.fixture
 def video_path() -> str:
-    return str(Path(__file__).parents[1] / "data" / "Testvideo_FR20_Cars-Cyclist.mp4")
+    return str(
+        Path(__file__).parents[1]
+        / "data"
+        / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
+    )
 
 
 @pytest.fixture
@@ -112,3 +118,18 @@ class TestLoadModel:
     ) -> None:
         with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
             loadmodel(str(text_file), self.CONF_THRESH, self.IOU_THRESH)
+
+
+class TestBgrToRgbConverter:
+    @pytest.fixture()
+    def image_as_array(self, video_path: str) -> numpy.ndarray:
+        cap = VideoCapture(video_path)
+        _, image_as_array = cap.read()
+        cap.release()
+        return image_as_array
+
+    def test_convert_bgr_to_rgb(self, image_as_array: numpy.ndarray) -> None:
+        result = convert_bgr_to_rgb(image_as_array)
+        assert not (image_as_array == result).all()
+        expected = cvtColor(image_as_array, COLOR_BGR2RGB)
+        assert (result == expected).all()
