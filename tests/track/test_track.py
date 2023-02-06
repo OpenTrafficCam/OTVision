@@ -210,7 +210,7 @@ def test_track_fail_wrong_parameters(
     copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
 
     # Track all test detections files
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=".*has to be.*"):
         track(
             paths=[test_track_tmp_dir],
             sigma_l=sigma_l,
