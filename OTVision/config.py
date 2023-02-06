@@ -129,6 +129,7 @@ class _LastPaths:
 
 @dataclass
 class _ConvertConfig:
+    paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     output_filetype: str = ".mp4"
     input_fps: float = 20.0
@@ -141,6 +142,7 @@ class _ConvertConfig:
     @staticmethod
     def from_dict(d: dict) -> "_ConvertConfig":
         return _ConvertConfig(
+            d.get("PATHS", []),
             d.get("RUN_CHAINED", _ConvertConfig.run_chained),
             d.get("OUTPUT_FILETYPE", _ConvertConfig.output_filetype),
             d.get("INPUT_FPS", _ConvertConfig.input_fps),
@@ -153,6 +155,7 @@ class _ConvertConfig:
 
     def to_dict(self) -> dict:
         return {
+            "PATHS": self.paths,
             "RUN_CHAINED": self.run_chained,
             "OUTPUT_FILETYPE": self.output_filetype,
             "INPUT_FPS": self.input_fps,
@@ -210,6 +213,7 @@ class _YoloConfig:
 
 @dataclass
 class _DetectConfig:
+    paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
     overwrite: bool = True
@@ -227,6 +231,7 @@ class _DetectConfig:
         )
 
         return _DetectConfig(
+            d.get("PATHS", []),
             d.get("RUN_CHAINED", _DetectConfig.run_chained),
             yolo_config,
             d.get("OVERWRITE", _DetectConfig.overwrite),
@@ -240,6 +245,7 @@ class _DetectConfig:
 
     def to_dict(self) -> dict:
         return {
+            "PATHS": [str(p) for p in self.paths],
             "RUN_CHAINED": self.run_chained,
             "YOLO": self.yolo_config.to_dict(),
             "OVERWRITE": self.overwrite,
@@ -279,6 +285,7 @@ class _TrackIouConfig:
 
 @dataclass
 class _TrackConfig:
+    paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
@@ -294,6 +301,7 @@ class _TrackConfig:
         )
 
         return _TrackConfig(
+            d.get("PATHS", []),
             d.get("RUN_CHAINED", _TrackConfig.run_chained),
             iou_config,
             d.get("OVERWRITE", _TrackConfig.overwrite),
@@ -302,6 +310,7 @@ class _TrackConfig:
 
     def to_dict(self) -> dict:
         return {
+            "PATHS": [str(p) for p in self.paths],
             "RUN_CHAINED": self.run_chained,
             "IOU": self.iou.to_dict(),
             "OVERWRITE": self.overwrite,
@@ -327,6 +336,7 @@ class _UndistortConfig:
 
 @dataclass
 class _TransformConfig:
+    paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     overwrite: bool = True
     debug: bool = False
@@ -334,6 +344,7 @@ class _TransformConfig:
     @staticmethod
     def from_dict(d: dict) -> "_TransformConfig":
         return _TransformConfig(
+            d.get("PATHS", []),
             d.get("RUN_CHAINED", _TransformConfig.run_chained),
             d.get("OVERWRITE", _TransformConfig.overwrite),
             d.get("DEBUG", _TransformConfig.debug),
@@ -341,6 +352,7 @@ class _TransformConfig:
 
     def to_dict(self) -> dict:
         return {
+            "PATHS": [str(p) for p in self.paths],
             "RUN_CHAINED": self.run_chained,
             "OVERWRITE": self.overwrite,
             "DEBUG": self.debug,
@@ -408,7 +420,6 @@ class Config:
     Updates the default configuration with the custom config.
     """
 
-    paths: list = field(default_factory=list)
     search_subdirs: bool = True
     default_filetype: _DefaultFiletype = _DefaultFiletype()
     filetypes: _Filetypes = _Filetypes()
@@ -465,7 +476,6 @@ class Config:
         gui_config = _GuiConfig.from_dict(gui_dict) if gui_dict else Config.gui
 
         return Config(
-            paths=d.get("PATHS", []),
             search_subdirs=d.get("SEARCH_SUBDIRS", Config.search_subdirs),
             default_filetype=default_filetype,
             convert=convert_config,
@@ -483,7 +493,6 @@ class Config:
             dict: The OTVision config.
         """
         return {
-            "PATHS": self.paths,
             "SEARCH_SUBDIRS": self.search_subdirs,
             "DEFAULT_FILETYPE": self.default_filetype.to_dict(),
             "FILETYPES": self.filetypes.to_dict(),
@@ -530,7 +539,6 @@ def parse_user_config(yaml_file: str) -> None:
 
 # sourcery skip: merge-dict-assign
 CONFIG: dict = {}
-CONFIG["PATHS"] = []
 
 # FOLDERS
 CONFIG["SEARCH_SUBDIRS"] = True
@@ -569,6 +577,7 @@ CONFIG["LAST PATHS"]["REFPTS"] = []
 
 # CONVERT
 CONFIG["CONVERT"] = {}
+CONFIG["CONVERT"]["PATHS"] = []
 CONFIG["CONVERT"]["RUN_CHAINED"] = True
 CONFIG["CONVERT"]["OUTPUT_FILETYPE"] = ".mp4"
 CONFIG["CONVERT"]["INPUT_FPS"] = 20.0
@@ -580,6 +589,7 @@ CONFIG["CONVERT"]["DEBUG"] = False
 
 # DETECT
 CONFIG["DETECT"] = {}
+CONFIG["DETECT"]["PATHS"] = []
 CONFIG["DETECT"]["RUN_CHAINED"] = True
 CONFIG["DETECT"]["YOLO"] = {}
 CONFIG["DETECT"]["YOLO"]["WEIGHTS"] = "yolov5s"
@@ -601,6 +611,7 @@ CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE"] = False
 
 # TRACK
 CONFIG["TRACK"] = {}
+CONFIG["TRACK"]["PATHS"] = []
 CONFIG["TRACK"]["RUN_CHAINED"] = True
 CONFIG["TRACK"]["IOU"] = {}
 CONFIG["TRACK"]["IOU"]["SIGMA_L"] = 0.27  # 0.272
@@ -618,6 +629,7 @@ CONFIG["UNDISTORT"]["DEBUG"] = False
 
 # TRANSFORM
 CONFIG["TRANSFORM"] = {}
+CONFIG["TRANSFORM"]["PATHS"] = []
 CONFIG["TRANSFORM"]["RUN_CHAINED"] = True
 CONFIG["TRANSFORM"]["OVERWRITE"] = True
 CONFIG["TRANSFORM"]["DEBUG"] = False

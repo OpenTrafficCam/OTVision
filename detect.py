@@ -87,11 +87,11 @@ def main() -> None:
     if args.paths:
         str_paths = args.paths
     else:
-        if len(config.CONFIG["PATHS"]) == 0:
+        if len(config.CONFIG["DETECT"]["PATHS"]) == 0:
             log.error("No paths have been passed as command line args.")
             log.error("No paths have been defined in the user config.")
             return
-        str_paths = config.CONFIG["PATHS"]
+        str_paths = config.CONFIG["DETECT"]["PATHS"]
 
     if args.weights:
         weights = args.weights
