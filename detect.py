@@ -88,8 +88,8 @@ def main() -> None:
         str_paths = args.paths
     else:
         if len(config.CONFIG["PATHS"]) == 0:
-            # log.error("No paths have been passed as command line args.")
-            # log.error("No paths have been defined in the user config.")
+            log.error("No paths have been passed as command line args.")
+            log.error("No paths have been defined in the user config.")
             return
         str_paths = config.CONFIG["PATHS"]
 
@@ -100,9 +100,9 @@ def main() -> None:
 
     if args.filetypes:
         filetypes = args.filetypes
-
     else:
         filetypes = config.CONFIG["FILETYPES"]["VID"]
+
     if args.overwrite:
         overwrite = args.overwrite
     else:
