@@ -223,10 +223,10 @@ def write_json(
     if overwrite or not outfile_already_exists:
         if compress:
             with bz2.open(outfile, "wt", encoding=ENCODING) as output:
-                ujson.dump(dict_to_write, output, indent=4)
+                ujson.dump(dict_to_write, output)
         else:
             with open(outfile, "w", encoding=ENCODING) as output:
-                ujson.dump(dict_to_write, output, indent=4)
+                ujson.dump(dict_to_write, output)
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
         else:
