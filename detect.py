@@ -74,8 +74,7 @@ def parse() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse()
+def _process_config(args: argparse.Namespace) -> None:
     if args.config:
         config.parse_user_config(args.config)
     else:
@@ -84,35 +83,34 @@ def main() -> None:
         if user_config_cwd.exists():
             config.parse_user_config(str(user_config_cwd))
 
+
+def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
         str_paths = args.paths
     else:
         if len(config.CONFIG["DETECT"]["PATHS"]) == 0:
-            log.error("No paths have been passed as command line args.")
-            log.error("No paths have been defined in the user config.")
-            return
+            raise IOError(
+                "No paths have been passed as command line args."
+                "No paths have been defined in the user config."
+            )
+
         str_paths = config.CONFIG["DETECT"]["PATHS"]
+    return str_paths
 
-    if args.weights:
-        weights = args.weights
-    else:
-        weights = config.CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
 
-    if args.filetypes:
-        filetypes = args.filetypes
-    else:
-        filetypes = config.CONFIG["FILETYPES"]["VID"]
+def main() -> None:
+    args = parse()
+    _process_config(args)
 
-    if args.overwrite:
-        overwrite = args.overwrite
-    else:
-        overwrite = config.CONFIG["DETECT"]["OVERWRITE"]
+    try:
+        str_paths = _extract_paths(args)
+    except IOError as ioe:
+        log.error(ioe)
 
-    if args.debug:
-        debug = args.debug
-    else:
-        debug = config.CONFIG["DETECT"]["DEBUG"]
-
+    weights = args.weights or config.CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
+    filetypes = args.filetypes or config.CONFIG["FILETYPES"]["VID"]
+    overwrite = args.overwrite or config.CONFIG["DETECT"]["OVERWRITE"]
+    debug = args.debug or config.CONFIG["DETECT"]["DEBUG"]
     paths = [Path(str_path) for str_path in str_paths]
 
     log.info("Starting detection from command line")
