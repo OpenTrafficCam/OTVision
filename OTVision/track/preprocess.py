@@ -1,12 +1,16 @@
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from OTVision.helpers.files import read_json
 
+DATE_FORMAT: str = "%Y-%m-%d %H:%M:%S.%f"
+INPUT_FILE_PATH: str = "input_file_path"
 DATA: str = "data"
 CLASS: str = "class"
 CLASSIFIED: str = "classified"
 FRAME: str = "frame"
+OCCURRENCE: str = "occurrence"
 LABEL: str = "label"
 CONFIDENCE: str = "conf"
 X: str = "x"
@@ -22,6 +26,8 @@ class Detection:
     """
 
     frame: int
+    occurrence: datetime
+    input_file_path: str
     label: str
     conf: float
     x: float
@@ -32,6 +38,7 @@ class Detection:
     def to_dict(self) -> dict:
         return {
             FRAME: self.frame,
+            OCCURRENCE: self.occurrence,
             LABEL: self.label,
             CONFIDENCE: self.conf,
             X: self.x,
@@ -67,10 +74,16 @@ class DetectionParser:
     def convert(self, input: dict[str, dict[str, list]]) -> list[Detection]:
         detections: list[Detection] = []
         for key, value in input.items():
+            occurrence: datetime = datetime.strptime(
+                str(value[OCCURRENCE]), DATE_FORMAT
+            )
+            input_file_path: str = str(value[INPUT_FILE_PATH])
             data_detections = value[CLASSIFIED]
             for detection in data_detections:
                 detected_item = Detection(
                     int(key),
+                    occurrence,
+                    input_file_path,
                     detection[CLASS],
                     detection[CONFIDENCE],
                     detection[X],

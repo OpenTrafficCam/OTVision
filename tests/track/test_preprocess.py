@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+from typing import Any
+
 import pytest
 
 from OTVision.track.preprocess import (
@@ -5,6 +8,9 @@ from OTVision.track.preprocess import (
     CLASSIFIED,
     CONFIDENCE,
     DATA,
+    DATE_FORMAT,
+    INPUT_FILE_PATH,
+    OCCURRENCE,
     Cleanup,
     Detection,
     DetectionParser,
@@ -16,6 +22,8 @@ from OTVision.track.preprocess import (
 
 
 class DataBuilder:
+    DEFAULT_OCCURRENCE = datetime(year=2022, month=5, day=4)
+    DEFAULT_INPUT_FILE_PATH = "input-file.otdet"
     DEFAULT_LABEL = "car"
     DEFAULT_CONFIDENCE = 1.0
     DEFAULT_X = 512.0
@@ -23,7 +31,7 @@ class DataBuilder:
     DEFAULT_W = 128.0
     DEFAULT_H = 64.0
 
-    data: dict[str, dict[str, list]]
+    data: dict[str, dict[str, Any]]
     classified_frames: list[str]
     non_classified_frames: list[str]
     current_key: int
@@ -34,9 +42,17 @@ class DataBuilder:
         self.non_classified_frames = []
         self.current_key = 0
 
-    def append_non_classified_frame(self) -> "DataBuilder":
-        frame_number = self.next_key()
-        self.data[frame_number] = {CLASSIFIED: []}
+    def append_non_classified_frame(
+        self, input_file_path: str = DEFAULT_INPUT_FILE_PATH
+    ) -> "DataBuilder":
+        key: int = self.next_key()
+        frame_number = str(key)
+        occurrence = self.occurrence_from(key)
+        self.data[frame_number] = {
+            OCCURRENCE: occurrence,
+            INPUT_FILE_PATH: input_file_path,
+            CLASSIFIED: [],
+        }
         self.non_classified_frames.append(frame_number)
         return self
 
@@ -68,6 +84,7 @@ class DataBuilder:
     def append_classified_frame(
         self,
         number_of_classifications: int = 1,
+        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
         label: str = DEFAULT_LABEL,
         confidence: float = DEFAULT_CONFIDENCE,
         x: float = DEFAULT_X,
@@ -75,21 +92,37 @@ class DataBuilder:
         w: float = DEFAULT_W,
         h: float = DEFAULT_H,
     ) -> "DataBuilder":
-        frame_number = self.next_key()
+        key: int = self.next_key()
+        frame_number: str = str(key)
+        occurrence = self.occurrence_as_string(key)
         self.data[frame_number] = {
+            OCCURRENCE: occurrence,
+            INPUT_FILE_PATH: input_file_path,
             CLASSIFIED: [
                 self.create_classification(
-                    label=label, confidence=confidence, x=x, y=y, w=w, h=h
+                    label=label,
+                    confidence=confidence,
+                    x=x,
+                    y=y,
+                    w=w,
+                    h=h,
                 )
                 for i in range(0, number_of_classifications)
-            ]
+            ],
         }
         self.classified_frames.append(frame_number)
         return self
 
+    def occurrence_as_string(self, key: int) -> str:
+        return self.occurrence_from(key).strftime(DATE_FORMAT)
+
+    def occurrence_from(self, key: int) -> datetime:
+        return DataBuilder.DEFAULT_OCCURRENCE + timedelta(microseconds=key)
+
     def batch_append_classified_frames(
         self,
         number_of_frames: int = 1,
+        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
         number_of_classifications: int = 1,
         label: str = DEFAULT_LABEL,
         confidence: float = DEFAULT_CONFIDENCE,
@@ -100,13 +133,20 @@ class DataBuilder:
     ) -> "DataBuilder":
         for i in range(0, number_of_frames):
             self.append_classified_frame(
-                number_of_classifications, label, confidence, x, y, w, h
+                number_of_classifications=number_of_classifications,
+                input_file_path=input_file_path,
+                label=label,
+                confidence=confidence,
+                x=x,
+                y=y,
+                w=w,
+                h=h,
             )
         return self
 
-    def next_key(self) -> str:
+    def next_key(self) -> int:
         self.current_key += 1
-        return str(self.current_key)
+        return self.current_key
 
     def build(self) -> dict[str, dict[str, list]]:
         return self.data.copy()
@@ -156,9 +196,13 @@ class TestDetectionParser:
         parser = DetectionParser()
         result: list[Detection] = parser.convert(input)
 
+        input_file_path: str = "input-file.otdet"
+        expected_occurrence = input_builder.occurrence_from(1)
         assert result == [
             Detection(
                 frame=1,
+                occurrence=expected_occurrence,
+                input_file_path=input_file_path,
                 label=DataBuilder.DEFAULT_LABEL,
                 conf=DataBuilder.DEFAULT_CONFIDENCE,
                 x=DataBuilder.DEFAULT_X,
@@ -167,3 +211,9 @@ class TestDetectionParser:
                 h=DataBuilder.DEFAULT_H,
             )
         ]
+
+
+class TestPreprocess:
+    def test_preprocess(self) -> None:
+        builder = DataBuilder()
+        builder.append_classified_frame(input_file_path="first-file.otdet")
