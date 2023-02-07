@@ -1,6 +1,6 @@
 import pytest
 
-from track.preprocess import Cleanup, Detection, DetectionParser
+from OTVision.track.preprocess import Cleanup, Detection, DetectionParser
 
 
 class DataBuilder:

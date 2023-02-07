@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+from pathlib import Path
 
-from helpers.files import read_json
+from OTVision.helpers.files import read_json
 
 
 @dataclass(frozen=True, repr=True)
@@ -71,7 +72,7 @@ class DetectionParser:
 
 
 class Preprocess:
-    def load_data(self, input_path: str) -> list[Detection]:
+    def load_data(self, input_path: Path) -> list[Detection]:
         input = read_json(input_path)
         data: dict[str, dict[str, list]] = input["data"]
         cleaned = Cleanup().remove_empty_frames(data)
