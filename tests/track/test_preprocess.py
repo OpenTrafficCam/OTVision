@@ -1,6 +1,18 @@
 import pytest
 
-from OTVision.track.preprocess import Cleanup, Detection, DetectionParser
+from OTVision.track.preprocess import (
+    CLASS,
+    CLASSIFIED,
+    CONFIDENCE,
+    DATA,
+    Cleanup,
+    Detection,
+    DetectionParser,
+    H,
+    W,
+    X,
+    Y,
+)
 
 
 class DataBuilder:
@@ -24,7 +36,7 @@ class DataBuilder:
 
     def append_non_classified_frame(self) -> "DataBuilder":
         frame_number = self.next_key()
-        self.data[frame_number] = {"classified": []}
+        self.data[frame_number] = {CLASSIFIED: []}
         self.non_classified_frames.append(frame_number)
         return self
 
@@ -45,12 +57,12 @@ class DataBuilder:
         h: float = DEFAULT_H,
     ) -> dict[str, object]:
         return {
-            "class": label,
-            "conf": confidence,
-            "x": x,
-            "y": y,
-            "w": w,
-            "h": h,
+            CLASS: label,
+            CONFIDENCE: confidence,
+            X: x,
+            Y: y,
+            W: w,
+            H: h,
         }
 
     def append_classified_frame(
@@ -65,7 +77,7 @@ class DataBuilder:
     ) -> "DataBuilder":
         frame_number = self.next_key()
         self.data[frame_number] = {
-            "classified": [
+            CLASSIFIED: [
                 self.create_classification(
                     label=label, confidence=confidence, x=x, y=y, w=w, h=h
                 )
@@ -106,7 +118,7 @@ class DataBuilder:
 
 class TestCleanup:
     @pytest.mark.parametrize(
-        "data",
+        DATA,
         [
             {},
             DataBuilder().append_classified_frame().build(),
