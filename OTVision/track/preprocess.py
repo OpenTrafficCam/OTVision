@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from OTVision.helpers.files import read_json
 
@@ -25,9 +26,6 @@ class Detection:
     Data class which contains information for a single detection.
     """
 
-    frame: int
-    occurrence: datetime
-    input_file_path: str
     label: str
     conf: float
     x: float
@@ -37,14 +35,28 @@ class Detection:
 
     def to_dict(self) -> dict:
         return {
-            FRAME: self.frame,
-            OCCURRENCE: self.occurrence,
             LABEL: self.label,
             CONFIDENCE: self.conf,
             X: self.x,
             Y: self.y,
             W: self.w,
             H: self.h,
+        }
+
+
+@dataclass(frozen=True, repr=True)
+class Frame:
+    frame: str
+    occurrence: datetime
+    input_file_path: str
+    detections: list[Detection]
+
+    def to_dict(self) -> dict:
+        return {
+            FRAME: self.frame,
+            OCCURRENCE: self.occurrence,
+            INPUT_FILE_PATH: self.input_file_path,
+            CLASSIFIED: self.detections,
         }
 
 
@@ -71,33 +83,44 @@ class Cleanup:
 
 
 class DetectionParser:
-    def convert(self, input: dict[str, dict[str, list]]) -> list[Detection]:
+    def convert(self, data_detections: list[dict[str, str]]) -> list[Detection]:
         detections: list[Detection] = []
+        for detection in data_detections:
+            detected_item = Detection(
+                detection[CLASS],
+                float(detection[CONFIDENCE]),
+                float(detection[X]),
+                float(detection[Y]),
+                float(detection[W]),
+                float(detection[H]),
+            )
+            detections.append(detected_item)
+        return detections
+
+
+class FrameParser:
+    def convert(self, input: dict[str, dict[str, Any]]) -> list[Frame]:
+        detection_parser = DetectionParser()
+        frames = []
         for key, value in input.items():
             occurrence: datetime = datetime.strptime(
                 str(value[OCCURRENCE]), DATE_FORMAT
             )
             input_file_path: str = str(value[INPUT_FILE_PATH])
             data_detections = value[CLASSIFIED]
-            for detection in data_detections:
-                detected_item = Detection(
-                    int(key),
-                    occurrence,
-                    input_file_path,
-                    detection[CLASS],
-                    detection[CONFIDENCE],
-                    detection[X],
-                    detection[Y],
-                    detection[W],
-                    detection[H],
-                )
-                detections.append(detected_item)
-        return detections
+            detections = detection_parser.convert(data_detections)
+            parsed_frame = Frame(
+                key,
+                occurrence=occurrence,
+                input_file_path=input_file_path,
+                detections=detections,
+            )
+            frames.append(parsed_frame)
+        return frames
 
 
 class Preprocess:
-    def load_data(self, input_path: Path) -> list[Detection]:
+    def load_data(self, input_path: Path) -> list[Frame]:
         input = read_json(input_path)
-        data: dict[str, dict[str, list]] = input[DATA]
-        cleaned = Cleanup().remove_empty_frames(data)
-        return DetectionParser().convert(cleaned)
+        data: dict[str, dict[str, Any]] = input[DATA]
+        return FrameParser().convert(data)

@@ -14,23 +14,33 @@ from OTVision.track.preprocess import (
     Cleanup,
     Detection,
     DetectionParser,
+    Frame,
+    FrameParser,
     H,
     W,
     X,
     Y,
 )
 
+DEFAULT_OCCURRENCE = datetime(year=2022, month=5, day=4)
+DEFAULT_INPUT_FILE_PATH = "input-file.otdet"
+DEFAULT_LABEL = "car"
+DEFAULT_CONFIDENCE = 1.0
+DEFAULT_X = 512.0
+DEFAULT_Y = 256.0
+DEFAULT_W = 128.0
+DEFAULT_H = 64.0
+
+
+def occurrence_from(key: int) -> datetime:
+    return DEFAULT_OCCURRENCE + timedelta(microseconds=key)
+
+
+def occurrence_as_string(key: int) -> str:
+    return occurrence_from(key).strftime(DATE_FORMAT)
+
 
 class DataBuilder:
-    DEFAULT_OCCURRENCE = datetime(year=2022, month=5, day=4)
-    DEFAULT_INPUT_FILE_PATH = "input-file.otdet"
-    DEFAULT_LABEL = "car"
-    DEFAULT_CONFIDENCE = 1.0
-    DEFAULT_X = 512.0
-    DEFAULT_Y = 256.0
-    DEFAULT_W = 128.0
-    DEFAULT_H = 64.0
-
     data: dict[str, dict[str, Any]]
     classified_frames: list[str]
     non_classified_frames: list[str]
@@ -47,7 +57,7 @@ class DataBuilder:
     ) -> "DataBuilder":
         key: int = self.next_key()
         frame_number = str(key)
-        occurrence = self.occurrence_from(key)
+        occurrence = occurrence_from(key)
         self.data[frame_number] = {
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: input_file_path,
@@ -94,7 +104,7 @@ class DataBuilder:
     ) -> "DataBuilder":
         key: int = self.next_key()
         frame_number: str = str(key)
-        occurrence = self.occurrence_as_string(key)
+        occurrence = occurrence_as_string(key)
         self.data[frame_number] = {
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: input_file_path,
@@ -112,12 +122,6 @@ class DataBuilder:
         }
         self.classified_frames.append(frame_number)
         return self
-
-    def occurrence_as_string(self, key: int) -> str:
-        return self.occurrence_from(key).strftime(DATE_FORMAT)
-
-    def occurrence_from(self, key: int) -> datetime:
-        return DataBuilder.DEFAULT_OCCURRENCE + timedelta(microseconds=key)
 
     def batch_append_classified_frames(
         self,
@@ -151,8 +155,8 @@ class DataBuilder:
     def build(self) -> dict[str, dict[str, list]]:
         return self.data.copy()
 
-    def build_as_detections(self) -> list[Detection]:
-        parser = DetectionParser()
+    def build_as_detections(self) -> list[Frame]:
+        parser = FrameParser()
         return parser.convert(self.data.copy())
 
 
@@ -191,26 +195,61 @@ class TestDetectionParser:
 
     def test_convert(self) -> None:
         input_builder = DataBuilder()
-        input = input_builder.append_classified_frame().build()
+        input: list[dict] = input_builder.append_classified_frame().build()["1"][
+            CLASSIFIED
+        ]
 
         parser = DetectionParser()
         result: list[Detection] = parser.convert(input)
 
-        input_file_path: str = "input-file.otdet"
-        expected_occurrence = input_builder.occurrence_from(1)
         assert result == [
             Detection(
-                frame=1,
-                occurrence=expected_occurrence,
-                input_file_path=input_file_path,
-                label=DataBuilder.DEFAULT_LABEL,
-                conf=DataBuilder.DEFAULT_CONFIDENCE,
-                x=DataBuilder.DEFAULT_X,
-                y=DataBuilder.DEFAULT_Y,
-                w=DataBuilder.DEFAULT_W,
-                h=DataBuilder.DEFAULT_H,
+                label=DEFAULT_LABEL,
+                conf=DEFAULT_CONFIDENCE,
+                x=DEFAULT_X,
+                y=DEFAULT_Y,
+                w=DEFAULT_W,
+                h=DEFAULT_H,
             )
         ]
+
+
+class TestFrameParser:
+    frames: list[Frame]
+
+    def test_convert(self) -> None:
+        input_builder = DataBuilder()
+        input_builder.append_classified_frame()
+        input_builder.append_non_classified_frame()
+        input_builder.append_classified_frame()
+        input = input_builder.build()
+
+        parser = FrameParser()
+        result: list[Frame] = parser.convert(input)
+
+        assert result == [
+            self.create_frame(1, [self.create_default_detection()]),
+            self.create_frame(2, []),
+            self.create_frame(3, [self.create_default_detection()]),
+        ]
+
+    def create_frame(self, frame_number: int, detections: list[Detection]) -> Frame:
+        return Frame(
+            frame=str(frame_number),
+            occurrence=occurrence_from(frame_number),
+            input_file_path=DEFAULT_INPUT_FILE_PATH,
+            detections=detections,
+        )
+
+    def create_default_detection(self) -> Detection:
+        return Detection(
+            label=DEFAULT_LABEL,
+            conf=DEFAULT_CONFIDENCE,
+            x=DEFAULT_X,
+            y=DEFAULT_Y,
+            w=DEFAULT_W,
+            h=DEFAULT_H,
+        )
 
 
 class TestPreprocess:
