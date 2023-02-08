@@ -51,6 +51,7 @@ def create_frame(
     frame_number: int,
     detections: list[Detection],
     occurrence: datetime | None = None,
+    input_file_path: str = DEFAULT_INPUT_FILE_PATH,
 ) -> Frame:
     default_occurrence = occurrence_from(frame_number)
     if occurrence is None:
@@ -58,6 +59,7 @@ def create_frame(
     return Frame(
         frame=frame_number,
         occurrence=occurrence,
+        input_file_path=input_file_path,
         detections=detections,
     )
 
@@ -267,26 +269,36 @@ class TestFrameParser:
         input_builder.append_classified_frame()
         input = input_builder.build()
 
-        parser = FrameParser(
-            DEFAULT_INPUT_FILE_PATH, recorded_start_date=DEFAULT_START_DATE
-        )
+        order_key = "/some/path/to"
+        path = f"{order_key}/file-name.otdet"
+        parser = FrameParser(path, recorded_start_date=DEFAULT_START_DATE)
         result: FrameGroup = parser.convert(input)
 
         expected_result = FrameGroup(
             [
-                create_frame(1, [create_default_detection()]),
-                create_frame(2, []),
-                create_frame(3, [create_default_detection()]),
+                create_frame(1, [create_default_detection()], input_file_path=path),
+                create_frame(2, [], input_file_path=path),
+                create_frame(3, [create_default_detection()], input_file_path=path),
             ],
-            input_file_path=DEFAULT_INPUT_FILE_PATH,
+            order_key=order_key,
         )
 
         assert result == expected_result
 
+    def test_order_key(self) -> None:
+        order_key = "/some/path/to"
+        path = f"{order_key}/file-name.otdet"
+        parser = FrameParser(path, recorded_start_date=DEFAULT_START_DATE)
+
+        calculated_key = parser.order_key()
+
+        assert calculated_key == order_key
+
 
 class TestPreprocess:
     def test_preprocess(self) -> None:
-        first_file_path = "first-file.otdet"
+        order_key = "order-key"
+        first_file_path = f"{order_key}/first-file.otdet"
         first_start_date = datetime(2022, 5, 4, 12, 0, 1)
         first_builder = DataBuilder(
             input_file_path=first_file_path,
@@ -295,7 +307,7 @@ class TestPreprocess:
         first_builder.append_classified_frame()
         first_detections = first_builder.build_ot_det()
 
-        second_file_path = "second-file.otdet"
+        second_file_path = f"{order_key}/second-file.otdet"
         second_start_date = datetime(2022, 5, 4, 12, 0, 0)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
@@ -304,7 +316,7 @@ class TestPreprocess:
         second_builder.append_classified_frame()
         second_detections = second_builder.build_ot_det()
 
-        third_file_path = "third-file.otdet"
+        third_file_path = f"{order_key}/third-file.otdet"
         third_start_date = datetime(2022, 5, 4, 13, 0, 1)
         third_builder = DataBuilder(
             input_file_path=third_file_path,
@@ -324,25 +336,28 @@ class TestPreprocess:
                     Frame(
                         1,
                         occurrence=second_start_date,
+                        input_file_path=second_file_path,
                         detections=[create_default_detection()],
                     ),
                     Frame(
                         2,
                         occurrence=first_start_date,
+                        input_file_path=first_file_path,
                         detections=[create_default_detection()],
                     ),
                 ],
-                input_file_path=first_file_path,
+                order_key=order_key,
             ),
             FrameGroup(
                 [
                     Frame(
                         1,
                         occurrence=third_start_date,
+                        input_file_path=third_file_path,
                         detections=[create_default_detection()],
                     )
                 ],
-                input_file_path=third_file_path,
+                order_key=order_key,
             ),
         ]
 
@@ -350,14 +365,6 @@ class TestPreprocess:
 
 
 class TestFrameGroup:
-    def test_order_key(self) -> None:
-        order_key = "/some/path/to"
-        group = self.create_frame_group()
-
-        calculated_key = group.order_key()
-
-        assert calculated_key == order_key
-
     def test_start_date(self) -> None:
         start_date = datetime(2022, 5, 4, 12, 0, 0)
         group = self.create_frame_group(start_date=start_date)
@@ -400,5 +407,5 @@ class TestFrameGroup:
             create_frame(1, [], occurrence=end_date),
         ]
         path = f"{order_key}/detection.otdet"
-        group = FrameGroup(frames, input_file_path=path)
+        group = FrameGroup(frames, order_key=path)
         return group

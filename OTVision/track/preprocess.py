@@ -55,29 +55,27 @@ class Detection:
 class Frame:
     frame: int
     occurrence: datetime
+    input_file_path: str
     detections: list[Detection]
 
     def to_dict(self) -> dict:
         return {
             FRAME: self.frame,
             OCCURRENCE: self.occurrence,
+            INPUT_FILE_PATH: self.input_file_path,
             CLASSIFIED: self.detections,
         }
 
     def derive_frame_number(self, new_frame_number: int) -> "Frame":
-        return Frame(new_frame_number, self.occurrence, self.detections)
+        return Frame(
+            new_frame_number, self.occurrence, self.input_file_path, self.detections
+        )
 
 
 @dataclass(frozen=True)
 class FrameGroup:
     frames: list[Frame]
-    input_file_path: str
-
-    def order_key(self) -> str:
-        path = Path(self.input_file_path)
-        if ON_WINDOWS:
-            return os.path.normcase(path.parent)
-        return os.path.normpath(path.parent)
+    order_key: str
 
     def start_date(self) -> datetime:
         return self.frames[0].occurrence
@@ -98,7 +96,7 @@ class FrameGroup:
         for frame in second.frames:
             last_frame_number = last_frame_number + 1
             all_frames.append(frame.derive_frame_number(last_frame_number))
-        return FrameGroup(all_frames, self.input_file_path)
+        return FrameGroup(all_frames, self.order_key)
 
 
 class Cleanup:
@@ -159,12 +157,19 @@ class FrameParser:
             parsed_frame = Frame(
                 key,
                 occurrence=occurrence,
+                input_file_path=self.input_file_path,
                 detections=detections,
             )
             frames.append(parsed_frame)
 
         frames.sort(key=lambda frame: (frame.occurrence, frame.frame))
-        return FrameGroup(frames, input_file_path=self.input_file_path)
+        return FrameGroup(frames, order_key=self.order_key())
+
+    def order_key(self) -> str:
+        path = Path(self.input_file_path)
+        if ON_WINDOWS:
+            return os.path.normcase(path.parent)
+        return os.path.normpath(path.parent)
 
 
 class Preprocess:
