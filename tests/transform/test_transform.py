@@ -38,7 +38,7 @@ def test_transform(
     )
 
     ref_gpkg_files = get_files(
-        paths=[test_transform_tmp_dir],
+        paths=[test_transform_dir],
         filetypes=[".ottrk"],
     )
     for ref_ottrk_file in ref_ottrk_files:
