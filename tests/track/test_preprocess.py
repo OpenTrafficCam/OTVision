@@ -18,6 +18,7 @@ from OTVision.track.preprocess import (
     Detection,
     DetectionParser,
     Frame,
+    FrameGroup,
     FrameParser,
     H,
     Preprocess,
@@ -50,7 +51,6 @@ def create_frame(
     frame_number: int,
     detections: list[Detection],
     occurrence: datetime | None = None,
-    input_file_path: str = DEFAULT_INPUT_FILE_PATH,
 ) -> Frame:
     default_occurrence = occurrence_from(frame_number)
     if occurrence is None:
@@ -58,7 +58,6 @@ def create_frame(
     return Frame(
         frame=frame_number,
         occurrence=occurrence,
-        input_file_path=input_file_path,
         detections=detections,
     )
 
@@ -188,7 +187,7 @@ class DataBuilder:
     def build(self) -> dict[int, dict[str, list]]:
         return self.data.copy()
 
-    def build_as_detections(self) -> list[Frame]:
+    def build_as_detections(self) -> FrameGroup:
         parser = FrameParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
         return parser.convert(self.data.copy())
 
@@ -271,13 +270,16 @@ class TestFrameParser:
         parser = FrameParser(
             DEFAULT_INPUT_FILE_PATH, recorded_start_date=DEFAULT_START_DATE
         )
-        result: list[Frame] = parser.convert(input)
+        result: FrameGroup = parser.convert(input)
 
-        expected_result = [
-            create_frame(1, [create_default_detection()]),
-            create_frame(2, []),
-            create_frame(3, [create_default_detection()]),
-        ]
+        expected_result = FrameGroup(
+            [
+                create_frame(1, [create_default_detection()]),
+                create_frame(2, []),
+                create_frame(3, [create_default_detection()]),
+            ],
+            input_file_path=DEFAULT_INPUT_FILE_PATH,
+        )
 
         assert result == expected_result
 
@@ -317,24 +319,78 @@ class TestPreprocess:
         )
 
         expected_result = [
-            Frame(
-                1,
+            FrameGroup(
+                [
+                    Frame(
+                        1,
+                        occurrence=first_start_date,
+                        detections=[create_default_detection()],
+                    ),
+                    Frame(
+                        2,
+                        occurrence=second_start_date,
+                        detections=[create_default_detection()],
+                    ),
+                ],
                 input_file_path=first_file_path,
-                occurrence=first_start_date,
-                detections=[create_default_detection()],
             ),
-            Frame(
-                1,
-                input_file_path=second_file_path,
-                occurrence=second_start_date,
-                detections=[create_default_detection()],
-            ),
-            Frame(
-                1,
+            FrameGroup(
+                [
+                    Frame(
+                        1,
+                        occurrence=third_start_date,
+                        detections=[create_default_detection()],
+                    )
+                ],
                 input_file_path=third_file_path,
-                occurrence=third_start_date,
-                detections=[create_default_detection()],
             ),
         ]
 
         assert result == expected_result
+
+
+class TestFrameGroup:
+    def test_order_key(self) -> None:
+        order_key = "/some/path/to"
+        group = self.create_frame_group()
+
+        calculated_key = group.order_key()
+
+        assert calculated_key == order_key
+
+    def test_start_date(self) -> None:
+        start_date = datetime(2022, 5, 4, 12, 0, 0)
+        group = self.create_frame_group(start_date=start_date)
+
+        assert group.start_date() == start_date
+
+    def test_end_date(self) -> None:
+        end_date = datetime(2022, 5, 4, 12, 0, 1)
+        group = self.create_frame_group(end_date=end_date)
+
+        assert group.end_date() == end_date
+
+    def test_merge(self) -> None:
+        start_date = datetime(2022, 5, 4, 12, 0, 0)
+        end_date = datetime(2022, 5, 4, 12, 0, 1)
+        first_group = self.create_frame_group(start_date=start_date)
+        second_group = self.create_frame_group(end_date=end_date)
+
+        merged_group: FrameGroup = first_group.merge(second_group)
+
+        assert merged_group.start_date() == start_date
+        assert merged_group.end_date() == end_date
+
+    def create_frame_group(
+        self,
+        order_key: str = "/some/path/to",
+        start_date: datetime = DEFAULT_START_DATE,
+        end_date: datetime = DEFAULT_START_DATE,
+    ) -> FrameGroup:
+        frames: list[Frame] = [
+            create_frame(1, [], occurrence=start_date),
+            create_frame(1, [], occurrence=end_date),
+        ]
+        path = f"{order_key}/detection.otdet"
+        group = FrameGroup(frames, input_file_path=path)
+        return group

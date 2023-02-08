@@ -1,9 +1,11 @@
+import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from OTVision.helpers.files import get_files, read_json
+from OTVision.helpers.machine import ON_WINDOWS
 
 METADATA: str = "metadata"
 VIDEO: str = "vid"
@@ -49,20 +51,48 @@ class Detection:
         }
 
 
-@dataclass(frozen=True, repr=True)
+@dataclass(frozen=True)
 class Frame:
     frame: int
     occurrence: datetime
-    input_file_path: str
     detections: list[Detection]
 
     def to_dict(self) -> dict:
         return {
             FRAME: self.frame,
             OCCURRENCE: self.occurrence,
-            INPUT_FILE_PATH: self.input_file_path,
             CLASSIFIED: self.detections,
         }
+
+    def derive_frame_number(self, new_frame_number: int) -> "Frame":
+        return Frame(new_frame_number, self.occurrence, self.detections)
+
+
+@dataclass(frozen=True)
+class FrameGroup:
+    frames: list[Frame]
+    input_file_path: str
+
+    def order_key(self) -> str:
+        path = Path(self.input_file_path)
+        if ON_WINDOWS:
+            return os.path.normcase(path.parent)
+        return os.path.normpath(path.parent)
+
+    def start_date(self) -> datetime:
+        return self.frames[0].occurrence
+
+    def end_date(self) -> datetime:
+        return self.frames[-1].occurrence
+
+    def merge(self, other: "FrameGroup") -> "FrameGroup":
+        all_frames = []
+        all_frames.extend(self.frames)
+        last_frame_number = all_frames[-1].frame
+        for frame in other.frames:
+            last_frame_number = last_frame_number + 1
+            all_frames.append(frame.derive_frame_number(last_frame_number))
+        return FrameGroup(all_frames, self.input_file_path)
 
 
 class Cleanup:
@@ -111,7 +141,7 @@ class FrameParser:
         self.input_file_path = input_file_path
         self.recorded_start_date = recorded_start_date
 
-    def convert(self, input: dict[int, dict[str, Any]]) -> list[Frame]:
+    def convert(self, input: dict[int, dict[str, Any]]) -> FrameGroup:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
@@ -123,11 +153,12 @@ class FrameParser:
             parsed_frame = Frame(
                 key,
                 occurrence=occurrence,
-                input_file_path=self.input_file_path,
                 detections=detections,
             )
             frames.append(parsed_frame)
-        return frames
+
+        frames.sort(key=lambda frame: (frame.occurrence, frame.frame))
+        return FrameGroup(frames, input_file_path=self.input_file_path)
 
 
 class Preprocess:
@@ -144,17 +175,30 @@ class Preprocess:
             input_data.append(input)
         self.process(input_data)
 
-    def process(self, input: list[dict]) -> list[Frame]:
-        all_detections = []
+    def process(self, input: list[dict]) -> list[FrameGroup]:
+        all_groups: list[FrameGroup] = []
         for recording in input:
             input_file_path: str = str(recording[METADATA][VIDEO][FILE])
             start_date: datetime = self.extract_start_date_from(recording)
             data: dict[int, dict[str, Any]] = recording[DATA]
-            detections = FrameParser(
+            frame_group = FrameParser(
                 input_file_path, recorded_start_date=start_date
             ).convert(data)
-            all_detections.extend(detections)
-        return all_detections
+            all_groups.append(frame_group)
+        threshold = timedelta(minutes=1)
+        if len(all_groups) == 0:
+            return []
+        merged_groups = []
+        last_group = all_groups[0]
+        for current_group in all_groups[1:]:
+            if (current_group.start_date() - last_group.end_date()) <= threshold:
+                last_group = last_group.merge(current_group)
+            else:
+                merged_groups.append(last_group)
+                last_group = current_group
+        merged_groups.append(last_group)
+
+        return merged_groups
 
     def extract_start_date_from(self, recording: dict) -> datetime:
         if RECORDED_START_DATE in recording[METADATA][VIDEO].keys():
