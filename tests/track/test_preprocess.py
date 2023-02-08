@@ -11,6 +11,8 @@ from OTVision.track.preprocess import (
     DATA,
     DATE_FORMAT,
     FILE,
+    FRAME,
+    INPUT_FILE_PATH,
     METADATA,
     OCCURRENCE,
     RECORDED_START_DATE,
@@ -20,7 +22,7 @@ from OTVision.track.preprocess import (
     DetectionParser,
     Frame,
     FrameGroup,
-    FrameParser,
+    FrameGroupParser,
     H,
     Preprocess,
     W,
@@ -100,7 +102,9 @@ class DataBuilder:
         frame_number = self.next_key()
         occurrence = occurrence_from(frame_number, start_date=self.start_date)
         self.data[frame_number] = {
+            FRAME: frame_number,
             OCCURRENCE: occurrence,
+            INPUT_FILE_PATH: self.input_file_path,
             CLASSIFIED: [],
         }
         self.non_classified_frames.append(frame_number)
@@ -144,7 +148,9 @@ class DataBuilder:
         frame_number: int = self.next_key()
         occurrence = occurrence_as_string(frame_number, self.start_date)
         self.data[frame_number] = {
+            FRAME: frame_number,
             OCCURRENCE: occurrence,
+            INPUT_FILE_PATH: self.input_file_path,
             CLASSIFIED: [
                 self.create_classification(
                     label=label,
@@ -191,7 +197,7 @@ class DataBuilder:
         return self.data.copy()
 
     def build_as_detections(self) -> FrameGroup:
-        parser = FrameParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
+        parser = FrameGroupParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
         return parser.convert(self.data.copy())
 
     def build_ot_det(self) -> dict:
@@ -272,7 +278,7 @@ class TestFrameParser:
 
         order_key = "/some/path/to"
         path = f"{order_key}/file-name.otdet"
-        parser = FrameParser(path, recorded_start_date=DEFAULT_START_DATE)
+        parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
         result: FrameGroup = parser.convert(input)
 
         expected_result = FrameGroup(
@@ -289,7 +295,7 @@ class TestFrameParser:
     def test_order_key(self) -> None:
         order_key = "/some/path/to"
         path = f"{order_key}/file-name.otdet"
-        parser = FrameParser(path, recorded_start_date=DEFAULT_START_DATE)
+        parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
 
         calculated_key = parser.order_key()
 
@@ -297,7 +303,24 @@ class TestFrameParser:
 
 
 class TestPreprocess:
-    def test_preprocess(self) -> None:
+    def test_preprocess_single_file(self) -> None:
+        order_key = "order-key"
+        file_path = f"{order_key}/first-file.otdet"
+        start_date = datetime(2022, 5, 4, 12, 0, 1)
+        builder = DataBuilder(
+            input_file_path=file_path,
+            start_date=start_date,
+        )
+        builder.append_classified_frame()
+        otdet = builder.build_ot_det()
+
+        preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
+        preprocessed_otdet = preprocessor.process([otdet])
+        serialized_otdet = preprocessed_otdet[0].to_dict()
+
+        assert serialized_otdet == {DATA: otdet[DATA]}
+
+    def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
         first_file_path = f"{order_key}/first-file.otdet"
         first_start_date = datetime(2022, 5, 4, 12, 0, 1)

@@ -44,7 +44,7 @@ class Detection:
 
     def to_dict(self) -> dict:
         return {
-            LABEL: self.label,
+            CLASS: self.label,
             CONFIDENCE: self.conf,
             X: self.x,
             Y: self.y,
@@ -63,9 +63,9 @@ class Frame:
     def to_dict(self) -> dict:
         return {
             FRAME: self.frame,
-            OCCURRENCE: self.occurrence,
+            OCCURRENCE: self.occurrence.strftime(DATE_FORMAT),
             INPUT_FILE_PATH: self.input_file_path,
-            CLASSIFIED: self.detections,
+            CLASSIFIED: [detection.to_dict() for detection in self.detections],
         }
 
     def derive_frame_number(self, new_frame_number: int) -> "Frame":
@@ -99,6 +99,11 @@ class FrameGroup:
             last_frame_number = last_frame_number + 1
             all_frames.append(frame.derive_frame_number(last_frame_number))
         return FrameGroup(all_frames, self.order_key)
+
+    def to_dict(self) -> dict:
+        return {
+            DATA: {frame.frame: frame.to_dict() for frame in self.frames},
+        }
 
 
 class Cleanup:
@@ -139,7 +144,7 @@ class DetectionParser:
         return detections
 
 
-class FrameParser:
+class FrameGroupParser:
     input_file_path: str
     recorded_start_date: datetime
 
@@ -201,7 +206,7 @@ class Preprocess:
             input_file_path: str = str(recording[METADATA][VIDEO][FILE])
             start_date: datetime = self.extract_start_date_from(recording)
             data: dict[int, dict[str, Any]] = recording[DATA]
-            frame_group = FrameParser(
+            frame_group = FrameGroupParser(
                 input_file_path, recorded_start_date=start_date
             ).convert(data)
             all_groups.append(frame_group)
