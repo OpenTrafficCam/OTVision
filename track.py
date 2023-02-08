@@ -22,9 +22,9 @@ OTVision script to call the track main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
-from OTVision.config import CONFIG
+import OTVision
+import OTVision.config as config
 from OTVision.helpers.log import log
-from OTVision.track.track import main as track
 
 
 def parse() -> argparse.Namespace:
@@ -35,31 +35,70 @@ def parse() -> argparse.Namespace:
         nargs="+",
         type=str,
         help="Path or list of paths to detections files",
-        required=True,
+        required=False,
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        help="Path to custom user configuration yaml file.",
+        required=False,
     )
     parser.add_argument(
         "-o",
         "--overwrite",
-        default=CONFIG["TRACK"]["OVERWRITE"],
         action=argparse.BooleanOptionalAction,
         help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
-        default=CONFIG["TRACK"]["DEBUG"],
         action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
     return parser.parse_args()
 
 
+def _process_config(args: argparse.Namespace) -> None:
+    if args.config:
+        config.parse_user_config(args.config)
+    else:
+        user_config_cwd = Path(__file__).parent / "user_config.otvision.yaml"
+
+        if user_config_cwd.exists():
+            config.parse_user_config(str(user_config_cwd))
+
+
+def _extract_paths(args: argparse.Namespace) -> list[str]:
+    if args.paths:
+        str_paths = args.paths
+    else:
+        if len(config.CONFIG["TRACK"]["PATHS"]) == 0:
+            raise IOError(
+                "No paths have been passed as command line args."
+                "No paths have been defined in the user config."
+            )
+
+        str_paths = config.CONFIG["TRACK"]["PATHS"]
+    return str_paths
+
+
 def main() -> None:
     args = parse()
-    paths = [Path(str_path) for str_path in args.paths]
+    _process_config(args)
+    try:
+        str_paths = _extract_paths(args)
+    except IOError as ioe:
+        log.error(ioe)
+
+    overwrite = args.overwrite or config.CONFIG["TRACK"]["OVERWRITE"]
+    debug = args.debug or config.CONFIG["TRACK"]["DEBUG"]
+    paths = [Path(str_path) for str_path in str_paths]
+
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
-    track(paths=paths, overwrite=args.overwrite, debug=args.debug)
+
+    OTVision.track(paths=paths, overwrite=overwrite, debug=debug)
     log.info("Finished tracking from command line")
 
 
