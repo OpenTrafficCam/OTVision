@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -292,7 +293,7 @@ class TestFrameParser:
 
         calculated_key = parser.order_key()
 
-        assert calculated_key == order_key
+        assert calculated_key == os.path.normcase(order_key)
 
 
 class TestPreprocess:
