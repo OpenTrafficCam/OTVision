@@ -1,9 +1,14 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from OTVision.helpers.files import read_json
+from OTVision.helpers.files import get_files, read_json
+
+METADATA: str = "metadata"
+VIDEO: str = "vid"
+FILE: str = "file"
+RECORDED_START_DATE: str = "recorded_start_date"
 
 DATE_FORMAT: str = "%Y-%m-%d %H:%M:%S.%f"
 INPUT_FILE_PATH: str = "input_file_path"
@@ -46,7 +51,7 @@ class Detection:
 
 @dataclass(frozen=True, repr=True)
 class Frame:
-    frame: str
+    frame: int
     occurrence: datetime
     input_file_path: str
     detections: list[Detection]
@@ -62,8 +67,8 @@ class Frame:
 
 class Cleanup:
     def remove_empty_frames(
-        self, data: dict[str, dict[str, list]]
-    ) -> dict[str, dict[str, list]]:
+        self, data: dict[int, dict[str, list]]
+    ) -> dict[int, dict[str, list]]:
         """
         Removes frames without detections from the given data object.
 
@@ -99,20 +104,26 @@ class DetectionParser:
 
 
 class FrameParser:
-    def convert(self, input: dict[str, dict[str, Any]]) -> list[Frame]:
+    input_file_path: str
+    recorded_start_date: datetime
+
+    def __init__(self, input_file_path: str, recorded_start_date: datetime) -> None:
+        self.input_file_path = input_file_path
+        self.recorded_start_date = recorded_start_date
+
+    def convert(self, input: dict[int, dict[str, Any]]) -> list[Frame]:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
             occurrence: datetime = datetime.strptime(
                 str(value[OCCURRENCE]), DATE_FORMAT
             )
-            input_file_path: str = str(value[INPUT_FILE_PATH])
             data_detections = value[CLASSIFIED]
             detections = detection_parser.convert(data_detections)
             parsed_frame = Frame(
                 key,
                 occurrence=occurrence,
-                input_file_path=input_file_path,
+                input_file_path=self.input_file_path,
                 detections=detections,
             )
             frames.append(parsed_frame)
@@ -120,7 +131,34 @@ class FrameParser:
 
 
 class Preprocess:
-    def load_data(self, input_path: Path) -> list[Frame]:
-        input = read_json(input_path)
-        data: dict[str, dict[str, Any]] = input[DATA]
-        return FrameParser().convert(data)
+    no_frames_for: timedelta
+
+    def __init__(self, no_frames_for: timedelta) -> None:
+        self.no_frames_for = no_frames_for
+
+    def run(self, input_path: Path) -> None:
+        input_data = []
+        files = get_files([input_path], filetypes=[".otdet"])
+        for file in files:
+            input = read_json(file)
+            input_data.append(input)
+        self.process(input_data)
+
+    def process(self, input: list[dict]) -> list[Frame]:
+        all_detections = []
+        for recording in input:
+            input_file_path: str = str(recording[METADATA][VIDEO][FILE])
+            start_date: datetime = self.extract_start_date_from(recording)
+            data: dict[int, dict[str, Any]] = recording[DATA]
+            detections = FrameParser(
+                input_file_path, recorded_start_date=start_date
+            ).convert(data)
+            all_detections.extend(detections)
+        return all_detections
+
+    def extract_start_date_from(self, recording: dict) -> datetime:
+        if RECORDED_START_DATE in recording[METADATA][VIDEO].keys():
+            return datetime.strptime(
+                str(recording[METADATA][VIDEO][RECORDED_START_DATE]), DATE_FORMAT
+            )
+        return datetime(1900, 1, 1)
