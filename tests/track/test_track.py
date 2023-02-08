@@ -1,11 +1,11 @@
 import shutil
 from filecmp import cmpfiles
 from pathlib import Path
+from typing import Generator, TypeVar
 
 import pytest
 
 from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files
 from OTVision.track.track import main as track
 
 SIGMA_L = CONFIG["TRACK"]["IOU"]["SIGMA_L"]
@@ -14,43 +14,37 @@ SIGMA_IOU = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
 T_MIN = CONFIG["TRACK"]["IOU"]["T_MIN"]
 T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
 
+T = TypeVar("T")
+YieldFixture = Generator[T, None, None]
 
-def define_and_create_folders(
-    test_data_tmp_dir: Path, test_data_dir: Path, dir_name: str
-) -> tuple[Path, Path]:
-    test_track_dir = test_data_dir / "track" / dir_name
-    (test_data_tmp_dir / "track").mkdir(exist_ok=True)
-    test_track_tmp_dir = test_data_tmp_dir / "track" / dir_name
+
+@pytest.fixture
+def test_track_dir(test_data_dir: Path) -> Path:
+    return test_data_dir / "track"
+
+
+@pytest.fixture
+def test_track_tmp_dir(
+    test_data_tmp_dir: Path, test_track_dir: Path
+) -> YieldFixture[Path]:
+    # Create tmp dir
+    test_track_tmp_dir = test_data_tmp_dir / "track"
     test_track_tmp_dir.mkdir(exist_ok=True)
-    return test_track_dir, test_track_tmp_dir
-
-
-def get_reference_data(test_track_dir: Path) -> tuple[list[Path], list[Path]]:
-    ref_detections_files = get_files(
-        paths=[test_track_dir],
-        filetypes=[CONFIG["DEFAULT_FILETYPE"]["DETECT"]],
-    )
-    ref_tracks_files = get_files(
-        paths=[test_track_dir], filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]]
-    )
-
-    return ref_detections_files, ref_tracks_files
-
-
-def copy_input_data_to_tmp_folder(
-    test_track_tmp_dir: Path, ref_detections_files: list[Path]
-) -> None:
-    for ref_detections_file in ref_detections_files:
-        # test_detections_file = test_data_tmp_dir / "track" / ref_detections_file.name
-        test_detections_file = test_track_tmp_dir / ref_detections_file.name
-        shutil.copy2(
-            ref_detections_file,
-            test_detections_file,
-        )
+    # Copy test files to tmp dir
+    shutil.copytree(test_track_dir, test_track_tmp_dir, dirs_exist_ok=True)
+    # Delete tracks files from tmp dir (we create them during the tests)
+    extension = CONFIG["DEFAULT_FILETYPE"]["TRACK"]
+    tracks_files_to_delete = test_track_tmp_dir.rglob(f"*{extension}")
+    for f in tracks_files_to_delete:
+        f.unlink()
+    # Yield tmp dir
+    yield test_track_tmp_dir
+    # Teardown tmp dir after use in test
+    shutil.rmtree(test_track_tmp_dir)
 
 
 @pytest.mark.parametrize(
-    "dir_name, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
+    "test_case, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
     [
         ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
         ("sigma_l_0_1", 0.1, SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
@@ -66,9 +60,9 @@ def copy_input_data_to_tmp_folder(
     ],
 )
 def test_track_pass(
-    test_data_tmp_dir: Path,
-    test_data_dir: Path,
-    dir_name: str,
+    test_track_dir: Path,
+    test_track_tmp_dir: Path,
+    test_case: str,
     sigma_l: float,
     sigma_h: float,
     sigma_iou: float,
@@ -80,20 +74,9 @@ def test_track_pass(
     using the IOU tracker by Bochinski et al.
     """
 
-    # Define sub dirs and create tmp folder
-    test_track_dir, test_track_tmp_dir = define_and_create_folders(
-        test_data_tmp_dir, test_data_dir, dir_name
-    )
-
-    # Get reference data
-    ref_detections_files, ref_tracks_files = get_reference_data(test_track_dir)
-
-    # Copy input data to temporary folder
-    copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
-
     # Track all test detections files
     track(
-        paths=[test_track_tmp_dir],
+        paths=[test_track_tmp_dir / test_case],
         sigma_l=sigma_l,
         sigma_h=sigma_h,
         sigma_iou=sigma_iou,
@@ -101,11 +84,15 @@ def test_track_pass(
         t_miss_max=t_miss_max,
     )
 
-    # Compare all test tracks files to their respective reference tracks files
+    # Get reference tracks file names
+    extension = CONFIG["DEFAULT_FILETYPE"]["TRACK"]
+    ref_tracks_files = (test_track_dir / test_case).glob(f"*{extension}")
     tracks_file_names = [file.name for file in ref_tracks_files]
+
+    # Compare all test tracks files to their respective reference tracks files
     equal_files, different_files, irregular_files = cmpfiles(
-        a=test_track_dir,
-        b=test_track_tmp_dir,
+        a=test_track_dir / test_case,
+        b=test_track_tmp_dir / test_case,
         common=tracks_file_names,
         shallow=False,
     )
@@ -115,31 +102,21 @@ def test_track_pass(
 
 
 @pytest.mark.parametrize("overwrite", [(True), (False)])
-def test_track_overwrite(
-    test_data_tmp_dir: Path, test_data_dir: Path, overwrite: bool
-) -> None:
+def test_track_overwrite(test_track_tmp_dir: Path, overwrite: bool) -> None:
     """Tests if the main function of OTVision/track/track.py properly overwrites
     existing files or not based on the overwrite parameter"""
 
-    # Define sub dirs and create tmp folder
-    test_track_dir, test_track_tmp_dir = define_and_create_folders(
-        test_data_tmp_dir, test_data_dir, dir_name="default"
-    )
-
-    # Get reference data
-    ref_detections_files, ref_tracks_files = get_reference_data(test_track_dir)
-
-    # Copy input data to temporary folder
-    copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
-
-    test_tracks_files = [test_track_tmp_dir / file.name for file in ref_tracks_files]
+    # Get tracks files to test for
+    test_case = "default"
+    extension = CONFIG["DEFAULT_FILETYPE"]["TRACK"]
+    test_tracks_files = (test_track_tmp_dir / test_case).glob(f"*{extension}")
 
     # Track all test detections files for a first time and get file statistics
-    track(paths=[test_track_tmp_dir])
+    track(paths=[test_track_tmp_dir / test_case])
     pre_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
 
     # Track all test detections files for a second time and get file statistics
-    track(paths=[test_track_tmp_dir], overwrite=overwrite)
+    track(paths=[test_track_tmp_dir / test_case], overwrite=overwrite)
     post_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
 
     # Check if file statistics are different
@@ -169,26 +146,24 @@ def test_track_fail_wrong_paths(paths) -> None:  # type: ignore
 
 
 @pytest.mark.parametrize(
-    "dir_name, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
+    "sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
     [
-        ("default", "some_str", SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
-        ("default", Path("some_str"), SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
-        ("default", SIGMA_L, "some_str", SIGMA_IOU, T_MIN, T_MISS_MAX),
-        ("default", SIGMA_L, Path("some_str"), SIGMA_IOU, T_MIN, T_MISS_MAX),
-        ("default", SIGMA_L, SIGMA_H, "some_str", T_MIN, T_MISS_MAX),
-        ("default", SIGMA_L, SIGMA_H, Path("some_str"), T_MIN, T_MISS_MAX),
-        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, "some_str", T_MISS_MAX),
-        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, Path("some_str"), T_MISS_MAX),
-        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, 10.5, T_MISS_MAX),
-        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, "some_str"),
-        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, Path("some_str")),
-        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75.5),
+        ("some_str", SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        (Path("some_str"), SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        (SIGMA_L, "some_str", SIGMA_IOU, T_MIN, T_MISS_MAX),
+        (SIGMA_L, Path("some_str"), SIGMA_IOU, T_MIN, T_MISS_MAX),
+        (SIGMA_L, SIGMA_H, "some_str", T_MIN, T_MISS_MAX),
+        (SIGMA_L, SIGMA_H, Path("some_str"), T_MIN, T_MISS_MAX),
+        (SIGMA_L, SIGMA_H, SIGMA_IOU, "some_str", T_MISS_MAX),
+        (SIGMA_L, SIGMA_H, SIGMA_IOU, Path("some_str"), T_MISS_MAX),
+        (SIGMA_L, SIGMA_H, SIGMA_IOU, 10.5, T_MISS_MAX),
+        (SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, "some_str"),
+        (SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, Path("some_str")),
+        (SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75.5),
     ],
 )
 def test_track_fail_wrong_parameters(
-    test_data_tmp_dir: Path,
-    test_data_dir: Path,
-    dir_name: str,
+    test_track_tmp_dir: Path,
     sigma_l: float,
     sigma_h: float,
     sigma_iou: float,
@@ -198,21 +173,12 @@ def test_track_fail_wrong_parameters(
     """Tests if the main function of OTVision/track/track.py raises errors when wrong
     parameters are given"""
 
-    # Define sub dirs and create tmp folder
-    test_track_dir, test_track_tmp_dir = define_and_create_folders(
-        test_data_tmp_dir, test_data_dir, dir_name
-    )
-
-    # Get reference data
-    ref_detections_files, ref_tracks_files = get_reference_data(test_track_dir)
-
-    # Copy input data to temporary folder
-    copy_input_data_to_tmp_folder(test_track_tmp_dir, ref_detections_files)
+    test_case = "default"
 
     # Track all test detections files
     with pytest.raises(ValueError, match=".*has to be.*"):
         track(
-            paths=[test_track_tmp_dir],
+            paths=[test_track_tmp_dir / test_case],
             sigma_l=sigma_l,
             sigma_h=sigma_h,
             sigma_iou=sigma_iou,
