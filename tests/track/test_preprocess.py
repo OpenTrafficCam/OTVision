@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 
@@ -50,7 +50,7 @@ def occurrence_as_string(key: int, start_date: datetime = DEFAULT_START_DATE) ->
 def create_frame(
     frame_number: int,
     detections: list[Detection],
-    occurrence: datetime | None = None,
+    occurrence: Optional[datetime] = None,
     input_file_path: str = DEFAULT_INPUT_FILE_PATH,
 ) -> Frame:
     default_occurrence = occurrence_from(frame_number)
