@@ -277,7 +277,7 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = f"{order_key}/file-name.otdet"
+        path = os.path.normcase(f"{order_key}/file-name.otdet")
         parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
         result: FrameGroup = parser.convert(input)
 
