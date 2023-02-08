@@ -1,4 +1,5 @@
 black
+deepdiff
 flake8
 interrogate
 isort
