@@ -287,7 +287,7 @@ class TestFrameParser:
 class TestPreprocess:
     def test_preprocess(self) -> None:
         first_file_path = "first-file.otdet"
-        first_start_date = datetime(2022, 5, 4, 12, 0, 0)
+        first_start_date = datetime(2022, 5, 4, 12, 0, 1)
         first_builder = DataBuilder(
             input_file_path=first_file_path,
             start_date=first_start_date,
@@ -296,7 +296,7 @@ class TestPreprocess:
         first_detections = first_builder.build_ot_det()
 
         second_file_path = "second-file.otdet"
-        second_start_date = datetime(2022, 5, 4, 12, 0, 1)
+        second_start_date = datetime(2022, 5, 4, 12, 0, 0)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
             start_date=second_start_date,
@@ -323,12 +323,12 @@ class TestPreprocess:
                 [
                     Frame(
                         1,
-                        occurrence=first_start_date,
+                        occurrence=second_start_date,
                         detections=[create_default_detection()],
                     ),
                     Frame(
                         2,
-                        occurrence=second_start_date,
+                        occurrence=first_start_date,
                         detections=[create_default_detection()],
                     ),
                 ],
@@ -371,15 +371,23 @@ class TestFrameGroup:
         assert group.end_date() == end_date
 
     def test_merge(self) -> None:
-        start_date = datetime(2022, 5, 4, 12, 0, 0)
-        end_date = datetime(2022, 5, 4, 12, 0, 1)
-        first_group = self.create_frame_group(start_date=start_date)
-        second_group = self.create_frame_group(end_date=end_date)
+        first_start = datetime(2022, 5, 4, 12, 0, 0)
+        first_end = first_start + timedelta(seconds=1)
+        second_start = first_end + timedelta(seconds=1)
+        second_end = second_start + timedelta(seconds=1)
+        first_group = self.create_frame_group(
+            start_date=first_start, end_date=first_end
+        )
+        second_group = self.create_frame_group(
+            start_date=second_end, end_date=second_end
+        )
 
-        merged_group: FrameGroup = first_group.merge(second_group)
+        merge_first_second: FrameGroup = first_group.merge(second_group)
+        merge_second_first: FrameGroup = second_group.merge(first_group)
 
-        assert merged_group.start_date() == start_date
-        assert merged_group.end_date() == end_date
+        assert merge_first_second.start_date() == first_start
+        assert merge_first_second.end_date() == second_end
+        assert merge_first_second == merge_second_first
 
     def create_frame_group(
         self,

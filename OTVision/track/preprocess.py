@@ -86,10 +86,16 @@ class FrameGroup:
         return self.frames[-1].occurrence
 
     def merge(self, other: "FrameGroup") -> "FrameGroup":
-        all_frames = []
-        all_frames.extend(self.frames)
+        if self.start_date() < other.start_date():
+            return self._merge(self, other)
+        else:
+            return self._merge(other, self)
+
+    def _merge(self, first: "FrameGroup", second: "FrameGroup") -> "FrameGroup":
+        all_frames: list[Frame] = []
+        all_frames.extend(first.frames)
         last_frame_number = all_frames[-1].frame
-        for frame in other.frames:
+        for frame in second.frames:
             last_frame_number = last_frame_number + 1
             all_frames.append(frame.derive_frame_number(last_frame_number))
         return FrameGroup(all_frames, self.input_file_path)
