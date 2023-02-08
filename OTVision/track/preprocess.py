@@ -26,6 +26,8 @@ Y: str = "y"
 W: str = "W"
 H: str = "h"
 
+MISSING_START_DATE = datetime(1900, 1, 1)
+
 
 @dataclass(frozen=True, repr=True)
 class Detection:
@@ -173,10 +175,10 @@ class FrameParser:
 
 
 class Preprocess:
-    no_frames_for: timedelta
+    time_without_frames: timedelta
 
-    def __init__(self, no_frames_for: timedelta) -> None:
-        self.no_frames_for = no_frames_for
+    def __init__(self, no_frames_for: timedelta = timedelta(minutes=1)) -> None:
+        self.time_without_frames = no_frames_for
 
     def run(self, input_path: Path) -> None:
         input_data = []
@@ -187,6 +189,13 @@ class Preprocess:
         self.process(input_data)
 
     def process(self, input: list[dict]) -> list[FrameGroup]:
+        all_groups = self._parse_frame_groups(input)
+        if len(all_groups) == 0:
+            return []
+
+        return self._merge_groups(all_groups)
+
+    def _parse_frame_groups(self, input: list[dict]) -> list[FrameGroup]:
         all_groups: list[FrameGroup] = []
         for recording in input:
             input_file_path: str = str(recording[METADATA][VIDEO][FILE])
@@ -196,19 +205,20 @@ class Preprocess:
                 input_file_path, recorded_start_date=start_date
             ).convert(data)
             all_groups.append(frame_group)
-        threshold = timedelta(minutes=1)
-        if len(all_groups) == 0:
-            return []
+        return all_groups
+
+    def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
         merged_groups = []
         last_group = all_groups[0]
         for current_group in all_groups[1:]:
-            if (current_group.start_date() - last_group.end_date()) <= threshold:
+            if (
+                current_group.start_date() - last_group.end_date()
+            ) <= self.time_without_frames:
                 last_group = last_group.merge(current_group)
             else:
                 merged_groups.append(last_group)
                 last_group = current_group
         merged_groups.append(last_group)
-
         return merged_groups
 
     def extract_start_date_from(self, recording: dict) -> datetime:
@@ -216,4 +226,4 @@ class Preprocess:
             return datetime.strptime(
                 str(recording[METADATA][VIDEO][RECORDED_START_DATE]), DATE_FORMAT
             )
-        return datetime(1900, 1, 1)
+        return MISSING_START_DATE
