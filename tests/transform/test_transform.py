@@ -6,48 +6,74 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from OTVision.transform.transform import main as transform
+from tests.conftest import YieldFixture
 
 
 @pytest.fixture
-def tmp_bzipped_ottrk_cyclist(test_data_dir: Path, test_data_tmp_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.ottrk.bz2"
-    ottrk_file = test_data_dir / fname
-    dest = test_data_tmp_dir / Path(fname).stem
+def test_data_transform_dir(test_data_dir: Path) -> Path:
+    return test_data_dir / "transform"
+
+
+@pytest.fixture
+def test_data_tmp_transform_dir(
+    test_data_tmp_dir: Path,
+) -> YieldFixture[Path]:
+    data_tmp_transform_dir = test_data_tmp_dir / "transform"
+    data_tmp_transform_dir.mkdir(exist_ok=True)
+    yield data_tmp_transform_dir
+    shutil.rmtree(data_tmp_transform_dir)
+
+
+@pytest.fixture
+def tmp_ottrk_cyclist_bz2(
+    test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
+) -> Path:
+    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.ottrk"
+    ottrk_file = test_data_transform_dir / fname
+    dest = test_data_tmp_transform_dir / fname
     shutil.copy2(ottrk_file, dest)
     return dest
 
 
 @pytest.fixture
-def tmp_bzipped_ottrk_truck(test_data_dir: Path, test_data_tmp_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.ottrk.bz2"
-    ottrk_file = test_data_dir / fname
-    dest = test_data_tmp_dir / Path(fname).stem
+def tmp_ottrk_truck_bz2(
+    test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
+) -> Path:
+    fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.ottrk"
+    ottrk_file = test_data_transform_dir / fname
+    dest = test_data_tmp_transform_dir / fname
     shutil.copy2(ottrk_file, dest)
     return dest
 
 
 @pytest.fixture
-def single_refpts_file(test_data_dir: Path) -> Path:
-    return test_data_dir / "Testvideo_FR20.otrfpts"
+def single_refpts_file(test_data_transform_dir: Path) -> Path:
+    return test_data_transform_dir / "Testvideo_FR20.otrfpts"
 
 
 @pytest.fixture
-def tmp_cyclist_refpts_file(test_data_dir: Path, test_data_tmp_dir: Path) -> Path:
+def tmp_cyclist_refpts_file(
+    test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
+) -> Path:
     fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otrfpts"
-    src = test_data_dir / fname
-    dest = test_data_tmp_dir / fname
+    src = test_data_transform_dir / fname
+    dest = test_data_tmp_transform_dir / fname
     shutil.copy2(src, dest)
     return dest
 
 
 @pytest.fixture
-def truck_gpkg(test_data_dir: Path) -> Path:
-    return test_data_dir / "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.gpkg"
+def truck_gpkg(test_data_transform_dir: Path) -> Path:
+    return (
+        test_data_transform_dir / "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.gpkg"
+    )
 
 
 @pytest.fixture
-def cyclist_gpkg(test_data_dir: Path) -> Path:
-    return test_data_dir / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.gpkg"
+def cyclist_gpkg(test_data_transform_dir: Path) -> Path:
+    return (
+        test_data_transform_dir / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.gpkg"
+    )
 
 
 class TestTransform:
@@ -65,29 +91,25 @@ class TestTransform:
         single_refpts_file: Path,
         truck_gpkg: Path,
         cyclist_gpkg: Path,
-        tmp_bzipped_ottrk_cyclist: Path,
-        tmp_bzipped_ottrk_truck: Path,
+        tmp_ottrk_cyclist_bz2: Path,
+        tmp_ottrk_truck_bz2: Path,
     ) -> None:
         # sourcery skip: remove-assert-true, remove-redundant-pass
 
         transform(
-            paths=[tmp_bzipped_ottrk_cyclist, tmp_bzipped_ottrk_truck],
+            paths=[tmp_ottrk_cyclist_bz2, tmp_ottrk_truck_bz2],
             refpts_file=single_refpts_file,
         )
 
         # Compare gpkg files for all test data
-        result_truck_gpkg_bzipped = tmp_bzipped_ottrk_truck.with_suffix(".gpkg")
-        result_cyclist_gpkg_bzipped = tmp_bzipped_ottrk_cyclist.with_suffix(".gpkg")
+        result_truck_gpkg = tmp_ottrk_truck_bz2.with_suffix(".gpkg")
+        result_cyclist_gpkg = tmp_ottrk_cyclist_bz2.with_suffix(".gpkg")
 
         expected_utm_tracks_truck_df = gpd.read_file(truck_gpkg)
-        result_utm_tracks_truck_df = gpd.read_file(
-            result_truck_gpkg_bzipped, compression="bz2"
-        )
+        result_utm_tracks_truck_df = gpd.read_file(result_truck_gpkg)
 
         expected_utm_tracks_cyclist_df = gpd.read_file(cyclist_gpkg)
-        result_utm_tracks_cyclist_df = gpd.read_file(
-            result_cyclist_gpkg_bzipped, compression="bz2"
-        )
+        result_utm_tracks_cyclist_df = gpd.read_file(result_cyclist_gpkg)
 
         # Raise error if df's are not equal
         assert_frame_equal(expected_utm_tracks_truck_df, result_utm_tracks_truck_df)
@@ -97,13 +119,13 @@ class TestTransform:
         self,
         tmp_cyclist_refpts_file: Path,
         cyclist_gpkg: Path,
-        tmp_bzipped_ottrk_cyclist: Path,
+        tmp_ottrk_cyclist_bz2: Path,
     ) -> None:
         # sourcery skip: remove-assert-true, remove-redundant-pass
         assert tmp_cyclist_refpts_file.exists()
-        transform(paths=[tmp_bzipped_ottrk_cyclist])
+        transform(paths=[tmp_ottrk_cyclist_bz2])
 
-        result_cyclist_gpkg_bzipped = tmp_bzipped_ottrk_cyclist.with_suffix(".gpkg")
+        result_cyclist_gpkg_bzipped = tmp_ottrk_cyclist_bz2.with_suffix(".gpkg")
 
         expected_utm_tracks_cyclist_df = gpd.read_file(cyclist_gpkg)
         result_utm_tracks_cyclist_df = gpd.read_file(

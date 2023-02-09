@@ -1,0 +1,4 @@
+---
+DETECT:
+  YOLO:
+    WEIGHTS: my_weights
