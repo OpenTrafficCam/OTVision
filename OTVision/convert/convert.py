@@ -142,8 +142,8 @@ def convert(
         if debug:
             reset_debug()
         return None
-    vid_filetypes = CONFIG["FILETYPES"]["VID"] + [".h264"]
-    if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
+    vid_filetypes = CONFIG["FILETYPES"]["VID"]
+    if input_filetype == ".h264" and output_filetype in vid_filetypes:
         if fps_from_filename:
             input_fps = _get_fps_from_filename(input_filename)
         # Create ffmpeg command
@@ -199,10 +199,10 @@ def convert(
                 log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
                 input_video_file.unlink()
 
-    elif input_filetype in vid_filetypes:
-        raise TypeError("Output video filetype is not supported")
-    elif output_filetype in vid_filetypes:
-        raise TypeError("Input video filetype is not supported")
+    elif input_filetype != ".h264":
+        raise TypeError("Input video filetype has to ne .h264")
+    elif output_filetype not in vid_filetypes:
+        raise TypeError(f"Output video filetype {output_filetype} is not supported")
 
     if debug:
         reset_debug()
