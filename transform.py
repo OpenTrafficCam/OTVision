@@ -77,16 +77,14 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
-        str_paths = args.paths
-    else:
-        if len(config.CONFIG["TRANSFORM"]["PATHS"]) == 0:
-            raise IOError(
-                "No paths have been passed as command line args."
-                "No paths have been defined in the user config."
-            )
+        return args.paths
+    if len(config.CONFIG["TRANSFORM"]["PATHS"]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
 
-        str_paths = config.CONFIG["TRANSFORM"]["PATHS"]
-    return str_paths
+    return config.CONFIG["TRANSFORM"]["PATHS"]
 
 
 def main() -> None:
@@ -98,9 +96,18 @@ def main() -> None:
         log.error(ioe)
 
     paths = [Path(str_path) for str_path in str_paths]
+
     refpts_file = args.refpts_file
-    overwrite = args.overwrite or config.CONFIG["TRANSFORM"]["OVERWRITE"]
-    debug = args.debug or config.CONFIG["TRANSFORM"]["DEBUG"]
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG["TRANSFORM"]["OVERWRITE"]
+    else:
+        overwrite = args.overwrite
+
+    if args.debug is None:
+        debug = config.CONFIG["TRANSFORM"]["DEBUG"]
+    else:
+        debug = args.debug
 
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")

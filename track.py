@@ -106,7 +106,7 @@ def _extract_paths(args: argparse.Namespace) -> list[str]:
     return config.CONFIG["TRACK"]["PATHS"]
 
 
-def main() -> None:
+def main() -> None:  # sourcery skip: assign-if-exp
     args = parse()
     _process_config(args)
     try:
@@ -116,13 +116,41 @@ def main() -> None:
         return
 
     paths = [Path(str_path) for str_path in str_paths]
-    overwrite = args.overwrite or config.CONFIG["TRACK"]["OVERWRITE"]
-    debug = args.debug or config.CONFIG["TRACK"]["DEBUG"]
-    sigma_l = args.sigma_l or config.CONFIG["TRACK"]["IOU"]["SIGMA_L"]
-    sigma_h = args.sigma_h or config.CONFIG["TRACK"]["IOU"]["SIGMA_H"]
-    sigma_iou = args.sigma_iou or config.CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
-    t_min = args.t_min or config.CONFIG["TRACK"]["IOU"]["T_MIN"]
-    t_miss_max = args.t_miss_max or config.CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG["TRACK"]["OVERWRITE"]
+    else:
+        overwrite = args.overwrite
+
+    if args.debug is None:
+        debug = config.CONFIG["TRACK"]["DEBUG"]
+    else:
+        debug = args.debug
+
+    if args.sigma_l is None:
+        sigma_l = config.CONFIG["TRACK"]["IOU"]["SIGMA_L"]
+    else:
+        sigma_l = args.sigma_l
+
+    if args.sigma_h is None:
+        sigma_h = config.CONFIG["TRACK"]["IOU"]["SIGMA_H"]
+    else:
+        sigma_h = args.sigma_h
+
+    if args.sigma_iou is None:
+        sigma_iou = config.CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
+    else:
+        sigma_iou = args.sigma_iou
+
+    if args.t_min is None:
+        t_min = config.CONFIG["TRACK"]["IOU"]["T_MIN"]
+    else:
+        t_min = args.t_min
+
+    if args.t_miss_max is None:
+        t_miss_max = config.CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
+    else:
+        t_miss_max = args.t_miss_max
 
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
