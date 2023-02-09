@@ -96,7 +96,8 @@ def test_track_pass(
         common=tracks_file_names,
         shallow=False,
     )
-    assert tracks_file_names == equal_files
+    for equal_file in equal_files:
+        assert equal_file in tracks_file_names
     assert not different_files
     assert not irregular_files
 
