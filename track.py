@@ -113,6 +113,7 @@ def main() -> None:
         str_paths = _extract_paths(args)
     except IOError as ioe:
         log.error(ioe)
+        return
 
     paths = [Path(str_path) for str_path in str_paths]
     overwrite = args.overwrite or config.CONFIG["TRACK"]["OVERWRITE"]
