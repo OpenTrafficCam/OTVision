@@ -605,12 +605,8 @@ CONFIG[FILETYPES] = {}
 CONFIG[FILETYPES][VID] = [
     ".avi",
     ".mkv",
-    ".m4v",
     ".mov",
     ".mp4",
-    ".mpg",
-    ".mpeg",
-    ".wmv",
 ]
 CONFIG[FILETYPES][IMG] = [".jpg", ".jpeg", ".png"]
 CONFIG[FILETYPES][DETECT] = [".otdet"]
