@@ -56,6 +56,31 @@ def parse() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
+    parser.add_argument(
+        "--sigma_l",
+        type=float,
+        help="Set sigma_l paramter for tracking",
+    )
+    parser.add_argument(
+        "--sigma_h",
+        type=float,
+        help="Set sigma_h paramter for tracking",
+    )
+    parser.add_argument(
+        "--sigma_iou",
+        type=float,
+        help="Set sigma_iou paramter for tracking",
+    )
+    parser.add_argument(
+        "--t_min",
+        type=int,
+        help="Set t_min paramter for tracking",
+    )
+    parser.add_argument(
+        "--t_miss_max",
+        type=int,
+        help="Set t_miss_max paramter for tracking",
+    )
     return parser.parse_args()
 
 
@@ -71,16 +96,14 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
-        str_paths = args.paths
-    else:
-        if len(config.CONFIG["TRACK"]["PATHS"]) == 0:
-            raise IOError(
-                "No paths have been passed as command line args."
-                "No paths have been defined in the user config."
-            )
+        return args.paths
+    if len(config.CONFIG["TRACK"]["PATHS"]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
 
-        str_paths = config.CONFIG["TRACK"]["PATHS"]
-    return str_paths
+    return config.CONFIG["TRACK"]["PATHS"]
 
 
 def main() -> None:
@@ -90,15 +113,31 @@ def main() -> None:
         str_paths = _extract_paths(args)
     except IOError as ioe:
         log.error(ioe)
+        return
 
+    paths = [Path(str_path) for str_path in str_paths]
     overwrite = args.overwrite or config.CONFIG["TRACK"]["OVERWRITE"]
     debug = args.debug or config.CONFIG["TRACK"]["DEBUG"]
-    paths = [Path(str_path) for str_path in str_paths]
+    sigma_l = args.sigma_l or config.CONFIG["TRACK"]["IOU"]["SIGMA_L"]
+    sigma_h = args.sigma_h or config.CONFIG["TRACK"]["IOU"]["SIGMA_H"]
+    sigma_iou = args.sigma_iou or config.CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
+    t_min = args.t_min or config.CONFIG["TRACK"]["IOU"]["T_MIN"]
+    t_miss_max = args.t_miss_max or config.CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
 
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    OTVision.track(paths=paths, overwrite=overwrite, debug=debug)
+    OTVision.track(
+        paths=paths,
+        sigma_l=sigma_l,
+        sigma_h=sigma_h,
+        sigma_iou=sigma_iou,
+        t_min=t_min,
+        t_miss_max=t_miss_max,
+        overwrite=overwrite,
+        debug=debug,
+    )
+
     log.info("Finished tracking from command line")
 
 
