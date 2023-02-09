@@ -201,6 +201,12 @@ def test_pass_convert_overwrite(test_convert_tmp_dir: Path, overwrite: bool) -> 
             assert pre == post
 
 
-def test_fail_fps_from_filename() -> None:
-    # TODO
-    pass
+def test_fail_fps_from_filename(test_convert_tmp_dir: Path) -> None:
+    """Tests if the correct ValueError is raised if the main function of
+    OTVision/convert/convert.py is called with fps_from_filename == True but
+    h264 file names do not contain the frame rate as specified in helpers/formats.py"""
+
+    test_case = "fail_fps_from_filename"
+
+    with pytest.raises(ValueError, match="Cannot read frame rate from file name*."):
+        convert(paths=[test_convert_tmp_dir / test_case], fps_from_filename=True)
