@@ -1,4 +1,5 @@
 import shutil
+from filecmp import cmpfiles
 from pathlib import Path
 from typing import Generator, TypeVar
 
@@ -9,6 +10,13 @@ import pytest
 from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
+
+OUTPUT_FILETYPE = CONFIG["CONVERT"]["OUTPUT_FILETYPE"]
+INPUT_FPS = CONFIG["CONVERT"]["INPUT_FPS"]
+OUTPUT_FPS = CONFIG["CONVERT"]["OUTPUT_FPS"]
+FPS_FROM_FILENAME = CONFIG["CONVERT"]["FPS_FROM_FILENAME"]
+DELETE_INPUT = CONFIG["CONVERT"]["DELETE_INPUT"]
+OVERWRITE = CONFIG["CONVERT"]["OVERWRITE"]
 
 T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
@@ -44,14 +52,39 @@ def test_check_ffmpeg() -> None:
     check_ffmpeg()
 
 
-def test_convert(test_convert_dir: Path, test_convert_tmp_dir: Path) -> None:
+@pytest.mark.parametrize(
+    "test_case, output_filetype, input_fps, fps_from_filename",
+    [
+        ("default", OUTPUT_FILETYPE, INPUT_FPS, FPS_FROM_FILENAME),
+        ("fps_from_filename", OUTPUT_FILETYPE, 180, True),
+        ("input_fps_20", OUTPUT_FILETYPE, 20.0, False),
+        ("input_fps_40", OUTPUT_FILETYPE, 40.0, False),
+        ("output_filetype_avi", ".avi", INPUT_FPS, FPS_FROM_FILENAME),
+        # ("output_filetype_mkv", ".mkv", INPUT_FPS, FPS_FROM_FILENAME),
+        ("output_filetype_mov", ".mov", INPUT_FPS, FPS_FROM_FILENAME),
+        ("output_filetype_mp4", ".mp4", INPUT_FPS, FPS_FROM_FILENAME),
+    ],
+)
+def test_convert_pass(
+    test_convert_dir: Path,
+    test_convert_tmp_dir: Path,
+    test_case: str,
+    output_filetype: str,
+    input_fps: float,
+    fps_from_filename: bool,
+) -> None:
     """Tests the main function of OTVision/convert/convert.py
     transforming short test videos from h264 to mp4 based on
     framerate specified as part of the file path using ffmpeg.exe
     """
 
     # # Convert test h264 without further arguments
-    convert(paths=[test_convert_tmp_dir])
+    convert(
+        paths=[test_convert_tmp_dir / test_case],
+        output_filetype=output_filetype,
+        input_fps=input_fps,
+        fps_from_filename=fps_from_filename,
+    )
 
     # Local function to turn videos into np arrays for comparison
     def array_from_video(file: Path) -> np.ndarray:
@@ -76,31 +109,39 @@ def test_convert(test_convert_dir: Path, test_convert_tmp_dir: Path) -> None:
         return np.stack(frames, axis=0)
 
     # Get reference video files
-    extension = CONFIG["DEFAULT_FILETYPE"]["VID"]
-    mp4_ref_videos = test_convert_dir.glob(f"*{extension}")
+    ref_video_files = list((test_convert_dir / test_case).glob(f"*{output_filetype}"))
 
-    for mp4_ref_video in mp4_ref_videos:
-        mp4_test_video = test_convert_tmp_dir / mp4_ref_video.name
+    if not ref_video_files:
+        raise FileNotFoundError(
+            f"No reference video files found in {test_convert_dir / test_case}"
+        )
+
+    video_file_names = [file.name for file in ref_video_files]
+
+    # Compare all test tracks files to their respective reference tracks files
+    equal_files, different_files, irregular_files = cmpfiles(
+        a=test_convert_dir / test_case,
+        b=test_convert_tmp_dir / test_case,
+        common=video_file_names,
+        shallow=False,
+    )
+    for equal_file in equal_files:
+        assert equal_file in video_file_names
+    assert not different_files
+    assert not irregular_files
+
+    for ref_video_file in ref_video_files:
+        test_video_file = test_convert_tmp_dir / test_case / ref_video_file.name
 
         # Assert shapes of ref and test video arrays
 
-        array_mp4_ref_video = array_from_video(mp4_ref_video)
-        array_mp4_test_video = array_from_video(mp4_test_video)
+        array_ref_video = array_from_video(ref_video_file)
+        array_test_video = array_from_video(test_video_file)
 
-        assert array_mp4_ref_video.shape == array_mp4_test_video.shape
+        assert array_ref_video.shape == array_test_video.shape
 
         # Assert size of ef and test video files
 
-        assert mp4_ref_video.stat().st_size == pytest.approx(
-            mp4_test_video.stat().st_size, rel=0.01
+        assert ref_video_file.stat().st_size == pytest.approx(
+            test_video_file.stat().st_size, rel=0.01
         )
-
-        # BUG: Asserting reference and test video's color values fails
-        # import numpy.testing as np_tst
-        # precision = 5
-        # np_tst.assert_array_almost_equal(
-        #     array_mp4_ref_video,
-        #     array_mp4_test_video,
-        #     decimal=precision,
-        # )
-        # (for exact assertion use assert np.array_equal() instead)
