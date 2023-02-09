@@ -146,9 +146,59 @@ def test_pass_convert(
     # assert not irregular_files
 
 
-def test_pass_delete_input() -> None:
-    # TODO
-    pass
+@pytest.mark.parametrize("delete_input", [(True), (False)])
+def test_pass_convert_delete_input(
+    test_convert_tmp_dir: Path, delete_input: bool
+) -> None:
+    """Tests if the main function of OTVision/convert/convert.py properly deletes
+    input h264 files or not based on the delete_input parameter"""
+
+    test_case = "default"
+    extension = ".h264"
+
+    # Get all h264 files to test for
+    pre_test_h264_files = list((test_convert_tmp_dir / test_case).glob(f"*{extension}"))
+
+    # Convert all test h264 files
+    convert(paths=[test_convert_tmp_dir / test_case], delete_input=delete_input)
+
+    # Get all h264 files to test for
+    post_test_h264_files = list(
+        (test_convert_tmp_dir / test_case).glob(f"*{extension}")
+    )
+
+    # Check if 264 still exists
+    if delete_input:
+        assert not post_test_h264_files
+    else:
+        for pre, post in zip(pre_test_h264_files, post_test_h264_files):
+            assert pre == post
+
+
+@pytest.mark.parametrize("overwrite", [(True), (False)])
+def test_pass_convert_overwrite(test_convert_tmp_dir: Path, overwrite: bool) -> None:
+    """Tests if the main function of OTVision/convert/convert.py properly overwrites
+    existing files or not based on the overwrite parameter"""
+
+    # Get video files to test for
+    test_case = "default"
+    extension = CONFIG["DEFAULT_FILETYPE"]["VID"]
+    test_video_files = (test_convert_tmp_dir / test_case).glob(f"*{extension}")
+
+    # Convert all test h264 files for a first time and get file statistics
+    convert(paths=[test_convert_tmp_dir / test_case])
+    pre_test_file_stats = [file.stat().st_mtime_ns for file in test_video_files]
+
+    # Convert all test h264 files for a second time and get file statistics
+    convert(paths=[test_convert_tmp_dir / test_case], overwrite=overwrite)
+    post_test_file_stats = [file.stat().st_mtime_ns for file in test_video_files]
+
+    # Check if file statistics are different
+    for pre, post in zip(pre_test_file_stats, post_test_file_stats):
+        if overwrite:
+            assert pre != post
+        else:
+            assert pre == post
 
 
 def test_fail_fps_from_filename() -> None:
