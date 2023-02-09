@@ -21,43 +21,42 @@ OTVision main module for converting videos to other formats and frame rates.
 
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import log, reset_debug, set_debug
 
+OUTPUT_FPS: Optional[float] = None
+
 
 def main(
     paths: list[Path],
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
-    output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
     delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
     debug: bool = CONFIG["CONVERT"]["DEBUG"],
 ) -> None:
-    """Converts multiple h264-based videos into other formats and/or frame rates.
-
-    Currently only works for windows as ffmpeg.exe is utilized.
+    """Converts multiple h264-based videos into other formats.
 
     Args:
         paths (list[Path]): List of paths to .h264 files
             (or other video files)
-        output_filetype (str, optional): Type of video file created.
+        output_filetype (str, optional): Extension and format of video file created.
             Defaults to CONFIG["CONVERT"]["OUTPUT_FILETYPE"].
-        input_fps (float, optional): Frame rate of input video.
+        input_fps (float, optional): Frame rate of input h264.
+            If fps_from_filename is set to True, input_fps will be ignored.
             Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
-        output_fps (float, optional): Frame rate of output video.
-            Defaults to CONFIG["CONVERT"]["OUTPUT_FPS"].
-        fps_from_filename (bool, optional): Whether or not trying to parse frame rate
+        fps_from_filename (bool, optional): Whether or not to parse frame rate
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
         overwrite (bool, optional): Whether or not to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether or not to delete the input h264.
             Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
-        debug (bool, optional): Whether or not logging in debug mode.
+        debug (bool, optional): Whether or not to log in debug mode.
             Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
 
@@ -72,7 +71,6 @@ def main(
             h264_file,
             output_filetype,
             input_fps,
-            output_fps,
             fps_from_filename,
             overwrite,
             delete_input,
@@ -85,7 +83,6 @@ def convert(
     input_video_file: Path,
     output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
     input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
-    output_fps: float = CONFIG["CONVERT"]["OUTPUT_FPS"],
     fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
     overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
     delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
@@ -102,11 +99,10 @@ def convert(
         input_video_file (Path): Path to h264 video file (or other format).
         output_filetype (str, optional): Type of video file created.
             Defaults to CONFIG["CONVERT"]["OUTPUT_FILETYPE"].
-        input_fps (float, optional): Frame rate of input video.
+        input_fps (float, optional): Frame rate of input h264.
+            If fps_from_filename is set to True, input_fps will be ignored.
             Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
-        output_fps (float, optional): Frame rate of output video.
-            Defaults to CONFIG["CONVERT"]["OUTPUT_FPS"].
-        fps_from_filename (bool, optional): Whether or not trying to parse frame rate
+        fps_from_filename (bool, optional): Whether or not to parse frame rate
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
         overwrite (bool, optional): Whether or not to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
@@ -128,6 +124,8 @@ def convert(
 
     log.info(f"Try converting {input_video_file} to {output_filetype}")
 
+    output_fps = OUTPUT_FPS
+
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
@@ -139,22 +137,19 @@ def convert(
     if input_filetype in vid_filetypes and output_filetype in vid_filetypes:
         if fps_from_filename:
             input_fps = _get_fps_from_filename(input_filename)
-        elif input_fps is None:
-            input_fps = CONFIG["CONVERT"]["FPS"]
-
         # Create ffmpeg command
 
         # Input frame rate
         # ? Change -framerate to -r?
-        input_fps_cmds = ["-framerate", str(input_fps)] if input_fps is not None else []
+        input_fps_cmds = ["-framerate", str(input_fps)]
 
         # Output frame rate and copy commands
         if output_fps is not None:
-            output_fps_cmds = ["-r", str(output_fps)]
+            output_fps_cmds: list[str] = ["-r", str(output_fps)]
             copy_cmds: list[str] = []
             delete_input = False  # Never delete input if re-encoding file.
         else:
-            output_fps_cmds = ""
+            output_fps_cmds = []
             copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
 
         # Input file
@@ -186,7 +181,7 @@ def convert(
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
-        log.info(f"{output_video_file} created with {output_fps} fps")
+        log.info(f"{output_video_file} created an input fps of {input_fps}")
 
         if delete_input:
             in_size = input_video_file.stat().st_size
