@@ -77,7 +77,7 @@ def test_pass_convert(
     framerate specified as part of the file path using ffmpeg.exe
     """
 
-    # # Convert test h264 without further arguments
+    # # Convert test h264 files
     convert(
         paths=[test_convert_tmp_dir / test_case],
         output_filetype=output_filetype,
@@ -201,7 +201,7 @@ def test_pass_convert_overwrite(test_convert_tmp_dir: Path, overwrite: bool) -> 
             assert pre == post
 
 
-def test_fail_fps_from_filename(test_convert_tmp_dir: Path) -> None:
+def test_fail_convert_fps_from_filename(test_convert_tmp_dir: Path) -> None:
     """Tests if the correct ValueError is raised if the main function of
     OTVision/convert/convert.py is called with fps_from_filename == True but
     h264 file names do not contain the frame rate as specified in helpers/formats.py"""
@@ -210,3 +210,60 @@ def test_fail_fps_from_filename(test_convert_tmp_dir: Path) -> None:
 
     with pytest.raises(ValueError, match="Cannot read frame rate from file name*."):
         convert(paths=[test_convert_tmp_dir / test_case], fps_from_filename=True)
+
+
+@pytest.mark.parametrize(
+    "paths",
+    [
+        (1),
+        ("some_str"),
+        (Path("some_str")),
+        ([Path("some_str"), Path("some_other_str")]),
+    ],
+)
+def test_fail_convert_wrong_paths(paths) -> None:  # type: ignore
+    """Tests if the main function of OTVision/convert/convert.py raises specific errors
+    when wrong paths are given"""
+
+    # Check if TypeError is raised
+    with pytest.raises(TypeError, match=r"Paths needs to be a list of pathlib.Path"):
+        convert(paths=paths)
+
+
+@pytest.mark.parametrize(
+    "output_filetype, input_fps, fps_from_filename, overwrite, delete_input",
+    [
+        (22, INPUT_FPS, FPS_FROM_FILENAME, OVERWRITE, DELETE_INPUT),
+        (OUTPUT_FILETYPE, "foo", FPS_FROM_FILENAME, OVERWRITE, DELETE_INPUT),
+        (OUTPUT_FILETYPE, [40], FPS_FROM_FILENAME, OVERWRITE, DELETE_INPUT),
+        (OUTPUT_FILETYPE, INPUT_FPS, 20, OVERWRITE, DELETE_INPUT),
+        (OUTPUT_FILETYPE, INPUT_FPS, "foo", OVERWRITE, DELETE_INPUT),
+        (OUTPUT_FILETYPE, INPUT_FPS, FPS_FROM_FILENAME, 20, DELETE_INPUT),
+        (OUTPUT_FILETYPE, INPUT_FPS, FPS_FROM_FILENAME, "foo", DELETE_INPUT),
+        (OUTPUT_FILETYPE, INPUT_FPS, FPS_FROM_FILENAME, OVERWRITE, 20),
+        (OUTPUT_FILETYPE, INPUT_FPS, FPS_FROM_FILENAME, OVERWRITE, "foo"),
+    ],
+)
+def test_fail_convert_wrong_parameters(
+    test_convert_tmp_dir: Path,
+    output_filetype: str,
+    input_fps: float,
+    fps_from_filename: bool,
+    overwrite: bool,
+    delete_input: bool,
+) -> None:
+    """Tests if the main function of OTVision/conver/conver.py raises specific
+    errors when wrong parameters are given"""
+
+    test_case = "default"
+
+    # Track all test detections files
+    with pytest.raises(ValueError, match=".*has to be.*"):
+        convert(
+            paths=[test_convert_tmp_dir / test_case],
+            output_filetype=output_filetype,
+            input_fps=input_fps,
+            fps_from_filename=fps_from_filename,
+            overwrite=overwrite,
+            delete_input=delete_input,
+        )

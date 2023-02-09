@@ -119,8 +119,17 @@ def convert(
         None: If not on a windows machine.
         None: If output video file already exists and overwrite is not enabled.
     """
+
     if debug:
         set_debug()
+
+    _check_types(
+        output_filetype=output_filetype,
+        input_fps=input_fps,
+        fps_from_filename=fps_from_filename,
+        overwrite=overwrite,
+        delete_input=delete_input,
+    )
 
     log.info(f"Try converting {input_video_file} to {output_filetype}")
 
@@ -208,6 +217,27 @@ def check_ffmpeg() -> None:
     except FileNotFoundError as e:
         error_message = "ffmpeg could not be called, make sure ffmpeg is in path"
         raise FileNotFoundError(error_message) from e
+
+
+def _check_types(
+    output_filetype: str,
+    input_fps: float,
+    fps_from_filename: bool,
+    overwrite: bool,
+    delete_input: bool,
+) -> None:
+    """Raise ValueErrors if wrong types"""
+
+    if not isinstance(output_filetype, str):
+        raise ValueError("output_filetype has to be str")
+    if not isinstance(input_fps, (int, float)):
+        raise ValueError("input_fps has to be int or float")
+    if not isinstance(fps_from_filename, bool):
+        raise ValueError("fps_from_filename has to be bool")
+    if not isinstance(overwrite, bool):
+        raise ValueError("overwrite has to be bool")
+    if not isinstance(delete_input, bool):
+        raise ValueError("delete_input has to be bool")
 
 
 # Useful ffmpeg commands:
