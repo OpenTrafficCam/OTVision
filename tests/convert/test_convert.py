@@ -231,6 +231,27 @@ def test_fail_convert_wrong_paths(paths) -> None:  # type: ignore
 
 
 @pytest.mark.parametrize(
+    "output_filetype",
+    [".foo", ".jpg", ".mpeg", ".avchd", ".flv", ".swf", ".m4v", ".mpg", ".wmv"],
+)
+def test_fail_convert_not_supported_output_filetypes(
+    test_convert_tmp_dir: Path,
+    output_filetype: str,
+) -> None:
+    """Tests if the main function of OTVision/conver/conver.py raises specific
+    errors when not defined output filetypes are given"""
+
+    test_case = "default"
+
+    # Track all test detections files
+    with pytest.raises(TypeError, match="Output video filetype.*"):
+        convert(
+            paths=[test_convert_tmp_dir / test_case],
+            output_filetype=output_filetype,
+        )
+
+
+@pytest.mark.parametrize(
     "output_filetype, input_fps, fps_from_filename, overwrite, delete_input",
     [
         (22, INPUT_FPS, FPS_FROM_FILENAME, OVERWRITE, DELETE_INPUT),
