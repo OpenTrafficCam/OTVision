@@ -315,10 +315,18 @@ class TestPreprocess:
         otdet = builder.build_ot_det()
 
         preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
-        preprocessed_otdet = preprocessor.process([otdet])
+        preprocessed_otdet, metadata = preprocessor.process([otdet])
         serialized_otdet = preprocessed_otdet[0].to_dict()
 
         assert serialized_otdet == {DATA: otdet[DATA]}
+        assert metadata == {
+            file_path: {
+                VIDEO: {
+                    FILE: file_path,
+                    RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
+                }
+            }
+        }
 
     def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
@@ -350,7 +358,7 @@ class TestPreprocess:
         third_detections = third_builder.build_ot_det()
 
         preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
-        result = preprocessor.process(
+        merged_groups, metadata = preprocessor.process(
             [first_detections, second_detections, third_detections]
         )
 
@@ -385,7 +393,27 @@ class TestPreprocess:
             ),
         ]
 
-        assert result == expected_result
+        assert merged_groups == expected_result
+        assert metadata == {
+            first_file_path: {
+                VIDEO: {
+                    FILE: first_file_path,
+                    RECORDED_START_DATE: first_start_date.strftime(DATE_FORMAT),
+                }
+            },
+            second_file_path: {
+                VIDEO: {
+                    FILE: second_file_path,
+                    RECORDED_START_DATE: second_start_date.strftime(DATE_FORMAT),
+                }
+            },
+            third_file_path: {
+                VIDEO: {
+                    FILE: third_file_path,
+                    RECORDED_START_DATE: third_start_date.strftime(DATE_FORMAT),
+                }
+            },
+        }
 
 
 class TestFrameGroup:

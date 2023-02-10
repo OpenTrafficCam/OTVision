@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 from OTVision.helpers.files import get_files, read_json
 from OTVision.helpers.machine import ON_WINDOWS
@@ -179,38 +179,49 @@ class FrameGroupParser:
         return os.path.normpath(path.parent)
 
 
+@dataclass(frozen=True)
+class PreprocessResult:
+    frame_groups: list[FrameGroup]
+    metadata: dict[str, dict]
+
+
 class Preprocess:
     time_without_frames: timedelta
 
     def __init__(self, no_frames_for: timedelta = timedelta(minutes=1)) -> None:
         self.time_without_frames = no_frames_for
 
-    def run(self, input_path: Path) -> None:
+    def run(self, input_path: Path) -> PreprocessResult:
         input_data = []
         files = get_files([input_path], filetypes=[".otdet"])
         for file in files:
             input = read_json(file)
             input_data.append(input)
-        self.process(input_data)
+        groups, metadata = self.process(input_data)
+        return PreprocessResult(frame_groups=groups, metadata=metadata)
 
-    def process(self, input: list[dict]) -> list[FrameGroup]:
-        all_groups = self._parse_frame_groups(input)
+    def process(self, input: list[dict]) -> Tuple[list[FrameGroup], dict[str, dict]]:
+        all_groups, metadata = self._parse_frame_groups(input)
         if len(all_groups) == 0:
-            return []
+            return [], metadata
+        return self._merge_groups(all_groups), metadata
 
-        return self._merge_groups(all_groups)
-
-    def _parse_frame_groups(self, input: list[dict]) -> list[FrameGroup]:
+    def _parse_frame_groups(
+        self, input: list[dict]
+    ) -> Tuple[list[FrameGroup], dict[str, dict]]:
         all_groups: list[FrameGroup] = []
+        metadata: dict[str, dict] = {}
         for recording in input:
-            input_file_path: str = str(recording[METADATA][VIDEO][FILE])
+            file_metadata = recording[METADATA]
+            input_file_path: str = str(file_metadata[VIDEO][FILE])
+            metadata[input_file_path] = file_metadata
             start_date: datetime = self.extract_start_date_from(recording)
             data: dict[int, dict[str, Any]] = recording[DATA]
             frame_group = FrameGroupParser(
                 input_file_path, recorded_start_date=start_date
             ).convert(data)
             all_groups.append(frame_group)
-        return all_groups
+        return all_groups, metadata
 
     def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
         merged_groups = []
