@@ -62,12 +62,6 @@ def parse() -> argparse.Namespace:
         help="Logging in debug mode",
     )
     parser.add_argument(
-        "--output_filetype",
-        type=str,
-        help="Extension and format of video file created.",
-        required=False,
-    )
-    parser.add_argument(
         "--input_fps",
         type=float,
         help="Frame rate of input h264.",
@@ -128,11 +122,6 @@ def main() -> None:  # sourcery skip: assign-if-exp
     else:
         debug = args.debug
 
-    if args.output_filetype is None:
-        output_filetype = config.CONFIG["CONVERT"]["OUTPUT_FILETYPE"]
-    else:
-        output_filetype = args.output_filetype
-
     if args.input_fps is None:
         input_fps = config.CONFIG["CONVERT"]["INPUT_FPS"]
     else:
@@ -151,7 +140,6 @@ def main() -> None:  # sourcery skip: assign-if-exp
         delete_input=delete_input,
         overwrite=overwrite,
         debug=debug,
-        output_filetype=output_filetype,
         input_fps=input_fps,
         fps_from_filename=fps_from_filename,
     )
