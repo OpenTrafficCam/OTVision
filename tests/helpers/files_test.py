@@ -46,10 +46,11 @@ def test_dir_with_files() -> YieldFixture[Path]:
 def test_write_compressed_json(
     test_dir_with_files: Path,
 ) -> None:
+    nested = {f"data_{i}": str(i) for i in range(20)}
     data = {
         "some": "data",
         "other": "data",
-        "nested": {"data_one": "one", "data_two": "two"},
+        "nested": nested,
     }
 
     json_path = Path(test_dir_with_files, "json_dump.json")

@@ -1,20 +1,82 @@
 import shutil
 from pathlib import Path
-from typing import Union
 
 import geopandas as gpd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from OTVision.helpers.files import get_files
 from OTVision.transform.transform import main as transform
+from tests.conftest import YieldFixture
 
 
-@pytest.mark.parametrize("single_refpts_file", [None, "Testvideo_FR20.otrfpts"])
-def test_transform(
-    test_data_tmp_dir: Path, test_data_dir: Path, single_refpts_file: Union[None, str]
-) -> None:
-    # sourcery skip: remove-assert-true, remove-redundant-pass
+@pytest.fixture
+def test_data_transform_dir(test_data_dir: Path) -> Path:
+    return test_data_dir / "transform"
+
+
+@pytest.fixture
+def test_data_tmp_transform_dir(
+    test_data_tmp_dir: Path,
+) -> YieldFixture[Path]:
+    data_tmp_transform_dir = test_data_tmp_dir / "transform"
+    data_tmp_transform_dir.mkdir(exist_ok=True)
+    yield data_tmp_transform_dir
+    shutil.rmtree(data_tmp_transform_dir)
+
+
+@pytest.fixture
+def tmp_ottrk_cyclist_bz2(
+    test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
+) -> Path:
+    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.ottrk"
+    ottrk_file = test_data_transform_dir / fname
+    dest = test_data_tmp_transform_dir / fname
+    shutil.copy2(ottrk_file, dest)
+    return dest
+
+
+@pytest.fixture
+def tmp_ottrk_truck_bz2(
+    test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
+) -> Path:
+    fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.ottrk"
+    ottrk_file = test_data_transform_dir / fname
+    dest = test_data_tmp_transform_dir / fname
+    shutil.copy2(ottrk_file, dest)
+    return dest
+
+
+@pytest.fixture
+def single_refpts_file(test_data_transform_dir: Path) -> Path:
+    return test_data_transform_dir / "Testvideo_FR20.otrfpts"
+
+
+@pytest.fixture
+def tmp_cyclist_refpts_file(
+    test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
+) -> Path:
+    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otrfpts"
+    src = test_data_transform_dir / fname
+    dest = test_data_tmp_transform_dir / fname
+    shutil.copy2(src, dest)
+    return dest
+
+
+@pytest.fixture
+def truck_gpkg(test_data_transform_dir: Path) -> Path:
+    return (
+        test_data_transform_dir / "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.gpkg"
+    )
+
+
+@pytest.fixture
+def cyclist_gpkg(test_data_transform_dir: Path) -> Path:
+    return (
+        test_data_transform_dir / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.gpkg"
+    )
+
+
+class TestTransform:
     """Tests the main function of OTVision/transform/transform.py
     transforming test tracks files from pixel to world coordinates based
     on a set of reference points in both pixel and world coordinates
@@ -24,58 +86,50 @@ def test_transform(
     A tmp test directory is created and deleted by pytest fixture in test/conftest.py.
     """
 
-    # Get true ottrk and otrpfts files from tests/data
-    true_ottrk_files = get_files(
-        paths=[test_data_dir],
-        filetypes=[".ottrk"],
-    )
-    for true_ottrk_file in true_ottrk_files:
-        # Copy ottrk file to tests/data_tmp
-        true_ottrk_file = Path(true_ottrk_file)
-        test_ottrk_file = (
-            true_ottrk_file.parents[1] / test_data_tmp_dir.name / true_ottrk_file.name
-        )
-        shutil.copy2(
-            true_ottrk_file,
-            test_ottrk_file,
-        )
-        # Copy otrfpts file to tests/data_tmp
-        true_otrfpts_file = Path(true_ottrk_file).with_suffix(".otrfpts")
-        test_otrfpts_file = (
-            true_otrfpts_file.parents[1]
-            / test_data_tmp_dir.name
-            / true_otrfpts_file.name
-        )
-        shutil.copy2(
-            true_otrfpts_file,
-            test_otrfpts_file,
-        )
+    def test_transform_zippedOttrkFilesAs1stParam_correctRefptsFileAs2ndParam(
+        self,
+        single_refpts_file: Path,
+        truck_gpkg: Path,
+        cyclist_gpkg: Path,
+        tmp_ottrk_cyclist_bz2: Path,
+        tmp_ottrk_truck_bz2: Path,
+    ) -> None:
+        # sourcery skip: remove-assert-true, remove-redundant-pass
 
-    # Get test ottrk and otrpfts files from tests/data_tmp
-    test_tracks_files = get_files(
-        paths=[Path(test_data_tmp_dir)],
-        filetypes=[".ottrk"],
-    )
-
-    # Transform list of .ottrk files using otrefpts
-    if single_refpts_file:
         transform(
-            paths=test_tracks_files, refpts_file=test_data_dir / single_refpts_file
+            paths=[tmp_ottrk_cyclist_bz2, tmp_ottrk_truck_bz2],
+            refpts_file=single_refpts_file,
         )
-    else:
-        transform(paths=test_tracks_files, refpts_file=None)
 
-    # Compare gpkg files for all test data
-    for true_ottrk_file in true_ottrk_files:
-        # Get gpkg file names and read to df's
-        true_gpkg_file = Path(true_ottrk_file).with_suffix(".gpkg")
-        test_gpkg_file = (
-            true_gpkg_file.parents[1] / test_data_tmp_dir.name / true_gpkg_file.name
-        )
-        true_utm_tracks_df = gpd.read_file(true_gpkg_file)
-        test_utm_tracks_df = gpd.read_file(test_gpkg_file)
+        # Compare gpkg files for all test data
+        result_truck_gpkg = tmp_ottrk_truck_bz2.with_suffix(".gpkg")
+        result_cyclist_gpkg = tmp_ottrk_cyclist_bz2.with_suffix(".gpkg")
+
+        expected_utm_tracks_truck_df = gpd.read_file(truck_gpkg)
+        result_utm_tracks_truck_df = gpd.read_file(result_truck_gpkg)
+
+        expected_utm_tracks_cyclist_df = gpd.read_file(cyclist_gpkg)
+        result_utm_tracks_cyclist_df = gpd.read_file(result_cyclist_gpkg)
 
         # Raise error if df's are not equal
-        assert_frame_equal(true_utm_tracks_df, test_utm_tracks_df)
+        assert_frame_equal(expected_utm_tracks_truck_df, result_utm_tracks_truck_df)
+        assert_frame_equal(expected_utm_tracks_cyclist_df, result_utm_tracks_cyclist_df)
 
-    assert True
+    def test_transform_refptsFileInSameDir_zippedOttrkFilesAsParam(
+        self,
+        tmp_cyclist_refpts_file: Path,
+        cyclist_gpkg: Path,
+        tmp_ottrk_cyclist_bz2: Path,
+    ) -> None:
+        # sourcery skip: remove-assert-true, remove-redundant-pass
+        assert tmp_cyclist_refpts_file.exists()
+        transform(paths=[tmp_ottrk_cyclist_bz2])
+
+        result_cyclist_gpkg_bzipped = tmp_ottrk_cyclist_bz2.with_suffix(".gpkg")
+
+        expected_utm_tracks_cyclist_df = gpd.read_file(cyclist_gpkg)
+        result_utm_tracks_cyclist_df = gpd.read_file(
+            result_cyclist_gpkg_bzipped, compression="bz2"
+        )
+
+        assert_frame_equal(expected_utm_tracks_cyclist_df, result_utm_tracks_cyclist_df)
