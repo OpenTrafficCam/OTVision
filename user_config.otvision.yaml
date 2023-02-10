@@ -28,7 +28,7 @@ DETECT:
     IMGSIZE: 640
     IOU: 0.45
     NORMALIZED: false
-    WEIGHTS: yolov5m
+    WEIGHTS: yolov5s
 
 FILETYPES:
   DETECT:
