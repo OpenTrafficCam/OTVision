@@ -1,3 +1,5 @@
+import bz2
+import json
 import shutil
 from filecmp import cmp
 from pathlib import Path
@@ -83,3 +85,15 @@ class TestDetect:
         detect([cyclist_mp4], force_reload_torch_hub_cache=True)
         result_otdet = detect_test_tmp_dir / default_cyclist_otdet.name
         assert cmp(result_otdet, default_cyclist_otdet)
+
+    def test_detect_otdet_valid_json(
+        self, detect_test_tmp_dir: Path, cyclist_mp4: Path
+    ) -> None:
+        detect([cyclist_mp4], model=self.model, force_reload_torch_hub_cache=False)
+        result_otdet = detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
+        assert result_otdet.exists()
+        try:
+            otdet_file = bz2.open(str(result_otdet), "r")
+            json.load(otdet_file)
+        finally:
+            otdet_file.close()
