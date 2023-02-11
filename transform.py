@@ -78,13 +78,13 @@ def _process_config(args: argparse.Namespace) -> None:
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
         return args.paths
-    if len(config.CONFIG["TRANSFORM"]["PATHS"]) == 0:
+    if len(config.CONFIG[config.TRANSFORM][config.PATHS]) == 0:
         raise IOError(
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
 
-    return config.CONFIG["TRANSFORM"]["PATHS"]
+    return config.CONFIG[config.TRANSFORM][config.PATHS]
 
 
 def main() -> None:
@@ -100,12 +100,12 @@ def main() -> None:
     refpts_file = args.refpts_file
 
     if args.overwrite is None:
-        overwrite = config.CONFIG["TRANSFORM"]["OVERWRITE"]
+        overwrite = config.CONFIG[config.TRANSFORM][config.OVERWRITE]
     else:
         overwrite = args.overwrite
 
     if args.debug is None:
-        debug = config.CONFIG["TRANSFORM"]["DEBUG"]
+        debug = config.CONFIG[config.TRANSFORM][config.DEBUG]
     else:
         debug = args.debug
 

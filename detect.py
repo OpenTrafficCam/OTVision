@@ -87,13 +87,13 @@ def _process_config(args: argparse.Namespace) -> None:
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
         return args.paths
-    if len(config.CONFIG["DETECT"]["PATHS"]) == 0:
+    if len(config.CONFIG[config.DETECT][config.PATHS]) == 0:
         raise IOError(
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
 
-    return config.CONFIG["DETECT"]["PATHS"]
+    return config.CONFIG[config.DETECT][config.PATHS]
 
 
 def main() -> None:  # sourcery skip: assign-if-exp
@@ -108,22 +108,22 @@ def main() -> None:  # sourcery skip: assign-if-exp
     paths = [Path(str_path) for str_path in str_paths]
 
     if args.weights is None:
-        weights = config.CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
+        weights = config.CONFIG[config.DETECT][config.YOLO][config.WEIGHTS]
     else:
         weights = args.weights
 
     if args.filetypes is None:
-        filetypes = config.CONFIG["FILETYPES"]["VID"]
+        filetypes = config.CONFIG[config.DETECT][config.VID]
     else:
         filetypes = args.filetypes
 
     if args.overwrite is None:
-        overwrite = config.CONFIG["DETECT"]["OVERWRITE"]
+        overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
     else:
         overwrite = args.overwrite
 
     if args.debug is None:
-        debug = config.CONFIG["DETECT"]["DEBUG"]
+        debug = config.CONFIG[config.DETECT][config.DEBUG]
     else:
         debug = args.debug
 

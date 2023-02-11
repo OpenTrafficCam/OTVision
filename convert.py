@@ -88,13 +88,13 @@ def _process_config(args: argparse.Namespace) -> None:
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
         return args.paths
-    if len(config.CONFIG["CONVERT"]["PATHS"]) == 0:
+    if len(config.CONFIG[config.CONVERT][config.PATHS]) == 0:
         raise IOError(
             "No paths have been passed as command line args.\n"
             "No paths have been defined in the user config."
         )
 
-    return config.CONFIG["CONVERT"]["PATHS"]
+    return config.CONFIG[config.CONVERT][config.PATHS]
 
 
 def main() -> None:  # sourcery skip: assign-if-exp
@@ -108,27 +108,27 @@ def main() -> None:  # sourcery skip: assign-if-exp
     paths = [Path(str_path) for str_path in str_paths]
 
     if args.delete_input is None:
-        delete_input = config.CONFIG["CONVERT"]["DELETE_INPUT"]
+        delete_input = config.CONFIG[config.CONVERT][config.DELETE_INPUT]
     else:
         delete_input = args.delete_input
 
     if args.overwrite is None:
-        overwrite = config.CONFIG["CONVERT"]["OVERWRITE"]
+        overwrite = config.CONFIG[config.CONVERT][config.OVERWRITE]
     else:
         overwrite = args.overwrite
 
     if args.debug is None:
-        debug = config.CONFIG["CONVERT"]["DEBUG"]
+        debug = config.CONFIG[config.CONVERT][config.DEBUG]
     else:
         debug = args.debug
 
     if args.input_fps is None:
-        input_fps = config.CONFIG["CONVERT"]["INPUT_FPS"]
+        input_fps = config.CONFIG[config.CONVERT][config.INPUT_FPS]
     else:
         input_fps = args.input_fps
 
     if args.fps_from_filename is None:
-        fps_from_filename = config.CONFIG["CONVERT"]["FPS_FROM_FILENAME"]
+        fps_from_filename = config.CONFIG[config.CONVERT][config.FPS_FROM_FILENAME]
     else:
         fps_from_filename = args.fps_from_filename
 

@@ -97,13 +97,13 @@ def _process_config(args: argparse.Namespace) -> None:
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
         return args.paths
-    if len(config.CONFIG["TRACK"]["PATHS"]) == 0:
+    if len(config.CONFIG[config.TRACK][config.PATHS]) == 0:
         raise IOError(
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
 
-    return config.CONFIG["TRACK"]["PATHS"]
+    return config.CONFIG[config.TRACK][config.PATHS]
 
 
 def main() -> None:  # sourcery skip: assign-if-exp
@@ -118,37 +118,37 @@ def main() -> None:  # sourcery skip: assign-if-exp
     paths = [Path(str_path) for str_path in str_paths]
 
     if args.overwrite is None:
-        overwrite = config.CONFIG["TRACK"]["OVERWRITE"]
+        overwrite = config.CONFIG[config.TRACK][config.OVERWRITE]
     else:
         overwrite = args.overwrite
 
     if args.debug is None:
-        debug = config.CONFIG["TRACK"]["DEBUG"]
+        debug = config.CONFIG[config.TRACK][config.DEBUG]
     else:
         debug = args.debug
 
     if args.sigma_l is None:
-        sigma_l = config.CONFIG["TRACK"]["IOU"]["SIGMA_L"]
+        sigma_l = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_L]
     else:
         sigma_l = args.sigma_l
 
     if args.sigma_h is None:
-        sigma_h = config.CONFIG["TRACK"]["IOU"]["SIGMA_H"]
+        sigma_h = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_H]
     else:
         sigma_h = args.sigma_h
 
     if args.sigma_iou is None:
-        sigma_iou = config.CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
+        sigma_iou = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_IOU]
     else:
         sigma_iou = args.sigma_iou
 
     if args.t_min is None:
-        t_min = config.CONFIG["TRACK"]["IOU"]["T_MIN"]
+        t_min = config.CONFIG[config.TRACK][config.IOU][config.T_MIN]
     else:
         t_min = args.t_min
 
     if args.t_miss_max is None:
-        t_miss_max = config.CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
+        t_miss_max = config.CONFIG[config.TRACK][config.IOU][config.T_MISS_MAX]
     else:
         t_miss_max = args.t_miss_max
 
