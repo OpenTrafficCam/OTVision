@@ -238,7 +238,7 @@ def test_fail_convert_not_supported_output_filetypes(
     test_convert_tmp_dir: Path,
     output_filetype: str,
 ) -> None:
-    """Tests if the main function of OTVision/conver/conver.py raises specific
+    """Tests if the main function of OTVision/convert/convert.py raises specific
     errors when not defined output filetypes are given"""
 
     test_case = "default"
