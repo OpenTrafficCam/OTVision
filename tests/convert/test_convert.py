@@ -273,7 +273,7 @@ def test_fail_convert_wrong_parameters(
     overwrite: bool,
     delete_input: bool,
 ) -> None:
-    """Tests if the main function of OTVision/conver/conver.py raises specific
+    """Tests if the main function of OTVision/convert/convert.py raises specific
     errors when wrong parameters are given"""
 
     test_case = "default"
