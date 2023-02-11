@@ -77,9 +77,13 @@ def test_pass_convert(
     framerate specified as part of the file path using ffmpeg.exe
     """
 
-    # # Convert test h264 files
+    # Buil test dir paths
+    test_case_dir = test_convert_dir / test_case
+    test_case_tmp_dir = test_convert_tmp_dir / test_case
+
+    # Convert test h264 files
     convert(
-        paths=[test_convert_tmp_dir / test_case],
+        paths=[test_case_tmp_dir],
         output_filetype=output_filetype,
         input_fps=input_fps,
         fps_from_filename=fps_from_filename,
@@ -108,15 +112,13 @@ def test_pass_convert(
         return np.stack(frames, axis=0)
 
     # Get reference video files
-    ref_video_files = list((test_convert_dir / test_case).glob(f"*{output_filetype}"))
+    ref_video_files = list(test_case_dir.glob(f"*{output_filetype}"))
 
     if not ref_video_files:
-        raise FileNotFoundError(
-            f"No reference video files found in {test_convert_dir / test_case}"
-        )
+        raise FileNotFoundError(f"No reference video files found in {test_case_dir}")
 
     for ref_video_file in ref_video_files:
-        test_video_file = test_convert_tmp_dir / test_case / ref_video_file.name
+        test_video_file = test_case_tmp_dir / ref_video_file.name
 
         # Assert shapes of ref and test video arrays
 
@@ -135,8 +137,8 @@ def test_pass_convert(
     # # Compare all test video files to their respective reference video files
     # video_file_names = [file.name for file in ref_video_files]
     # equal_files, different_files, irregular_files = cmpfiles(
-    #     a=test_convert_dir / test_case,
-    #     b=test_convert_tmp_dir / test_case,
+    #     a=test_case_dir,
+    #     b=test_case_tmp_dir,
     #     common=video_file_names,
     #     shallow=False,
     # )
@@ -155,17 +157,16 @@ def test_pass_convert_delete_input(
 
     test_case = "default"
     extension = ".h264"
+    test_case_tmp_dir = test_convert_tmp_dir / test_case
 
     # Get all h264 files to test for
-    pre_test_h264_files = list((test_convert_tmp_dir / test_case).glob(f"*{extension}"))
+    pre_test_h264_files = list(test_case_tmp_dir.glob(f"*{extension}"))
 
     # Convert all test h264 files
-    convert(paths=[test_convert_tmp_dir / test_case], delete_input=delete_input)
+    convert(paths=[test_case_tmp_dir], delete_input=delete_input)
 
     # Get all h264 files to test for
-    post_test_h264_files = list(
-        (test_convert_tmp_dir / test_case).glob(f"*{extension}")
-    )
+    post_test_h264_files = list((test_case_tmp_dir).glob(f"*{extension}"))
 
     # Check if 264 still exists
     if delete_input:
@@ -183,14 +184,15 @@ def test_pass_convert_overwrite(test_convert_tmp_dir: Path, overwrite: bool) -> 
     # Get video files to test for
     test_case = "default"
     extension = CONFIG["DEFAULT_FILETYPE"]["VID"]
-    test_video_files = (test_convert_tmp_dir / test_case).glob(f"*{extension}")
+    test_case_tmp_dir = test_convert_tmp_dir / test_case
+    test_video_files = test_case_tmp_dir.glob(f"*{extension}")
 
     # Convert all test h264 files for a first time and get file statistics
-    convert(paths=[test_convert_tmp_dir / test_case])
+    convert(paths=[test_case_tmp_dir])
     pre_test_file_stats = [file.stat().st_mtime_ns for file in test_video_files]
 
     # Convert all test h264 files for a second time and get file statistics
-    convert(paths=[test_convert_tmp_dir / test_case], overwrite=overwrite)
+    convert(paths=[test_case_tmp_dir], overwrite=overwrite)
     post_test_file_stats = [file.stat().st_mtime_ns for file in test_video_files]
 
     # Check if file statistics are different
