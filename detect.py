@@ -113,7 +113,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
         weights = args.weights
 
     if args.filetypes is None:
-        filetypes = config.CONFIG[config.DETECT][config.VID]
+        filetypes = config.CONFIG[config.FILETYPES][config.VID]
     else:
         filetypes = args.filetypes
 
