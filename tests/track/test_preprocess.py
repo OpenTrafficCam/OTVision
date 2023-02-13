@@ -419,13 +419,13 @@ class TestPreprocess:
 class TestFrameGroup:
     def test_start_date(self) -> None:
         start_date = datetime(2022, 5, 4, 12, 0, 0)
-        group = self.create_frame_group(start_date=start_date)
+        group = self._create_frame_group(start_date=start_date)
 
         assert group.start_date() == start_date
 
     def test_end_date(self) -> None:
         end_date = datetime(2022, 5, 4, 12, 0, 1)
-        group = self.create_frame_group(end_date=end_date)
+        group = self._create_frame_group(end_date=end_date)
 
         assert group.end_date() == end_date
 
@@ -434,10 +434,10 @@ class TestFrameGroup:
         first_end = first_start + timedelta(seconds=1)
         second_start = first_end + timedelta(seconds=1)
         second_end = second_start + timedelta(seconds=1)
-        first_group = self.create_frame_group(
+        first_group = self._create_frame_group(
             start_date=first_start, end_date=first_end
         )
-        second_group = self.create_frame_group(
+        second_group = self._create_frame_group(
             start_date=second_end, end_date=second_end
         )
 
@@ -448,15 +448,37 @@ class TestFrameGroup:
         assert merge_first_second.end_date() == second_end
         assert merge_first_second == merge_second_first
 
-    def create_frame_group(
+    def test_split(self) -> None:
+        first_start = datetime(2022, 5, 4, 12, 0, 0)
+        first_end = first_start + timedelta(seconds=1)
+        second_start = first_end + timedelta(seconds=1)
+        second_end = second_start + timedelta(seconds=1)
+        first_group = self._create_frame_group(
+            start_date=first_start,
+            end_date=first_end,
+            input_file_path="first-video.mp4",
+        )
+        second_group = self._create_frame_group(
+            start_date=second_end,
+            end_date=second_end,
+            input_file_path="second-video.mp4",
+        )
+
+        merged: FrameGroup = first_group.merge(second_group)
+        splitted = merged.split()
+
+        assert splitted == [first_group, second_group]
+
+    def _create_frame_group(
         self,
         order_key: str = "/some/path/to",
         start_date: datetime = DEFAULT_START_DATE,
         end_date: datetime = DEFAULT_START_DATE,
+        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
     ) -> FrameGroup:
         frames: list[Frame] = [
-            create_frame(1, [], occurrence=start_date),
-            create_frame(1, [], occurrence=end_date),
+            create_frame(1, [], occurrence=start_date, input_file_path=input_file_path),
+            create_frame(2, [], occurrence=end_date, input_file_path=input_file_path),
         ]
         path = f"{order_key}/detection.otdet"
         group = FrameGroup(frames, order_key=path)

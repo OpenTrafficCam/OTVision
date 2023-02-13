@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Tuple
 
-from OTVision.helpers.files import get_files, read_json
+from OTVision.helpers.files import read_json
 from OTVision.helpers.machine import ON_WINDOWS
 
 METADATA: str = "metadata"
@@ -100,6 +100,23 @@ class FrameGroup:
             all_frames.append(frame.derive_frame_number(last_frame_number))
         return FrameGroup(all_frames, self.order_key)
 
+    def split(self) -> list["FrameGroup"]:
+        current_group_frames: list[Frame] = []
+        current_video_path = None
+        groups = []
+        frame_id = 1
+        for frame in self.frames:
+            if frame.input_file_path != current_video_path:
+                if len(current_group_frames) > 0:
+                    groups.append(FrameGroup(current_group_frames, self.order_key))
+                current_group_frames = []
+                current_video_path = frame.input_file_path
+                frame_id = 1
+            current_group_frames.append(frame.derive_frame_number(frame_id))
+            frame_id = frame_id + 1
+        groups.append(FrameGroup(current_group_frames, self.order_key))
+        return groups
+
     def to_dict(self) -> dict:
         return {
             DATA: {frame.frame: frame.to_dict() for frame in self.frames},
@@ -191,9 +208,8 @@ class Preprocess:
     def __init__(self, no_frames_for: timedelta = timedelta(minutes=1)) -> None:
         self.time_without_frames = no_frames_for
 
-    def run(self, input_path: Path) -> PreprocessResult:
+    def run(self, files: list[Path]) -> PreprocessResult:
         input_data = []
-        files = get_files([input_path], filetypes=[".otdet"])
         for file in files:
             input = read_json(file)
             input_data.append(input)
