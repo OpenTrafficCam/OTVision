@@ -23,7 +23,7 @@ LABEL: str = "label"
 CONFIDENCE: str = "conf"
 X: str = "x"
 Y: str = "y"
-W: str = "W"
+W: str = "w"
 H: str = "h"
 
 MISSING_START_DATE = datetime(1900, 1, 1)
