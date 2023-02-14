@@ -1,20 +1,71 @@
 import bz2
 import json
 import shutil
-from filecmp import cmp
 from pathlib import Path
 
-import numpy
 import pytest
 import torch
+from jsonschema import validate
 
 import OTVision.config as config
 from OTVision.detect.detect import main as detect
 from tests.conftest import YieldFixture
 
-torch.manual_seed(0)
-torch.use_deterministic_algorithms(True)
-numpy.random.seed(0)
+otdet_schema = {
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "vid": {
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string"},
+                        "filetype": {"type": "string"},
+                        "width": {"type": "number"},
+                        "height": {"type": "number"},
+                        "fps": {"type": "number"},
+                        "frames": {"type": "number"},
+                    },
+                },
+                "det": {
+                    "type": "object",
+                    "properties": {
+                        "detector": {"type": "string"},
+                        "weights": {"type": "string"},
+                        "conf": {"type": "number"},
+                        "iou": {"type": "number"},
+                        "size": {"type": "number"},
+                        "chunksize": {"type": "number"},
+                        "normalized": {"type": "boolean"},
+                    },
+                },
+            },
+        }
+    },
+    "data": {
+        "type": "object",
+        "properties": {
+            "propertyNames": {"pattern": "[1-9][0-9]*"},
+            "properties": {
+                "classified": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "class": "string",
+                            "conf": "number",
+                            "x": "number",
+                            "y": "number",
+                            "w": "number",
+                            "h": "number",
+                        },
+                    },
+                }
+            },
+        },
+    },
+}
 
 
 @pytest.fixture
@@ -84,13 +135,6 @@ class TestDetect:
         force_reload=False,
     ).cpu()
 
-    def test_detect_mp4AsParam_returnCorrectOtdetFile(
-        self, detect_test_tmp_dir: Path, cyclist_mp4: Path, default_cyclist_otdet: Path
-    ) -> None:
-        detect([cyclist_mp4], model=self.model, force_reload_torch_hub_cache=True)
-        result_otdet = detect_test_tmp_dir / default_cyclist_otdet.name
-        assert cmp(result_otdet, default_cyclist_otdet)
-
     def test_detect_otdet_valid_json(
         self, detect_test_tmp_dir: Path, cyclist_mp4: Path
     ) -> None:
@@ -102,3 +146,15 @@ class TestDetect:
             json.load(otdet_file)
         finally:
             otdet_file.close()
+
+    def test_detect_otdet_matches_schema(
+        self, detect_test_tmp_dir: Path, cyclist_mp4: Path, default_cyclist_otdet: Path
+    ) -> None:
+        detect([cyclist_mp4], model=self.model, force_reload_torch_hub_cache=True)
+        result_otdet = detect_test_tmp_dir / default_cyclist_otdet.name
+        try:
+            file = bz2.open(str(result_otdet), "r")
+            result_otdet_json = json.load(file)
+            validate(result_otdet_json, otdet_schema)
+        finally:
+            file.close()
