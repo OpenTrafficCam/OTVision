@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from OTVision.detect.detect import Timestamper
+from OTVision.track.preprocess import DATE_FORMAT
 
 
 @pytest.fixture
@@ -54,10 +55,12 @@ class TestTimestamper:
             },
         }
 
+        second_frame = start_date + time_per_frame
+        third_frame = second_frame + time_per_frame
         expected_dict = copy.deepcopy(detections)
-        expected_dict["data"]["1"]["occurrence"] = start_date
-        expected_dict["data"]["2"]["occurrence"] = start_date + time_per_frame
-        expected_dict["data"]["3"]["occurrence"] = start_date + 2 * time_per_frame
+        expected_dict["data"]["1"]["occurrence"] = start_date.strftime(DATE_FORMAT)
+        expected_dict["data"]["2"]["occurrence"] = second_frame.strftime(DATE_FORMAT)
+        expected_dict["data"]["3"]["occurrence"] = third_frame.strftime(DATE_FORMAT)
         stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
 
         assert expected_dict == stamped_dict

@@ -31,6 +31,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
 
 from . import yolo
 
@@ -240,7 +241,8 @@ class Timestamper:
         """
         data: dict = detections["data"]
         for key, value in data.items():
-            value["occurrence"] = start_date + (int(key) - 1) * time_per_frame
+            occurrence = start_date + (int(key) - 1) * time_per_frame
+            value[OCCURRENCE] = occurrence.strftime(DATE_FORMAT)
         return detections
 
 
