@@ -37,12 +37,10 @@ def _get_fps_from_filename(filename: str) -> int:
         int or None: frame rate in frames per second or None
     """
 
-    match = re.search(r"_FR([\d]+)_", filename)
-
-    if not match:
-        raise ValueError("Cannot read frame rate from file name")
-
-    return int(match[1])
+    if match := re.search(r"_FR([\d]+)_", filename):
+        return int(match[1])
+    else:
+        raise ValueError(f"Cannot read frame rate from file name {filename}")
 
 
 def _get_datetime_from_filename(

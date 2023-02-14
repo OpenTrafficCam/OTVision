@@ -86,19 +86,17 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
-        str_paths = args.paths
-    else:
-        if len(config.CONFIG["DETECT"]["PATHS"]) == 0:
-            raise IOError(
-                "No paths have been passed as command line args."
-                "No paths have been defined in the user config."
-            )
+        return args.paths
+    if len(config.CONFIG[config.DETECT][config.PATHS]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
 
-        str_paths = config.CONFIG["DETECT"]["PATHS"]
-    return str_paths
+    return config.CONFIG[config.DETECT][config.PATHS]
 
 
-def main() -> None:
+def main() -> None:  # sourcery skip: assign-if-exp
     args = parse()
     _process_config(args)
 
@@ -107,11 +105,27 @@ def main() -> None:
     except IOError as ioe:
         log.error(ioe)
 
-    weights = args.weights or config.CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
-    filetypes = args.filetypes or config.CONFIG["FILETYPES"]["VID"]
-    overwrite = args.overwrite or config.CONFIG["DETECT"]["OVERWRITE"]
-    debug = args.debug or config.CONFIG["DETECT"]["DEBUG"]
     paths = [Path(str_path) for str_path in str_paths]
+
+    if args.weights is None:
+        weights = config.CONFIG[config.DETECT][config.YOLO][config.WEIGHTS]
+    else:
+        weights = args.weights
+
+    if args.filetypes is None:
+        filetypes = config.CONFIG[config.FILETYPES][config.VID]
+    else:
+        filetypes = args.filetypes
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
+    else:
+        overwrite = args.overwrite
+
+    if args.debug is None:
+        debug = config.CONFIG[config.DETECT][config.DEBUG]
+    else:
+        debug = args.debug
 
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")

@@ -61,6 +61,17 @@ def parse() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
+    parser.add_argument(
+        "--input_fps",
+        type=float,
+        help="Frame rate of input h264.",
+        required=False,
+    )
+    parser.add_argument(
+        "--fps_from_filename",
+        action=argparse.BooleanOptionalAction,
+        help="Whether or not to parse frame rate from file name.",
+    )
     return parser.parse_args()
 
 
@@ -76,19 +87,17 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
-        str_paths = args.paths
-    else:
-        if len(config.CONFIG["CONVERT"]["PATHS"]) == 0:
-            raise IOError(
-                "No paths have been passed as command line args.\n"
-                "No paths have been defined in the user config."
-            )
+        return args.paths
+    if len(config.CONFIG[config.CONVERT][config.PATHS]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args.\n"
+            "No paths have been defined in the user config."
+        )
 
-        str_paths = config.CONFIG["CONVERT"]["PATHS"]
-    return str_paths
+    return config.CONFIG[config.CONVERT][config.PATHS]
 
 
-def main() -> None:
+def main() -> None:  # sourcery skip: assign-if-exp
     args = parse()
     _process_config(args)
     try:
@@ -96,10 +105,32 @@ def main() -> None:
     except IOError as ioe:
         log.error(ioe)
 
-    delete_input = args.delete_input or config.CONFIG["CONVERT"]["DELETE_INPUT"]
-    overwrite = args.overwrite or config.CONFIG["CONVERT"]["OVERWRITE"]
-    debug = args.debug or config.CONFIG["CONVERT"]["DEBUG"]
     paths = [Path(str_path) for str_path in str_paths]
+
+    if args.delete_input is None:
+        delete_input = config.CONFIG[config.CONVERT][config.DELETE_INPUT]
+    else:
+        delete_input = args.delete_input
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG[config.CONVERT][config.OVERWRITE]
+    else:
+        overwrite = args.overwrite
+
+    if args.debug is None:
+        debug = config.CONFIG[config.CONVERT][config.DEBUG]
+    else:
+        debug = args.debug
+
+    if args.input_fps is None:
+        input_fps = config.CONFIG[config.CONVERT][config.INPUT_FPS]
+    else:
+        input_fps = args.input_fps
+
+    if args.fps_from_filename is None:
+        fps_from_filename = config.CONFIG[config.CONVERT][config.FPS_FROM_FILENAME]
+    else:
+        fps_from_filename = args.fps_from_filename
 
     log.info("Starting conversion from command line")
     log.info(f"Arguments: {vars(args)}")
@@ -109,6 +140,8 @@ def main() -> None:
         delete_input=delete_input,
         overwrite=overwrite,
         debug=debug,
+        input_fps=input_fps,
+        fps_from_filename=fps_from_filename,
     )
     log.info("Finished conversion from command line")
 
