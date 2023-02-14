@@ -19,17 +19,26 @@ OTVision main module to detect objects in single or multiple images or videos.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import re
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Union
 
 import torch
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from . import yolo
+
+FILE_NAME_PATTERN = (
+    "(?P<prefix>[A-Za-z0-9]+)"
+    "_FR(?P<frame_rate>\\d+)"
+    "_(?P<start_date>\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2})\\..*"
+)
 
 
 def main(
@@ -115,7 +124,8 @@ def main(
             normalized=normalized,
         )
         log.info("Video detected")
-        write(detections_video, video_file, overwrite=overwrite)
+        stamped_detections = add_timestamps(detections_video, video_file)
+        write(stamped_detections, video_file, overwrite=overwrite)
 
     if debug:
         reset_debug()
@@ -140,6 +150,98 @@ def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
         return [files]
     chunk_starts = range(0, len(files), chunksize)
     return [files[i : i + chunksize] for i in chunk_starts]
+
+
+def add_timestamps(detections: dict, video_file: Path) -> dict:
+    return Timestamper().stamp(detections, video_file)
+
+
+class InproperFormattedFilename(Exception):
+    pass
+
+
+class Timestamper:
+    def stamp(self, detections: dict, video_file: Path) -> dict:
+        """This method adds timestamps when the frame occurred in real time to each
+        frame.
+
+        Args:
+            detections (dict): dictionary containing all frames
+            video_file (Path): path to video file
+
+        Returns:
+            dict: input dictionary with additional occurrence per frame
+        """
+        start_time = self._get_start_time_from(video_file)
+        time_per_frame = self._get_time_per_frame(detections, video_file)
+        return self._stamp(detections, start_time, time_per_frame)
+
+    def _get_start_time_from(self, video_file: Path) -> datetime:
+        """Parse the given filename and retrieve the start date of the video.
+
+        Args:
+            video_file (Path): path to video file
+
+        Raises:
+            InproperFormattedFilename: if the filename is not formatted as expected, an
+            exception will be raised
+
+        Returns:
+            datetime: start date of the video
+        """
+        match = re.search(
+            FILE_NAME_PATTERN,
+            video_file.name,
+        )
+        if match:
+            start_date: str = match.group("start_date")
+            return datetime.strptime(start_date, "%Y-%m-%d_%H-%M-%S")
+        raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
+
+    def _get_time_per_frame(self, detections: dict, video_file: Path) -> timedelta:
+        """Calculates the duration for each frame. This is done using the total
+        duration of the video and the number of frames.
+
+        Args:
+            detections (dict): dictionary containing all frames
+            video_file (Path): path to video file
+
+        Returns:
+            timedelta: duration per frame
+        """
+        duration = self._get_duration(video_file)
+        number_of_frames = len(detections["data"].keys())
+        return duration / number_of_frames
+
+    def _get_duration(self, video_file: Path) -> timedelta:
+        """Get the duration of the video
+
+        Args:
+            video_file (Path): path to video file
+
+        Returns:
+            timedelta: duration of the video
+        """
+        clip = VideoFileClip(str(video_file.absolute()))
+        return timedelta(seconds=clip.duration)
+
+    def _stamp(
+        self, detections: dict, start_date: datetime, time_per_frame: timedelta
+    ) -> dict:
+        """Add a timestamp (occurrence in real time) to each frame.
+
+        Args:
+            detections (dict): dictionary containing all frames
+            start_date (datetime): start date of the video recording
+            time_per_frame (timedelta): duration per frame
+
+        Returns:
+            dict: dictionary containing all frames with their occurrence in real time
+        """
+        data: dict = detections["data"]
+        for key, value in data.items():
+            value["occurrence"] = start_date + (int(key) - 1) * time_per_frame
+        return detections
 
 
 def write(
