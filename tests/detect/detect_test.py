@@ -5,7 +5,14 @@ from pathlib import Path
 import pytest
 
 from OTVision.detect.detect import Timestamper
-from OTVision.track.preprocess import DATE_FORMAT
+from OTVision.track.preprocess import (
+    CLASS,
+    CLASSIFIED,
+    DATA,
+    DATE_FORMAT,
+    METADATA,
+    OCCURRENCE,
+)
 
 
 @pytest.fixture
@@ -47,20 +54,20 @@ class TestTimestamper:
         start_date = datetime(2022, 1, 2, 3, 4, 5)
         time_per_frame = timedelta(microseconds=10000)
         detections: dict[str, dict[str, dict]] = {
-            "metadata": {},
-            "data": {
-                "1": {"classified": []},
-                "2": {"classified": [{"class": "car"}]},
-                "3": {"classified": []},
+            METADATA: {},
+            DATA: {
+                "1": {CLASSIFIED: []},
+                "2": {CLASSIFIED: [{CLASS: "car"}]},
+                "3": {CLASSIFIED: []},
             },
         }
 
         second_frame = start_date + time_per_frame
         third_frame = second_frame + time_per_frame
         expected_dict = copy.deepcopy(detections)
-        expected_dict["data"]["1"]["occurrence"] = start_date.strftime(DATE_FORMAT)
-        expected_dict["data"]["2"]["occurrence"] = second_frame.strftime(DATE_FORMAT)
-        expected_dict["data"]["3"]["occurrence"] = third_frame.strftime(DATE_FORMAT)
+        expected_dict[DATA]["1"][OCCURRENCE] = start_date.strftime(DATE_FORMAT)
+        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.strftime(DATE_FORMAT)
+        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.strftime(DATE_FORMAT)
         stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
 
         assert expected_dict == stamped_dict
