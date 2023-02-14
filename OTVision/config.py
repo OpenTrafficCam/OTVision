@@ -110,23 +110,15 @@ class _DefaultFiletype:
 class _VideoFiletypes:
     avi: str = ".avi"
     mkv: str = ".mkv"
-    m4v: str = ".m4v"
     mov: str = ".mov"
     mp4: str = ".mp4"
-    mpg: str = ".mpg"
-    mpeg: str = ".mpeg"
-    wmv: str = ".wmv"
 
     def to_list(self) -> list:
         return [
             self.avi,
             self.mkv,
-            self.m4v,
             self.mov,
             self.mp4,
-            self.mpg,
-            self.mpeg,
-            self.wmv,
         ]
 
 
@@ -605,12 +597,8 @@ CONFIG[FILETYPES] = {}
 CONFIG[FILETYPES][VID] = [
     ".avi",
     ".mkv",
-    ".m4v",
     ".mov",
     ".mp4",
-    ".mpg",
-    ".mpeg",
-    ".wmv",
 ]
 CONFIG[FILETYPES][IMG] = [".jpg", ".jpeg", ".png"]
 CONFIG[FILETYPES][DETECT] = [".otdet"]
