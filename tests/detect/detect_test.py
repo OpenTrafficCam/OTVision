@@ -4,12 +4,17 @@ import shutil
 from filecmp import cmp
 from pathlib import Path
 
+import numpy
 import pytest
 import torch
 
 import OTVision.config as config
 from OTVision.detect.detect import main as detect
 from tests.conftest import YieldFixture
+
+torch.manual_seed(0)
+torch.use_deterministic_algorithms(True)
+numpy.random.seed(0)
 
 
 @pytest.fixture
@@ -77,12 +82,12 @@ class TestDetect:
         model="yolov5s",
         pretrained=True,
         force_reload=False,
-    )
+    ).cpu()
 
     def test_detect_mp4AsParam_returnCorrectOtdetFile(
         self, detect_test_tmp_dir: Path, cyclist_mp4: Path, default_cyclist_otdet: Path
     ) -> None:
-        detect([cyclist_mp4], force_reload_torch_hub_cache=True)
+        detect([cyclist_mp4], model=self.model, force_reload_torch_hub_cache=True)
         result_otdet = detect_test_tmp_dir / default_cyclist_otdet.name
         assert cmp(result_otdet, default_cyclist_otdet)
 
