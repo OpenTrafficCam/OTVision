@@ -5,16 +5,7 @@ CONVERT:
   DELETE_INPUT: false
   FPS_FROM_FILENAME: true
   INPUT_FPS: 20.0
-  OUTPUT_FILETYPE: .mp4
-  OUTPUT_FPS: 20.0
   OVERWRITE: true
-
-DEFAULT_FILETYPE:
-  DETECT: .otdet
-  IMG: .jpg
-  REFPTS: .otrfpts
-  TRACK: .ottrk
-  VID: .mp4
 
 DETECT:
   PATHS: []
@@ -27,33 +18,7 @@ DETECT:
     CONF: 0.25
     IMGSIZE: 640
     IOU: 0.45
-    NORMALIZED: false
     WEIGHTS: yolov5s
-
-FILETYPES:
-  DETECT:
-    - .otdet
-  IMG:
-    - .jpg
-    - .jpeg
-    - .png
-  REFPTS:
-    - .otrfpts
-  TRACK:
-    - .ottrk
-  TRANSFORM:
-    - .gpkg
-  VID:
-    - .avi
-    - .mkv
-    - .m4v
-    - .mov
-    - .mp4
-    - .mpg
-    - .mpeg
-    - .wmv
-
-SEARCH_SUBDIRS: true
 
 TRACK:
   PATHS: []
@@ -65,12 +30,3 @@ TRACK:
     T_MIN: 5
     T_MISS_MAX: 51
   OVERWRITE: true
-
-TRANSFORM:
-  PATHS: []
-  DEBUG: false
-  OVERWRITE: true
-
-UNDISTORT:
-  DEBUG: false
-  OVERWRITE: false
