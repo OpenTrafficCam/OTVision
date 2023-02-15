@@ -135,7 +135,7 @@ def yolov5s() -> Any:
 
 
 @dataclass
-class BoundingBox:
+class Detection:
     det_class: str
     conf: float
     x: float
@@ -144,18 +144,19 @@ class BoundingBox:
     h: float
 
     @staticmethod
-    def from_dict(d: dict) -> "BoundingBox":
-        return BoundingBox(d[CLASS], d[CONF], d[X], d[Y], d[W], d[H])
+    def from_dict(d: dict) -> "Detection":
+        return Detection(d[CLASS], d[CONF], d[X], d[Y], d[W], d[H])
 
 
 @dataclass
-class Detection:
-    bboxes: list[BoundingBox]
+class Frame:
+    number: int
+    detections: list[Detection]
 
     @staticmethod
-    def from_dict(d: dict) -> "Detection":
-        bboxes = [BoundingBox.from_dict(bbox) for bbox in d[CLASSIFIED]]
-        return Detection(bboxes)
+    def from_dict(frame_number: str, d: dict) -> "Frame":
+        detections = [Detection.from_dict(detection) for detection in d[CLASSIFIED]]
+        return Frame(int(frame_number), detections)
 
 
 class TestDetect:
@@ -171,7 +172,7 @@ class TestDetect:
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
-    def is_normalized(self, bbox: BoundingBox) -> bool:
+    def is_normalized(self, bbox: Detection) -> bool:
         return (
             (bbox.w >= 0 and bbox.w < 1)
             and (bbox.y >= 0 and bbox.y < 1)
@@ -220,9 +221,11 @@ class TestDetect:
         detect([truck_mp4], model=yolov5s, conf=0.25, normalized=True)
         otdet_dict = read_bz2_otdet(otdet_file)
 
-        detections = [Detection.from_dict(det) for det in otdet_dict[DATA].values()]
+        detections = [
+            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+        ]
         for det in detections:
-            for bbox in det.bboxes:
+            for bbox in det.detections:
                 assert self.is_normalized(bbox)
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
@@ -233,10 +236,12 @@ class TestDetect:
         detect([truck_mp4], model=yolov5s, conf=0.25, normalized=False)
         otdet_dict = read_bz2_otdet(otdet_file)
 
-        detections = [Detection.from_dict(det) for det in otdet_dict[DATA].values()]
+        detections = [
+            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+        ]
         denormalized_bbox_found = False
         for det in detections:
-            for bbox in det.bboxes:
+            for bbox in det.detections:
                 denormalized_bbox_found = (
                     denormalized_bbox_found or not self.is_normalized(bbox)
                 )
@@ -253,9 +258,11 @@ class TestDetect:
         detect(paths=[truck_mp4], model=yolov5s, conf=conf)
         otdet_dict = read_bz2_otdet(otdet_file)
 
-        detections = [Detection.from_dict(det) for det in otdet_dict[DATA].values()]
+        detections = [
+            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+        ]
         for det in detections:
-            for bbox in det.bboxes:
+            for bbox in det.detections:
                 assert bbox.conf >= conf
         otdet_file.unlink()
 
