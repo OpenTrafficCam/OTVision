@@ -130,14 +130,17 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    OTVision.detect(
-        paths=paths,
-        weights=weights,
-        filetypes=filetypes,
-        overwrite=overwrite,
-        debug=debug,
-    )
-    log.info("Finished detection from command line")
+    try:
+        OTVision.detect(
+            paths=paths,
+            weights=weights,
+            filetypes=filetypes,
+            overwrite=overwrite,
+            debug=debug,
+        )
+        log.info("Finished detection from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":
