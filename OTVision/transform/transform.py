@@ -28,7 +28,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from OTVision.config import CONFIG
+from OTVision.config import CONFIG, FILETYPES, REFPTS, TRACK
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     get_files,
@@ -77,10 +77,15 @@ def main(
     if debug:
         set_debug()
 
+    track_filetype = CONFIG[FILETYPES][TRACK]
+    refpts_filetype = CONFIG[FILETYPES][REFPTS]
+
     if refpts_file:
-        refpts_file = get_files(
-            paths=[refpts_file], filetypes=CONFIG["FILETYPES"]["REFPTS"]
-        )[0]
+        if not refpts_file.exists():
+            raise FileNotFoundError(
+                f"No reference points file with filetype: '{refpts_filetype}' found!"
+            )
+
         refpts = read_refpts(reftpts_file=refpts_file)
         (
             homography,
@@ -92,6 +97,11 @@ def main(
         ) = get_homography(refpts=refpts)
         log.info(f"Read {refpts_file}")
     tracks_files = get_files(paths=paths, filetypes=CONFIG["FILETYPES"]["TRACK"])
+    if not tracks_files:
+        raise FileNotFoundError(
+            f"No files of type '{track_filetype}' found to transform!"
+        )
+
     for tracks_file in tracks_files:
         log.info(f"Try transforming {tracks_file}")
         # Try reading refpts and getting homography if not done above
@@ -99,7 +109,12 @@ def main(
             associated_refpts_file = replace_filetype(
                 files=[tracks_file], new_filetype=CONFIG["DEFAULT_FILETYPE"]["REFPTS"]
             )[0]
-            log.info(f"Found refpts file {refpts_file}")
+            if not associated_refpts_file.exists():
+                raise FileNotFoundError(
+                    f"No reference points file found for tracks file: {tracks_file}!"
+                )
+
+            log.info(f"Found refpts file {associated_refpts_file}")
             refpts = read_refpts(reftpts_file=associated_refpts_file)
             log.info("Refpts read")
             (
