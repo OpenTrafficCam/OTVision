@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from OTVision.detect.detect import Timestamper
-from OTVision.track.preprocess import (
+from OTVision.dataformat import (
     CLASS,
     CLASSIFIED,
     DATA,
@@ -13,6 +12,7 @@ from OTVision.track.preprocess import (
     METADATA,
     OCCURRENCE,
 )
+from OTVision.detect.detect import Timestamper
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 import pytest
 
-from OTVision.track.preprocess import (
+from OTVision.dataformat import (
     CLASS,
     CLASSIFIED,
     CONFIDENCE,
@@ -17,17 +17,19 @@ from OTVision.track.preprocess import (
     OCCURRENCE,
     RECORDED_START_DATE,
     VIDEO,
+    H,
+    W,
+    X,
+    Y,
+)
+from OTVision.track.preprocess import (
     Cleanup,
     Detection,
     DetectionParser,
     Frame,
     FrameGroup,
     FrameGroupParser,
-    H,
     Preprocess,
-    W,
-    X,
-    Y,
 )
 
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4)

@@ -4,27 +4,26 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Tuple
 
+from OTVision.dataformat import (
+    CLASS,
+    CLASSIFIED,
+    CONFIDENCE,
+    DATA,
+    DATE_FORMAT,
+    FILE,
+    FRAME,
+    INPUT_FILE_PATH,
+    METADATA,
+    OCCURRENCE,
+    RECORDED_START_DATE,
+    VIDEO,
+    H,
+    W,
+    X,
+    Y,
+)
 from OTVision.helpers.files import read_json
 from OTVision.helpers.machine import ON_WINDOWS
-
-METADATA: str = "metadata"
-VIDEO: str = "vid"
-FILE: str = "file"
-RECORDED_START_DATE: str = "recorded_start_date"
-
-DATE_FORMAT: str = "%Y-%m-%d %H:%M:%S.%f"
-INPUT_FILE_PATH: str = "input_file_path"
-DATA: str = "data"
-CLASS: str = "class"
-CLASSIFIED: str = "classified"
-FRAME: str = "frame"
-OCCURRENCE: str = "occurrence"
-LABEL: str = "label"
-CONFIDENCE: str = "conf"
-X: str = "x"
-Y: str = "y"
-W: str = "w"
-H: str = "h"
 
 MISSING_START_DATE = datetime(1900, 1, 1)
 
