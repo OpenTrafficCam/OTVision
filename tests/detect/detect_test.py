@@ -80,6 +80,31 @@ otdet_schema = {
 }
 
 
+@dataclass
+class Detection:
+    det_class: str
+    conf: float
+    x: float
+    y: float
+    w: float
+    h: float
+
+    @staticmethod
+    def from_dict(d: dict) -> "Detection":
+        return Detection(d[CLASS], d[CONF], d[X], d[Y], d[W], d[H])
+
+
+@dataclass
+class Frame:
+    number: int
+    detections: list[Detection]
+
+    @staticmethod
+    def from_dict(frame_number: str, d: dict) -> "Frame":
+        detections = [Detection.from_dict(detection) for detection in d[CLASSIFIED]]
+        return Frame(int(frame_number), detections)
+
+
 def read_bz2_otdet(otdet: Path) -> dict:
     with bz2.open(otdet, "r") as file:
         result_otdet_json = json.load(file)
@@ -132,31 +157,6 @@ def yolov5s() -> Any:
         force_reload=False,
     )
     return model
-
-
-@dataclass
-class Detection:
-    det_class: str
-    conf: float
-    x: float
-    y: float
-    w: float
-    h: float
-
-    @staticmethod
-    def from_dict(d: dict) -> "Detection":
-        return Detection(d[CLASS], d[CONF], d[X], d[Y], d[W], d[H])
-
-
-@dataclass
-class Frame:
-    number: int
-    detections: list[Detection]
-
-    @staticmethod
-    def from_dict(frame_number: str, d: dict) -> "Frame":
-        detections = [Detection.from_dict(detection) for detection in d[CLASSIFIED]]
-        return Frame(int(frame_number), detections)
 
 
 class TestDetect:
