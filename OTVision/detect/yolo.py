@@ -26,12 +26,12 @@ import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
-from OTVision.config import CONFIG
+from OTVision.config import CONFIG, FILETYPES, VID
 from OTVision.helpers.files import has_filetype
 from OTVision.helpers.log import log
 
 
-class NoVideoError(Exception):
+class VideoFiletypeNotSupportedError(Exception):
     pass
 
 
@@ -74,7 +74,12 @@ def detect_video(
     t1 = perf_counter()
 
     if not has_filetype(file, CONFIG["FILETYPES"]["VID"]):
-        raise NoVideoError(f"The file: {file} is not a video!")
+        raise VideoFiletypeNotSupportedError(
+            (
+                f"Filetype of '{file}' is not supported!",
+                f"Only videos of filetype: '{CONFIG[FILETYPES][VID]}'",
+            )
+        )
 
     cap = VideoCapture(str(file))
     batch_no = 0

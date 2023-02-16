@@ -3,6 +3,7 @@ deepdiff
 flake8
 interrogate
 isort
+jsonschema
 mypy
 pre-commit
 pytest
