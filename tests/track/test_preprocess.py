@@ -332,7 +332,7 @@ class TestPreprocess:
 
         assert serialized_otdet == {DATA: otdet[DATA]}
         assert metadata == {
-            Path(file_path): {
+            file_path: {
                 VIDEO: {
                     FILE: file_path,
                     RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
