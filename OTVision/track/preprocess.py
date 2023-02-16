@@ -59,16 +59,18 @@ class Detection:
 class Frame:
     frame: int
     occurrence: datetime
-    input_file_path: str
+    input_file_path: Path
     detections: list[Detection]
 
     def to_dict(self) -> dict:
         return {
             FRAME: self.frame,
             OCCURRENCE: self.occurrence.strftime(DATE_FORMAT),
-            INPUT_FILE_PATH: self.input_file_path,
+            INPUT_FILE_PATH: self.input_file_path.as_posix(),
             CLASSIFIED: [
-                detection.to_dict(self.frame, self.occurrence, self.input_file_path)
+                detection.to_dict(
+                    self.frame, self.occurrence, self.input_file_path.as_posix()
+                )
                 for detection in self.detections
             ],
         }
@@ -184,10 +186,10 @@ class DetectionParser:
 
 
 class FrameGroupParser:
-    input_file_path: str
+    input_file_path: Path
     recorded_start_date: datetime
 
-    def __init__(self, input_file_path: str, recorded_start_date: datetime) -> None:
+    def __init__(self, input_file_path: Path, recorded_start_date: datetime) -> None:
         self.input_file_path = input_file_path
         self.recorded_start_date = recorded_start_date
 
@@ -214,7 +216,7 @@ class FrameGroupParser:
     def order_key(self) -> str:
         path = Path(self.input_file_path)
         if ON_WINDOWS:
-            return os.path.normcase(to_unix_path(path.parent))
+            return os.path.normcase(path.parent.as_posix())
         return os.path.normpath(path.parent)
 
 
@@ -222,10 +224,6 @@ class FrameGroupParser:
 class PreprocessResult:
     frame_groups: list[FrameGroup]
     metadata: dict[str, dict]
-
-
-def to_unix_path(file_path: Path) -> str:
-    return str(file_path).replace("\\", "/")
 
 
 class Preprocess:
@@ -257,11 +255,11 @@ class Preprocess:
         metadata: dict[str, dict] = {}
         for file_path, recording in input.items():
             file_metadata = recording[METADATA]
-            metadata[to_unix_path(file_path)] = file_metadata
+            metadata[file_path.as_posix()] = file_metadata
             start_date: datetime = self.extract_start_date_from(recording)
             data: dict[int, dict[str, Any]] = recording[DATA]
             frame_group = FrameGroupParser(
-                to_unix_path(file_path), recorded_start_date=start_date
+                file_path, recorded_start_date=start_date
             ).convert(data)
             all_groups.append(frame_group)
         return all_groups, metadata

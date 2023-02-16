@@ -31,11 +31,10 @@ from OTVision.track.preprocess import (
     FrameGroup,
     FrameGroupParser,
     Preprocess,
-    to_unix_path,
 )
 
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4)
-DEFAULT_INPUT_FILE_PATH = "input-file.otdet"
+DEFAULT_INPUT_FILE_PATH = Path("input-file.otdet")
 DEFAULT_LABEL = "car"
 DEFAULT_CONFIDENCE = 1.0
 DEFAULT_X = 512.0
@@ -58,7 +57,7 @@ def create_frame(
     frame_number: int,
     detections: list[Detection],
     occurrence: Optional[datetime] = None,
-    input_file_path: str = DEFAULT_INPUT_FILE_PATH,
+    input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
 ) -> Frame:
     default_occurrence = occurrence_from(frame_number)
     if occurrence is None:
@@ -87,12 +86,12 @@ class DataBuilder:
     classified_frames: list[int]
     non_classified_frames: list[int]
     current_key: int
-    input_file_path: str
+    input_file_path: Path
     start_date: datetime
 
     def __init__(
         self,
-        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
+        input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
         start_date: datetime = DEFAULT_START_DATE,
     ) -> None:
         self.data = {}
@@ -108,7 +107,7 @@ class DataBuilder:
         self.data[frame_number] = {
             FRAME: frame_number,
             OCCURRENCE: occurrence,
-            INPUT_FILE_PATH: self.input_file_path,
+            INPUT_FILE_PATH: self.input_file_path.as_posix(),
             CLASSIFIED: [],
         }
         self.non_classified_frames.append(frame_number)
@@ -131,7 +130,7 @@ class DataBuilder:
         h: float = DEFAULT_H,
         frame_number: int = 1,
         occurrence: str = DEFAULT_START_DATE.strftime(DATE_FORMAT),
-        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
+        input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
     ) -> dict[str, object]:
         return {
             CLASS: label,
@@ -142,7 +141,7 @@ class DataBuilder:
             H: h,
             FRAME: frame_number,
             OCCURRENCE: occurrence,
-            INPUT_FILE_PATH: input_file_path,
+            INPUT_FILE_PATH: input_file_path.as_posix(),
         }
 
     def append_classified_frame(
@@ -160,7 +159,7 @@ class DataBuilder:
         self.data[frame_number] = {
             FRAME: frame_number,
             OCCURRENCE: occurrence,
-            INPUT_FILE_PATH: self.input_file_path,
+            INPUT_FILE_PATH: self.input_file_path.as_posix(),
             CLASSIFIED: [
                 self.create_classification(
                     label=label,
@@ -217,7 +216,7 @@ class DataBuilder:
         return {
             METADATA: {
                 VIDEO: {
-                    FILE: self.input_file_path,
+                    FILE: self.input_file_path.as_posix(),
                     RECORDED_START_DATE: self.start_date.strftime(DATE_FORMAT),
                 }
             },
@@ -290,7 +289,7 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = to_unix_path(Path(os.path.normcase(f"{order_key}/file-name.otdet")))
+        path = Path(os.path.normcase(f"{order_key}/file-name.otdet"))
         parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
         result: FrameGroup = parser.convert(input)
 
@@ -307,7 +306,7 @@ class TestFrameParser:
 
     def test_order_key(self) -> None:
         order_key = "/some/path/to"
-        path = f"{order_key}/file-name.otdet"
+        path = Path(f"{order_key}/file-name.otdet")
         parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
 
         calculated_key = parser.order_key()
@@ -318,7 +317,7 @@ class TestFrameParser:
 class TestPreprocess:
     def test_preprocess_single_file(self) -> None:
         order_key = "order-key"
-        file_path = f"{order_key}/first-file.otdet"
+        file_path = Path(f"{order_key}/first-file.otdet")
         start_date = datetime(2022, 5, 4, 12, 0, 1)
         builder = DataBuilder(
             input_file_path=file_path,
@@ -333,9 +332,9 @@ class TestPreprocess:
 
         assert serialized_otdet == {DATA: otdet[DATA]}
         assert metadata == {
-            file_path: {
+            file_path.as_posix(): {
                 VIDEO: {
-                    FILE: file_path,
+                    FILE: file_path.as_posix(),
                     RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
                 }
             }
@@ -343,7 +342,7 @@ class TestPreprocess:
 
     def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
-        first_file_path = f"{order_key}/first-file.otdet"
+        first_file_path = Path(f"{order_key}/first-file.otdet")
         first_start_date = datetime(2022, 5, 4, 12, 0, 1)
         first_builder = DataBuilder(
             input_file_path=first_file_path,
@@ -352,7 +351,7 @@ class TestPreprocess:
         first_builder.append_classified_frame()
         first_detections = first_builder.build_ot_det()
 
-        second_file_path = f"{order_key}/second-file.otdet"
+        second_file_path = Path(f"{order_key}/second-file.otdet")
         second_start_date = datetime(2022, 5, 4, 12, 0, 0)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
@@ -361,7 +360,7 @@ class TestPreprocess:
         second_builder.append_classified_frame()
         second_detections = second_builder.build_ot_det()
 
-        third_file_path = f"{order_key}/third-file.otdet"
+        third_file_path = Path(f"{order_key}/third-file.otdet")
         third_start_date = datetime(2022, 5, 4, 13, 0, 1)
         third_builder = DataBuilder(
             input_file_path=third_file_path,
@@ -373,9 +372,9 @@ class TestPreprocess:
         preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
         merged_groups, metadata = preprocessor.process(
             {
-                Path(first_file_path): first_detections,
-                Path(second_file_path): second_detections,
-                Path(third_file_path): third_detections,
+                first_file_path: first_detections,
+                second_file_path: second_detections,
+                third_file_path: third_detections,
             }
         )
 
@@ -412,21 +411,21 @@ class TestPreprocess:
 
         assert merged_groups == expected_result
         assert metadata == {
-            first_file_path: {
+            first_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: first_file_path,
+                    FILE: first_file_path.as_posix(),
                     RECORDED_START_DATE: first_start_date.strftime(DATE_FORMAT),
                 }
             },
-            second_file_path: {
+            second_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: second_file_path,
+                    FILE: second_file_path.as_posix(),
                     RECORDED_START_DATE: second_start_date.strftime(DATE_FORMAT),
                 }
             },
-            third_file_path: {
+            third_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: third_file_path,
+                    FILE: third_file_path.as_posix(),
                     RECORDED_START_DATE: third_start_date.strftime(DATE_FORMAT),
                 }
             },
@@ -470,7 +469,7 @@ class TestFrameGroup:
         order_key: str = "/some/path/to",
         start_date: datetime = DEFAULT_START_DATE,
         end_date: datetime = DEFAULT_START_DATE,
-        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
+        input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
     ) -> FrameGroup:
         frames: list[Frame] = [
             create_frame(1, [], occurrence=start_date, input_file_path=input_file_path),
