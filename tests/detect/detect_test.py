@@ -97,21 +97,13 @@ class Detection:
     def from_dict(d: dict) -> "Detection":
         return Detection(d[CLASS], d[CONF], d[X], d[Y], d[W], d[H])
 
-
-def test_detect_emptyDirAsParam(test_data_tmp_dir: Path) -> None:
-    empty_dir = test_data_tmp_dir / "empty"
-    empty_dir.mkdir()
-    with pytest.raises(
-        FileNotFoundError, match=r"No videos of type .* found to detect!"
-    ):
-        detect(paths=[empty_dir])
-
-
-def test_detect_emptyListAsParam() -> None:
-    with pytest.raises(
-        FileNotFoundError, match=r"No videos of type .* found to detect!"
-    ):
-        detect(paths=[])
+    def is_normalized(self) -> bool:
+        return (
+            (self.w >= 0 and self.w < 1)
+            and (self.y >= 0 and self.y < 1)
+            and (self.w >= 0 and self.w < 1)
+            and (self.h >= 0 and self.h < 1)
+        )
 
 
 @dataclass
@@ -199,13 +191,19 @@ class TestDetect:
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
-    def is_normalized(self, bbox: Detection) -> bool:
-        return (
-            (bbox.w >= 0 and bbox.w < 1)
-            and (bbox.y >= 0 and bbox.y < 1)
-            and (bbox.w >= 0 and bbox.w < 1)
-            and (bbox.h >= 0 and bbox.h < 1)
-        )
+    def test_detect_emptyDirAsParam(self, detect_test_tmp_dir: Path) -> None:
+        empty_dir = detect_test_tmp_dir / "empty"
+        empty_dir.mkdir()
+        with pytest.raises(
+            FileNotFoundError, match=r"No videos of type .* found to detect!"
+        ):
+            detect(paths=[empty_dir])
+
+    def test_detect_emptyListAsParam(self) -> None:
+        with pytest.raises(
+            FileNotFoundError, match=r"No videos of type .* found to detect!"
+        ):
+            detect(paths=[])
 
     def test_detect_create_otdet(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
@@ -262,7 +260,7 @@ class TestDetect:
         ]
         for det in detections:
             for bbox in det.detections:
-                assert self.is_normalized(bbox)
+                assert bbox.is_normalized()
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
 
@@ -278,16 +276,16 @@ class TestDetect:
         )
         otdet_dict = read_bz2_otdet(otdet_file)
 
-        detections = [
+        frames = [
             Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
         ]
         denormalized_bbox_found = False
-        for det in detections:
-            for bbox in det.detections:
+        for frame in frames:
+            for det in frame.detections:
                 denormalized_bbox_found = (
-                    denormalized_bbox_found or not self.is_normalized(bbox)
+                    denormalized_bbox_found or not det.is_normalized()
                 )
-                assert bbox.conf >= self.conf
+                assert det.conf >= self.conf
         assert denormalized_bbox_found
         otdet_file.unlink()
 
