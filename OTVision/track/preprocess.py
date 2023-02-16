@@ -10,12 +10,12 @@ from OTVision.dataformat import (
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
-    FILE,
     FRAME,
     INPUT_FILE_PATH,
     METADATA,
     OCCURRENCE,
     RECORDED_START_DATE,
+    TRACK_ID,
     VIDEO,
     H,
     W,
@@ -41,7 +41,7 @@ class Detection:
     w: float
     h: float
 
-    def to_dict(self) -> dict:
+    def to_dict(self, frame: int, occurrence: datetime, input_file_path: str) -> dict:
         return {
             CLASS: self.label,
             CONFIDENCE: self.conf,
@@ -49,6 +49,9 @@ class Detection:
             Y: self.y,
             W: self.w,
             H: self.h,
+            FRAME: frame,
+            OCCURRENCE: occurrence.strftime(DATE_FORMAT),
+            INPUT_FILE_PATH: input_file_path,
         }
 
 
@@ -64,7 +67,10 @@ class Frame:
             FRAME: self.frame,
             OCCURRENCE: self.occurrence.strftime(DATE_FORMAT),
             INPUT_FILE_PATH: self.input_file_path,
-            CLASSIFIED: [detection.to_dict() for detection in self.detections],
+            CLASSIFIED: [
+                detection.to_dict(self.frame, self.occurrence, self.input_file_path)
+                for detection in self.detections
+            ],
         }
 
     def derive_frame_number(self, new_frame_number: int) -> "Frame":
@@ -99,27 +105,44 @@ class FrameGroup:
             all_frames.append(frame.derive_frame_number(last_frame_number))
         return FrameGroup(all_frames, self.order_key)
 
-    def split(self) -> list["FrameGroup"]:
-        current_group_frames: list[Frame] = []
-        current_video_path = None
-        groups = []
-        frame_id = 1
-        for frame in self.frames:
-            if frame.input_file_path != current_video_path:
-                if len(current_group_frames) > 0:
-                    groups.append(FrameGroup(current_group_frames, self.order_key))
-                current_group_frames = []
-                current_video_path = frame.input_file_path
-                frame_id = 1
-            current_group_frames.append(frame.derive_frame_number(frame_id))
-            frame_id = frame_id + 1
-        groups.append(FrameGroup(current_group_frames, self.order_key))
-        return groups
-
     def to_dict(self) -> dict:
         return {
             DATA: {frame.frame: frame.to_dict() for frame in self.frames},
         }
+
+
+class Splitter:
+    def split(self, tracks: dict[str, dict]) -> dict[str, list[dict]]:
+        detections = self.flatten(tracks)
+        detections.sort(
+            key=lambda detection: (
+                detection[INPUT_FILE_PATH],
+                detection[FRAME],
+                detection[TRACK_ID],
+            )
+        )
+        current_group_detections: list[dict] = []
+        current_video_path = ""
+        groups: dict[str, list[dict]] = {}
+        frame_offset = 0
+        for detection in detections:
+            if detection[INPUT_FILE_PATH] != current_video_path:
+                if len(current_group_detections) > 0:
+                    groups[current_video_path] = current_group_detections
+                current_group_detections = []
+                current_video_path = detection[INPUT_FILE_PATH]
+                frame_offset = detection[FRAME] - 1
+            detection[FRAME] = detection[FRAME] - frame_offset
+            current_group_detections.append(detection)
+        groups[current_video_path] = current_group_detections
+        return groups
+
+    def flatten(self, frames: dict[str, dict]) -> list[dict]:
+        detections = []
+        for track in frames.values():
+            for detection in track.values():
+                detections.append(detection)
+        return detections
 
 
 class Cleanup:
@@ -178,7 +201,7 @@ class FrameGroupParser:
             data_detections = value[CLASSIFIED]
             detections = detection_parser.convert(data_detections)
             parsed_frame = Frame(
-                key,
+                int(key),
                 occurrence=occurrence,
                 input_file_path=self.input_file_path,
                 detections=detections,
@@ -208,32 +231,33 @@ class Preprocess:
         self.time_without_frames = no_frames_for
 
     def run(self, files: list[Path]) -> PreprocessResult:
-        input_data = []
+        input_data = {}
         for file in files:
             input = read_json(file)
-            input_data.append(input)
+            input_data[file] = input
         groups, metadata = self.process(input_data)
         return PreprocessResult(frame_groups=groups, metadata=metadata)
 
-    def process(self, input: list[dict]) -> Tuple[list[FrameGroup], dict[str, dict]]:
+    def process(
+        self, input: dict[Path, dict]
+    ) -> Tuple[list[FrameGroup], dict[str, dict]]:
         all_groups, metadata = self._parse_frame_groups(input)
         if len(all_groups) == 0:
             return [], metadata
         return self._merge_groups(all_groups), metadata
 
     def _parse_frame_groups(
-        self, input: list[dict]
+        self, input: dict[Path, dict]
     ) -> Tuple[list[FrameGroup], dict[str, dict]]:
         all_groups: list[FrameGroup] = []
         metadata: dict[str, dict] = {}
-        for recording in input:
+        for file_path, recording in input.items():
             file_metadata = recording[METADATA]
-            input_file_path: str = str(file_metadata[VIDEO][FILE])
-            metadata[input_file_path] = file_metadata
+            metadata[str(file_path)] = file_metadata
             start_date: datetime = self.extract_start_date_from(recording)
             data: dict[int, dict[str, Any]] = recording[DATA]
             frame_group = FrameGroupParser(
-                input_file_path, recorded_start_date=start_date
+                str(file_path), recorded_start_date=start_date
             ).convert(data)
             all_groups.append(frame_group)
         return all_groups, metadata

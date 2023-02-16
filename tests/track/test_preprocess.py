@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Optional
 
 import pytest
@@ -127,6 +128,9 @@ class DataBuilder:
         y: float = DEFAULT_Y,
         w: float = DEFAULT_W,
         h: float = DEFAULT_H,
+        frame_number: int = 1,
+        occurrence: str = DEFAULT_START_DATE.strftime(DATE_FORMAT),
+        input_file_path: str = DEFAULT_INPUT_FILE_PATH,
     ) -> dict[str, object]:
         return {
             CLASS: label,
@@ -135,6 +139,9 @@ class DataBuilder:
             Y: y,
             W: w,
             H: h,
+            FRAME: frame_number,
+            OCCURRENCE: occurrence,
+            INPUT_FILE_PATH: input_file_path,
         }
 
     def append_classified_frame(
@@ -161,6 +168,9 @@ class DataBuilder:
                     y=y,
                     w=w,
                     h=h,
+                    frame_number=frame_number,
+                    occurrence=occurrence,
+                    input_file_path=self.input_file_path,
                 )
                 for i in range(0, number_of_classifications)
             ],
@@ -317,12 +327,12 @@ class TestPreprocess:
         otdet = builder.build_ot_det()
 
         preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
-        preprocessed_otdet, metadata = preprocessor.process([otdet])
+        preprocessed_otdet, metadata = preprocessor.process({Path(file_path): otdet})
         serialized_otdet = preprocessed_otdet[0].to_dict()
 
         assert serialized_otdet == {DATA: otdet[DATA]}
         assert metadata == {
-            file_path: {
+            Path(file_path): {
                 VIDEO: {
                     FILE: file_path,
                     RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
@@ -361,7 +371,11 @@ class TestPreprocess:
 
         preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
         merged_groups, metadata = preprocessor.process(
-            [first_detections, second_detections, third_detections]
+            {
+                Path(first_file_path): first_detections,
+                Path(second_file_path): second_detections,
+                Path(third_file_path): third_detections,
+            }
         )
 
         expected_result = [
@@ -449,27 +463,6 @@ class TestFrameGroup:
         assert merge_first_second.start_date() == first_start
         assert merge_first_second.end_date() == second_end
         assert merge_first_second == merge_second_first
-
-    def test_split(self) -> None:
-        first_start = datetime(2022, 5, 4, 12, 0, 0)
-        first_end = first_start + timedelta(seconds=1)
-        second_start = first_end + timedelta(seconds=1)
-        second_end = second_start + timedelta(seconds=1)
-        first_group = self._create_frame_group(
-            start_date=first_start,
-            end_date=first_end,
-            input_file_path="first-video.mp4",
-        )
-        second_group = self._create_frame_group(
-            start_date=second_end,
-            end_date=second_end,
-            input_file_path="second-video.mp4",
-        )
-
-        merged: FrameGroup = first_group.merge(second_group)
-        splitted = merged.split()
-
-        assert splitted == [first_group, second_group]
 
     def _create_frame_group(
         self,
