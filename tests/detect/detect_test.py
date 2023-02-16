@@ -22,6 +22,10 @@ X = "x"
 Y = "y"
 W = "w"
 H = "h"
+CAR = "car"
+TRUCK = "truck"
+PERSON = "person"
+BICYCLE = "bicycle"
 
 otdet_schema = {
     "type": "object",
@@ -109,6 +113,17 @@ def read_bz2_otdet(otdet: Path) -> dict:
     with bz2.open(otdet, "r") as file:
         result_otdet_json = json.load(file)
     return result_otdet_json
+
+
+def count_classes(frames: list[Frame]) -> dict:
+    class_counts: dict[str, int] = {}
+    for frame in frames:
+        for det in frame.detections:
+            if det.det_class in class_counts.keys():
+                class_counts[det.det_class] += 1
+            else:
+                class_counts[det.det_class] = 0
+    return class_counts
 
 
 @pytest.fixture(scope="module")
@@ -283,3 +298,20 @@ class TestDetect:
         else:
             assert first_mtime == second_mtime
         otdet_file.unlink()
+
+    def test_detect_fulfill_minimum_detection_requirements(
+        self, cyclist_mp4: Path
+    ) -> None:
+        deviation = 0.1
+        detect([cyclist_mp4], weights="yolov5m", conf=0.5)
+        result_otdet = cyclist_mp4.parent / cyclist_mp4.with_suffix(".otdet")
+        otdet_dict = read_bz2_otdet(result_otdet)
+
+        frames = [
+            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+        ]
+        class_counts = count_classes(frames)
+        assert class_counts[CAR] >= 120 * (1 - deviation)
+        assert class_counts[TRUCK] >= 60 * (1 - deviation)
+        assert class_counts[PERSON] >= 120 * (1 - deviation)
+        assert class_counts[BICYCLE] >= 60 * (1 - deviation)
