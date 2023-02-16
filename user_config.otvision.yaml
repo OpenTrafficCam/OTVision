@@ -18,7 +18,7 @@ DETECT:
     CONF: 0.25
     IMGSIZE: 640
     IOU: 0.45
-    WEIGHTS: yolov5m
+    WEIGHTS: yolov5s
 
 TRACK:
   PATHS: []
