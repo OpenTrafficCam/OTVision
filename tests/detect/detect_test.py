@@ -231,16 +231,19 @@ class TestDetect:
         expected_cyclist_metadata = read_bz2_otdet(default_cyclist_otdet)[METADATA]
         assert result_cyclist_metadata == expected_cyclist_metadata
 
-    def test_detect_no_error_raised_on_wrong_filetype(
+    def test_detect_error_raised_on_wrong_filetype(
         self, detect_test_tmp_dir: Path
     ) -> None:
-        mkv_video_path = detect_test_tmp_dir / "video.vid"
-        mkv_video_path.touch()
-        detect(
-            paths=[mkv_video_path],
-            weights=self.model,
-            force_reload_torch_hub_cache=False,
-        )
+        video_path = detect_test_tmp_dir / "video.vid"
+        video_path.touch()
+        with pytest.raises(
+            FileNotFoundError, match=r"No videos of type .* found to detect!"
+        ):
+            detect(
+                paths=[video_path],
+                weights=self.model,
+                force_reload_torch_hub_cache=False,
+            )
 
     def test_detect_bboxes_normalized(self, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
