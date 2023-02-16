@@ -31,6 +31,7 @@ from OTVision.track.preprocess import (
     FrameGroup,
     FrameGroupParser,
     Preprocess,
+    to_unix_path,
 )
 
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4)
@@ -289,7 +290,7 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = os.path.normcase(f"{order_key}/file-name.otdet")
+        path = to_unix_path(Path(os.path.normcase(f"{order_key}/file-name.otdet")))
         parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
         result: FrameGroup = parser.convert(input)
 
