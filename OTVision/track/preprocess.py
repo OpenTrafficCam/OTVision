@@ -214,7 +214,7 @@ class FrameGroupParser:
     def order_key(self) -> str:
         path = Path(self.input_file_path)
         if ON_WINDOWS:
-            return os.path.normcase(path.parent)
+            return os.path.normcase(to_unix_path(path.parent))
         return os.path.normpath(path.parent)
 
 
