@@ -112,7 +112,7 @@ def main(
         # Split into files of group
         splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
         for file_path, serializable_detections in splitted.items():
-            output = build_output(file_path, serializable_detections, metadata)
+            output = build_output(file_path, serializable_detections, new_metadata)
             write_json(
                 dict_to_write=output,
                 file=clean_file_extension(file_path),
