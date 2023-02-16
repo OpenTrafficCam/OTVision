@@ -224,6 +224,10 @@ class PreprocessResult:
     metadata: dict[str, dict]
 
 
+def to_unix_path(file_path: Path) -> str:
+    return str(file_path).replace("\\", "/")
+
+
 class Preprocess:
     time_without_frames: timedelta
 
@@ -253,11 +257,11 @@ class Preprocess:
         metadata: dict[str, dict] = {}
         for file_path, recording in input.items():
             file_metadata = recording[METADATA]
-            metadata[str(file_path)] = file_metadata
+            metadata[to_unix_path(file_path)] = file_metadata
             start_date: datetime = self.extract_start_date_from(recording)
             data: dict[int, dict[str, Any]] = recording[DATA]
             frame_group = FrameGroupParser(
-                str(file_path), recorded_start_date=start_date
+                to_unix_path(file_path), recorded_start_date=start_date
             ).convert(data)
             all_groups.append(frame_group)
         return all_groups, metadata
