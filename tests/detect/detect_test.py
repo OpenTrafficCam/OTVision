@@ -303,7 +303,12 @@ class TestDetect:
         self, cyclist_mp4: Path
     ) -> None:
         deviation = 0.1
-        detect([cyclist_mp4], weights="yolov5m", conf=0.5)
+        detect(
+            [cyclist_mp4],
+            weights="yolov5m",
+            conf=0.5,
+            force_reload_torch_hub_cache=False,
+        )
         result_otdet = cyclist_mp4.parent / cyclist_mp4.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
 
@@ -315,3 +320,7 @@ class TestDetect:
         assert class_counts[TRUCK] >= 60 * (1 - deviation)
         assert class_counts[PERSON] >= 120 * (1 - deviation)
         assert class_counts[BICYCLE] >= 60 * (1 - deviation)
+        assert class_counts[CAR] <= 120 * (1 + deviation)
+        assert class_counts[TRUCK] <= 60 * (1 + deviation)
+        assert class_counts[PERSON] <= 120 * (1 + deviation)
+        assert class_counts[BICYCLE] <= 60 * (1 + deviation)
