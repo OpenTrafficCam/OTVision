@@ -9,7 +9,8 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: True
+      max-parallel: 1
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.10"]
