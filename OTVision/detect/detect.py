@@ -103,6 +103,14 @@ def main(
     video_files = get_files(paths=paths, filetypes=filetypes)
 
     for video_file in video_files:
+        detections_file = video_file.with_suffix(CONFIG["DEFAULT_FILETYPE"]["DETECT"])
+
+        if not overwrite and detections_file.is_file():
+            log.warning(
+                f"{detections_file} already exists. To overwrite, set overwrite to True"
+            )
+            continue
+
         log.info(f"Try detecting {video_file}")
         detections_video = yolo.detect_video(
             file=video_file,
@@ -115,7 +123,12 @@ def main(
             normalized=normalized,
         )
         log.info("Video detected")
-        write(detections_video, video_file, overwrite=overwrite)
+
+        write(
+            detections=detections_video,
+            detections_file=detections_file,
+            overwrite=overwrite,
+        )
 
     if debug:
         reset_debug()
@@ -144,7 +157,7 @@ def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
 
 def write(
     detections: dict,  # TODO: Type hint nested dict during refactoring"
-    img_or_video_file: Path,
+    detections_file: Path,
     overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
 ) -> None:
     """Writes detections of a video or image to a json-like file.
@@ -155,19 +168,16 @@ def write(
         overwrite (bool, optional): Wheter or not to overwrite existing detections file.
             Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
-    # ?: Check overwrite before detecting instead of before writing detections?
+
     filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
-    detection_file = Path(img_or_video_file).with_suffix(filetype)
-    detections_file_already_exists = detection_file.is_file()
-    if overwrite or not detections_file_already_exists:
-        # Write JSON
-        t_json_start = time.perf_counter()
-        write_json(detections, detection_file, filetype=filetype, overwrite=overwrite)
-        t_json_end = time.perf_counter()
-        log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
-        if detections_file_already_exists:
-            log.info(f"{detection_file} overwritten")
-        else:
-            log.info(f"{detection_file} written")
+
+    # Write JSON
+    t_json_start = time.perf_counter()
+    write_json(detections, detections_file, filetype=filetype, overwrite=overwrite)
+    t_json_end = time.perf_counter()
+
+    if detections_file.is_file():
+        log.info(f"{detections_file} overwritten")
     else:
-        log.info(f"{detection_file} already exists. To overwrite, set overwrite=True")
+        log.info(f"{detections_file} written")
+    log.debug(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
