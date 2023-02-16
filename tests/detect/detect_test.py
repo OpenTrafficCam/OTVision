@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import torch
 from jsonschema import validate
 
 import OTVision.config as config
 from OTVision.detect.detect import main as detect
+from OTVision.detect.yolo import loadmodel
 from tests.conftest import YieldFixture
 
 METADATA = "metadata"
@@ -163,19 +163,15 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
     return detect_test_data_dir / "default" / fname
 
 
-@pytest.fixture(scope="module")
-def yolov5s() -> Any:
-    model = torch.hub.load(
-        repo_or_dir="ultralytics/yolov5",
-        model="yolov5s",
-        pretrained=True,
-        force_reload=False,
-    )
+@pytest.fixture(scope="session")
+def yolov5m() -> Any:
+    model = loadmodel("yolov5m", conf=0.25, iou=0.25, force_reload=True)
     return model
 
 
+@pytest.mark.usefixtures("yolov5m")
 class TestDetect:
-    model: str = "yolov5s"
+    model = "yolov5m"
     conf: float = 0.25
     filetypes: list[str] = config.CONFIG[config.FILETYPES][config.VID]
 
@@ -230,10 +226,16 @@ class TestDetect:
             force_reload_torch_hub_cache=False,
         )
 
-    def test_detect_bboxes_normalized(self, yolov5s: Any, truck_mp4: Path) -> None:
+    def test_detect_bboxes_normalized(self, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        detect([truck_mp4], model=yolov5s, conf=0.25, normalized=True)
+        detect(
+            [truck_mp4],
+            weights=self.model,
+            conf=0.25,
+            normalized=True,
+            force_reload_torch_hub_cache=False,
+        )
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -245,10 +247,16 @@ class TestDetect:
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
 
-    def test_detect_bboxes_denormalized(self, yolov5s: Any, truck_mp4: Path) -> None:
+    def test_detect_bboxes_denormalized(self, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        detect([truck_mp4], model=yolov5s, conf=0.25, normalized=False)
+        detect(
+            [truck_mp4],
+            weights=self.model,
+            conf=0.25,
+            normalized=False,
+            force_reload_torch_hub_cache=False,
+        )
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -265,12 +273,15 @@ class TestDetect:
         otdet_file.unlink()
 
     @pytest.mark.parametrize("conf", [0.0, 0.1, 0.5, 0.9, 1.0])
-    def test_detect_conf_bbox_above_thresh(
-        self, yolov5s: Any, truck_mp4: Path, conf: float
-    ) -> None:
+    def test_detect_conf_bbox_above_thresh(self, truck_mp4: Path, conf: float) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        detect(paths=[truck_mp4], model=yolov5s, conf=conf)
+        detect(
+            paths=[truck_mp4],
+            weights=self.model,
+            conf=conf,
+            force_reload_torch_hub_cache=False,
+        )
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -282,15 +293,18 @@ class TestDetect:
         otdet_file.unlink()
 
     @pytest.mark.parametrize("overwrite", [(True), (False)])
-    def test_detect_overwrite(
-        self, yolov5s: Any, truck_mp4: Path, overwrite: bool
-    ) -> None:
+    def test_detect_overwrite(self, truck_mp4: Path, overwrite: bool) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        detect(paths=[truck_mp4], model=yolov5s, overwrite=True)
+        detect(
+            paths=[truck_mp4],
+            weights=self.model,
+            overwrite=True,
+            force_reload_torch_hub_cache=False,
+        )
 
         first_mtime = otdet_file.stat().st_mtime_ns
-        detect(paths=[truck_mp4], model=yolov5s, overwrite=overwrite)
+        detect(paths=[truck_mp4], weights=self.model, overwrite=overwrite)
         second_mtime = otdet_file.stat().st_mtime_ns
 
         if overwrite:
@@ -305,7 +319,7 @@ class TestDetect:
         deviation = 0.1
         detect(
             [cyclist_mp4],
-            weights="yolov5m",
+            weights=self.model,
             conf=0.5,
             force_reload_torch_hub_cache=False,
         )
