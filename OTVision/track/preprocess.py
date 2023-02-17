@@ -200,12 +200,29 @@ class PreprocessResult:
 
 
 class Preprocess:
+    """Preprocess otdet files before running track. Input files belonging to the same
+    recording will be merged together. The time gape to separate two recordings from
+    each other is defined by `self.time_without_frames`.
+
+    Returns:
+        Preprocess: preprocessor for tracking
+    """
+
     time_without_frames: timedelta
 
     def __init__(self, no_frames_for: timedelta = timedelta(minutes=1)) -> None:
         self.time_without_frames = no_frames_for
 
     def run(self, files: list[Path]) -> PreprocessResult:
+        """Read all input files, parse the content and merge the frame groups belonging
+        together.
+
+        Args:
+            files (list[Path]): list of input files
+
+        Returns:
+            PreprocessResult: merged frame groups and metadata per file
+        """
         input_data = {}
         for file in files:
             input = read_json(file)
@@ -216,6 +233,14 @@ class Preprocess:
     def process(
         self, input: dict[Path, dict]
     ) -> Tuple[list[FrameGroup], dict[str, dict]]:
+        """Parse input and merge frame groups belonging together.
+
+        Args:
+            input (dict[Path, dict]): input by input file path
+
+        Returns:
+            Tuple[list[FrameGroup], dict[str, dict]]: parsed and merged frame groups
+        """
         all_groups, metadata = self._parse_frame_groups(input)
         if len(all_groups) == 0:
             return [], metadata
@@ -224,6 +249,14 @@ class Preprocess:
     def _parse_frame_groups(
         self, input: dict[Path, dict]
     ) -> Tuple[list[FrameGroup], dict[str, dict]]:
+        """Parse input to frame groups. Every input file belongs to one frame group.
+
+        Args:
+            input (dict[Path, dict]): read in input (otdet)
+
+        Returns:
+            Tuple[list[FrameGroup], dict[str, dict]]: parsed input and metadata per file
+        """
         all_groups: list[FrameGroup] = []
         metadata: dict[str, dict] = {}
         for file_path, recording in input.items():
@@ -238,6 +271,15 @@ class Preprocess:
         return all_groups, metadata
 
     def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
+        """Merge frame groups whose start and end times are close to each other. Close
+        is defined by `self.time_without_frames`.
+
+        Args:
+            all_groups (list[FrameGroup]): list of frame groups to merge
+
+        Returns:
+            list[FrameGroup]: list of merged frame groups
+        """
         merged_groups = []
         last_group = all_groups[0]
         for current_group in all_groups[1:]:
