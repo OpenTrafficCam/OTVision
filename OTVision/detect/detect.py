@@ -84,6 +84,11 @@ def main(
     if debug:
         set_debug()
 
+    video_files = get_files(paths=paths, filetypes=filetypes)
+
+    if not video_files:
+        raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
+
     if not model:
         yolo_model = yolo.loadmodel(
             weights,
@@ -99,8 +104,6 @@ def main(
         yolo_model.conf = conf
         yolo_model.iou = iou
     log.info("Model prepared")
-
-    video_files = get_files(paths=paths, filetypes=filetypes)
 
     for video_file in video_files:
         log.info(f"Try detecting {video_file}")

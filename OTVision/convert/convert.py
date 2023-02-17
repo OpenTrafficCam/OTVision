@@ -64,8 +64,13 @@ def main(
     if debug:
         set_debug()
 
-    check_ffmpeg()
     h264_files = get_files(paths, [".h264"])
+
+    if not h264_files:
+        raise FileNotFoundError("No files of type 'h264' found to convert!")
+
+    check_ffmpeg()
+
     for h264_file in h264_files:
         convert(
             h264_file,
