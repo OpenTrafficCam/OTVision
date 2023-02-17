@@ -19,7 +19,6 @@ OTVision main module to detect objects in single or multiple images or videos.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import time
 from pathlib import Path
 from typing import Union
 
@@ -122,11 +121,12 @@ def main(
             chunksize=chunksize,
             normalized=normalized,
         )
-        log.info("Video detected")
+        log.info(f"Successfully detected {video_file}")
 
-        write(
-            detections=detections_video,
-            detections_file=detections_file,
+        write_json(
+            dict_to_write=detections_video,
+            file=detections_file,
+            filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
             overwrite=overwrite,
         )
 
@@ -153,31 +153,3 @@ def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
         return [files]
     chunk_starts = range(0, len(files), chunksize)
     return [files[i : i + chunksize] for i in chunk_starts]
-
-
-def write(
-    detections: dict,  # TODO: Type hint nested dict during refactoring"
-    detections_file: Path,
-    overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
-) -> None:
-    """Writes detections of a video or image to a json-like file.
-
-    Args:
-        detections (dict): Detections of a video or image.
-        img_or_video_file (Path): Path to image or video of detections.
-        overwrite (bool, optional): Wheter or not to overwrite existing detections file.
-            Defaults to CONFIG["DETECT"]["OVERWRITE"].
-    """
-
-    filetype = CONFIG["DEFAULT_FILETYPE"]["DETECT"]
-
-    # Write JSON
-    t_json_start = time.perf_counter()
-    write_json(detections, detections_file, filetype=filetype, overwrite=overwrite)
-    t_json_end = time.perf_counter()
-
-    if detections_file.is_file():
-        log.info(f"{detections_file} overwritten")
-    else:
-        log.info(f"{detections_file} written")
-    log.debug(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")

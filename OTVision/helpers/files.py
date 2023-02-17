@@ -20,6 +20,7 @@ OTVision helpers for filehandling
 
 import bz2
 import shutil
+import time
 from pathlib import Path
 from typing import Union
 
@@ -198,6 +199,7 @@ def read_json(
         raise
 
 
+# TODO: Type hint nested dict during refactoring
 def write_json(
     dict_to_write: dict,
     file: Path,
@@ -221,16 +223,21 @@ def write_json(
     outfile = Path(file).with_suffix(filetype)
     outfile_already_exists = outfile.is_file()
     if overwrite or not outfile_already_exists:
+        t_json_start = time.perf_counter()
         if compress:
             with bz2.open(outfile, "wt", encoding=ENCODING) as output:
                 ujson.dump(dict_to_write, output)
         else:
             with open(outfile, "w", encoding=ENCODING) as output:
                 ujson.dump(dict_to_write, output)
+        t_json_end = time.perf_counter()
+
         if not outfile_already_exists:
             log.debug(f"{outfile} written")
         else:
             log.debug(f"{outfile} overwritten")
+
+        log.debug(f"Writing {outfile} took: {t_json_end - t_json_start:0.4f}s")
     else:
         log.debug(f"{outfile} already exists, not overwritten. Set overwrite=True")
 
