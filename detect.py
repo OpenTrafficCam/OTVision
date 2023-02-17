@@ -181,19 +181,22 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    OTVision.detect(
-        paths=paths,
-        weights=weights,
-        conf=conf,
-        iou=iou,
-        chunksize=chunksize,
-        size=imagesize,
-        half_precision=half,
-        force_reload_torch_hub_cache=force_reload,
-        overwrite=overwrite,
-        debug=debug,
-    )
-    log.info("Finished detection from command line")
+    try:
+        OTVision.detect(
+            paths=paths,
+            weights=weights,
+            conf=conf,
+            iou=iou,
+            chunksize=chunksize,
+            size=imagesize,
+            half_precision=half,
+            force_reload_torch_hub_cache=force_reload,
+            overwrite=overwrite,
+            debug=debug,
+        )
+        log.info("Finished detection from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":

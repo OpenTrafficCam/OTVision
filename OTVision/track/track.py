@@ -83,6 +83,10 @@ def main(
 
     filetypes = CONFIG["FILETYPES"]["DETECT"]
     detections_files = get_files(paths=paths, filetypes=filetypes)
+
+    if not detections_files:
+        raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
+
     preprocessor = Preprocess()
     preprocessed = preprocessor.run(detections_files)
 

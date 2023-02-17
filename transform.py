@@ -97,7 +97,10 @@ def main() -> None:
 
     paths = [Path(str_path) for str_path in str_paths]
 
-    refpts_file = args.refpts_file
+    if args.refpts_file:
+        refpts_file = Path(args.refpts_file)
+    else:
+        refpts_file = None
 
     if args.overwrite is None:
         overwrite = config.CONFIG[config.TRANSFORM][config.OVERWRITE]
@@ -111,10 +114,14 @@ def main() -> None:
 
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
-    OTVision.transform(
-        paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=debug
-    )
-    log.info("Finished transforming to world coordinates  from command line")
+
+    try:
+        OTVision.transform(
+            paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=debug
+        )
+        log.info("Finished transforming to world coordinates  from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":

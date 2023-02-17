@@ -227,3 +227,15 @@ def test_track_fail_wrong_parameters(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
+
+
+def test_track_emptyDirAsParam(test_track_tmp_dir: Path) -> None:
+    empty_dir = test_track_tmp_dir / "empty"
+    empty_dir.mkdir()
+    with pytest.raises(FileNotFoundError, match=r"No files of type .* found to track!"):
+        track(paths=[empty_dir])
+
+
+def test_track_emptyListAsParam() -> None:
+    with pytest.raises(FileNotFoundError, match=r"No files of type .* found to track!"):
+        track(paths=[])

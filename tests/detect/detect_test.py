@@ -104,6 +104,14 @@ class Detection:
     def from_dict(d: dict) -> "Detection":
         return Detection(d[CLASS], d[CONFIDENCE], d[X], d[Y], d[W], d[H])
 
+    def is_normalized(self) -> bool:
+        return (
+            (self.w >= 0 and self.w < 1)
+            and (self.y >= 0 and self.y < 1)
+            and (self.w >= 0 and self.w < 1)
+            and (self.h >= 0 and self.h < 1)
+        )
+
 
 @dataclass
 class Frame:
@@ -190,13 +198,19 @@ class TestDetect:
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
-    def is_normalized(self, bbox: Detection) -> bool:
-        return (
-            (bbox.w >= 0 and bbox.w < 1)
-            and (bbox.y >= 0 and bbox.y < 1)
-            and (bbox.w >= 0 and bbox.w < 1)
-            and (bbox.h >= 0 and bbox.h < 1)
-        )
+    def test_detect_emptyDirAsParam(self, detect_test_tmp_dir: Path) -> None:
+        empty_dir = detect_test_tmp_dir / "empty"
+        empty_dir.mkdir()
+        with pytest.raises(
+            FileNotFoundError, match=r"No videos of type .* found to detect!"
+        ):
+            detect(paths=[empty_dir])
+
+    def test_detect_emptyListAsParam(self) -> None:
+        with pytest.raises(
+            FileNotFoundError, match=r"No videos of type .* found to detect!"
+        ):
+            detect(paths=[])
 
     def test_detect_create_otdet(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
@@ -222,16 +236,19 @@ class TestDetect:
         expected_cyclist_metadata = read_bz2_otdet(default_cyclist_otdet)[METADATA]
         assert result_cyclist_metadata == expected_cyclist_metadata
 
-    def test_detect_no_error_raised_on_wrong_filetype(
+    def test_detect_error_raised_on_wrong_filetype(
         self, detect_test_tmp_dir: Path
     ) -> None:
-        mkv_video_path = detect_test_tmp_dir / "video.vid"
-        mkv_video_path.touch()
-        detect(
-            paths=[mkv_video_path],
-            weights=self.model,
-            force_reload_torch_hub_cache=False,
-        )
+        video_path = detect_test_tmp_dir / "video.vid"
+        video_path.touch()
+        with pytest.raises(
+            FileNotFoundError, match=r"No videos of type .* found to detect!"
+        ):
+            detect(
+                paths=[video_path],
+                weights=self.model,
+                force_reload_torch_hub_cache=False,
+            )
 
     def test_detect_bboxes_normalized(self, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
@@ -250,7 +267,7 @@ class TestDetect:
         ]
         for det in detections:
             for bbox in det.detections:
-                assert self.is_normalized(bbox)
+                assert bbox.is_normalized()
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
 
@@ -266,16 +283,16 @@ class TestDetect:
         )
         otdet_dict = read_bz2_otdet(otdet_file)
 
-        detections = [
+        frames = [
             Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
         ]
         denormalized_bbox_found = False
-        for det in detections:
-            for bbox in det.detections:
+        for frame in frames:
+            for det in frame.detections:
                 denormalized_bbox_found = (
-                    denormalized_bbox_found or not self.is_normalized(bbox)
+                    denormalized_bbox_found or not det.is_normalized()
                 )
-                assert bbox.conf >= self.conf
+                assert det.conf >= self.conf
         assert denormalized_bbox_found
         otdet_file.unlink()
 
