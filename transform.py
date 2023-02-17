@@ -93,7 +93,7 @@ def main() -> None:
     try:
         str_paths = _extract_paths(args)
     except IOError as ioe:
-        log.error(ioe)
+        log.exception(ioe)
 
     paths = [Path(str_path) for str_path in str_paths]
 
@@ -112,16 +112,15 @@ def main() -> None:
     else:
         debug = args.debug
 
-    log.info("Starting transforming to world coordinates from command line")
+    log.info("Call transform from command line")
     log.info(f"Arguments: {vars(args)}")
 
     try:
         OTVision.transform(
             paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=debug
         )
-        log.info("Finished transforming to world coordinates  from command line")
     except FileNotFoundError as fnfe:
-        log.error(fnfe)
+        log.exception(fnfe)
 
 
 if __name__ == "__main__":

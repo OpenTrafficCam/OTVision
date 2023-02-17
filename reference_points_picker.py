@@ -21,10 +21,9 @@ def parse() -> argparse.Namespace:
 
 def main() -> None:
     kwargs = vars(parse())
-    log.info("Start reference points picker gui")
-    log.debug(kwargs)
+    log.info("Call reference points picker from command line")
+    log.info(kwargs)
     ReferencePointsPicker(**kwargs)
-    log.info("Stop reference points picker gui")
 
 
 if __name__ == "__main__":

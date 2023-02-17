@@ -89,12 +89,16 @@ def main(
         debug (bool, optional): Whether or not to run in debug mode.
             Defaults to CONFIG["TRACK"]["DEBUG"].
     """
-    log.info("Start tracking")
+
     if debug:
         set_debug()
 
     filetypes = CONFIG[FILETYPES][DETECT]
     detections_files = get_files(paths=paths, filetypes=filetypes)
+
+    start_msg = f"Start tracking of {len(detections_files)} detections files"
+    log.info(start_msg)
+    print(start_msg)
 
     if not detections_files:
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
@@ -108,7 +112,7 @@ def main(
             )
             continue
 
-        log.info(f"Try tracking {detections_file}")
+        log.info(f"Track {detections_file}")
         detections = read_json(
             json_file=detections_file, filetype=detections_file.suffix
         )
@@ -125,7 +129,6 @@ def main(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
-        log.info(f"Successfully tracked {detections_file}")
 
         write_json(
             dict_to_write=tracks_px,
@@ -133,6 +136,12 @@ def main(
             filetype=CONFIG[DEFAULT_FILETYPE][TRACK],
             overwrite=overwrite,
         )
+
+        log.info(f"Successfully tracked and wrote {tracks_file}")
+
+    finished_msg = "Finished tracking"
+    log.info(finished_msg)
+    print(finished_msg)
 
     if debug:
         reset_debug()
@@ -193,8 +202,6 @@ def track(
         "t_min": t_min,
         "t_miss_max": t_miss_max,
     }
-
-    log.info("Detections tracked")
 
     return {
         "metadata": metadata,

@@ -108,7 +108,6 @@ class FrameRunDetection(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        log.debug("---Starting detection from gui---")
         input_filetype = f".{self.master.master.frame_files.combo_vid_filetype.get()}"
 
         files = replace_filetype(
@@ -127,6 +126,7 @@ class FrameRunDetection(FrameRun):
         chunksize = self.master.frame_options.scale_chunksize.get()
         normalized = self.master.frame_options.checkbutton_normalized_var.get()
         overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        log.info("Call detect from GUI")
         detect(
             paths=files,
             filetypes=[input_filetype],

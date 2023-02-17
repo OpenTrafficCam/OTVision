@@ -130,7 +130,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     try:
         str_paths = _extract_paths(args)
     except IOError as ioe:
-        log.error(ioe)
+        log.exception(ioe)
 
     paths = [Path(str_path) for str_path in str_paths]
 
@@ -178,7 +178,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     else:
         debug = args.debug
 
-    log.info("Starting detection from command line")
+    log.info("Call detect from command line")
     log.info(f"Arguments: {vars(args)}")
 
     try:
@@ -194,9 +194,8 @@ def main() -> None:  # sourcery skip: assign-if-exp
             overwrite=overwrite,
             debug=debug,
         )
-        log.info("Finished detection from command line")
     except FileNotFoundError as fnfe:
-        log.error(fnfe)
+        log.exception(fnfe)
 
 
 if __name__ == "__main__":

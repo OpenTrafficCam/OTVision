@@ -69,11 +69,14 @@ def main(
             Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
 
-    log.info("Start conversion")
     if debug:
         set_debug()
 
     h264_files = get_files(paths, [".h264"])
+
+    start_msg = f"Start conversion of {len(h264_files)} .h264 files"
+    log.info(start_msg)
+    print(start_msg)
 
     if not h264_files:
         raise FileNotFoundError("No files of type 'h264' found to convert!")
@@ -81,6 +84,7 @@ def main(
     check_ffmpeg()
 
     for h264_file in h264_files:
+        log.info(f"Convert {h264_file} to {output_filetype}")
         convert(
             h264_file,
             output_filetype,
@@ -89,6 +93,12 @@ def main(
             overwrite,
             delete_input,
         )
+        log.info(f"Successfully converted {h264_file} to {output_filetype}")
+
+    finished_msg = "Finished conversion"
+    log.info(finished_msg)
+    print(finished_msg)
+
     if debug:
         reset_debug()
 
@@ -144,8 +154,6 @@ def convert(
         overwrite=overwrite,
         delete_input=delete_input,
     )
-
-    log.info(f"Try converting {input_video_file} to {output_filetype}")
 
     output_fps = OUTPUT_FPS
 

@@ -84,8 +84,6 @@ def detect_video(
     cap = VideoCapture(str(file))
     batch_no = 0
 
-    log.info(f"Run detection on video: {file}")
-
     got_frame = True
     t_loop_overhead = 0.0
     while got_frame:
@@ -194,7 +192,7 @@ def _log_batch_performances_stats(
         f"{batch_no_str}, {batch}, {transformed_batch}, {det}, "
         f"{add_list}, {loop_overhead}, {batch_len}, {fps}"
     )
-    log.info(log_msg)
+    log.debug(log_msg)
 
 
 def _add_detection_results(
@@ -260,7 +258,7 @@ def loadmodel(
         if force_reload:
             # cache already force reloaded
             raise
-        log.error(e)
+        log.exception(e)
         log.info("Force reload cache and try again.")
         if is_custom:
             model = _load_custom_model(weights=Path(weights), force_reload=True)

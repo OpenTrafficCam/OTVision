@@ -142,8 +142,8 @@ def evaluate_homography(
     # Normalize error vectors using sentence of pythagoras
     eval_df["delta"] = np.linalg.norm(eval_df[["x_delta", "y_delta"]].values, axis=1)
     eval_df["delta_abs"] = eval_df["delta"].abs()
-    log.info("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
-    log.info("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+    log.debug("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
+    log.debug("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
     # sourcery skip: merge-dict-assign
     eval_dict = {}
     eval_dict["mean_transformation_error_m"] = eval_df["delta_abs"].mean()

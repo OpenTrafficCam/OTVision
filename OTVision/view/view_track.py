@@ -100,7 +100,6 @@ class FrameRunTracking(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        log.debug("---Starting tracking from gui---")
         files = replace_filetype(
             files=self.master.master.frame_files.get_tree_files(),
             new_filetype=CONFIG["DEFAULT_FILETYPE"]["DETECT"],
@@ -115,6 +114,7 @@ class FrameRunTracking(FrameRun):
         t_min = self.master.frame_options.scale_t_min.get()
         t_miss_max = self.master.frame_options.scale_t_miss_max.get()
         overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        log.info("Call track from GUI")
         track(
             paths=files,
             sigma_l=sigma_l,

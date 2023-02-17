@@ -82,13 +82,13 @@ def main(
             Defaults to CONFIG["TRANSFORM"]["DEBUG"].
     """
 
-    log.info("Start transformation from pixel to world coordinates")
     if debug:
         set_debug()
 
     track_filetype = CONFIG[FILETYPES][TRACK]
 
     if refpts_file:
+        log.info(f"Reading global reference points file at {refpts_file}")
         refpts_filetype = CONFIG[FILETYPES][REFPTS]
 
         if not refpts_file.exists():
@@ -105,8 +105,14 @@ def main(
             hemisphere,
             homography_eval_dict,
         ) = get_homography(refpts=refpts)
-        log.info(f"Read {refpts_file}")
+        log.info("Successfully read reference points file")
+
     tracks_files = get_files(paths=paths, filetypes=CONFIG[FILETYPES][TRACK])
+
+    start_msg = f"Start transformation of {len(tracks_files)} video files"
+    log.info(start_msg)
+    print(start_msg)
+
     if not tracks_files:
         raise FileNotFoundError(
             f"No files of type '{track_filetype}' found to transform!"
@@ -121,7 +127,7 @@ def main(
             )
             continue
 
-        log.info(f"Try transforming {tracks_file}")
+        log.info(f"Transform {tracks_file}")
 
         # Try reading refpts and getting homography if not done above
         if not refpts_file:
@@ -133,9 +139,9 @@ def main(
                     f"No reference points file found for tracks file: {tracks_file}!"
                 )
 
-            log.info(f"Found refpts file {associated_refpts_file}")
+            log.info(f"Found associated refpts file {associated_refpts_file}")
             refpts = read_refpts(reftpts_file=associated_refpts_file)
-            log.info("Refpts read")
+            log.info("Read read associated refpts file")
             (
                 homography,
                 refpts_utm_upshift_predecimal,
@@ -144,11 +150,11 @@ def main(
                 hemisphere,
                 homography_eval_dict,
             ) = get_homography(refpts=refpts)
-            log.info("Homography matrix created")
+            log.debug("Homography matrix created")
 
         # Read tracks
         tracks_px_df, metadata_dict = read_tracks(tracks_file)
-        log.info("Tracks read")
+        log.debug("Tracks read")
 
         # Actual transformation
         tracks_utm_df = transform(
@@ -157,7 +163,7 @@ def main(
             refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
             upshift_utm=upshift_utm,
         )
-        log.info("Tracks transformed")
+        log.debug("Tracks transformed")
 
         # Add crs information tp metadata dict
         # TODO: Declare constant for the dictionary keys
@@ -168,7 +174,7 @@ def main(
             utm_zone=utm_zone, hemisphere=hemisphere
         )
         metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
-        log.debug(f"config_dict: {metadata_dict}")
+        log.debug(f"metadata: {metadata_dict}")
 
         # Write tracks
         write_tracks(
@@ -179,7 +185,11 @@ def main(
             tracks_file=tracks_file,
         )
 
-        log.info(f"Successfully transformed {tracks_file}")
+        log.info(f"Successfully transformed and wrote {tracks_file}")
+
+    finished_msg = "Finished transformation"
+    log.info(finished_msg)
+    print(finished_msg)
 
     if debug:
         reset_debug()
@@ -332,6 +342,7 @@ def write_tracks(
         gpkg_file = tracks_file.with_suffix(".gpkg")
         gpkg_file_already_exists = gpkg_file.is_file()
         if overwrite or not gpkg_file_already_exists:
+            log.debug(f"Write {gpkg_file}")
             # Get CRS UTM EPSG number
             epsg = _get_epsg_from_utm_zone(utm_zone=utm_zone, hemisphere=hemisphere)
             # Create, set crs and write geopandas.GeoDataFrame
@@ -342,9 +353,9 @@ def write_tracks(
                 ),
             ).set_crs(f"epsg:{epsg}").to_file(filename=gpkg_file, driver="GPKG")
             if gpkg_file_already_exists:
-                log.info(f"{gpkg_file} overwritten")
+                log.debug(f"{gpkg_file} overwritten")
             else:
-                log.info(f"{gpkg_file}  file written")
+                log.debug(f"{gpkg_file} written")
         else:
-            log.info(f"{gpkg_file} already exists. To overwrite, set overwrite=True")
+            log.debug(f"{gpkg_file} already exists. To overwrite, set overwrite=True")
     # TODO: Export tracks as ottrk (json)

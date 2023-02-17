@@ -562,7 +562,7 @@ class Config:
             try:
                 yaml_config = yaml.safe_load(file)
             except yaml.YAMLError:
-                log.error("Unable to parse user config. Using default config.")
+                log.exception("Unable to parse user config. Using default config.")
                 raise
         config = Config.from_dict(yaml_config)
 

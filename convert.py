@@ -103,7 +103,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     try:
         str_paths = _extract_paths(args)
     except IOError as ioe:
-        log.error(ioe)
+        log.exception(ioe)
 
     paths = [Path(str_path) for str_path in str_paths]
 
@@ -132,7 +132,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     else:
         fps_from_filename = args.fps_from_filename
 
-    log.info("Starting conversion from command line")
+    log.info("Call convert from command line")
     log.info(f"Arguments: {vars(args)}")
     try:
         OTVision.convert(
@@ -143,9 +143,8 @@ def main() -> None:  # sourcery skip: assign-if-exp
             input_fps=input_fps,
             fps_from_filename=fps_from_filename,
         )
-        log.info("Finished conversion from command line")
     except FileNotFoundError as fnfe:
-        log.error(fnfe)
+        log.exception(fnfe)
 
 
 if __name__ == "__main__":

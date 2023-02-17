@@ -98,7 +98,6 @@ class FrameRunConversion(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        log.debug("---Starting conversion from gui---")
         fps_from_filename = (
             self.master.frame_options.checkbutton_use_framerate_var.get()
         )
@@ -113,6 +112,7 @@ class FrameRunConversion(FrameRun):
         input_fps = self.master.frame_options.entry_framerate.get()
         output_fps = self.master.frame_options.entry_framerate.get()
         overwrite = self.master.frame_options.checkbutton_use_framerate_var.get()
+        log.info("Call convert from GUI")
         convert(
             paths=files,
             output_filetype=output_filetype,

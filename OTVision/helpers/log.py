@@ -31,10 +31,10 @@ log = logging.getLogger(__name__)
 def set_debug() -> None:
     """Sets logging level to DEBUG"""
     log.setLevel("DEBUG")
-    log.debug("Debug mode on")
+    log.info("Debug mode on")
 
 
 def reset_debug() -> None:
     """Resets logging level to INFO"""
-    log.debug("Debug mode off")
+    log.info("Debug mode off")
     log.setLevel("INFO")

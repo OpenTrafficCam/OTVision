@@ -180,13 +180,18 @@ def read_json(
     if json_file.suffix != filetype:
         raise ValueError(f"Wrong filetype {str(json_file)}, has to be {filetype}")
     try:
+        t_json_start = time.perf_counter()
         if decompress:
+            log.debug(f"Read and decompress {json_file}")
             with bz2.open(json_file, "rt", encoding=ENCODING) as input:
                 dict_from_json_file = ujson.load(input)
         else:
+            log.debug(f"Read {json_file} withoud decompressing")
             with open(json_file, "r", encoding=ENCODING) as input:
                 dict_from_json_file = ujson.load(input)
-        log.info(f"{json_file} read")
+        log.debug(f"Succesfully read {json_file}")
+        t_json_end = time.perf_counter()
+        log.debug(f"Reading {json_file} took: {t_json_end - t_json_start:0.4f}s")
         return dict_from_json_file
     except OSError:
         log.exception(f"Could not open {json_file}")
@@ -225,17 +230,19 @@ def write_json(
     if overwrite or not outfile_already_exists:
         t_json_start = time.perf_counter()
         if compress:
+            log.debug(f"Compress and write {outfile}")
             with bz2.open(outfile, "wt", encoding=ENCODING) as output:
                 ujson.dump(dict_to_write, output)
         else:
+            log.debug(f"Write {outfile} without compressing")
             with open(outfile, "w", encoding=ENCODING) as output:
                 ujson.dump(dict_to_write, output)
         t_json_end = time.perf_counter()
 
         if not outfile_already_exists:
-            log.debug(f"{outfile} written")
+            log.debug(f"Successfully wrote {outfile}")
         else:
-            log.debug(f"{outfile} overwritten")
+            log.debug(f"Successfully overwrote {outfile}")
 
         log.debug(f"Writing {outfile} took: {t_json_end - t_json_start:0.4f}s")
     else:
@@ -261,9 +268,9 @@ def _check_and_update_metadata_inplace(otdict: dict) -> None:
             otdict["metadata"]["det"] = otdict["det_config"]
         if "trk_config" in otdict:
             otdict["metadata"]["trk"] = otdict["trk_config"]
-        log.info("metadata updated from historic format to new format")
+        log.info("Metadata updated from historic format to new format")
     except Exception:
-        log.exception("metadata not found and not in historic config format")
+        log.exception("Metadata not found and not in historic config format")
         raise
 
 

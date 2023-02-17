@@ -94,11 +94,14 @@ def main(
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["DETECT"]["DEBUG"].
     """
-    log.info("Start detection")
     if debug:
         set_debug()
 
     video_files = get_files(paths=paths, filetypes=filetypes)
+
+    start_msg = f"Start detection of {len(video_files)} video files"
+    log.info(start_msg)
+    print(start_msg)
 
     if not video_files:
         raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
@@ -117,7 +120,10 @@ def main(
         )
         yolo_model.conf = conf
         yolo_model.iou = iou
-    log.info("Model prepared")
+
+    model_succes_msg = f"Model {weights} prepared"
+    log.info(model_succes_msg)
+    print(model_succes_msg)
 
     for video_file in video_files:
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
@@ -128,7 +134,7 @@ def main(
             )
             continue
 
-        log.info(f"Try detecting {video_file}")
+        log.info(f"Detect {video_file}")
         detections_video = yolo.detect_video(
             file=video_file,
             model=yolo_model,
@@ -139,7 +145,6 @@ def main(
             chunksize=chunksize,
             normalized=normalized,
         )
-        log.info(f"Successfully detected {video_file}")
 
         write_json(
             dict_to_write=detections_video,
@@ -147,6 +152,12 @@ def main(
             filetype=CONFIG[DEFAULT_FILETYPE][DETECT],
             overwrite=overwrite,
         )
+
+        log.info(f"Successfully detected and wrote {detections_file}")
+
+    finished_msg = "Finished detection"
+    log.info(finished_msg)
+    print(finished_msg)
 
     if debug:
         reset_debug()
