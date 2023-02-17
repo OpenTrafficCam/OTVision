@@ -23,7 +23,16 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from OTVision.config import CONFIG
+from OTVision.config import (
+    CONFIG,
+    CONVERT,
+    DEBUG,
+    DELETE_INPUT,
+    FPS_FROM_FILENAME,
+    INPUT_FPS,
+    OUTPUT_FILETYPE,
+    OVERWRITE,
+)
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import log, reset_debug, set_debug
@@ -33,12 +42,12 @@ OUTPUT_FPS: Optional[float] = None
 
 def main(
     paths: list[Path],
-    output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
-    input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
-    fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
-    overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
-    delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
-    debug: bool = CONFIG["CONVERT"]["DEBUG"],
+    output_filetype: str = CONFIG[CONVERT][OUTPUT_FILETYPE],
+    input_fps: float = CONFIG[CONVERT][INPUT_FPS],
+    fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
+    overwrite: bool = CONFIG[CONVERT][OVERWRITE],
+    delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
+    debug: bool = CONFIG[CONVERT][DEBUG],
 ) -> None:
     """Converts multiple h264-based videos into other formats.
 
@@ -86,12 +95,12 @@ def main(
 
 def convert(
     input_video_file: Path,
-    output_filetype: str = CONFIG["CONVERT"]["OUTPUT_FILETYPE"],
-    input_fps: float = CONFIG["CONVERT"]["INPUT_FPS"],
-    fps_from_filename: bool = CONFIG["CONVERT"]["FPS_FROM_FILENAME"],
-    overwrite: bool = CONFIG["CONVERT"]["OVERWRITE"],
-    delete_input: bool = CONFIG["CONVERT"]["DELETE_INPUT"],
-    debug: bool = CONFIG["CONVERT"]["DEBUG"],
+    output_filetype: str = CONFIG[CONVERT][OUTPUT_FILETYPE],
+    input_fps: float = CONFIG[CONVERT][INPUT_FPS],
+    fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
+    overwrite: bool = CONFIG[CONVERT][OVERWRITE],
+    delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
+    debug: bool = CONFIG[CONVERT][DEBUG],
 ) -> None:
     """Converts h264-based videos into other formats and/or other frame rates.
     Also input frame rates can be given.

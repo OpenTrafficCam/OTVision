@@ -28,7 +28,16 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from OTVision.config import CONFIG, FILETYPES, REFPTS, TRACK
+from OTVision.config import (
+    CONFIG,
+    DEBUG,
+    DEFAULT_FILETYPE,
+    FILETYPES,
+    OVERWRITE,
+    REFPTS,
+    TRACK,
+    TRANSFORM,
+)
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     get_files,
@@ -50,8 +59,8 @@ from .get_homography import get_homography
 def main(
     paths: list[Path],
     refpts_file: Union[Path, None] = None,
-    overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
-    debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
+    overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
+    debug: bool = CONFIG[TRANSFORM][DEBUG],
 ) -> None:
     """Transform tracks files containing trajectories in pixel coordinates to .gpkg
     files with trajectories in utm coordinates using either one single refpts file for
@@ -78,9 +87,10 @@ def main(
         set_debug()
 
     track_filetype = CONFIG[FILETYPES][TRACK]
-    refpts_filetype = CONFIG[FILETYPES][REFPTS]
 
     if refpts_file:
+        refpts_filetype = CONFIG[FILETYPES][REFPTS]
+
         if not refpts_file.exists():
             raise FileNotFoundError(
                 f"No reference points file with filetype: '{refpts_filetype}' found!"
@@ -96,7 +106,7 @@ def main(
             homography_eval_dict,
         ) = get_homography(refpts=refpts)
         log.info(f"Read {refpts_file}")
-    tracks_files = get_files(paths=paths, filetypes=CONFIG["FILETYPES"]["TRACK"])
+    tracks_files = get_files(paths=paths, filetypes=CONFIG[FILETYPES][TRACK])
     if not tracks_files:
         raise FileNotFoundError(
             f"No files of type '{track_filetype}' found to transform!"
@@ -116,7 +126,7 @@ def main(
         # Try reading refpts and getting homography if not done above
         if not refpts_file:
             associated_refpts_file = replace_filetype(
-                files=[tracks_file], new_filetype=CONFIG["DEFAULT_FILETYPE"]["REFPTS"]
+                files=[tracks_file], new_filetype=CONFIG[DEFAULT_FILETYPE][REFPTS]
             )[0]
             if not associated_refpts_file.exists():
                 raise FileNotFoundError(
@@ -150,6 +160,7 @@ def main(
         log.info("Tracks transformed")
 
         # Add crs information tp metadata dict
+        # TODO: Declare constant for the dictionary keys
         metadata_dict["trk"]["utm"] = True
         metadata_dict["trk"]["utm_zone"] = utm_zone
         metadata_dict["trk"]["hemisphere"] = hemisphere
@@ -301,7 +312,7 @@ def write_tracks(
     hemisphere: str,
     tracks_file: Path,
     filetype: str = "gpkg",
-    overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
+    overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
 ) -> None:
     """Writes tracks as .gpkg and in specific epsg projection
     according to UTM zone and hemisphere
