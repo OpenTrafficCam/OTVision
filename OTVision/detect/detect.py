@@ -43,7 +43,7 @@ from OTVision.config import (
     YOLO,
 )
 from OTVision.helpers.files import get_files, write_json
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import log
 
 from . import yolo
 
@@ -94,8 +94,6 @@ def main(
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["DETECT"]["DEBUG"].
     """
-    if debug:
-        set_debug()
 
     video_files = get_files(paths=paths, filetypes=filetypes)
 
@@ -159,8 +157,6 @@ def main(
     log.info(finished_msg)
     print(finished_msg)
 
-    if debug:
-        reset_debug()
     return None
 
 

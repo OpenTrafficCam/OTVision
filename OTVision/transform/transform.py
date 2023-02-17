@@ -51,7 +51,7 @@ from OTVision.helpers.formats import (
     _get_time_from_frame_number,
     _ottrk_dict_to_df,
 )
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import log
 
 from .get_homography import get_homography
 
@@ -81,9 +81,6 @@ def main(
         debug (bool, optional): Whether or not to run in debug mode.
             Defaults to CONFIG["TRANSFORM"]["DEBUG"].
     """
-
-    if debug:
-        set_debug()
 
     track_filetype = CONFIG[FILETYPES][TRACK]
 
@@ -190,9 +187,6 @@ def main(
     finished_msg = "Finished transformation"
     log.info(finished_msg)
     print(finished_msg)
-
-    if debug:
-        reset_debug()
 
 
 # TODO: Type hint nested dict during refactoring

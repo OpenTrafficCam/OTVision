@@ -45,7 +45,7 @@ from OTVision.helpers.files import (
     read_json,
     write_json,
 )
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import log
 
 from .iou import track_iou
 
@@ -89,9 +89,6 @@ def main(
         debug (bool, optional): Whether or not to run in debug mode.
             Defaults to CONFIG["TRACK"]["DEBUG"].
     """
-
-    if debug:
-        set_debug()
 
     filetypes = CONFIG[FILETYPES][DETECT]
     detections_files = get_files(paths=paths, filetypes=filetypes)
@@ -142,9 +139,6 @@ def main(
     finished_msg = "Finished tracking"
     log.info(finished_msg)
     print(finished_msg)
-
-    if debug:
-        reset_debug()
 
 
 def track(

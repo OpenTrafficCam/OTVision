@@ -35,7 +35,7 @@ from OTVision.config import (
 )
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import log
 
 OUTPUT_FPS: Optional[float] = None
 
@@ -69,9 +69,6 @@ def main(
             Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
 
-    if debug:
-        set_debug()
-
     h264_files = get_files(paths, [".h264"])
 
     start_msg = f"Start conversion of {len(h264_files)} .h264 files"
@@ -98,9 +95,6 @@ def main(
     finished_msg = "Finished conversion"
     log.info(finished_msg)
     print(finished_msg)
-
-    if debug:
-        reset_debug()
 
 
 def convert(
@@ -144,9 +138,6 @@ def convert(
         None: If output video file already exists and overwrite is not enabled.
     """
 
-    if debug:
-        set_debug()
-
     _check_types(
         output_filetype=output_filetype,
         input_fps=input_fps,
@@ -164,8 +155,6 @@ def convert(
         log.warning(
             f"{output_video_file} already exists. To overwrite, set overwrite to True"
         )
-        if debug:
-            reset_debug()
         return None
     vid_filetypes = CONFIG["FILETYPES"]["VID"]
     if input_filetype == ".h264" and output_filetype in vid_filetypes:
@@ -228,9 +217,6 @@ def convert(
         raise TypeError("Input video filetype has to ne .h264")
     else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
-
-    if debug:
-        reset_debug()
 
 
 def check_ffmpeg() -> None:
