@@ -101,7 +101,7 @@ def main(
             )
             continue
 
-        log.debug(f"Try transforming {tracks_file}")
+        log.info(f"Try transforming {tracks_file}")
 
         # Try reading refpts and getting homography if not done above
         if not refpts_file:
@@ -153,7 +153,7 @@ def main(
             tracks_file=tracks_file,
         )
 
-        log.debug(f"Successfully transformed {tracks_file}")
+        log.info(f"Successfully transformed {tracks_file}")
 
     if debug:
         reset_debug()
