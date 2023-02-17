@@ -144,6 +144,9 @@ def convert(
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
     if not overwrite and output_video_file.is_file():
+        log.warning(
+            f"{output_video_file} already exists. To overwrite, set overwrite to True"
+        )
         if debug:
             reset_debug()
         return None
