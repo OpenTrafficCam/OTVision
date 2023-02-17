@@ -119,17 +119,13 @@ def main(
             output = build_output(file_path, serializable_detections, new_metadata)
             write_json(
                 dict_to_write=output,
-                file=clean_file_extension(file_path),
+                file=Path(file_path),
                 filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
                 overwrite=overwrite,
             )
 
     if debug:
         reset_debug()
-
-
-def clean_file_extension(file_path: str) -> Path:
-    return Path(file_path)
 
 
 def track(
