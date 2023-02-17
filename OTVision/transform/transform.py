@@ -93,7 +93,16 @@ def main(
         log.info(f"Read {refpts_file}")
     tracks_files = get_files(paths=paths, filetypes=CONFIG["FILETYPES"]["TRACK"])
     for tracks_file in tracks_files:
-        log.info(f"Try transforming {tracks_file}")
+        gpkg_file = tracks_file.with_suffix(".gpkg")
+
+        if not overwrite and gpkg_file.is_file():
+            log.warning(
+                f"{gpkg_file} already exists. To overwrite, set overwrite to True"
+            )
+            continue
+
+        log.debug(f"Try transforming {tracks_file}")
+
         # Try reading refpts and getting homography if not done above
         if not refpts_file:
             associated_refpts_file = replace_filetype(
@@ -111,40 +120,41 @@ def main(
                 homography_eval_dict,
             ) = get_homography(refpts=refpts)
             log.info("Homography matrix created")
+
         # Read tracks
         tracks_px_df, metadata_dict = read_tracks(tracks_file)
         log.info("Tracks read")
-        # Check if transformation is actually needed
-        # already_utm = "utm" in metadata_dict["trk"] and metadata_dict["trk"]["utm"]
-        if overwrite:  # ? or not already_utm?
-            metadata_dict["trk"]["utm"] = False  # ? or not?
-            # Actual transformation
-            tracks_utm_df = transform(
-                tracks_px=tracks_px_df,
-                homography=homography,
-                refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
-                upshift_utm=upshift_utm,
-            )
-            log.info("Tracks transformed")
-            # Add crs information tp metadata dict
-            metadata_dict["trk"]["utm"] = True
-            metadata_dict["trk"]["utm_zone"] = utm_zone
-            metadata_dict["trk"]["hemisphere"] = hemisphere
-            metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
-                utm_zone=utm_zone, hemisphere=hemisphere
-            )
-            metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
-            log.info("Meta infos created")
-            log.debug(f"config_dict: {metadata_dict}")
-            # Write tracks
-            write_tracks(
-                tracks_utm_df=tracks_utm_df,
-                metadata_dict=metadata_dict,
-                utm_zone=utm_zone,
-                hemisphere=hemisphere,
-                tracks_file=tracks_file,
-            )
-        log.info("Transformation successful")
+
+        # Actual transformation
+        tracks_utm_df = transform(
+            tracks_px=tracks_px_df,
+            homography=homography,
+            refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
+            upshift_utm=upshift_utm,
+        )
+        log.info("Tracks transformed")
+
+        # Add crs information tp metadata dict
+        metadata_dict["trk"]["utm"] = True
+        metadata_dict["trk"]["utm_zone"] = utm_zone
+        metadata_dict["trk"]["hemisphere"] = hemisphere
+        metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
+            utm_zone=utm_zone, hemisphere=hemisphere
+        )
+        metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
+        log.debug(f"config_dict: {metadata_dict}")
+
+        # Write tracks
+        write_tracks(
+            tracks_utm_df=tracks_utm_df,
+            metadata_dict=metadata_dict,
+            utm_zone=utm_zone,
+            hemisphere=hemisphere,
+            tracks_file=tracks_file,
+        )
+
+        log.debug(f"Successfully transformed {tracks_file}")
+
     if debug:
         reset_debug()
 
