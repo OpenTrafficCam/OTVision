@@ -184,7 +184,7 @@ def track_iou(
 def _check_types(
     sigma_l: float, sigma_h: float, sigma_iou: float, t_min: int, t_miss_max: int
 ) -> None:
-    """Raise ValueErrors if wront types"""
+    """Raise ValueErrors if wrong types"""
 
     if not isinstance(sigma_l, (int, float)):
         raise ValueError("sigma_l has to be int or float")

@@ -8,7 +8,7 @@ T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def test_data_tmp_dir() -> YieldFixture[Path]:
     test_data_tmp_dir = Path(__file__).parent / "data_tmp"
     test_data_tmp_dir.mkdir(exist_ok=True)
@@ -16,6 +16,6 @@ def test_data_tmp_dir() -> YieldFixture[Path]:
     shutil.rmtree(test_data_tmp_dir)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def test_data_dir() -> Path:
     return Path(__file__).parent / "data"

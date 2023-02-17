@@ -2,21 +2,18 @@ import os
 import shutil
 from filecmp import cmpfiles
 from pathlib import Path
-from typing import Generator, TypeVar
 
 import pytest
 
 from OTVision.config import CONFIG
 from OTVision.track.track import main as track
+from tests.conftest import YieldFixture
 
 SIGMA_L = CONFIG["TRACK"]["IOU"]["SIGMA_L"]
 SIGMA_H = CONFIG["TRACK"]["IOU"]["SIGMA_H"]
 SIGMA_IOU = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
 T_MIN = CONFIG["TRACK"]["IOU"]["T_MIN"]
 T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
-
-T = TypeVar("T")
-YieldFixture = Generator[T, None, None]
 
 
 @pytest.fixture

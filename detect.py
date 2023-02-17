@@ -45,19 +45,46 @@ def parse() -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "-f",
-        "--filetypes",
-        type=str,
-        nargs="+",
-        help="Filetypes of files in folders to select for detection",
-        required=False,
-    )
-    parser.add_argument(
         "-w",
         "--weights",
         type=str,
         help="Name of weights from PyTorch hub or Path to weights file",
         required=False,
+    )
+    parser.add_argument(
+        "--conf",
+        type=float,
+        help="The YOLOv5 models confidence threshold.",
+        required=False,
+    )
+    parser.add_argument(
+        "--iou",
+        type=float,
+        help="The YOLOv5 models IOU threshold.",
+        required=False,
+    )
+    parser.add_argument(
+        "--chunksize",
+        type=int,
+        help="The number of frames of a video to be inferred in one iteration.",
+        required=False,
+    )
+    parser.add_argument(
+        "--imagesize",
+        type=int,
+        help="YOLOv5 image size.",
+        required=False,
+    )
+    parser.add_argument(
+        "--half",
+        action=argparse.BooleanOptionalAction,
+        help="Use half precision for detection.",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        help="Force reload model in torch hub instead of using cache.",
+        action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
         "-o",
@@ -86,19 +113,17 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
-        str_paths = args.paths
-    else:
-        if len(config.CONFIG["DETECT"]["PATHS"]) == 0:
-            raise IOError(
-                "No paths have been passed as command line args."
-                "No paths have been defined in the user config."
-            )
+        return args.paths
+    if len(config.CONFIG[config.DETECT][config.PATHS]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
 
-        str_paths = config.CONFIG["DETECT"]["PATHS"]
-    return str_paths
+    return config.CONFIG[config.DETECT][config.PATHS]
 
 
-def main() -> None:
+def main() -> None:  # sourcery skip: assign-if-exp
     args = parse()
     _process_config(args)
 
@@ -107,11 +132,51 @@ def main() -> None:
     except IOError as ioe:
         log.error(ioe)
 
-    weights = args.weights or config.CONFIG["DETECT"]["YOLO"]["WEIGHTS"]
-    filetypes = args.filetypes or config.CONFIG["FILETYPES"]["VID"]
-    overwrite = args.overwrite or config.CONFIG["DETECT"]["OVERWRITE"]
-    debug = args.debug or config.CONFIG["DETECT"]["DEBUG"]
     paths = [Path(str_path) for str_path in str_paths]
+
+    if args.weights is None:
+        weights = config.CONFIG[config.DETECT][config.YOLO][config.WEIGHTS]
+    else:
+        weights = args.weights
+
+    if args.conf is None:
+        conf = config.CONFIG[config.DETECT][config.YOLO][config.CONF]
+    else:
+        conf = args.conf
+
+    if args.iou is None:
+        iou = config.CONFIG[config.DETECT][config.YOLO][config.IOU]
+    else:
+        iou = args.iou
+
+    if args.chunksize is None:
+        chunksize = config.CONFIG[config.DETECT][config.YOLO][config.CHUNK_SIZE]
+    else:
+        chunksize = args.chunksize
+
+    if args.imagesize is None:
+        imagesize = config.CONFIG[config.DETECT][config.YOLO][config.IMG_SIZE]
+    else:
+        imagesize = args.imagesize
+    if args.half is None:
+        half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
+    else:
+        half = args.half
+
+    if args.force is None:
+        force_reload = config.CONFIG[config.DETECT][config.FORCE_RELOAD_TORCH_HUB_CACHE]
+    else:
+        force_reload = args.force
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
+    else:
+        overwrite = args.overwrite
+
+    if args.debug is None:
+        debug = config.CONFIG[config.DETECT][config.DEBUG]
+    else:
+        debug = args.debug
 
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
@@ -119,7 +184,12 @@ def main() -> None:
     OTVision.detect(
         paths=paths,
         weights=weights,
-        filetypes=filetypes,
+        conf=conf,
+        iou=iou,
+        chunksize=chunksize,
+        size=imagesize,
+        half_precision=half,
+        force_reload_torch_hub_cache=force_reload,
         overwrite=overwrite,
         debug=debug,
     )
