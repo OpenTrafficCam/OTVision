@@ -20,12 +20,28 @@ OTVision helpers for logging
 
 
 import logging
+from datetime import datetime
+from pathlib import Path
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(filename)s:%(message)s", level=logging.INFO
 )
-
 log = logging.getLogger(__name__)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(level=logging.WARNING)
+log.addHandler(hdlr=console_handler)
+
+# Create file handler
+datetime_str = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
+log_dir = Path.cwd() / "otvision_logs"
+if not log_dir.is_dir():
+    log_dir.mkdir(parents=True, exist_ok=True)
+log_file = log_dir / f"{datetime_str}.log"
+file_handler = logging.FileHandler(filename=log_file)
+file_handler.setLevel(level=logging.DEBUG)
+log.addHandler(hdlr=file_handler)
 
 
 def set_debug() -> None:
