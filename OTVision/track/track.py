@@ -81,9 +81,17 @@ def main(
 
     filetypes = CONFIG["FILETYPES"]["DETECT"]
     detections_files = get_files(paths=paths, filetypes=filetypes)
-    for detections_file in detections_files:
-        log.info(f"Try tracking {detections_file}")
 
+    for detections_file in detections_files:
+        tracks_file = detections_file.with_suffix(CONFIG["DEFAULT_FILETYPE"]["TRACK"])
+
+        if not overwrite and tracks_file.is_file():
+            log.warning(
+                f"{tracks_file} already exists. To overwrite, set overwrite to True"
+            )
+            continue
+
+        log.info(f"Try tracking {detections_file}")
         detections = read_json(
             json_file=detections_file, filetype=detections_file.suffix
         )
@@ -100,10 +108,11 @@ def main(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
+        log.info(f"Successfully tracked {detections_file}")
 
         write_json(
             dict_to_write=tracks_px,
-            file=detections_file,
+            file=tracks_file,
             filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
             overwrite=overwrite,
         )
