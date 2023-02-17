@@ -45,19 +45,46 @@ def parse() -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "-f",
-        "--filetypes",
-        type=str,
-        nargs="+",
-        help="Filetypes of files in folders to select for detection",
-        required=False,
-    )
-    parser.add_argument(
         "-w",
         "--weights",
         type=str,
         help="Name of weights from PyTorch hub or Path to weights file",
         required=False,
+    )
+    parser.add_argument(
+        "--conf",
+        type=float,
+        help="The YOLOv5 models confidence threshold.",
+        required=False,
+    )
+    parser.add_argument(
+        "--iou",
+        type=float,
+        help="The YOLOv5 models IOU threshold.",
+        required=False,
+    )
+    parser.add_argument(
+        "--chunksize",
+        type=int,
+        help="The number of frames of a video to be inferred in one iteration.",
+        required=False,
+    )
+    parser.add_argument(
+        "--imagesize",
+        type=int,
+        help="YOLOv5 image size.",
+        required=False,
+    )
+    parser.add_argument(
+        "--half",
+        action=argparse.BooleanOptionalAction,
+        help="Use half precision for detection.",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        help="Force reload model in torch hub instead of using cache.",
+        action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
         "-o",
@@ -112,10 +139,34 @@ def main() -> None:  # sourcery skip: assign-if-exp
     else:
         weights = args.weights
 
-    if args.filetypes is None:
-        filetypes = config.CONFIG[config.FILETYPES][config.VID]
+    if args.conf is None:
+        conf = config.CONFIG[config.DETECT][config.YOLO][config.CONF]
     else:
-        filetypes = args.filetypes
+        conf = args.conf
+
+    if args.iou is None:
+        iou = config.CONFIG[config.DETECT][config.YOLO][config.IOU]
+    else:
+        iou = args.iou
+
+    if args.chunksize is None:
+        chunksize = config.CONFIG[config.DETECT][config.YOLO][config.CHUNK_SIZE]
+    else:
+        chunksize = args.chunksize
+
+    if args.imagesize is None:
+        imagesize = config.CONFIG[config.DETECT][config.YOLO][config.IMG_SIZE]
+    else:
+        imagesize = args.imagesize
+    if args.half is None:
+        half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
+    else:
+        half = args.half
+
+    if args.force is None:
+        force_reload = config.CONFIG[config.DETECT][config.FORCE_RELOAD_TORCH_HUB_CACHE]
+    else:
+        force_reload = args.force
 
     if args.overwrite is None:
         overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
@@ -130,14 +181,22 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info("Starting detection from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    OTVision.detect(
-        paths=paths,
-        weights=weights,
-        filetypes=filetypes,
-        overwrite=overwrite,
-        debug=debug,
-    )
-    log.info("Finished detection from command line")
+    try:
+        OTVision.detect(
+            paths=paths,
+            weights=weights,
+            conf=conf,
+            iou=iou,
+            chunksize=chunksize,
+            size=imagesize,
+            half_precision=half,
+            force_reload_torch_hub_cache=force_reload,
+            overwrite=overwrite,
+            debug=debug,
+        )
+        log.info("Finished detection from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":

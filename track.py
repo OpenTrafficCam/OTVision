@@ -155,18 +155,20 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info("Starting tracking from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    OTVision.track(
-        paths=paths,
-        sigma_l=sigma_l,
-        sigma_h=sigma_h,
-        sigma_iou=sigma_iou,
-        t_min=t_min,
-        t_miss_max=t_miss_max,
-        overwrite=overwrite,
-        debug=debug,
-    )
-
-    log.info("Finished tracking from command line")
+    try:
+        OTVision.track(
+            paths=paths,
+            sigma_l=sigma_l,
+            sigma_h=sigma_h,
+            sigma_iou=sigma_iou,
+            t_min=t_min,
+            t_miss_max=t_miss_max,
+            overwrite=overwrite,
+            debug=debug,
+        )
+        log.info("Finished tracking from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":

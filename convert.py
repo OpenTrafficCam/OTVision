@@ -134,16 +134,18 @@ def main() -> None:  # sourcery skip: assign-if-exp
 
     log.info("Starting conversion from command line")
     log.info(f"Arguments: {vars(args)}")
-
-    OTVision.convert(
-        paths=paths,
-        delete_input=delete_input,
-        overwrite=overwrite,
-        debug=debug,
-        input_fps=input_fps,
-        fps_from_filename=fps_from_filename,
-    )
-    log.info("Finished conversion from command line")
+    try:
+        OTVision.convert(
+            paths=paths,
+            delete_input=delete_input,
+            overwrite=overwrite,
+            debug=debug,
+            input_fps=input_fps,
+            fps_from_filename=fps_from_filename,
+        )
+        log.info("Finished conversion from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":

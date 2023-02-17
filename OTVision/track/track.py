@@ -82,6 +82,9 @@ def main(
     filetypes = CONFIG["FILETYPES"]["DETECT"]
     detections_files = get_files(paths=paths, filetypes=filetypes)
 
+    if not detections_files:
+        raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
+
     for detections_file in detections_files:
         tracks_file = detections_file.with_suffix(CONFIG["DEFAULT_FILETYPE"]["TRACK"])
 

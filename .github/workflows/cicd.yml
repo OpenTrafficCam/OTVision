@@ -9,7 +9,8 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: True
+      max-parallel: 1
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.10"]
@@ -33,6 +34,7 @@ jobs:
           pip install flake8
           pip install mypy
           pip install deepdiff
+          pip install jsonschema
           python -c 'from OTVision.helpers.machine \
           import print_has_cuda; print_has_cuda()'
       - name: Lint codebase

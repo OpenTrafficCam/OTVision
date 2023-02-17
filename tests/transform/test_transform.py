@@ -54,12 +54,13 @@ def single_refpts_file(test_data_transform_dir: Path) -> Path:
 @pytest.fixture
 def tmp_cyclist_refpts_file(
     test_data_transform_dir: Path, test_data_tmp_transform_dir: Path
-) -> Path:
+) -> YieldFixture[Path]:
     fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otrfpts"
     src = test_data_transform_dir / fname
     dest = test_data_tmp_transform_dir / fname
     shutil.copy2(src, dest)
-    return dest
+    yield dest
+    dest.unlink()
 
 
 @pytest.fixture
@@ -133,3 +134,32 @@ class TestTransform:
         )
 
         assert_frame_equal(expected_utm_tracks_cyclist_df, result_utm_tracks_cyclist_df)
+
+    def test_transform_noExistingRefptsFileAsParam_raiseFileNotFoundError(
+        self, tmp_ottrk_cyclist_bz2: Path
+    ) -> None:
+        with pytest.raises(
+            FileNotFoundError,
+            match=r"^No reference points file with filetype:.* found!",
+        ):
+            transform(
+                [tmp_ottrk_cyclist_bz2], refpts_file=Path("no/existing/refpts.otrfpts")
+            )
+
+    def test_transform_noRefptsFileInSameDirAsParam_raiseFileNotFoundError(
+        self, tmp_ottrk_cyclist_bz2: Path
+    ) -> None:
+        with pytest.raises(
+            FileNotFoundError,
+            match=r"^No reference points file found for tracks file:.*!",
+        ):
+            transform([tmp_ottrk_cyclist_bz2])
+
+    def test_transform_emptyListAsParam_raiseFileNotFoundError(
+        self, single_refpts_file: Path
+    ) -> None:
+        with pytest.raises(
+            FileNotFoundError,
+            match=r"No files of type .* found to transform!",
+        ):
+            transform([], refpts_file=single_refpts_file)
