@@ -209,7 +209,7 @@ def convert(
 
     elif input_filetype != ".h264":
         raise TypeError("Input video filetype has to ne .h264")
-    elif output_filetype not in vid_filetypes:
+    else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
 
     if debug:
