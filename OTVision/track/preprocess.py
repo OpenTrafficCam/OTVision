@@ -145,28 +145,6 @@ class Splitter:
         return detections
 
 
-class Cleanup:
-    def remove_empty_frames(
-        self, data: dict[int, dict[str, list]]
-    ) -> dict[int, dict[str, list]]:
-        """
-        Removes frames without detections from the given data object.
-
-        Args:
-            data (pd.DataFrame): data to remove empty frames from
-
-        Returns:
-            pd.DataFrame: same data object
-        """
-        keys_to_drop = []
-        for key, value in data.items():
-            classified_data = value[CLASSIFIED]
-            if 0 == len(classified_data):
-                keys_to_drop.append(key)
-        [data.pop(key) for key in keys_to_drop]
-        return data
-
-
 class DetectionParser:
     def convert(self, data_detections: list[dict[str, str]]) -> list[Detection]:
         detections: list[Detection] = []

@@ -2,8 +2,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-import pytest
-
 from OTVision.dataformat import (
     CLASS,
     CLASSIFIED,
@@ -23,7 +21,6 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.track.preprocess import (
-    Cleanup,
     Detection,
     DetectionParser,
     Frame,
@@ -221,36 +218,6 @@ class DataBuilder:
             },
             DATA: self.build(),
         }
-
-
-class TestCleanup:
-    @pytest.mark.parametrize(
-        DATA,
-        [
-            {},
-            DataBuilder().append_classified_frame().build(),
-        ],
-    )
-    def test_remove_nothing(self, data: dict) -> None:
-        cleaned_data = Cleanup().remove_empty_frames(data.copy())
-
-        assert cleaned_data == data
-
-    def test_remove_frame_without_detection(self) -> None:
-        data_builder = DataBuilder()
-        data = (
-            data_builder.append_non_classified_frame()
-            .append_classified_frame()
-            .append_non_classified_frame()
-            .append_classified_frame()
-            .append_classified_frame(2)
-            .build()
-        )
-
-        cleaned_data = Cleanup().remove_empty_frames(data.copy())
-
-        assert cleaned_data != data
-        assert cleaned_data.keys() == set(data_builder.classified_frames)
 
 
 class TestDetectionParser:
