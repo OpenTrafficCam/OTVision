@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -289,7 +288,7 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = Path(os.path.normcase(f"{order_key}/file-name.otdet"))
+        path = Path(f"{order_key}/file-name.otdet")
         parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
         result: FrameGroup = parser.convert(input)
 
@@ -311,7 +310,7 @@ class TestFrameParser:
 
         calculated_key = parser.order_key()
 
-        assert calculated_key == os.path.normcase(order_key)
+        assert calculated_key == order_key
 
 
 class TestPreprocess:

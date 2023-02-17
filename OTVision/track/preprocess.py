@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -23,7 +22,6 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.helpers.files import read_json
-from OTVision.helpers.machine import ON_WINDOWS
 
 MISSING_START_DATE = datetime(1900, 1, 1)
 
@@ -214,10 +212,7 @@ class FrameGroupParser:
         return FrameGroup(frames, order_key=self.order_key())
 
     def order_key(self) -> str:
-        path = Path(self.input_file_path)
-        if ON_WINDOWS:
-            return os.path.normcase(path.parent.as_posix())
-        return os.path.normpath(path.parent)
+        return self.input_file_path.parent.as_posix()
 
 
 @dataclass(frozen=True)
