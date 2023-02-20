@@ -27,6 +27,31 @@ import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
 from OTVision.config import CONFIG, FILETYPES, VID
+from OTVision.dataformat import (
+    CHUNKSIZE,
+    CLASS,
+    CLASSIFIED,
+    CONFIDENCE,
+    DATA,
+    DETECTION,
+    DETECTOR,
+    FILE,
+    FILETYPE,
+    FPS,
+    FRAMES,
+    HEIGHT,
+    IOU,
+    METADATA,
+    NORMALIZED,
+    SIZE,
+    VIDEO,
+    WEIGHTS,
+    WIDTH,
+    H,
+    W,
+    X,
+    Y,
+)
 from OTVision.helpers.files import has_filetype
 from OTVision.helpers.log import log
 
@@ -336,12 +361,12 @@ def _get_vidconfig(
     file: Path, width: int, height: int, fps: float, frames: int
 ) -> dict[str, Union[str, int, float]]:
     return {
-        "file": str(Path(file).stem),
-        "filetype": str(Path(file).suffix),
-        "width": width,
-        "height": height,
-        "fps": fps,
-        "frames": frames,
+        FILE: str(Path(file).stem),
+        FILETYPE: str(Path(file).suffix),
+        WIDTH: width,
+        HEIGHT: height,
+        FPS: fps,
+        FRAMES: frames,
     }
 
 
@@ -354,13 +379,13 @@ def _get_det_config(
     normalized: bool,
 ) -> dict[str, Union[str, int, float]]:
     return {
-        "detector": "YOLOv5",
-        "weights": str(weights),
-        "conf": conf,
-        "iou": iou,
-        "size": size,
-        "chunksize": chunksize,
-        "normalized": normalized,
+        DETECTOR: "YOLOv5",
+        WEIGHTS: str(weights),
+        CONFIDENCE: conf,
+        IOU: iou,
+        SIZE: size,
+        CHUNKSIZE: chunksize,
+        NORMALIZED: normalized,
     }
 
 
@@ -373,18 +398,18 @@ def _convert_detections_chunks(
         detection: list = []
         for yolo_bbox in yolo_detection:
             bbox = {
-                "class": names[int(yolo_bbox[5])],
-                "conf": yolo_bbox[4],
-                "x": yolo_bbox[0],
-                "y": yolo_bbox[1],
-                "w": yolo_bbox[2],
-                "h": yolo_bbox[3],
+                CLASS: names[int(yolo_bbox[5])],
+                CONFIDENCE: yolo_bbox[4],
+                X: yolo_bbox[0],
+                Y: yolo_bbox[1],
+                W: yolo_bbox[2],
+                H: yolo_bbox[3],
             }
 
             detection.append(bbox)
-        data = {str(no + 1): {"classified": detection}}
+        data = {str(no + 1): {CLASSIFIED: detection}}
         # ?: Should every image have a det_config dict? Even if it is always the same?
-        result.append({"metadata": {"det": det_config}, "data": data})
+        result.append({METADATA: {DETECTION: det_config}, DATA: data})
     return result
 
 
@@ -401,16 +426,16 @@ def _convert_detections(
         detection: list = []
         for yolo_bbox in yolo_detection:
             bbox = {
-                "class": names[int(yolo_bbox[5])],
-                "conf": yolo_bbox[4],
-                "x": yolo_bbox[0],
-                "y": yolo_bbox[1],
-                "w": yolo_bbox[2],
-                "h": yolo_bbox[3],
+                CLASS: names[int(yolo_bbox[5])],
+                CONFIDENCE: yolo_bbox[4],
+                X: yolo_bbox[0],
+                Y: yolo_bbox[1],
+                W: yolo_bbox[2],
+                H: yolo_bbox[3],
             }
             detection.append(bbox)
-        data[str(no + 1)] = {"classified": detection}
-    return {"metadata": {"vid": vid_config, "det": det_config}, "data": data}
+        data[str(no + 1)] = {CLASSIFIED: detection}
+    return {METADATA: {VIDEO: vid_config, DETECTION: det_config}, DATA: data}
 
 
 def _containsvideo(file_chunks: list[list[Path]]) -> bool:

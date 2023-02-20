@@ -25,7 +25,18 @@ from pathlib import Path
 from typing import Tuple
 
 from OTVision.config import CONFIG
-from OTVision.dataformat import DATA, DETECTIONS, METADATA
+from OTVision.dataformat import (
+    DATA,
+    DETECTIONS,
+    METADATA,
+    SIGMA_H,
+    SIGMA_IOU,
+    SIGMA_L,
+    T_MIN,
+    T_MISS_MAX,
+    TRACK,
+    TRACKER,
+)
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     denormalize_bbox,
@@ -170,7 +181,7 @@ def track(
     """
 
     new_detections = track_iou(
-        detections=detections["data"],
+        detections=detections[DATA],
         sigma_l=sigma_l,
         sigma_h=sigma_h,
         sigma_iou=sigma_iou,
@@ -179,13 +190,13 @@ def track(
     )
 
     for id in metadata:
-        metadata[id]["trk"] = {
-            "tracker": "IOU",
-            "sigma_l": sigma_l,
-            "sigma_h": sigma_h,
-            "sigma_iou": sigma_iou,
-            "t_min": t_min,
-            "t_miss_max": t_miss_max,
+        metadata[id][TRACK] = {
+            TRACKER: "IOU",
+            SIGMA_L: sigma_l,
+            SIGMA_H: sigma_h,
+            SIGMA_IOU: sigma_iou,
+            T_MIN: t_min,
+            T_MISS_MAX: t_miss_max,
         }
 
     log.info("Detections tracked")

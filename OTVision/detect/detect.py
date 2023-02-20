@@ -29,12 +29,14 @@ import torch
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from OTVision.config import CONFIG
+from OTVision.dataformat import DATA
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import log, reset_debug, set_debug
 from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
 
 from . import yolo
 
+START_DATE = "start_date"
 FILE_NAME_PATTERN = (
     "(?P<prefix>[A-Za-z0-9]+)"
     "_FR(?P<frame_rate>\\d+)"
@@ -198,7 +200,7 @@ class Timestamper:
             video_file.name,
         )
         if match:
-            start_date: str = match.group("start_date")
+            start_date: str = match.group(START_DATE)
             return datetime.strptime(start_date, "%Y-%m-%d_%H-%M-%S")
         raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
@@ -214,7 +216,7 @@ class Timestamper:
             timedelta: duration per frame
         """
         duration = self._get_duration(video_file)
-        number_of_frames = len(detections["data"].keys())
+        number_of_frames = len(detections[DATA].keys())
         return duration / number_of_frames
 
     def _get_duration(self, video_file: Path) -> timedelta:
@@ -242,7 +244,7 @@ class Timestamper:
         Returns:
             dict: dictionary containing all frames with their occurrence in real time
         """
-        data: dict = detections["data"]
+        data: dict = detections[DATA]
         for key, value in data.items():
             occurrence = start_date + (int(key) - 1) * time_per_frame
             value[OCCURRENCE] = occurrence.strftime(DATE_FORMAT)
