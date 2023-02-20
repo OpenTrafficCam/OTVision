@@ -217,7 +217,7 @@ def convert(
                 input_video_file.unlink()
 
     elif input_filetype != ".h264":
-        raise TypeError("Input video filetype has to ne .h264")
+        raise TypeError("Input video filetype has to be .h264")
     else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
 
