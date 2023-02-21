@@ -29,7 +29,7 @@ import torch
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 from OTVision.config import CONFIG
-from OTVision.dataformat import DATA
+from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import log, reset_debug, set_debug
 from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
@@ -179,7 +179,9 @@ class Timestamper:
             dict: input dictionary with additional occurrence per frame
         """
         start_time = self._get_start_time_from(video_file)
-        time_per_frame = self._get_time_per_frame(detections, video_file)
+        duration = self._get_duration(video_file)
+        time_per_frame = self._get_time_per_frame(detections, duration)
+        self._update_metadata(detections, start_time, duration)
         return self._stamp(detections, start_time, time_per_frame)
 
     def _get_start_time_from(self, video_file: Path) -> datetime:
@@ -204,7 +206,7 @@ class Timestamper:
             return datetime.strptime(start_date, "%Y-%m-%d_%H-%M-%S")
         raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
-    def _get_time_per_frame(self, detections: dict, video_file: Path) -> timedelta:
+    def _get_time_per_frame(self, detections: dict, duration: timedelta) -> timedelta:
         """Calculates the duration for each frame. This is done using the total
         duration of the video and the number of frames.
 
@@ -215,7 +217,6 @@ class Timestamper:
         Returns:
             timedelta: duration per frame
         """
-        duration = self._get_duration(video_file)
         number_of_frames = len(detections[DATA].keys())
         return duration / number_of_frames
 
@@ -230,6 +231,15 @@ class Timestamper:
         """
         clip = VideoFileClip(str(video_file.absolute()))
         return timedelta(seconds=clip.duration)
+
+    def _update_metadata(
+        self, detections: dict, start_time: datetime, duration: timedelta
+    ) -> dict:
+        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.strftime(
+            DATE_FORMAT
+        )
+        detections[METADATA][VIDEO][LENGTH] = duration
+        return detections
 
     def _stamp(
         self, detections: dict, start_date: datetime, time_per_frame: timedelta

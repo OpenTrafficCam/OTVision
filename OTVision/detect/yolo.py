@@ -26,6 +26,7 @@ import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
+from OTVision import version
 from OTVision.config import CONFIG, FILETYPES, VID
 from OTVision.dataformat import (
     CHUNKSIZE,
@@ -35,14 +36,15 @@ from OTVision.dataformat import (
     DATA,
     DETECTION,
     DETECTOR,
-    FILE,
+    FILENAME,
     FILETYPE,
     FPS,
-    FRAMES,
     HEIGHT,
     IOU,
     METADATA,
     NORMALIZED,
+    NUMBER_OF_FRAMES,
+    OTDET_VERSION,
     SIZE,
     VIDEO,
     WEIGHTS,
@@ -361,12 +363,12 @@ def _get_vidconfig(
     file: Path, width: int, height: int, fps: float, frames: int
 ) -> dict[str, Union[str, int, float]]:
     return {
-        FILE: str(Path(file).stem),
+        FILENAME: str(Path(file).stem),
         FILETYPE: str(Path(file).suffix),
         WIDTH: width,
         HEIGHT: height,
         FPS: fps,
-        FRAMES: frames,
+        NUMBER_OF_FRAMES: frames,
     }
 
 
@@ -435,7 +437,14 @@ def _convert_detections(
             }
             detection.append(bbox)
         data[str(no + 1)] = {CLASSIFIED: detection}
-    return {METADATA: {VIDEO: vid_config, DETECTION: det_config}, DATA: data}
+    return {
+        METADATA: {
+            OTDET_VERSION: version.otdet_version(),
+            VIDEO: vid_config,
+            DETECTION: det_config,
+        },
+        DATA: data,
+    }
 
 
 def _containsvideo(file_chunks: list[list[Path]]) -> bool:

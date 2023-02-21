@@ -8,7 +8,7 @@ from OTVision.dataformat import (
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
-    FILE,
+    FILENAME,
     FRAME,
     INPUT_FILE_PATH,
     METADATA,
@@ -212,7 +212,7 @@ class DataBuilder:
         return {
             METADATA: {
                 VIDEO: {
-                    FILE: self.input_file_path.as_posix(),
+                    FILENAME: self.input_file_path.as_posix(),
                     RECORDED_START_DATE: self.start_date.strftime(DATE_FORMAT),
                 }
             },
@@ -300,7 +300,7 @@ class TestPreprocess:
         assert metadata == {
             file_path.as_posix(): {
                 VIDEO: {
-                    FILE: file_path.as_posix(),
+                    FILENAME: file_path.as_posix(),
                     RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
                 }
             }
@@ -379,19 +379,19 @@ class TestPreprocess:
         assert metadata == {
             first_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: first_file_path.as_posix(),
+                    FILENAME: first_file_path.as_posix(),
                     RECORDED_START_DATE: first_start_date.strftime(DATE_FORMAT),
                 }
             },
             second_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: second_file_path.as_posix(),
+                    FILENAME: second_file_path.as_posix(),
                     RECORDED_START_DATE: second_start_date.strftime(DATE_FORMAT),
                 }
             },
             third_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: third_file_path.as_posix(),
+                    FILENAME: third_file_path.as_posix(),
                     RECORDED_START_DATE: third_start_date.strftime(DATE_FORMAT),
                 }
             },
