@@ -36,9 +36,9 @@ from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
 from . import yolo
 
 FILE_NAME_PATTERN = (
-    "(?P<prefix>[A-Za-z0-9]+)"
-    "_FR(?P<frame_rate>\\d+)"
-    "_(?P<start_date>\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2})\\..*"
+    r"(?P<prefix>[A-Za-z0-9]+)"
+    r"_FR(?P<frame_rate>\d+)"
+    r"_(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
 )
 
 

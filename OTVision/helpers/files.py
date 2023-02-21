@@ -387,7 +387,7 @@ def _normalize_transformation(
 
 
     Returns:
-        dict: Normalized or denormalized dict
+        dict: Normalized dict
     """
     changed_files = set()
 

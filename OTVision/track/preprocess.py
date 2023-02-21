@@ -162,9 +162,6 @@ class DetectionParser:
 
 
 class FrameGroupParser:
-    input_file_path: Path
-    recorded_start_date: datetime
-
     def __init__(self, input_file_path: Path, recorded_start_date: datetime) -> None:
         self.input_file_path = input_file_path
         self.recorded_start_date = recorded_start_date
@@ -201,17 +198,15 @@ class PreprocessResult:
 
 class Preprocess:
     """Preprocess otdet files before running track. Input files belonging to the same
-    recording will be merged together. The time gape to separate two recordings from
+    recording will be merged together. The time gap to separate two recordings from
     each other is defined by `self.time_without_frames`.
 
     Returns:
         Preprocess: preprocessor for tracking
     """
 
-    time_without_frames: timedelta
-
-    def __init__(self, no_frames_for: timedelta = timedelta(minutes=1)) -> None:
-        self.time_without_frames = no_frames_for
+    def __init__(self, time_without_frames: timedelta = timedelta(minutes=1)) -> None:
+        self.time_without_frames = time_without_frames
 
     def run(self, files: list[Path]) -> PreprocessResult:
         """Read all input files, parse the content and merge the frame groups belonging

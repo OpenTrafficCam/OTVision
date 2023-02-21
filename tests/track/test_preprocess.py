@@ -292,7 +292,7 @@ class TestPreprocess:
         builder.append_classified_frame()
         otdet = builder.build_ot_det()
 
-        preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
+        preprocessor = Preprocess(time_without_frames=timedelta(minutes=1))
         preprocessed_otdet, metadata = preprocessor.process({Path(file_path): otdet})
         serialized_otdet = preprocessed_otdet[0].to_dict()
 
@@ -335,7 +335,7 @@ class TestPreprocess:
         third_builder.append_classified_frame()
         third_detections = third_builder.build_ot_det()
 
-        preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
+        preprocessor = Preprocess(time_without_frames=timedelta(minutes=1))
         merged_groups, metadata = preprocessor.process(
             {
                 first_file_path: first_detections,
