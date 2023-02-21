@@ -244,6 +244,17 @@ class TestDetectionParser:
         ]
 
 
+class TestFrame:
+    def test_get_output_file(self) -> None:
+        input_file = DEFAULT_INPUT_FILE_PATH
+        frame = create_frame(1, [], input_file_path=input_file)
+
+        suffix = ".suffix"
+        output_file = frame.get_output_file(with_suffix=suffix)
+
+        assert output_file == DEFAULT_INPUT_FILE_PATH.with_suffix(suffix=suffix)
+
+
 class TestFrameParser:
     frames: list[Frame]
 
@@ -292,7 +303,7 @@ class TestPreprocess:
         builder.append_classified_frame()
         otdet = builder.build_ot_det()
 
-        preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
+        preprocessor = Preprocess(time_without_frames=timedelta(minutes=1))
         preprocessed_otdet, metadata = preprocessor.process({Path(file_path): otdet})
         serialized_otdet = preprocessed_otdet[0].to_dict()
 
@@ -335,7 +346,7 @@ class TestPreprocess:
         third_builder.append_classified_frame()
         third_detections = third_builder.build_ot_det()
 
-        preprocessor = Preprocess(no_frames_for=timedelta(minutes=1))
+        preprocessor = Preprocess(time_without_frames=timedelta(minutes=1))
         merged_groups, metadata = preprocessor.process(
             {
                 first_file_path: first_detections,

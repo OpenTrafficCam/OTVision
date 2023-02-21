@@ -24,19 +24,23 @@ OTVision main module for tracking objects in successive frames of videos
 from pathlib import Path
 from typing import Tuple
 
-from OTVision.config import CONFIG
-from OTVision.dataformat import (
-    DATA,
-    DETECTIONS,
-    METADATA,
+from OTVision import dataformat
+from OTVision.config import (
+    CONFIG,
+    DEBUG,
+    DEFAULT_FILETYPE,
+    DETECT,
+    FILETYPES,
+    IOU,
+    OVERWRITE,
     SIGMA_H,
     SIGMA_IOU,
     SIGMA_L,
     T_MIN,
     T_MISS_MAX,
     TRACK,
-    TRACKER,
 )
+from OTVision.dataformat import DATA, DETECTIONS, METADATA
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     denormalize_bbox,
@@ -51,13 +55,13 @@ from .iou import track_iou
 
 def main(
     paths: list[Path],
-    sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
-    sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
-    sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
-    t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
-    t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-    overwrite: bool = CONFIG["TRACK"]["OVERWRITE"],
-    debug: bool = CONFIG["TRACK"]["DEBUG"],
+    sigma_l: float = CONFIG[TRACK][IOU][SIGMA_L],
+    sigma_h: float = CONFIG[TRACK][IOU][SIGMA_H],
+    sigma_iou: float = CONFIG[TRACK][IOU][SIGMA_IOU],
+    t_min: int = CONFIG[TRACK][IOU][T_MIN],
+    t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
+    overwrite: bool = CONFIG[TRACK][OVERWRITE],
+    debug: bool = CONFIG[TRACK][DEBUG],
 ) -> None:
     """Read detections from otdet file, perform tracking using iou tracker and
         save tracks to ottrk file.
@@ -92,7 +96,7 @@ def main(
     if debug:
         set_debug()
 
-    filetypes = CONFIG["FILETYPES"]["DETECT"]
+    filetypes = CONFIG[FILETYPES][DETECT]
     detections_files = get_files(paths=paths, filetypes=filetypes)
 
     if not detections_files:
@@ -101,12 +105,20 @@ def main(
     preprocessor = Preprocess()
     preprocessed = preprocessor.run(detections_files)
 
+    file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
     for frame_group in preprocessed.frame_groups:
-        # log.info(f"Try tracking {detections_file}")
+        existing_output_files = frame_group.get_existing_output_files(
+            with_suffix=file_type
+        )
 
-        # detections = read_json(
-        #     json_file=detections_file, filetype=detections_file.suffix
-        # )
+        if not overwrite and (len(existing_output_files) > 0):
+            log.warning(
+                (
+                    f"{existing_output_files} already exist(s)."
+                    "To overwrite, set overwrite to True"
+                )
+            )
+            continue
 
         metadata = preprocessed.metadata
         detections = frame_group.to_dict()
@@ -123,6 +135,7 @@ def main(
             t_miss_max=t_miss_max,
             metadata=metadata,
         )
+        log.info(f"Successfully tracked {frame_group.order_key}")
 
         # Split into files of group
         splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
@@ -131,7 +144,7 @@ def main(
             write_json(
                 dict_to_write=output,
                 file=Path(file_path),
-                filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
+                filetype=file_type,
                 overwrite=overwrite,
             )
 
@@ -141,11 +154,11 @@ def main(
 
 def track(
     detections: dict,  # TODO: Type hint nested dict during refactoring
-    sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
-    sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
-    sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
-    t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
-    t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+    sigma_l: float = CONFIG[TRACK][IOU][SIGMA_L],
+    sigma_h: float = CONFIG[TRACK][IOU][SIGMA_H],
+    sigma_iou: float = CONFIG[TRACK][IOU][SIGMA_IOU],
+    t_min: int = CONFIG[TRACK][IOU][T_MIN],
+    t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
     metadata: dict[str, dict] = {},
 ) -> Tuple[
     dict[str, dict], dict[str, dict]
@@ -191,12 +204,12 @@ def track(
 
     for id in metadata:
         metadata[id][TRACK] = {
-            TRACKER: "IOU",
-            SIGMA_L: sigma_l,
-            SIGMA_H: sigma_h,
-            SIGMA_IOU: sigma_iou,
-            T_MIN: t_min,
-            T_MISS_MAX: t_miss_max,
+            dataformat.TRACKER: "IOU",
+            dataformat.SIGMA_L: sigma_l,
+            dataformat.SIGMA_H: sigma_h,
+            dataformat.SIGMA_IOU: sigma_iou,
+            dataformat.T_MIN: t_min,
+            dataformat.T_MISS_MAX: t_miss_max,
         }
 
     log.info("Detections tracked")
