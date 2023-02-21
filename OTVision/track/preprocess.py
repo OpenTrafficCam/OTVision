@@ -78,6 +78,9 @@ class Frame:
             new_frame_number, self.occurrence, self.input_file_path, self.detections
         )
 
+    def get_output_file(self, with_suffix: str) -> Path:
+        return self.input_file_path.with_suffix(with_suffix)
+
 
 @dataclass(frozen=True)
 class FrameGroup:
@@ -105,6 +108,13 @@ class FrameGroup:
             all_frames.append(frame.derive_frame_number(last_frame_number))
         return FrameGroup(all_frames, self.order_key)
 
+    def get_existing_output_files(self, with_suffix: str) -> list[Path]:
+        output_files = set(
+            [frame.get_output_file(with_suffix=with_suffix) for frame in self.frames]
+        )
+        existing_files = [file for file in output_files if file.is_file()]
+        return existing_files
+
     def to_dict(self) -> dict:
         return {
             DATA: {frame.frame: frame.to_dict() for frame in self.frames},
@@ -122,19 +132,19 @@ class Splitter:
             )
         )
         current_group_detections: list[dict] = []
-        current_video_path = ""
+        current_input_path = ""
         groups: dict[str, list[dict]] = {}
         frame_offset = 0
         for detection in detections:
-            if detection[INPUT_FILE_PATH] != current_video_path:
+            if detection[INPUT_FILE_PATH] != current_input_path:
                 if len(current_group_detections) > 0:
-                    groups[current_video_path] = current_group_detections
+                    groups[current_input_path] = current_group_detections
                 current_group_detections = []
-                current_video_path = detection[INPUT_FILE_PATH]
+                current_input_path = detection[INPUT_FILE_PATH]
                 frame_offset = detection[FRAME] - 1
             detection[FRAME] = detection[FRAME] - frame_offset
             current_group_detections.append(detection)
-        groups[current_video_path] = current_group_detections
+        groups[current_input_path] = current_group_detections
         return groups
 
     def flatten(self, frames: dict[str, dict]) -> list[dict]:

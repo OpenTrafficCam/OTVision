@@ -244,6 +244,17 @@ class TestDetectionParser:
         ]
 
 
+class TestFrame:
+    def test_get_output_file(self) -> None:
+        input_file = DEFAULT_INPUT_FILE_PATH
+        frame = create_frame(1, [], input_file_path=input_file)
+
+        suffix = ".suffix"
+        output_file = frame.get_output_file(with_suffix=suffix)
+
+        assert output_file == DEFAULT_INPUT_FILE_PATH.with_suffix(suffix=suffix)
+
+
 class TestFrameParser:
     frames: list[Frame]
 
