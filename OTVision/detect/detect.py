@@ -266,7 +266,7 @@ class Timestamper:
         detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.strftime(
             DATE_FORMAT
         )
-        detections[METADATA][VIDEO][LENGTH] = duration
+        detections[METADATA][VIDEO][LENGTH] = str(duration)
         return detections
 
     def _stamp(
