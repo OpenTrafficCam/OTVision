@@ -16,9 +16,12 @@ from OTVision.dataformat import (
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
+    DETECTION,
     DETECTIONS,
     METADATA,
     OCCURRENCE,
+    OTDET_VERSION,
+    OTVISION_VERSION,
     H,
     W,
     X,
@@ -130,6 +133,12 @@ def read_bz2_otdet(otdet: Path) -> dict:
     return result_otdet_json
 
 
+def remove_ignored_metadata(data: dict) -> dict:
+    data[OTDET_VERSION] = "ignored"
+    data[DETECTION][OTVISION_VERSION] = "ignored"
+    return data
+
+
 def count_classes(frames: list[Frame]) -> dict:
     class_counts: dict[str, int] = {}
     for frame in frames:
@@ -232,8 +241,12 @@ class TestDetect:
     def test_detect_metadata_matches(
         self, result_cyclist_otdet: Path, default_cyclist_otdet: Path
     ) -> None:
-        result_cyclist_metadata = read_bz2_otdet(result_cyclist_otdet)[METADATA]
-        expected_cyclist_metadata = read_bz2_otdet(default_cyclist_otdet)[METADATA]
+        result_cyclist_metadata = remove_ignored_metadata(
+            read_bz2_otdet(result_cyclist_otdet)[METADATA]
+        )
+        expected_cyclist_metadata = remove_ignored_metadata(
+            read_bz2_otdet(default_cyclist_otdet)[METADATA]
+        )
         assert result_cyclist_metadata == expected_cyclist_metadata
 
     def test_detect_error_raised_on_wrong_filetype(
