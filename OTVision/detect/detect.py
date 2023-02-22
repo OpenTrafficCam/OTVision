@@ -148,6 +148,7 @@ def main(
             conf=conf,
             iou=iou,
             size=size,
+            half_precision=half_precision,
             chunksize=chunksize,
             normalized=normalized,
         )
