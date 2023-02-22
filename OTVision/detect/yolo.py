@@ -22,15 +22,16 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any, Union
 
+import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
-from OTVision.config import CONFIG
+from OTVision.config import CONFIG, FILETYPES, VID
 from OTVision.helpers.files import has_filetype
 from OTVision.helpers.log import log
 
 
-class NoVideoError(Exception):
+class VideoFiletypeNotSupportedError(Exception):
     pass
 
 
@@ -73,7 +74,12 @@ def detect_video(
     t1 = perf_counter()
 
     if not has_filetype(file, CONFIG["FILETYPES"]["VID"]):
-        raise NoVideoError(f"The file: {file} is not a video!")
+        raise VideoFiletypeNotSupportedError(
+            (
+                f"Filetype of '{file}' is not supported!",
+                f"Only videos of filetype: '{CONFIG[FILETYPES][VID]}'",
+            )
+        )
 
     cap = VideoCapture(str(file))
     batch_no = 0
@@ -91,12 +97,11 @@ def detect_video(
         if not img_batch:
             break
 
-        # What purpose does this transformation have
-        transformed_batch = list(map(lambda frame: frame[:, :, ::-1], img_batch))
+        rgb_transformed_batch = [convert_bgr_to_rgb(frame) for frame in img_batch]
 
         t_trans = perf_counter()
 
-        results = model(transformed_batch, size)
+        results = model(rgb_transformed_batch, size)
 
         t_det = perf_counter()
 
@@ -134,73 +139,13 @@ def detect_video(
     return _convert_detections(yolo_detections, class_names, vid_config, det_config)
 
 
-def detect_images(
-    file_chunks: list[list[Path]],
-    model: Union[torch.nn.Module, None] = None,
-    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
-    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
-    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
-    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
-    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
-    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-    ot_labels_enabled: bool = False,
-) -> Union[tuple[list, dict], list]:
-    """Detect and classify bounding boxes in images/frames using YOLOv5
-
-    Args:
-        file_chunks (list of list of Path): files to detect.
-        model (torch.nn.Module, optional): Yolo model to detect with.
-        weights (str, optional): Weigths, if no model passed. Defaults to "yolov5s".
-        conf (float, optional): Output confidence, if no model passed. Defaults to 0.25.
-        iou (float, optional): IOU param, if no model passed. Defaults to 0.45.
-        size (int, optional): Frame size for detection. Defaults to 640.
-        chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
-        normalized (bool, optional): Coords in % of image/frame size (True) or pixels
-        (False). Defaults to False.
-        ot_labels_enabled (bool, optional): returns [detections, names] where detections
-        consist of bounding boxes but without any annotations and the class name index
-        (True) or returns the dœetections in otdet format(False). Defaults to False.
-
-    Returns:
-        [type]: [description]
-    """
-    yolo_detections: list[list[float]] = []
-    if not file_chunks:
-        return ([], {}) if ot_labels_enabled else yolo_detections
-    if model is None:
-        model = loadmodel(weights, conf, iou)
-    t1 = perf_counter()
-    if _containsvideo(file_chunks):
-        raise VideoFoundError(
-            "List of paths given to detect_chunks function shouldn't contain any videos"
-        )
-
-    log.info("Run detection on images")
-    for img_batch, chunk in enumerate(file_chunks, start=1):
-        t_start = perf_counter()
-        results = model(chunk, size=size)
-        t_det = perf_counter()
-        _add_detection_results(yolo_detections, results, normalized)
-        str_batch_no = f"img_batch_no: {img_batch:d}"
-        str_det_time = f"det:{t_det - t_start:0.4f}"
-        str_batch_size = f"batch_size: {len(chunk):d}"
-        str_fps = f"fps: {chunksize / (t_det - t_start):0.1f}"
-        log.info(f"{str_batch_no}, {str_det_time}, {str_batch_size}, {str_fps}")
-
-    t2 = perf_counter()
-    duration = t2 - t1
-    det_fps = len(yolo_detections) / duration
-    _log_overall_performance_stats(duration, det_fps)
-    class_labels: dict = results.names
-    if ot_labels_enabled:
-        return (yolo_detections, class_labels)
-    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
-    return _convert_detections_chunks(yolo_detections, class_labels, det_config)
+def convert_bgr_to_rgb(img_frame: numpy.ndarray) -> numpy.ndarray:
+    return img_frame[:, :, ::-1]
 
 
 def _get_batch_of_frames(
     video_capture: VideoCapture, batch_size: int
-) -> tuple[bool, list]:
+) -> tuple[bool, list[numpy.ndarray]]:
     """Reads the the next batch_size frames from VideoCapture.
 
     Args:

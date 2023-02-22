@@ -22,9 +22,9 @@ OTVision script to call the transform main with arguments parsed from command li
 import argparse
 from pathlib import Path
 
-from OTVision.config import CONFIG
+import OTVision
+import OTVision.config as config
 from OTVision.helpers.log import log
-from OTVision.transform.transform import main as transform
 
 
 def parse() -> argparse.Namespace:
@@ -35,7 +35,14 @@ def parse() -> argparse.Namespace:
         nargs="+",
         type=str,
         help="Path or list of paths to tracks files",
-        required=True,
+        required=False,
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        help="Path to custom user configuration yaml file.",
+        required=False,
     )
     parser.add_argument(
         "-r",
@@ -46,30 +53,75 @@ def parse() -> argparse.Namespace:
     parser.add_argument(
         "-o",
         "--overwrite",
-        default=CONFIG["TRANSFORM"]["OVERWRITE"],
         action=argparse.BooleanOptionalAction,
         help="Overwrite existing output files",
     )
     parser.add_argument(
         "-d",
         "--debug",
-        default=CONFIG["TRANSFORM"]["DEBUG"],
         action=argparse.BooleanOptionalAction,
         help="Logging in debug mode",
     )
     return parser.parse_args()
 
 
+def _process_config(args: argparse.Namespace) -> None:
+    if args.config:
+        config.parse_user_config(args.config)
+    else:
+        user_config_cwd = Path(__file__).parent / "user_config.otvision.yaml"
+
+        if user_config_cwd.exists():
+            config.parse_user_config(str(user_config_cwd))
+
+
+def _extract_paths(args: argparse.Namespace) -> list[str]:
+    if args.paths:
+        return args.paths
+    if len(config.CONFIG[config.TRANSFORM][config.PATHS]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
+
+    return config.CONFIG[config.TRANSFORM][config.PATHS]
+
+
 def main() -> None:
     args = parse()
-    paths = [Path(str_path) for str_path in args.paths]
-    refpts_file = Path(args.refpts_file) if args.refpts_file else None
+    _process_config(args)
+    try:
+        str_paths = _extract_paths(args)
+    except IOError as ioe:
+        log.error(ioe)
+
+    paths = [Path(str_path) for str_path in str_paths]
+
+    if args.refpts_file:
+        refpts_file = Path(args.refpts_file)
+    else:
+        refpts_file = None
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG[config.TRANSFORM][config.OVERWRITE]
+    else:
+        overwrite = args.overwrite
+
+    if args.debug is None:
+        debug = config.CONFIG[config.TRANSFORM][config.DEBUG]
+    else:
+        debug = args.debug
+
     log.info("Starting transforming to world coordinates from command line")
     log.info(f"Arguments: {vars(args)}")
-    transform(
-        paths=paths, refpts_file=refpts_file, overwrite=args.overwrite, debug=args.debug
-    )
-    log.info("Finished transforming to world coordinates  from command line")
+
+    try:
+        OTVision.transform(
+            paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=debug
+        )
+        log.info("Finished transforming to world coordinates  from command line")
+    except FileNotFoundError as fnfe:
+        log.error(fnfe)
 
 
 if __name__ == "__main__":

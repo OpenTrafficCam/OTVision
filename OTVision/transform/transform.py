@@ -28,7 +28,16 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from OTVision.config import CONFIG
+from OTVision.config import (
+    CONFIG,
+    DEBUG,
+    DEFAULT_FILETYPE,
+    FILETYPES,
+    OVERWRITE,
+    REFPTS,
+    TRACK,
+    TRANSFORM,
+)
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     get_files,
@@ -50,8 +59,8 @@ from .get_homography import get_homography
 def main(
     paths: list[Path],
     refpts_file: Union[Path, None] = None,
-    overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
-    debug: bool = CONFIG["TRANSFORM"]["DEBUG"],
+    overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
+    debug: bool = CONFIG[TRANSFORM][DEBUG],
 ) -> None:
     """Transform tracks files containing trajectories in pixel coordinates to .gpkg
     files with trajectories in utm coordinates using either one single refpts file for
@@ -77,10 +86,16 @@ def main(
     if debug:
         set_debug()
 
+    track_filetype = CONFIG[FILETYPES][TRACK]
+
     if refpts_file:
-        refpts_file = get_files(
-            paths=[refpts_file], filetypes=CONFIG["FILETYPES"]["REFPTS"]
-        )[0]
+        refpts_filetype = CONFIG[FILETYPES][REFPTS]
+
+        if not refpts_file.exists():
+            raise FileNotFoundError(
+                f"No reference points file with filetype: '{refpts_filetype}' found!"
+            )
+
         refpts = read_refpts(reftpts_file=refpts_file)
         (
             homography,
@@ -91,15 +106,34 @@ def main(
             homography_eval_dict,
         ) = get_homography(refpts=refpts)
         log.info(f"Read {refpts_file}")
-    tracks_files = get_files(paths=paths, filetypes=CONFIG["FILETYPES"]["TRACK"])
+    tracks_files = get_files(paths=paths, filetypes=CONFIG[FILETYPES][TRACK])
+    if not tracks_files:
+        raise FileNotFoundError(
+            f"No files of type '{track_filetype}' found to transform!"
+        )
+
     for tracks_file in tracks_files:
+        gpkg_file = tracks_file.with_suffix(".gpkg")
+
+        if not overwrite and gpkg_file.is_file():
+            log.warning(
+                f"{gpkg_file} already exists. To overwrite, set overwrite to True"
+            )
+            continue
+
         log.info(f"Try transforming {tracks_file}")
+
         # Try reading refpts and getting homography if not done above
         if not refpts_file:
             associated_refpts_file = replace_filetype(
-                files=[tracks_file], new_filetype=CONFIG["DEFAULT_FILETYPE"]["REFPTS"]
+                files=[tracks_file], new_filetype=CONFIG[DEFAULT_FILETYPE][REFPTS]
             )[0]
-            log.info(f"Found refpts file {refpts_file}")
+            if not associated_refpts_file.exists():
+                raise FileNotFoundError(
+                    f"No reference points file found for tracks file: {tracks_file}!"
+                )
+
+            log.info(f"Found refpts file {associated_refpts_file}")
             refpts = read_refpts(reftpts_file=associated_refpts_file)
             log.info("Refpts read")
             (
@@ -111,40 +145,42 @@ def main(
                 homography_eval_dict,
             ) = get_homography(refpts=refpts)
             log.info("Homography matrix created")
+
         # Read tracks
         tracks_px_df, metadata_dict = read_tracks(tracks_file)
         log.info("Tracks read")
-        # Check if transformation is actually needed
-        # already_utm = "utm" in metadata_dict["trk"] and metadata_dict["trk"]["utm"]
-        if overwrite:  # ? or not already_utm?
-            metadata_dict["trk"]["utm"] = False  # ? or not?
-            # Actual transformation
-            tracks_utm_df = transform(
-                tracks_px=tracks_px_df,
-                homography=homography,
-                refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
-                upshift_utm=upshift_utm,
-            )
-            log.info("Tracks transformed")
-            # Add crs information tp metadata dict
-            metadata_dict["trk"]["utm"] = True
-            metadata_dict["trk"]["utm_zone"] = utm_zone
-            metadata_dict["trk"]["hemisphere"] = hemisphere
-            metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
-                utm_zone=utm_zone, hemisphere=hemisphere
-            )
-            metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
-            log.info("Meta infos created")
-            log.debug(f"config_dict: {metadata_dict}")
-            # Write tracks
-            write_tracks(
-                tracks_utm_df=tracks_utm_df,
-                metadata_dict=metadata_dict,
-                utm_zone=utm_zone,
-                hemisphere=hemisphere,
-                tracks_file=tracks_file,
-            )
-        log.info("Transformation successful")
+
+        # Actual transformation
+        tracks_utm_df = transform(
+            tracks_px=tracks_px_df,
+            homography=homography,
+            refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
+            upshift_utm=upshift_utm,
+        )
+        log.info("Tracks transformed")
+
+        # Add crs information tp metadata dict
+        # TODO: Declare constant for the dictionary keys
+        metadata_dict["trk"]["utm"] = True
+        metadata_dict["trk"]["utm_zone"] = utm_zone
+        metadata_dict["trk"]["hemisphere"] = hemisphere
+        metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
+            utm_zone=utm_zone, hemisphere=hemisphere
+        )
+        metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
+        log.debug(f"config_dict: {metadata_dict}")
+
+        # Write tracks
+        write_tracks(
+            tracks_utm_df=tracks_utm_df,
+            metadata_dict=metadata_dict,
+            utm_zone=utm_zone,
+            hemisphere=hemisphere,
+            tracks_file=tracks_file,
+        )
+
+        log.info(f"Successfully transformed {tracks_file}")
+
     if debug:
         reset_debug()
 
@@ -190,7 +226,7 @@ def read_refpts(
         dict: Matching reference points in both pixel and utm coordinates
     """
 
-    return read_json(reftpts_file, filetype=reftpts_file.suffix)
+    return read_json(reftpts_file, filetype=reftpts_file.suffix, decompress=False)
 
 
 def transform(
@@ -276,7 +312,7 @@ def write_tracks(
     hemisphere: str,
     tracks_file: Path,
     filetype: str = "gpkg",
-    overwrite: bool = CONFIG["TRANSFORM"]["OVERWRITE"],
+    overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
 ) -> None:
     """Writes tracks as .gpkg and in specific epsg projection
     according to UTM zone and hemisphere

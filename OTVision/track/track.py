@@ -23,7 +23,21 @@ OTVision main module for tracking objects in successive frames of videos
 
 from pathlib import Path
 
-from OTVision.config import CONFIG
+from OTVision.config import (
+    CONFIG,
+    DEBUG,
+    DEFAULT_FILETYPE,
+    DETECT,
+    FILETYPES,
+    IOU,
+    OVERWRITE,
+    SIGMA_H,
+    SIGMA_IOU,
+    SIGMA_L,
+    T_MIN,
+    T_MISS_MAX,
+    TRACK,
+)
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     denormalize_bbox,
@@ -38,13 +52,13 @@ from .iou import track_iou
 
 def main(
     paths: list[Path],
-    sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
-    sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
-    sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
-    t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
-    t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-    overwrite: bool = CONFIG["TRACK"]["OVERWRITE"],
-    debug: bool = CONFIG["TRACK"]["DEBUG"],
+    sigma_l: float = CONFIG[TRACK][IOU][SIGMA_L],
+    sigma_h: float = CONFIG[TRACK][IOU][SIGMA_H],
+    sigma_iou: float = CONFIG[TRACK][IOU][SIGMA_IOU],
+    t_min: int = CONFIG[TRACK][IOU][T_MIN],
+    t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
+    overwrite: bool = CONFIG[TRACK][OVERWRITE],
+    debug: bool = CONFIG[TRACK][DEBUG],
 ) -> None:
     """Read detections from otdet file, perform tracking using iou tracker and
         save tracks to ottrk file.
@@ -79,11 +93,22 @@ def main(
     if debug:
         set_debug()
 
-    filetypes = CONFIG["FILETYPES"]["DETECT"]
+    filetypes = CONFIG[FILETYPES][DETECT]
     detections_files = get_files(paths=paths, filetypes=filetypes)
-    for detections_file in detections_files:
-        log.info(f"Try tracking {detections_file}")
 
+    if not detections_files:
+        raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
+
+    for detections_file in detections_files:
+        tracks_file = detections_file.with_suffix(CONFIG[DEFAULT_FILETYPE][TRACK])
+
+        if not overwrite and tracks_file.is_file():
+            log.warning(
+                f"{tracks_file} already exists. To overwrite, set overwrite to True"
+            )
+            continue
+
+        log.info(f"Try tracking {detections_file}")
         detections = read_json(
             json_file=detections_file, filetype=detections_file.suffix
         )
@@ -100,11 +125,12 @@ def main(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
+        log.info(f"Successfully tracked {detections_file}")
 
         write_json(
             dict_to_write=tracks_px,
-            file=detections_file,
-            filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
+            file=tracks_file,
+            filetype=CONFIG[DEFAULT_FILETYPE][TRACK],
             overwrite=overwrite,
         )
 
@@ -114,11 +140,11 @@ def main(
 
 def track(
     detections: dict,  # TODO: Type hint nested dict during refactoring
-    sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
-    sigma_h: float = CONFIG["TRACK"]["IOU"]["SIGMA_H"],
-    sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
-    t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
-    t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
+    sigma_l: float = CONFIG[TRACK][IOU][SIGMA_L],
+    sigma_h: float = CONFIG[TRACK][IOU][SIGMA_H],
+    sigma_iou: float = CONFIG[TRACK][IOU][SIGMA_IOU],
+    t_min: int = CONFIG[TRACK][IOU][T_MIN],
+    t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
 ) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Perform tracking using track_iou with arguments and add metadata to tracks.
 

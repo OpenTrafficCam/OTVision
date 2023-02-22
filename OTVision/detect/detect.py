@@ -19,15 +19,30 @@ OTVision main module to detect objects in single or multiple images or videos.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import time
 from pathlib import Path
 from typing import Union
 
 import torch
-import ujson
 
-from OTVision.config import CONFIG
-from OTVision.helpers.files import get_files, has_filetype
+from OTVision.config import (
+    CHUNK_SIZE,
+    CONF,
+    CONFIG,
+    DEBUG,
+    DEFAULT_FILETYPE,
+    DETECT,
+    FILETYPES,
+    FORCE_RELOAD_TORCH_HUB_CACHE,
+    HALF_PRECISION,
+    IMG_SIZE,
+    IOU,
+    NORMALIZED,
+    OVERWRITE,
+    VID,
+    WEIGHTS,
+    YOLO,
+)
+from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from . import yolo
@@ -35,22 +50,19 @@ from . import yolo
 
 def main(
     paths: list[Path],
-    filetypes: list[str] = CONFIG["FILETYPES"]["VID_IMG"],
+    filetypes: list[str] = CONFIG[FILETYPES][VID],
     model: Union[torch.nn.Module, None] = None,
-    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
-    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
-    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
-    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
-    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
-    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
-    overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
-    ot_labels_enabled: bool = CONFIG["DETECT"]["OTLABELS_ENABLES"],
-    debug: bool = CONFIG["DETECT"]["DEBUG"],
-    half_precision: bool = CONFIG["DETECT"]["HALF_PRECISION"],
-    force_reload_torch_hub_cache: bool = CONFIG["DETECT"][
-        "FORCE_RELOAD_TORCH_HUB_CACHE"
-    ],
-) -> Union[tuple[list, dict], None]:
+    weights: str = CONFIG[DETECT][YOLO][WEIGHTS],
+    conf: float = CONFIG[DETECT][YOLO][CONF],
+    iou: float = CONFIG[DETECT][YOLO][IOU],
+    size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
+    chunksize: int = CONFIG[DETECT][YOLO][CHUNK_SIZE],
+    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
+    overwrite: bool = CONFIG[DETECT][OVERWRITE],
+    debug: bool = CONFIG[DETECT][DEBUG],
+    half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
+    force_reload_torch_hub_cache: bool = CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
+) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
 
@@ -74,8 +86,6 @@ def main(
             to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
         overwrite (bool, optional): Whether or not to overwrite
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
-        ot_labels_enabled (bool, optional): Whether or not to detect for pre-annotation.
-            Defaults to CONFIG["DETECT"]["OTLABELS_ENABLES"].
         half_precision (bool, optional): Whether to use half precision (FP16) for
             inference speed up. Only works for gpu.
             Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
@@ -83,13 +93,15 @@ def main(
             hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
         debug (bool, optional): Whether or not logging in debug mode.
             Defaults to CONFIG["DETECT"]["DEBUG"].
-
-    Returns:
-        list: Detections for images, if ot_labels_enable is set to True.
     """
     log.info("Start detection")
     if debug:
         set_debug()
+
+    video_files = get_files(paths=paths, filetypes=filetypes)
+
+    if not video_files:
+        raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
 
     if not model:
         yolo_model = yolo.loadmodel(
@@ -107,11 +119,15 @@ def main(
         yolo_model.iou = iou
     log.info("Model prepared")
 
-    files = get_files(paths=paths, filetypes=filetypes)
-    video_files, img_files = _split_to_video_img_paths(files)
-    log.info("Files splitted in videos and images")
-
     for video_file in video_files:
+        detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
+
+        if not overwrite and detections_file.is_file():
+            log.warning(
+                f"{detections_file} already exists. To overwrite, set overwrite to True"
+            )
+            continue
+
         log.info(f"Try detecting {video_file}")
         detections_video = yolo.detect_video(
             file=video_file,
@@ -123,82 +139,18 @@ def main(
             chunksize=chunksize,
             normalized=normalized,
         )
-        log.info("Video detected")
-        write(detections_video, video_file, overwrite=overwrite)
+        log.info(f"Successfully detected {video_file}")
 
-    log.info(f"Try detecting {len(img_files)} images")
-    img_file_chunks = _create_chunks(img_files, chunksize)
+        write_json(
+            dict_to_write=detections_video,
+            file=detections_file,
+            filetype=CONFIG[DEFAULT_FILETYPE][DETECT],
+            overwrite=overwrite,
+        )
 
-    if not ot_labels_enabled:
-        detections_img_file_chunks = yolo.detect_images(
-            file_chunks=img_file_chunks,
-            model=yolo_model,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=size,
-            chunksize=chunksize,
-            normalized=normalized,
-            ot_labels_enabled=ot_labels_enabled,
-        )
-        log.info("Images detected")
-    else:
-        detections_img_file_chunks, class_labels = yolo.detect_images(
-            file_chunks=img_file_chunks,
-            model=yolo_model,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=size,
-            chunksize=chunksize,
-            normalized=normalized,
-            ot_labels_enabled=ot_labels_enabled,
-        )
-        log.info("Images detected")
-        if debug:
-            reset_debug()
-        return detections_img_file_chunks, class_labels
-    for img_file, detection in zip(img_files, detections_img_file_chunks):
-        write(detection, img_file)
     if debug:
         reset_debug()
     return None
-
-
-def _split_to_video_img_paths(
-    files: list[Path],
-    video_formats: list[str] = CONFIG["FILETYPES"]["VID"],
-    img_formats: list[str] = CONFIG["FILETYPES"]["IMG"],
-) -> tuple[list[Path], list[Path]]:
-    """
-    Divides a list of files in video files and image files.
-
-    Args:
-        files (list[Path]): List of video and/or image file paths.
-        video_formats (list[str], optional): _description_.
-            Defaults to CONFIG["FILETYPES"]["VID"].
-        img_formats (list[str], optional): _description_.
-            Defaults to CONFIG["FILETYPES"]["IMG"].
-
-    Raises:
-        FormatNotSupportedError: If format of a path is not in
-            video_formats or img_formats.
-
-    Returns:
-        tuple[list[Path], list[Path]]: List of video paths and list of image paths
-    """
-
-    video_files, img_files = [], []
-    for file in files:
-        if has_filetype(file, video_formats):
-            video_files.append(file)
-        elif has_filetype(file, img_formats):
-            img_files.append(file)
-        else:
-            raise FormatNotSupportedError(
-                f"The format of path is not supported ({file})"
-            )
-    return video_files, img_files
 
 
 class FormatNotSupportedError(Exception):
@@ -219,36 +171,3 @@ def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
         return [files]
     chunk_starts = range(0, len(files), chunksize)
     return [files[i : i + chunksize] for i in chunk_starts]
-
-
-def write(
-    detections: dict,  # TODO: Type hint nested dict during refactoring"
-    img_or_video_file: Path,
-    overwrite: bool = CONFIG["DETECT"]["OVERWRITE"],
-) -> None:
-    """Writes detections of a video or image to a json-like file.
-
-    Args:
-        detections (dict): Detections of a video or image.
-        img_or_video_file (Path): Path to image or video of detections.
-        overwrite (bool, optional): Wheter or not to overwrite existing detections file.
-            Defaults to CONFIG["DETECT"]["OVERWRITE"].
-    """
-    # ?: Check overwrite before detecting instead of before writing detections?
-    detection_file = Path(img_or_video_file).with_suffix(
-        CONFIG["DEFAULT_FILETYPE"]["DETECT"]
-    )
-    detections_file_already_exists = detection_file.is_file()
-    if overwrite or not detections_file_already_exists:
-        # Write JSON
-        with open(detection_file, "w") as f:
-            t_json_start = time.perf_counter()
-            ujson.dump(detections, f, indent=4)
-            t_json_end = time.perf_counter()
-            log.info(f"Writing .otdet took: {t_json_end - t_json_start:0.4f}s")
-        if detections_file_already_exists:
-            log.info(f"{detection_file} overwritten")
-        else:
-            log.info(f"{detection_file} written")
-    else:
-        log.info(f"{detection_file} already exists. To overwrite, set overwrite=True")
