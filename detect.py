@@ -22,8 +22,8 @@ OTVision script to call the detect main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
-import OTVision
 import OTVision.config as config
+from OTVision.detect.detect import main as detect
 from OTVision.helpers.log import log
 
 
@@ -182,7 +182,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(args)}")
 
     try:
-        OTVision.detect(
+        detect(
             paths=paths,
             weights=weights,
             conf=conf,

@@ -17,14 +17,3 @@ OTVision init module
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
-# TODO: Might need to change this
-from .convert.convert import main as convert
-from .detect.detect import main as detect
-from .track.track import main as track
-from .transform.transform import main as transform
-
-# from .view.view import main as view
-
-__all__: list = ["detect", "track", "convert", "transform"]

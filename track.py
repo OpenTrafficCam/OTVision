@@ -22,9 +22,9 @@ OTVision script to call the track main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
-import OTVision
 import OTVision.config as config
 from OTVision.helpers.log import log
+from OTVision.track.track import main as track
 
 
 def parse() -> argparse.Namespace:
@@ -156,7 +156,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(args)}")
 
     try:
-        OTVision.track(
+        track(
             paths=paths,
             sigma_l=sigma_l,
             sigma_h=sigma_h,

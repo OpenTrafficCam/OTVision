@@ -22,8 +22,8 @@ OTVision script to call the convert main with arguments parsed from command line
 import argparse
 from pathlib import Path
 
-import OTVision
 import OTVision.config as config
+from OTVision.convert.convert import main as convert
 from OTVision.helpers.log import log
 
 
@@ -135,7 +135,7 @@ def main() -> None:  # sourcery skip: assign-if-exp
     log.info("Starting conversion from command line")
     log.info(f"Arguments: {vars(args)}")
     try:
-        OTVision.convert(
+        convert(
             paths=paths,
             delete_input=delete_input,
             overwrite=overwrite,
