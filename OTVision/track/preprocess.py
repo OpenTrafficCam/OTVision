@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Tuple
 
+from OTVision import dataformat, version
 from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
@@ -11,8 +12,10 @@ from OTVision.dataformat import (
     DETECTIONS,
     FRAME,
     INPUT_FILE_PATH,
+    INTERPOLATED_DETECTION,
     METADATA,
     OCCURRENCE,
+    OTTRACK_VERSION,
     RECORDED_START_DATE,
     TRACK_ID,
     VIDEO,
@@ -50,6 +53,7 @@ class Detection:
             FRAME: frame,
             OCCURRENCE: occurrence.strftime(DATE_FORMAT),
             INPUT_FILE_PATH: input_file_path,
+            INTERPOLATED_DETECTION: False,
         }
 
 
@@ -114,6 +118,23 @@ class FrameGroup:
         )
         existing_files = [file for file in output_files if file.is_file()]
         return existing_files
+
+    def update_metadata(
+        self, metadata: dict[str, dict], tracker_data: dict[str, dict]
+    ) -> dict[str, dict]:
+        for filepath in metadata.keys():
+            metadata[filepath][OTTRACK_VERSION] = version.ottrack_version()
+            metadata[filepath][dataformat.TRACKING] = {
+                dataformat.OTVISION_VERSION: version.otvision_version(),
+                dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().strftime(
+                    DATE_FORMAT
+                ),
+                dataformat.LAST_TRACKED_VIDEO_END: self.end_date().strftime(
+                    DATE_FORMAT
+                ),
+                dataformat.TRACKER: tracker_data,
+            }
+        return metadata
 
     def to_dict(self) -> dict:
         return {

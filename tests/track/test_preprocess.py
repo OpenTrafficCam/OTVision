@@ -11,6 +11,7 @@ from OTVision.dataformat import (
     FILENAME,
     FRAME,
     INPUT_FILE_PATH,
+    INTERPOLATED_DETECTION,
     METADATA,
     OCCURRENCE,
     RECORDED_START_DATE,
@@ -127,6 +128,7 @@ class DataBuilder:
         frame_number: int = 1,
         occurrence: str = DEFAULT_START_DATE.strftime(DATE_FORMAT),
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
+        interpolated_detection: bool = False,
     ) -> dict[str, object]:
         return {
             CLASS: label,
@@ -138,6 +140,7 @@ class DataBuilder:
             FRAME: frame_number,
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: input_file_path.as_posix(),
+            INTERPOLATED_DETECTION: interpolated_detection,
         }
 
     def append_classified_frame(

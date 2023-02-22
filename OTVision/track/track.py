@@ -22,7 +22,6 @@ OTVision main module for tracking objects in successive frames of videos
 
 
 from pathlib import Path
-from typing import Tuple
 
 from OTVision import dataformat
 from OTVision.config import (
@@ -123,24 +122,32 @@ def main(
         metadata = preprocessed.metadata
         detections = frame_group.to_dict()
         _check_and_update_metadata_inplace(otdict=detections)
+        tracker_data: dict = {
+            dataformat.NAME: "IOU",
+            dataformat.SIGMA_L: sigma_l,
+            dataformat.SIGMA_H: sigma_h,
+            dataformat.SIGMA_IOU: sigma_iou,
+            dataformat.T_MIN: t_min,
+            dataformat.T_MISS_MAX: t_miss_max,
+        }
+        frame_group.update_metadata(metadata, tracker_data)
 
         detections_denormalized = denormalize_bbox(detections, metadata=metadata)
 
-        tracks_px, new_metadata = track(
+        tracks_px = track(
             detections=detections_denormalized,
             sigma_l=sigma_l,
             sigma_h=sigma_h,
             sigma_iou=sigma_iou,
             t_min=t_min,
             t_miss_max=t_miss_max,
-            metadata=metadata,
         )
         log.info(f"Successfully tracked {frame_group.order_key}")
 
         # Split into files of group
         splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
         for file_path, serializable_detections in splitted.items():
-            output = build_output(file_path, serializable_detections, new_metadata)
+            output = build_output(file_path, serializable_detections, metadata)
             write_json(
                 dict_to_write=output,
                 file=Path(file_path),
@@ -159,10 +166,7 @@ def track(
     sigma_iou: float = CONFIG[TRACK][IOU][SIGMA_IOU],
     t_min: int = CONFIG[TRACK][IOU][T_MIN],
     t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
-    metadata: dict[str, dict] = {},
-) -> Tuple[
-    dict[str, dict], dict[str, dict]
-]:  # TODO: Type hint nested dict during refactoring
+) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Perform tracking using track_iou with arguments and add metadata to tracks.
 
     Args:
@@ -186,11 +190,9 @@ def track(
             continuing a track. If more detections are missing, the track will not be
             continued.
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
-        metadata (dict[str, dict]): dict of metadata per input file.
 
     Returns:
         dict[str, dict]: Dict of tracks in ottrk format.
-        dict[str, dict]: Dict of metadata
     """
 
     new_detections = track_iou(
@@ -201,20 +203,9 @@ def track(
         t_min=t_min,
         t_miss_max=t_miss_max,
     )
-
-    for id in metadata:
-        metadata[id][TRACK] = {
-            dataformat.TRACKER: "IOU",
-            dataformat.SIGMA_L: sigma_l,
-            dataformat.SIGMA_H: sigma_h,
-            dataformat.SIGMA_IOU: sigma_iou,
-            dataformat.T_MIN: t_min,
-            dataformat.T_MISS_MAX: t_miss_max,
-        }
-
     log.info("Detections tracked")
 
-    return new_detections, metadata
+    return new_detections
 
 
 def build_output(

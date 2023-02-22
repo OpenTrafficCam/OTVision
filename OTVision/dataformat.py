@@ -1,9 +1,10 @@
 METADATA: str = "metadata"
 OTDET_VERSION: str = "otdet_version"
+OTTRACK_VERSION: str = "ottrk_version"
 OTVISION_VERSION: str = "otvision_version"
 VIDEO: str = "video"
 DETECTION: str = "detection"
-TRACK: str = "trk"
+TRACKING: str = "tracking"
 FILENAME: str = "filename"
 FILETYPE: str = "filetype"
 WIDTH: str = "width"
@@ -29,6 +30,7 @@ W: str = "w"
 H: str = "h"
 
 TRACK_ID: str = "track-id"
+INTERPOLATED_DETECTION: str = "interpolated-detection"
 
 # Detector config
 MODEL: str = "model"
@@ -44,6 +46,8 @@ HALF_PRECISION: str = "half_precision"
 CLASSES: str = "classes"
 
 # Tracker config
+FIRST_TRACKED_VIDEO_START: str = "first_tracked_video_start"
+LAST_TRACKED_VIDEO_END: str = "last_tracked_video_end"
 TRACKER: str = "tracker"
 SIGMA_L: str = "sigma_l"
 SIGMA_H: str = "sigma_h"
