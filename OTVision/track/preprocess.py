@@ -5,10 +5,10 @@ from typing import Any, Tuple
 
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
+    DETECTIONS,
     FRAME,
     INPUT_FILE_PATH,
     METADATA,
@@ -65,7 +65,7 @@ class Frame:
             FRAME: self.frame,
             OCCURRENCE: self.occurrence.strftime(DATE_FORMAT),
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
-            CLASSIFIED: [
+            DETECTIONS: [
                 detection.to_dict(
                     self.frame, self.occurrence, self.input_file_path.as_posix()
                 )
@@ -183,7 +183,7 @@ class FrameGroupParser:
             occurrence: datetime = datetime.strptime(
                 str(value[OCCURRENCE]), DATE_FORMAT
             )
-            data_detections = value[CLASSIFIED]
+            data_detections = value[DETECTIONS]
             detections = detection_parser.convert(data_detections)
             parsed_frame = Frame(
                 int(key),

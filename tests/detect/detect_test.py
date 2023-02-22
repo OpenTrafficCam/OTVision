@@ -13,10 +13,10 @@ from jsonschema import validate
 import OTVision.config as config
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
+    DETECTIONS,
     METADATA,
     OCCURRENCE,
     H,
@@ -120,7 +120,7 @@ class Frame:
 
     @staticmethod
     def from_dict(frame_number: str, d: dict) -> "Frame":
-        detections = [Detection.from_dict(detection) for detection in d[CLASSIFIED]]
+        detections = [Detection.from_dict(detection) for detection in d[DETECTIONS]]
         return Frame(int(frame_number), detections)
 
 
@@ -384,9 +384,9 @@ class TestTimestamper:
         detections: dict[str, dict[str, dict]] = {
             METADATA: {},
             DATA: {
-                "1": {CLASSIFIED: []},
-                "2": {CLASSIFIED: [{CLASS: "car"}]},
-                "3": {CLASSIFIED: []},
+                "1": {DETECTIONS: []},
+                "2": {DETECTIONS: [{CLASS: "car"}]},
+                "3": {DETECTIONS: []},
             },
         }
 

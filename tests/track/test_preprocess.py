@@ -4,10 +4,10 @@ from typing import Any, Optional
 
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
+    DETECTIONS,
     FILENAME,
     FRAME,
     INPUT_FILE_PATH,
@@ -104,7 +104,7 @@ class DataBuilder:
             FRAME: frame_number,
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
-            CLASSIFIED: [],
+            DETECTIONS: [],
         }
         self.non_classified_frames.append(frame_number)
         return self
@@ -156,7 +156,7 @@ class DataBuilder:
             FRAME: frame_number,
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
-            CLASSIFIED: [
+            DETECTIONS: [
                 self.create_classification(
                     label=label,
                     confidence=confidence,
@@ -226,7 +226,7 @@ class TestDetectionParser:
     def test_convert(self) -> None:
         input_builder = DataBuilder()
         input: list[dict] = input_builder.append_classified_frame().build()[1][
-            CLASSIFIED
+            DETECTIONS
         ]
 
         parser = DetectionParser()

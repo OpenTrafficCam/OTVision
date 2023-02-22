@@ -29,8 +29,8 @@ from OTVision.dataformat import (
     BBOXES,
     CENTER,
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
+    DETECTIONS,
     FINISHED,
     FIRST,
     FRAMES,
@@ -111,7 +111,7 @@ def track_iou(
     new_detections: dict = {}
 
     for frame_num in detections:
-        detections_frame = detections[frame_num][CLASSIFIED]
+        detections_frame = detections[frame_num][DETECTIONS]
         # apply low threshold to detections
         dets = [det for det in detections_frame if det[CONFIDENCE] >= sigma_l]
         new_detections[frame_num] = {}

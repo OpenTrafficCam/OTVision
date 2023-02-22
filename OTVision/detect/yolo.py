@@ -43,10 +43,10 @@ from OTVision.config import (
 )
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DETECTION,
+    DETECTIONS,
     FILENAME,
     FILETYPE,
     HEIGHT,
@@ -428,7 +428,7 @@ def _convert_detections_chunks(
             }
 
             detection.append(bbox)
-        data = {str(no + 1): {CLASSIFIED: detection}}
+        data = {str(no + 1): {DETECTIONS: detection}}
         # ?: Should every image have a det_config dict? Even if it is always the same?
         result.append({METADATA: {DETECTION: det_config}, DATA: data})
     return result
@@ -455,7 +455,7 @@ def _convert_detections(
                 H: yolo_bbox[3],
             }
             detection.append(bbox)
-        data[str(no + 1)] = {CLASSIFIED: detection}
+        data[str(no + 1)] = {DETECTIONS: detection}
     return {
         METADATA: {
             OTDET_VERSION: version.otdet_version(),
