@@ -27,8 +27,6 @@
             "args": [
                 "--path",
                 ".tmp/debug/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
-                "--filetypes",
-                "mp4",
                 "--weights",
                 "yolov5s"
             ],
@@ -36,8 +34,6 @@
                 "args": [
                     "--path",
                     ".tmp\\debug\\Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
-                    "--filetypes",
-                    "mp4",
                     "--weights",
                     "yolov5s"
                 ]
