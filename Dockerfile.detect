@@ -7,15 +7,15 @@ RUN apt-get update --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 RUN add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update --no-install-recommends && \
-    apt-get install -y python3.9 python3-pip python3.9-dev libx11-dev \
+    apt-get install -y python3.10 python3-pip python3.10-dev libx11-dev \
     libgl1 curl && \
     curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python3.9 get-pip.py && \
+    python3.10 get-pip.py && \
     rm -rf /var/lib/apt/lists/*
 COPY requirements-detect.txt requirements-detect.txt
-RUN pip3.9 install --no-cache-dir -r requirements-detect.txt
+RUN pip3.10 install --no-cache-dir -r requirements-detect.txt
 
 ENV PYTHONPATH /OpenTrafficCam/OTVision
 COPY OTVision OTVision
 COPY detect.py .
-ENTRYPOINT [ "python3.9", "detect.py", "--paths", "data" ]
+ENTRYPOINT [ "python3.10", "detect.py", "--paths", "data" ]
