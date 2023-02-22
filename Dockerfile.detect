@@ -18,4 +18,4 @@ RUN pip3.10 install --no-cache-dir -r requirements-detect.txt
 ENV PYTHONPATH /OpenTrafficCam/OTVision
 COPY OTVision OTVision
 COPY detect.py .
-ENTRYPOINT [ "python3.10", "detect.py", "--paths", "data" ]
+ENTRYPOINT [ "python3.10", "detect.py", "--config", "config/user_config.otvision.yaml" ]
