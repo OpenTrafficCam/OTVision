@@ -67,7 +67,7 @@ jobs:
           context: .
           file: Dockerfile.detect
           push: true
-          tags: ${{ env.REGISTRY }}/opentrafficcam/${{ env.IMAGE_NAME }}
+          tags: ${{ env.REGISTRY }}/opentrafficcam/otvision
           labels: ${{ env.OTVISION_VERSION }}-detect
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
@@ -75,5 +75,5 @@ jobs:
           context: .
           file: Dockerfile.track
           push: true
-          tags: ${{ env.REGISTRY }}/opentrafficcam/${{ env.IMAGE_NAME }}
+          tags: ${{ env.REGISTRY }}/opentrafficcam/otvision
           labels: ${{ env.OTVISION_VERSION }}-track
