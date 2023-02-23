@@ -3,12 +3,8 @@
 FROM nvcr.io/nvidia/cuda:11.4.0-runtime-ubuntu20.04
 WORKDIR /OpenTrafficCam/OTVision
 RUN apt-get update --no-install-recommends && \
-    apt-get install -y software-properties-common && \
-    rm -rf /var/lib/apt/lists/*
-RUN add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update --no-install-recommends && \
-    apt-get install -y python3.10 python3-pip python3.10-dev libx11-dev \
-    libgl1 curl && \
+    apt-get install --no-install-recommends -y python3.10 \
+    python3-pip python3.10-dev libx11-dev libgl1 curl && \
     curl -O https://bootstrap.pypa.io/get-pip.py && \
     python3.10 get-pip.py && \
     rm -rf /var/lib/apt/lists/*
