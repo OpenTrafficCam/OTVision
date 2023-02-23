@@ -5,6 +5,9 @@ obj_train_data/*
 *ffmpeg.exe
 *ffmpeg.zip
 tests/resources/
+data
+models
+config
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

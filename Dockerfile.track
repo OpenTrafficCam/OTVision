@@ -1,0 +1,11 @@
+# Use ubuntu as base image instead of a python image, because the rest of the layers
+# will be the same in the cuda container
+FROM python:3.10-bullseye
+WORKDIR /OpenTrafficCam/OTVision
+COPY requirements-track.txt requirements-track.txt
+RUN pip3.10 install --no-cache-dir -r requirements-track.txt
+
+ENV PYTHONPATH /OpenTrafficCam/OTVision
+COPY OTVision OTVision
+COPY track.py .
+ENTRYPOINT [ "python3.10", "track.py", "--config", "config/user_config.otvision.yaml" ]
