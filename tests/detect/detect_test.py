@@ -1,7 +1,9 @@
 import bz2
+import copy
 import json
 import shutil
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -9,19 +11,24 @@ import pytest
 from jsonschema import validate
 
 import OTVision.config as config
+from OTVision.dataformat import (
+    CLASS,
+    CLASSIFIED,
+    CONFIDENCE,
+    DATA,
+    DATE_FORMAT,
+    METADATA,
+    OCCURRENCE,
+    H,
+    W,
+    X,
+    Y,
+)
+from OTVision.detect.detect import Timestamper
 from OTVision.detect.detect import main as detect
 from OTVision.detect.yolo import loadmodel
 from tests.conftest import YieldFixture
 
-METADATA = "metadata"
-DATA = "data"
-CLASSIFIED = "classified"
-CLASS = "class"
-CONF = "conf"
-X = "x"
-Y = "y"
-W = "w"
-H = "h"
 CAR = "car"
 TRUCK = "truck"
 PERSON = "person"
@@ -95,7 +102,7 @@ class Detection:
 
     @staticmethod
     def from_dict(d: dict) -> "Detection":
-        return Detection(d[CLASS], d[CONF], d[X], d[Y], d[W], d[H])
+        return Detection(d[CLASS], d[CONFIDENCE], d[X], d[Y], d[W], d[H])
 
     def is_normalized(self) -> bool:
         return (
@@ -355,3 +362,45 @@ class TestDetect:
         assert class_counts[TRUCK] <= 60 * (1 + deviation)
         assert class_counts[PERSON] <= 120 * (1 + deviation)
         assert class_counts[BICYCLE] <= 60 * (1 + deviation)
+
+
+class TestTimestamper:
+    @pytest.mark.parametrize(
+        "file_name, start_date",
+        [
+            ("prefix_FR20_2022-01-01_00-00-00.mp4", datetime(2022, 1, 1, 0, 0, 0)),
+            ("Test-Cars_FR20_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
+            ("Test_Cars_FR20_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
+        ],
+    )
+    def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
+        parsed_date = Timestamper()._get_start_time_from(Path(file_name))
+
+        assert parsed_date == start_date
+
+    def test_stamp_frames(self) -> None:
+        start_date = datetime(2022, 1, 2, 3, 4, 5)
+        time_per_frame = timedelta(microseconds=10000)
+        detections: dict[str, dict[str, dict]] = {
+            METADATA: {},
+            DATA: {
+                "1": {CLASSIFIED: []},
+                "2": {CLASSIFIED: [{CLASS: "car"}]},
+                "3": {CLASSIFIED: []},
+            },
+        }
+
+        second_frame = start_date + time_per_frame
+        third_frame = second_frame + time_per_frame
+        expected_dict = copy.deepcopy(detections)
+        expected_dict[DATA]["1"][OCCURRENCE] = start_date.strftime(DATE_FORMAT)
+        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.strftime(DATE_FORMAT)
+        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.strftime(DATE_FORMAT)
+        stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
+
+        assert expected_dict == stamped_dict
+
+
+@pytest.fixture
+def paths_with_illegal_fileformats() -> list[Path]:
+    return [Path("err_a.video"), Path("err_b.image")]

@@ -1,3 +1,4 @@
+import os
 import shutil
 from filecmp import cmpfiles
 from pathlib import Path
@@ -56,6 +57,48 @@ def test_track_tmp_dir(
         ("t_miss_max_75", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75),
     ],
 )
+@pytest.mark.skip(reason="Only used to update test data when tracking changes")
+def test_update_test_data(
+    test_track_dir: Path,
+    test_track_tmp_dir: Path,
+    test_case: str,
+    sigma_l: float,
+    sigma_h: float,
+    sigma_iou: float,
+    t_min: int,
+    t_miss_max: int,
+) -> None:
+    # Track all test detections files
+    input_folder = test_track_tmp_dir.relative_to(os.getcwd())
+    track(
+        paths=[input_folder / test_case],
+        sigma_l=sigma_l,
+        sigma_h=sigma_h,
+        sigma_iou=sigma_iou,
+        t_min=t_min,
+        t_miss_max=t_miss_max,
+    )
+    shutil.copytree(
+        test_track_tmp_dir / test_case, test_track_dir / test_case, dirs_exist_ok=True
+    )
+
+
+@pytest.mark.parametrize(
+    "test_case, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max",
+    [
+        ("default", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("sigma_l_0_1", 0.1, SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("sigma_l_0_5", 0.5, SIGMA_H, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("sigma_h_0_2", SIGMA_L, 0.2, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("sigma_h_0_6", SIGMA_L, 0.6, SIGMA_IOU, T_MIN, T_MISS_MAX),
+        ("sigma_iou_0_2", SIGMA_L, SIGMA_H, 0.2, T_MIN, T_MISS_MAX),
+        ("sigma_iou_0_6", SIGMA_L, SIGMA_H, 0.6, T_MIN, T_MISS_MAX),
+        ("t_min_3", SIGMA_L, SIGMA_H, SIGMA_IOU, 3, T_MISS_MAX),
+        ("t_min_10", SIGMA_L, SIGMA_H, SIGMA_IOU, 10, T_MISS_MAX),
+        ("t_miss_max_25", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 25),
+        ("t_miss_max_75", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75),
+    ],
+)
 def test_track_pass(
     test_track_dir: Path,
     test_track_tmp_dir: Path,
@@ -72,8 +115,9 @@ def test_track_pass(
     """
 
     # Track all test detections files
+    input_folder = test_track_tmp_dir.relative_to(os.getcwd())
     track(
-        paths=[test_track_tmp_dir / test_case],
+        paths=[input_folder / test_case],
         sigma_l=sigma_l,
         sigma_h=sigma_h,
         sigma_iou=sigma_iou,
