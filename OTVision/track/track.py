@@ -22,6 +22,7 @@ OTVision main module for tracking objects in successive frames of videos
 
 
 from pathlib import Path
+from typing import Tuple
 
 from OTVision.config import (
     CONFIG,
@@ -38,14 +39,15 @@ from OTVision.config import (
     T_MISS_MAX,
     TRACK,
 )
+from OTVision.dataformat import DATA, DETECTIONS, METADATA
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
     denormalize_bbox,
     get_files,
-    read_json,
     write_json,
 )
 from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.track.preprocess import Preprocess, Splitter
 
 from .iou import track_iou
 
@@ -99,40 +101,51 @@ def main(
     if not detections_files:
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
 
-    for detections_file in detections_files:
-        tracks_file = detections_file.with_suffix(CONFIG[DEFAULT_FILETYPE][TRACK])
+    preprocessor = Preprocess()
+    preprocessed = preprocessor.run(detections_files)
 
-        if not overwrite and tracks_file.is_file():
+    file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
+    for frame_group in preprocessed.frame_groups:
+        existing_output_files = frame_group.get_existing_output_files(
+            with_suffix=file_type
+        )
+
+        if not overwrite and (len(existing_output_files) > 0):
             log.warning(
-                f"{tracks_file} already exists. To overwrite, set overwrite to True"
+                (
+                    f"{existing_output_files} already exist(s)."
+                    "To overwrite, set overwrite to True"
+                )
             )
             continue
 
-        log.info(f"Try tracking {detections_file}")
-        detections = read_json(
-            json_file=detections_file, filetype=detections_file.suffix
-        )
-
+        metadata = preprocessed.metadata
+        detections = frame_group.to_dict()
         _check_and_update_metadata_inplace(otdict=detections)
 
-        detections_denormalized = denormalize_bbox(detections)
+        detections_denormalized = denormalize_bbox(detections, metadata=metadata)
 
-        tracks_px = track(
+        tracks_px, new_metadata = track(
             detections=detections_denormalized,
             sigma_l=sigma_l,
             sigma_h=sigma_h,
             sigma_iou=sigma_iou,
             t_min=t_min,
             t_miss_max=t_miss_max,
+            metadata=metadata,
         )
-        log.info(f"Successfully tracked {detections_file}")
+        log.info(f"Successfully tracked {frame_group.order_key}")
 
-        write_json(
-            dict_to_write=tracks_px,
-            file=tracks_file,
-            filetype=CONFIG[DEFAULT_FILETYPE][TRACK],
-            overwrite=overwrite,
-        )
+        # Split into files of group
+        splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
+        for file_path, serializable_detections in splitted.items():
+            output = build_output(file_path, serializable_detections, new_metadata)
+            write_json(
+                dict_to_write=output,
+                file=Path(file_path),
+                filetype=file_type,
+                overwrite=overwrite,
+            )
 
     if debug:
         reset_debug()
@@ -145,7 +158,10 @@ def track(
     sigma_iou: float = CONFIG[TRACK][IOU][SIGMA_IOU],
     t_min: int = CONFIG[TRACK][IOU][T_MIN],
     t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
-) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
+    metadata: dict[str, dict] = {},
+) -> Tuple[
+    dict[str, dict], dict[str, dict]
+]:  # TODO: Type hint nested dict during refactoring
     """Perform tracking using track_iou with arguments and add metadata to tracks.
 
     Args:
@@ -169,9 +185,11 @@ def track(
             continuing a track. If more detections are missing, the track will not be
             continued.
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
+        metadata (dict[str, dict]): dict of metadata per input file.
 
     Returns:
-        dict[str, dict]: Dict of dict of metadata and dict of tracks in ottrk format.
+        dict[str, dict]: Dict of tracks in ottrk format.
+        dict[str, dict]: Dict of metadata
     """
 
     new_detections = track_iou(
@@ -183,20 +201,22 @@ def track(
         t_miss_max=t_miss_max,
     )
 
-    metadata = detections["metadata"]
-
-    metadata["trk"] = {
-        "tracker": "IOU",
-        "sigma_l": sigma_l,
-        "sigma_h": sigma_h,
-        "sigma_iou": sigma_iou,
-        "t_min": t_min,
-        "t_miss_max": t_miss_max,
-    }
+    for id in metadata:
+        metadata[id]["trk"] = {
+            "tracker": "IOU",
+            "sigma_l": sigma_l,
+            "sigma_h": sigma_h,
+            "sigma_iou": sigma_iou,
+            "t_min": t_min,
+            "t_miss_max": t_miss_max,
+        }
 
     log.info("Detections tracked")
 
-    return {
-        "metadata": metadata,
-        "data": new_detections,
-    }
+    return new_detections, metadata
+
+
+def build_output(
+    file_path: str, detections: list[dict], metadata: dict[str, dict]
+) -> dict:
+    return {METADATA: metadata[file_path], DATA: {DETECTIONS: detections}}

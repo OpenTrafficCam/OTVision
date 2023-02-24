@@ -24,6 +24,7 @@ OTVision module to track road users in frames detected by OTVision
 
 
 from OTVision.config import CONFIG
+from OTVision.dataformat import TRACK_ID
 
 from .iou_util import iou
 
@@ -174,6 +175,7 @@ def track_iou(
     for frame_det in new_detections.values():
         for vehID, det in frame_det.items():
             det["finished"] = vehID in vehIDs_finished
+            det[TRACK_ID] = vehID
     # return tracks_finished
     # TODO: #83 Remove unnessecary code (e.g. for tracks_finished) from track_iou
     return new_detections
