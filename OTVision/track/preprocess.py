@@ -3,16 +3,19 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Tuple
 
+from OTVision import dataformat, version
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
+    DETECTIONS,
     FRAME,
     INPUT_FILE_PATH,
+    INTERPOLATED_DETECTION,
     METADATA,
     OCCURRENCE,
+    OTTRACK_VERSION,
     RECORDED_START_DATE,
     TRACK_ID,
     VIDEO,
@@ -50,6 +53,7 @@ class Detection:
             FRAME: frame,
             OCCURRENCE: occurrence.strftime(DATE_FORMAT),
             INPUT_FILE_PATH: input_file_path,
+            INTERPOLATED_DETECTION: False,
         }
 
 
@@ -65,7 +69,7 @@ class Frame:
             FRAME: self.frame,
             OCCURRENCE: self.occurrence.strftime(DATE_FORMAT),
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
-            CLASSIFIED: [
+            DETECTIONS: [
                 detection.to_dict(
                     self.frame, self.occurrence, self.input_file_path.as_posix()
                 )
@@ -114,6 +118,23 @@ class FrameGroup:
         )
         existing_files = [file for file in output_files if file.is_file()]
         return existing_files
+
+    def update_metadata(
+        self, metadata: dict[str, dict], tracker_data: dict[str, dict]
+    ) -> dict[str, dict]:
+        for filepath in metadata.keys():
+            metadata[filepath][OTTRACK_VERSION] = version.ottrack_version()
+            metadata[filepath][dataformat.TRACKING] = {
+                dataformat.OTVISION_VERSION: version.otvision_version(),
+                dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().strftime(
+                    DATE_FORMAT
+                ),
+                dataformat.LAST_TRACKED_VIDEO_END: self.end_date().strftime(
+                    DATE_FORMAT
+                ),
+                dataformat.TRACKER: tracker_data,
+            }
+        return metadata
 
     def to_dict(self) -> dict:
         return {
@@ -183,7 +204,7 @@ class FrameGroupParser:
             occurrence: datetime = datetime.strptime(
                 str(value[OCCURRENCE]), DATE_FORMAT
             )
-            data_detections = value[CLASSIFIED]
+            data_detections = value[DETECTIONS]
             detections = detection_parser.convert(data_detections)
             parsed_frame = Frame(
                 int(key),
