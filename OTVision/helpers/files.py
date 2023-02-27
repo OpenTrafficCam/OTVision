@@ -26,6 +26,7 @@ from typing import Union
 
 import ujson
 
+from OTVision import dataformat
 from OTVision.config import CONFIG
 from OTVision.dataformat import INPUT_FILE_PATH
 from OTVision.helpers.log import log
@@ -252,16 +253,16 @@ def _check_and_update_metadata_inplace(otdict: dict) -> None:
     Args:
         otdict (dict): dict of detections or tracks
     """
-    if "metadata" in otdict:
+    if dataformat.METADATA in otdict:
         return
     try:
-        otdict["metadata"] = {}
+        otdict[dataformat.METADATA] = {}
         if "vid_config" in otdict:
-            otdict["metadata"]["vid"] = otdict["vid_config"]
+            otdict[dataformat.METADATA][dataformat.VIDEO] = otdict["vid_config"]
         if "det_config" in otdict:
-            otdict["metadata"]["det"] = otdict["det_config"]
+            otdict[dataformat.METADATA][dataformat.DETECTION] = otdict["det_config"]
         if "trk_config" in otdict:
-            otdict["metadata"]["trk"] = otdict["trk_config"]
+            otdict[dataformat.METADATA][dataformat.TRACKING] = otdict["trk_config"]
         log.info("metadata updated from historic format to new format")
     except Exception:
         log.exception("metadata not found and not in historic config format")
@@ -289,9 +290,9 @@ def denormalize_bbox(
         _type_: Denormalized dict.
     """
     if keys_width is None:
-        keys_width = ["x", "w"]
+        keys_width = [dataformat.X, dataformat.W]
     if keys_height is None:
-        keys_height = ["y", "h"]
+        keys_height = [dataformat.Y, dataformat.H]
     log.debug("Denormalize frame wise")
     otdict = _denormalize_transformation(otdict, keys_width, keys_height, metadata)
     return otdict
@@ -319,15 +320,15 @@ def _denormalize_transformation(
     """
     changed_files = set()
 
-    for frame in otdict["data"].values():
+    for frame in otdict[dataformat.DATA].values():
         input_file = frame[INPUT_FILE_PATH]
         metadate = metadata[input_file]
-        width = metadate["vid"]["width"]
-        height = metadate["vid"]["height"]
-        is_normalized = metadate["det"]["normalized"]
+        width = metadate[dataformat.VIDEO][dataformat.WIDTH]
+        height = metadate[dataformat.VIDEO][dataformat.HEIGHT]
+        is_normalized = metadate[dataformat.DETECTION][dataformat.NORMALIZED_BBOX]
         if is_normalized:
             changed_files.add(input_file)
-            for bbox in frame["classified"]:
+            for bbox in frame[dataformat.DETECTIONS]:
                 for key in bbox:
                     if key in keys_width:
                         bbox[key] = bbox[key] * width
@@ -335,7 +336,7 @@ def _denormalize_transformation(
                         bbox[key] = bbox[key] * height
 
     for file in changed_files:
-        metadata[file]["det"]["normalized"] = False
+        metadata[file][dataformat.DETECTION][dataformat.NORMALIZED_BBOX] = False
     return otdict
 
 
@@ -360,10 +361,10 @@ def normalize_bbox(
         _type_: Normalized dict.
     """
     if keys_width is None:
-        keys_width = ["x", "w"]
+        keys_width = [dataformat.X, dataformat.W]
     if keys_height is None:
-        keys_height = ["y", "h"]
-    if not otdict["metadata"]["normalized"]:
+        keys_height = [dataformat.Y, dataformat.H]
+    if not otdict[dataformat.METADATA][dataformat.NORMALIZED_BBOX]:
         otdict = _normalize_transformation(
             otdict,
             keys_width,
@@ -398,15 +399,15 @@ def _normalize_transformation(
     """
     changed_files = set()
 
-    for frame in otdict["data"].values():
+    for frame in otdict[dataformat.DATA].values():
         input_file = frame[INPUT_FILE_PATH]
         metadate = metadata[input_file]
-        width = metadate["vid"]["width"]
-        height = metadate["vid"]["height"]
-        is_denormalized = not metadate["normalized"]
+        width = metadate[dataformat.VIDEO][dataformat.WIDTH]
+        height = metadate[dataformat.VIDEO][dataformat.HEIGHT]
+        is_denormalized = not metadate[dataformat.NORMALIZED_BBOX]
         if is_denormalized:
             changed_files.add(input_file)
-            for bbox in frame["classified"]:
+            for bbox in frame[dataformat.DETECTIONS]:
                 for key in bbox:
                     if key in keys_width:
                         bbox[key] = bbox[key] / width
@@ -414,7 +415,7 @@ def _normalize_transformation(
                         bbox[key] = bbox[key] / height
 
     for file in changed_files:
-        metadata[file]["normalized"] = True
+        metadata[file][dataformat.NORMALIZED_BBOX] = True
     return otdict
 
 

@@ -4,13 +4,14 @@ from typing import Any, Optional
 
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
-    FILE,
+    DETECTIONS,
+    FILENAME,
     FRAME,
     INPUT_FILE_PATH,
+    INTERPOLATED_DETECTION,
     METADATA,
     OCCURRENCE,
     RECORDED_START_DATE,
@@ -104,7 +105,7 @@ class DataBuilder:
             FRAME: frame_number,
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
-            CLASSIFIED: [],
+            DETECTIONS: [],
         }
         self.non_classified_frames.append(frame_number)
         return self
@@ -127,6 +128,7 @@ class DataBuilder:
         frame_number: int = 1,
         occurrence: str = DEFAULT_START_DATE.strftime(DATE_FORMAT),
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
+        interpolated_detection: bool = False,
     ) -> dict[str, object]:
         return {
             CLASS: label,
@@ -138,6 +140,7 @@ class DataBuilder:
             FRAME: frame_number,
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: input_file_path.as_posix(),
+            INTERPOLATED_DETECTION: interpolated_detection,
         }
 
     def append_classified_frame(
@@ -156,7 +159,7 @@ class DataBuilder:
             FRAME: frame_number,
             OCCURRENCE: occurrence,
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
-            CLASSIFIED: [
+            DETECTIONS: [
                 self.create_classification(
                     label=label,
                     confidence=confidence,
@@ -212,7 +215,7 @@ class DataBuilder:
         return {
             METADATA: {
                 VIDEO: {
-                    FILE: self.input_file_path.as_posix(),
+                    FILENAME: self.input_file_path.as_posix(),
                     RECORDED_START_DATE: self.start_date.strftime(DATE_FORMAT),
                 }
             },
@@ -226,7 +229,7 @@ class TestDetectionParser:
     def test_convert(self) -> None:
         input_builder = DataBuilder()
         input: list[dict] = input_builder.append_classified_frame().build()[1][
-            CLASSIFIED
+            DETECTIONS
         ]
 
         parser = DetectionParser()
@@ -311,7 +314,7 @@ class TestPreprocess:
         assert metadata == {
             file_path.as_posix(): {
                 VIDEO: {
-                    FILE: file_path.as_posix(),
+                    FILENAME: file_path.as_posix(),
                     RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
                 }
             }
@@ -390,19 +393,19 @@ class TestPreprocess:
         assert metadata == {
             first_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: first_file_path.as_posix(),
+                    FILENAME: first_file_path.as_posix(),
                     RECORDED_START_DATE: first_start_date.strftime(DATE_FORMAT),
                 }
             },
             second_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: second_file_path.as_posix(),
+                    FILENAME: second_file_path.as_posix(),
                     RECORDED_START_DATE: second_start_date.strftime(DATE_FORMAT),
                 }
             },
             third_file_path.as_posix(): {
                 VIDEO: {
-                    FILE: third_file_path.as_posix(),
+                    FILENAME: third_file_path.as_posix(),
                     RECORDED_START_DATE: third_start_date.strftime(DATE_FORMAT),
                 }
             },

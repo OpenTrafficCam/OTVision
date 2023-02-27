@@ -13,12 +13,15 @@ from jsonschema import validate
 import OTVision.config as config
 from OTVision.dataformat import (
     CLASS,
-    CLASSIFIED,
     CONFIDENCE,
     DATA,
     DATE_FORMAT,
+    DETECTION,
+    DETECTIONS,
     METADATA,
     OCCURRENCE,
+    OTDET_VERSION,
+    OTVISION_VERSION,
     H,
     W,
     X,
@@ -120,7 +123,7 @@ class Frame:
 
     @staticmethod
     def from_dict(frame_number: str, d: dict) -> "Frame":
-        detections = [Detection.from_dict(detection) for detection in d[CLASSIFIED]]
+        detections = [Detection.from_dict(detection) for detection in d[DETECTIONS]]
         return Frame(int(frame_number), detections)
 
 
@@ -128,6 +131,12 @@ def read_bz2_otdet(otdet: Path) -> dict:
     with bz2.open(otdet, "r") as file:
         result_otdet_json = json.load(file)
     return result_otdet_json
+
+
+def remove_ignored_metadata(data: dict) -> dict:
+    data[OTDET_VERSION] = "ignored"
+    data[DETECTION][OTVISION_VERSION] = "ignored"
+    return data
 
 
 def count_classes(frames: list[Frame]) -> dict:
@@ -232,8 +241,12 @@ class TestDetect:
     def test_detect_metadata_matches(
         self, result_cyclist_otdet: Path, default_cyclist_otdet: Path
     ) -> None:
-        result_cyclist_metadata = read_bz2_otdet(result_cyclist_otdet)[METADATA]
-        expected_cyclist_metadata = read_bz2_otdet(default_cyclist_otdet)[METADATA]
+        result_cyclist_metadata = remove_ignored_metadata(
+            read_bz2_otdet(result_cyclist_otdet)[METADATA]
+        )
+        expected_cyclist_metadata = remove_ignored_metadata(
+            read_bz2_otdet(default_cyclist_otdet)[METADATA]
+        )
         assert result_cyclist_metadata == expected_cyclist_metadata
 
     def test_detect_error_raised_on_wrong_filetype(
@@ -384,9 +397,9 @@ class TestTimestamper:
         detections: dict[str, dict[str, dict]] = {
             METADATA: {},
             DATA: {
-                "1": {CLASSIFIED: []},
-                "2": {CLASSIFIED: [{CLASS: "car"}]},
-                "3": {CLASSIFIED: []},
+                "1": {DETECTIONS: []},
+                "2": {DETECTIONS: [{CLASS: "car"}]},
+                "3": {DETECTIONS: []},
             },
         }
 

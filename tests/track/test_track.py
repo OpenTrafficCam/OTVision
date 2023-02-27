@@ -2,9 +2,11 @@ import os
 import shutil
 from filecmp import cmpfiles
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
+from OTVision import version
 from OTVision.config import CONFIG
 from OTVision.track.track import main as track
 from tests.conftest import YieldFixture
@@ -14,6 +16,11 @@ SIGMA_H = CONFIG["TRACK"]["IOU"]["SIGMA_H"]
 SIGMA_IOU = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
 T_MIN = CONFIG["TRACK"]["IOU"]["T_MIN"]
 T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
+
+
+version.otvision_version = Mock(return_value="ignored")
+version.ottrack_version = Mock(return_value="ignored")
+version.otdet_version = Mock(return_value="ignored")
 
 
 @pytest.fixture

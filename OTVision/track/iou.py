@@ -24,7 +24,25 @@ OTVision module to track road users in frames detected by OTVision
 
 
 from OTVision.config import CONFIG
-from OTVision.dataformat import TRACK_ID
+from OTVision.dataformat import (
+    AGE,
+    BBOXES,
+    CENTER,
+    CLASS,
+    CONFIDENCE,
+    DETECTIONS,
+    FINISHED,
+    FIRST,
+    FRAMES,
+    MAX_CLASS,
+    MAX_CONF,
+    START_FRAME,
+    TRACK_ID,
+    H,
+    W,
+    X,
+    Y,
+)
 
 from .iou_util import iou
 
@@ -39,10 +57,10 @@ def make_bbox(obj: dict) -> tuple[float, float, float, float]:
         tuple[float, float, float, float]: xmin, ymin, xmay, ymax
     """
     return (
-        obj["x"] - obj["w"] / 2,
-        obj["y"] - obj["h"] / 2,
-        obj["x"] + obj["w"] / 2,
-        obj["y"] + obj["h"] / 2,
+        obj[X] - obj[W] / 2,
+        obj[Y] - obj[H] / 2,
+        obj[X] + obj[W] / 2,
+        obj[Y] + obj[H] / 2,
     )
 
 
@@ -55,7 +73,7 @@ def center(obj: dict) -> tuple[float, float]:
     Returns:
         tuple[float, float]: _description_
     """
-    return obj["x"], obj["y"]
+    return obj[X], obj[Y]
 
 
 def track_iou(
@@ -93,9 +111,9 @@ def track_iou(
     new_detections: dict = {}
 
     for frame_num in detections:
-        detections_frame = detections[frame_num]["classified"]
+        detections_frame = detections[frame_num][DETECTIONS]
         # apply low threshold to detections
-        dets = [det for det in detections_frame if det["conf"] >= sigma_l]
+        dets = [det for det in detections_frame if det[CONFIDENCE] >= sigma_l]
         new_detections[frame_num] = {}
         updated_tracks: list = []
         saved_tracks: list = []
@@ -103,37 +121,37 @@ def track_iou(
             if dets:
                 # get det with highest iou
                 best_match = max(
-                    dets, key=lambda x: iou(track["bboxes"][-1], make_bbox(x))
+                    dets, key=lambda x: iou(track[BBOXES][-1], make_bbox(x))
                 )
-                if iou(track["bboxes"][-1], make_bbox(best_match)) >= sigma_iou:
-                    track["frames"].append(int(frame_num))
-                    track["bboxes"].append(make_bbox(best_match))
-                    track["center"].append(center(best_match))
-                    track["conf"].append(best_match["conf"])
-                    track["class"].append(best_match["class"])
-                    track["max_conf"] = max(track["max_conf"], best_match["conf"])
-                    track["age"] = 0
+                if iou(track[BBOXES][-1], make_bbox(best_match)) >= sigma_iou:
+                    track[FRAMES].append(int(frame_num))
+                    track[BBOXES].append(make_bbox(best_match))
+                    track[CENTER].append(center(best_match))
+                    track[CONFIDENCE].append(best_match[CONFIDENCE])
+                    track[CLASS].append(best_match[CLASS])
+                    track[MAX_CONF] = max(track[MAX_CONF], best_match[CONFIDENCE])
+                    track[AGE] = 0
 
                     updated_tracks.append(track)
 
                     # remove best matching detection from detections
                     del dets[dets.index(best_match)]
-                    # best_match["vehID"] = track["vehID"]
-                    best_match["first"] = False
-                    new_detections[frame_num][track["vehID"]] = best_match
+                    # best_match[TRACK_ID] = track[TRACK_ID]
+                    best_match[FIRST] = False
+                    new_detections[frame_num][track[TRACK_ID]] = best_match
 
             # if track was not updated
             if not updated_tracks or track is not updated_tracks[-1]:
                 # finish track when the conditions are met
-                if track["age"] < t_miss_max:
-                    track["age"] += 1
+                if track[AGE] < t_miss_max:
+                    track[AGE] += 1
                     saved_tracks.append(track)
                 elif (
-                    track["max_conf"] >= sigma_h
-                    and track["frames"][-1] - track["frames"][0] >= t_min
+                    track[MAX_CONF] >= sigma_h
+                    and track[FRAMES][-1] - track[FRAMES][0] >= t_min
                 ):
                     # tracks_finished.append(track)
-                    vehIDs_finished.append(track["vehID"])
+                    vehIDs_finished.append(track[TRACK_ID])
         # TODO: Alter der Tracks
         # create new tracks
         new_tracks = []
@@ -141,20 +159,20 @@ def track_iou(
             vehID += 1
             new_tracks.append(
                 {
-                    "frames": [int(frame_num)],
-                    "bboxes": [make_bbox(det)],
-                    "center": [center(det)],
-                    "conf": [det["conf"]],
-                    "class": [det["class"]],
-                    "max_class": det["class"],
-                    "max_conf": det["conf"],
-                    "vehID": vehID,
-                    "start_frame": int(frame_num),
-                    "age": 0,
+                    FRAMES: [int(frame_num)],
+                    BBOXES: [make_bbox(det)],
+                    CENTER: [center(det)],
+                    CONFIDENCE: [det[CONFIDENCE]],
+                    CLASS: [det[CLASS]],
+                    MAX_CLASS: det[CLASS],
+                    MAX_CONF: det[CONFIDENCE],
+                    TRACK_ID: vehID,
+                    START_FRAME: int(frame_num),
+                    AGE: 0,
                 }
             )
-            # det["vehID"] = vehID
-            det["first"] = True
+            # det[TRACK_ID] = vehID
+            det[FIRST] = True
             new_detections[frame_num][vehID] = det
         tracks_active = updated_tracks + saved_tracks + new_tracks
 
@@ -174,7 +192,7 @@ def track_iou(
     # TODO: #82 Use dict comprehensions in track_iou
     for frame_det in new_detections.values():
         for vehID, det in frame_det.items():
-            det["finished"] = vehID in vehIDs_finished
+            det[FINISHED] = vehID in vehIDs_finished
             det[TRACK_ID] = vehID
     # return tracks_finished
     # TODO: #83 Remove unnessecary code (e.g. for tracks_finished) from track_iou
