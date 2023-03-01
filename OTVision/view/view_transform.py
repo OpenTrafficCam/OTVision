@@ -101,16 +101,12 @@ class FrameTransformOptions(tk.Frame):
             self.master.master.frame_files.update_files_dict()
 
     def click_refpts(self, event):
-        # Get selected files from files frame
-        selected_files = self.master.master.frame_files.get_selected_files()
-
-        if selected_files:
+        if selected_files := self.master.master.frame_files.get_selected_files():
             log.debug("click and save refpts for selected files")
 
-            # Get refpts from picker tool
-            refpts = ReferencePointsPicker(video_file=Path(selected_files[0])).refpts
-
-            if refpts:
+            if refpts := ReferencePointsPicker(
+                video_file=Path(selected_files[0])
+            ).refpts:
                 # Save refpts for all selected files
                 for selected_file in selected_files:
                     new_refpts_file = Path(selected_file).with_suffix(".otrfpts")
