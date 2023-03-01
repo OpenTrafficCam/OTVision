@@ -51,9 +51,11 @@ from OTVision.helpers.formats import (
     _get_time_from_frame_number,
     _ottrk_dict_to_df,
 )
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
 
 from .get_homography import get_homography
+
+log = get_logger(__name__)
 
 
 def main(

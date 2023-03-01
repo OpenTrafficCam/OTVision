@@ -20,37 +20,44 @@ OTVision helpers for logging
 
 
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)s %(filename)s:%(message)s", level=logging.INFO
+FORMATTER = logging.Formatter(
+    "%(asctime)s %(levelname)s (%(name)s in %(funcName)s"
+    " at line %(lineno)d): %(message)s"
 )
-log = logging.getLogger(__name__)
 
-# Create console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(level=logging.WARNING)
-log.addHandler(hdlr=console_handler)
+DATETIME_STR = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
 
-# Create file handler
-datetime_str = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
-log_dir = Path.cwd() / "otvision_logs"
-if not log_dir.is_dir():
-    log_dir.mkdir(parents=True, exist_ok=True)
-log_file = log_dir / f"{datetime_str}.log"
-file_handler = logging.FileHandler(filename=log_file)
-file_handler.setLevel(level=logging.DEBUG)
-log.addHandler(hdlr=file_handler)
+LOG_DIR = Path.cwd() / "otvision_logs"
+
+LOG_FILENAME = f"{DATETIME_STR}.log"
 
 
-def set_debug() -> None:
-    """Sets logging level to DEBUG"""
-    log.setLevel("DEBUG")
-    log.info("Debug mode on")
+def get_log_file() -> Path:
+    if not LOG_DIR.is_dir():
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+    return LOG_DIR / LOG_FILENAME
 
 
-def reset_debug() -> None:
-    """Resets logging level to INFO"""
-    log.info("Debug mode off")
-    log.setLevel("INFO")
+FILE_HANDLER: logging.Handler = logging.FileHandler(filename=get_log_file())
+FILE_HANDLER.setFormatter(FORMATTER)
+FILE_HANDLER.setLevel(level=logging.DEBUG)
+
+
+def get_console_handler() -> logging.Handler:
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(FORMATTER)
+    console_handler.setLevel(level=logging.WARNING)
+    return console_handler
+
+
+def get_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger(name=name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(hdlr=get_console_handler())
+    logger.addHandler(hdlr=FILE_HANDLER)
+    logger.propagate = False
+    return logger

@@ -1,7 +1,9 @@
 import argparse
 
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
+
+log = get_logger(__name__)
 
 
 def parse() -> argparse.Namespace:

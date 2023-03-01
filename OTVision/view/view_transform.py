@@ -26,11 +26,13 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
 from OTVision.transform.transform import main as transform
 from OTVision.transform.transform import write_refpts
 from OTVision.view.view_helpers import FrameRun
+
+log = get_logger(__name__)
 
 
 class FrameTransform(tk.LabelFrame):

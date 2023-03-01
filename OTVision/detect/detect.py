@@ -43,9 +43,11 @@ from OTVision.config import (
     YOLO,
 )
 from OTVision.helpers.files import get_files, write_json
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
 
 from . import yolo
+
+log = get_logger(__name__)
 
 
 def main(

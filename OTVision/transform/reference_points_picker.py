@@ -31,7 +31,9 @@ from typing import Any, Union
 import cv2
 
 from OTVision.helpers.files import is_image, is_video
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
+
+log = get_logger(__name__)
 
 
 class ReferencePointsPicker:
@@ -54,7 +56,6 @@ class ReferencePointsPicker:
         title: str = "Reference Points Picker",
         popup_root: Union[tk.Tk, None] = None,
     ):
-
         # Attributes
         self.title = title
         self.left_button_down = False
@@ -138,7 +139,6 @@ class ReferencePointsPicker:
         cv2.setMouseCallback(self.title, self.handle_mouse_events)
 
         while True:
-
             # wait for a key press to close the window (0 = indefinite loop)
             key = cv2.waitKey(-1) & 0xFF  # BUG: #150 on mac
 
@@ -400,7 +400,6 @@ class DialogUTMCoordinates(Dialog):
     def body(
         self, master: tk.Frame
     ):  # sourcery skip: assign-if-exp, swap-if-expression
-
         # Labels
         if not self.try_again:
             text_provide = "Provide reference point\nin UTM coordinates!"

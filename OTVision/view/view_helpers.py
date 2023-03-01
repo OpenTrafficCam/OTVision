@@ -26,7 +26,9 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
+
+log = get_logger(__name__)
 
 
 class FrameFileTree(tk.LabelFrame):

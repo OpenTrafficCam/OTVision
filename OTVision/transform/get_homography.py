@@ -23,7 +23,9 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
+
+log = get_logger(__name__)
 
 
 # TODO: Type hint nested dict during refactoring

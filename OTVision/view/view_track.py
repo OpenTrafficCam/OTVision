@@ -23,9 +23,11 @@ import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
 from OTVision.track.track import main as track
 from OTVision.view.view_helpers import FrameRun
+
+log = get_logger(__name__)
 
 
 class FrameTrack(tk.LabelFrame):

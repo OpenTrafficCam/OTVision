@@ -24,7 +24,9 @@ from pathlib import Path
 
 import yaml
 
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
+
+log = get_logger(__name__)
 
 # CONFIG dict keys
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"

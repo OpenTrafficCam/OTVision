@@ -45,9 +45,11 @@ from OTVision.helpers.files import (
     read_json,
     write_json,
 )
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
 
 from .iou import track_iou
+
+log = get_logger(__name__)
 
 
 def main(

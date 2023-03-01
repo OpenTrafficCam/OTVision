@@ -24,7 +24,9 @@ from pathlib import Path
 
 import OTVision
 import OTVision.config as config
-from OTVision.helpers.log import log
+from OTVision.helpers.log import get_logger
+
+log = get_logger(__name__)
 
 
 def parse() -> argparse.Namespace:
