@@ -87,7 +87,6 @@ def main(
     track_filetype = CONFIG[FILETYPES][TRACK]
 
     if refpts_file:
-
         log.info(f"Reading global reference points file at {refpts_file}")
 
         refpts_filetype = CONFIG[FILETYPES][REFPTS]
@@ -189,7 +188,6 @@ def main(
             hemisphere=hemisphere,
             tracks_file=tracks_file,
         )
-
 
         log.info(f"Successfully transformed and wrote {tracks_file}")
 

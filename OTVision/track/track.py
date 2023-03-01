@@ -39,7 +39,6 @@ from OTVision.config import (
     T_MISS_MAX,
     TRACK,
 )
-
 from OTVision.dataformat import DATA, DETECTIONS, METADATA
 from OTVision.helpers.files import (
     _check_and_update_metadata_inplace,
@@ -122,8 +121,8 @@ def main(
                 )
             )
             continue
-        
-        log.info(f"Track {str(frame_group)}")
+
+        log.info(f"Track {str(frame_group.order_key)}")
 
         metadata = preprocessed.metadata
         detections = frame_group.to_dict()
@@ -149,7 +148,7 @@ def main(
             t_miss_max=t_miss_max,
         )
 
-        log.info(f"Successfully tracked {frame_group.order_key}")
+        log.debug(f"Successfully tracked {frame_group.order_key}")
 
         # Split into files of group
         splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
@@ -162,7 +161,7 @@ def main(
                 overwrite=overwrite,
             )
 
-        log.info(f"Successfully tracked and wrote {tracks_file}")
+        log.info(f"Successfully tracked and wrote {frame_group.order_key}")
 
     finished_msg = "Finished tracking"
     log.info(finished_msg)
@@ -216,6 +215,7 @@ def track(
     log.info("Detections tracked")
 
     return new_detections
+
 
 def build_output(
     file_path: str, detections: list[dict], metadata: dict[str, dict]
