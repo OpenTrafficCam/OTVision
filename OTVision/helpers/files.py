@@ -26,7 +26,9 @@ from typing import Union
 
 import ujson
 
+from OTVision import dataformat
 from OTVision.config import CONFIG
+from OTVision.dataformat import INPUT_FILE_PATH
 from OTVision.helpers.log import get_logger
 
 log = get_logger(__name__)
@@ -260,17 +262,17 @@ def _check_and_update_metadata_inplace(otdict: dict) -> None:
     Args:
         otdict (dict): dict of detections or tracks
     """
-    if "metadata" in otdict:
+    if dataformat.METADATA in otdict:
         return
     try:
-        otdict["metadata"] = {}
+        otdict[dataformat.METADATA] = {}
         if "vid_config" in otdict:
-            otdict["metadata"]["vid"] = otdict["vid_config"]
+            otdict[dataformat.METADATA][dataformat.VIDEO] = otdict["vid_config"]
         if "det_config" in otdict:
-            otdict["metadata"]["det"] = otdict["det_config"]
+            otdict[dataformat.METADATA][dataformat.DETECTION] = otdict["det_config"]
         if "trk_config" in otdict:
-            otdict["metadata"]["trk"] = otdict["trk_config"]
-        log.info("Metadata updated from historic format to new format")
+            otdict[dataformat.METADATA][dataformat.TRACKING] = otdict["trk_config"]
+        log.info("metadata updated from historic format to new format")
     except Exception:
         log.exception("Metadata not found and not in historic config format")
         raise
@@ -281,6 +283,7 @@ def denormalize_bbox(
     otdict: dict,
     keys_width: Union[list[str], None] = None,
     keys_height: Union[list[str], None] = None,
+    metadata: dict[str, dict] = {},
 ) -> dict:
     """Denormalize all bbox references in detections or tracks dict from percent to px.
 
@@ -290,21 +293,59 @@ def denormalize_bbox(
             Defaults to ["x", "w"].
         keys_height (list[str], optional): list of keys describing vertical position.
             Defaults to ["y", "h"].
+        metadata (dict[str, dict]): dict of metadata per input file.
 
     Returns:
         _type_: Denormalized dict.
     """
     if keys_width is None:
-        keys_width = ["x", "w"]
+        keys_width = [dataformat.X, dataformat.W]
     if keys_height is None:
-        keys_height = ["y", "h"]
-    if otdict["metadata"]["det"]["normalized"]:
-        direction = "denormalize"
-        otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
-        otdict["metadata"]["det"]["normalized"] = False
-        log.debug("Dict denormalized")
-    else:
-        log.debug("Dict was already denormalized")
+        keys_height = [dataformat.Y, dataformat.H]
+    log.debug("Denormalize frame wise")
+    otdict = _denormalize_transformation(otdict, keys_width, keys_height, metadata)
+    return otdict
+
+
+# TODO: Type hint nested dict during refactoring
+def _denormalize_transformation(
+    otdict: dict,
+    keys_width: list[str],
+    keys_height: list[str],
+    metadata: dict[str, dict] = {},
+) -> dict:
+    """Helper to do the actual denormalization.
+
+    Args:
+        otdict (dict): dict of detections or tracks
+        keys_width (list[str]): list of keys describing horizontal position.
+            Defaults to ["x", "w"].
+        keys_height (list[str]): list of keys describing vertical position.
+            Defaults to ["y", "h"].
+        metadata (dict[str, dict]): dict of metadata per input file.
+
+    Returns:
+        dict: denormalized dict
+    """
+    changed_files = set()
+
+    for frame in otdict[dataformat.DATA].values():
+        input_file = frame[INPUT_FILE_PATH]
+        metadate = metadata[input_file]
+        width = metadate[dataformat.VIDEO][dataformat.WIDTH]
+        height = metadate[dataformat.VIDEO][dataformat.HEIGHT]
+        is_normalized = metadate[dataformat.DETECTION][dataformat.NORMALIZED_BBOX]
+        if is_normalized:
+            changed_files.add(input_file)
+            for bbox in frame[dataformat.DETECTIONS]:
+                for key in bbox:
+                    if key in keys_width:
+                        bbox[key] = bbox[key] * width
+                    elif key in keys_height:
+                        bbox[key] = bbox[key] * height
+
+    for file in changed_files:
+        metadata[file][dataformat.DETECTION][dataformat.NORMALIZED_BBOX] = False
     return otdict
 
 
@@ -313,6 +354,7 @@ def normalize_bbox(
     otdict: dict,
     keys_width: Union[list[str], None] = None,
     keys_height: Union[list[str], None] = None,
+    metadata: dict[str, dict] = {},
 ) -> dict:
     """Normalize all bbox references in detections or tracks dict from percent to px.
 
@@ -322,18 +364,22 @@ def normalize_bbox(
             Defaults to ["x", "w"].
         keys_height (list[str], optional): list of keys describing vertical position.
             Defaults to ["y", "h"].
+        metadata (dict[str, dict]): dict of metadata per input file.
 
     Returns:
         _type_: Normalized dict.
     """
     if keys_width is None:
-        keys_width = ["x", "w"]
+        keys_width = [dataformat.X, dataformat.W]
     if keys_height is None:
-        keys_height = ["y", "h"]
-    if not otdict["metadata"]["normalized"]:
-        direction = "normalize"
-        otdict = _normal_transformation(otdict, direction, keys_width, keys_height)
-        otdict["metadata"]["normalized"] = True
+        keys_height = [dataformat.Y, dataformat.H]
+    if not otdict[dataformat.METADATA][dataformat.NORMALIZED_BBOX]:
+        otdict = _normalize_transformation(
+            otdict,
+            keys_width,
+            keys_height,
+            metadata,
+        )
         log.debug("Dict normalized")
     else:
         log.debug("Dict was already normalized")
@@ -341,38 +387,44 @@ def normalize_bbox(
 
 
 # TODO: Type hint nested dict during refactoring
-def _normal_transformation(
-    otdict: dict, direction: str, keys_width: list[str], keys_height: list[str]
+def _normalize_transformation(
+    otdict: dict,
+    keys_width: list[str],
+    keys_height: list[str],
+    metadata: dict[str, dict] = {},
 ) -> dict:
-    """Helper to do the actual normalization or denormalization.
-        (Reduces duplicate code snippets)
+    """Helper to do the actual normalization.
 
     Args:
         otdict (dict): dict of detections or tracks
-        direction (str): "normalize" or "denormalize"
         keys_width (list[str]): list of keys describing horizontal position.
             Defaults to ["x", "w"].
         keys_height (list[str]): list of keys describing vertical position.
             Defaults to ["y", "h"].
 
+
     Returns:
-        dict: Normalized or denormalized dict
+        dict: Normalized dict
     """
-    width = otdict["metadata"]["vid"]["width"]
-    height = otdict["metadata"]["vid"]["height"]
-    for detection in otdict["data"]:
-        for bbox in otdict["data"][detection]["classified"]:
-            for key in bbox:
-                if key in keys_width:
-                    if direction == "normalize":
+    changed_files = set()
+
+    for frame in otdict[dataformat.DATA].values():
+        input_file = frame[INPUT_FILE_PATH]
+        metadate = metadata[input_file]
+        width = metadate[dataformat.VIDEO][dataformat.WIDTH]
+        height = metadate[dataformat.VIDEO][dataformat.HEIGHT]
+        is_denormalized = not metadate[dataformat.NORMALIZED_BBOX]
+        if is_denormalized:
+            changed_files.add(input_file)
+            for bbox in frame[dataformat.DETECTIONS]:
+                for key in bbox:
+                    if key in keys_width:
                         bbox[key] = bbox[key] / width
-                    elif direction == "denormalize":
-                        bbox[key] = bbox[key] * width
-                elif key in keys_height:
-                    if direction == "normalize":
+                    elif key in keys_height:
                         bbox[key] = bbox[key] / height
-                    elif direction == "denormalize":
-                        bbox[key] = bbox[key] * height
+
+    for file in changed_files:
+        metadata[file][dataformat.NORMALIZED_BBOX] = True
     return otdict
 
 

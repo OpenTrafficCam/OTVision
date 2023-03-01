@@ -26,7 +26,43 @@ import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
 
-from OTVision.config import CONFIG, FILETYPES, VID
+from OTVision import dataformat, version
+from OTVision.config import (
+    CHUNK_SIZE,
+    CONF,
+    CONFIG,
+    DETECT,
+    FILETYPES,
+    HALF_PRECISION,
+    IMG_SIZE,
+    IOU,
+    NORMALIZED,
+    VID,
+    WEIGHTS,
+    YOLO,
+)
+from OTVision.dataformat import (
+    CLASS,
+    CONFIDENCE,
+    DATA,
+    DETECTION,
+    DETECTIONS,
+    FILENAME,
+    FILETYPE,
+    HEIGHT,
+    METADATA,
+    MODEL,
+    NUMBER_OF_FRAMES,
+    OTDET_VERSION,
+    OTVISION_VERSION,
+    RECORDED_FPS,
+    VIDEO,
+    WIDTH,
+    H,
+    W,
+    X,
+    Y,
+)
 from OTVision.helpers.files import has_filetype
 from OTVision.helpers.log import get_logger
 
@@ -48,12 +84,13 @@ class YOLOv5ModelNotFoundError(Exception):
 def detect_video(
     file: Path,
     model: Union[torch.nn.Module, None] = None,
-    weights: str = CONFIG["DETECT"]["YOLO"]["WEIGHTS"],
-    conf: float = CONFIG["DETECT"]["YOLO"]["CONF"],
-    iou: float = CONFIG["DETECT"]["YOLO"]["IOU"],
-    size: int = CONFIG["DETECT"]["YOLO"]["IMGSIZE"],
-    chunksize: int = CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"],
-    normalized: bool = CONFIG["DETECT"]["YOLO"]["NORMALIZED"],
+    weights: str = CONFIG[DETECT][YOLO][WEIGHTS],
+    conf: float = CONFIG[DETECT][YOLO][CONF],
+    iou: float = CONFIG[DETECT][YOLO][IOU],
+    size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
+    half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
+    chunksize: int = CONFIG[DETECT][YOLO][CHUNK_SIZE],
+    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
 ) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Detect and classify bounding boxes in videos using YOLOv5
     Args:
@@ -134,7 +171,9 @@ def detect_video(
 
     class_names = results.names
 
-    det_config = _get_det_config(weights, conf, iou, size, chunksize, normalized)
+    det_config = _get_det_config(
+        weights, conf, iou, size, half_precision, class_names, chunksize, normalized
+    )
     vid_config = _get_vidconfig(file, width, height, fps, frames)
     return _convert_detections(yolo_detections, class_names, vid_config, det_config)
 
@@ -336,12 +375,12 @@ def _get_vidconfig(
     file: Path, width: int, height: int, fps: float, frames: int
 ) -> dict[str, Union[str, int, float]]:
     return {
-        "file": str(Path(file).stem),
-        "filetype": str(Path(file).suffix),
-        "width": width,
-        "height": height,
-        "fps": fps,
-        "frames": frames,
+        FILENAME: str(Path(file).stem),
+        FILETYPE: str(Path(file).suffix),
+        WIDTH: width,
+        HEIGHT: height,
+        RECORDED_FPS: fps,
+        NUMBER_OF_FRAMES: frames,
     }
 
 
@@ -349,18 +388,25 @@ def _get_det_config(
     weights: Union[str, Path],
     conf: float,
     iou: float,
-    size: int,
+    image_size: int,
+    half_precision: bool,
+    classes: list[str],
     chunksize: int,
     normalized: bool,
-) -> dict[str, Union[str, int, float]]:
+) -> dict[str, Union[str, int, float, dict]]:
     return {
-        "detector": "YOLOv5",
-        "weights": str(weights),
-        "conf": conf,
-        "iou": iou,
-        "size": size,
-        "chunksize": chunksize,
-        "normalized": normalized,
+        OTVISION_VERSION: version.otvision_version(),
+        MODEL: {
+            dataformat.NAME: "YOLOv5",
+            dataformat.WEIGHTS: str(weights),
+            dataformat.IOU_THRESHOLD: iou,
+            dataformat.IMAGE_SIZE: image_size,
+            dataformat.MAX_CONFIDENCE: conf,
+            dataformat.HALF_PRECISION: half_precision,
+            dataformat.CLASSES: classes,
+        },
+        dataformat.CHUNKSIZE: chunksize,
+        dataformat.NORMALIZED_BBOX: normalized,
     }
 
 
@@ -373,18 +419,18 @@ def _convert_detections_chunks(
         detection: list = []
         for yolo_bbox in yolo_detection:
             bbox = {
-                "class": names[int(yolo_bbox[5])],
-                "conf": yolo_bbox[4],
-                "x": yolo_bbox[0],
-                "y": yolo_bbox[1],
-                "w": yolo_bbox[2],
-                "h": yolo_bbox[3],
+                CLASS: names[int(yolo_bbox[5])],
+                CONFIDENCE: yolo_bbox[4],
+                X: yolo_bbox[0],
+                Y: yolo_bbox[1],
+                W: yolo_bbox[2],
+                H: yolo_bbox[3],
             }
 
             detection.append(bbox)
-        data = {str(no + 1): {"classified": detection}}
+        data = {str(no + 1): {DETECTIONS: detection}}
         # ?: Should every image have a det_config dict? Even if it is always the same?
-        result.append({"metadata": {"det": det_config}, "data": data})
+        result.append({METADATA: {DETECTION: det_config}, DATA: data})
     return result
 
 
@@ -393,7 +439,7 @@ def _convert_detections(
     yolo_detections: list,
     names: dict,
     vid_config: dict[str, Union[str, int, float]],
-    det_config: dict[str, Union[str, int, float]],
+    det_config: dict[str, Union[str, int, float, dict]],
 ) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     data = {}
     for no, yolo_detection in enumerate(yolo_detections):
@@ -401,16 +447,23 @@ def _convert_detections(
         detection: list = []
         for yolo_bbox in yolo_detection:
             bbox = {
-                "class": names[int(yolo_bbox[5])],
-                "conf": yolo_bbox[4],
-                "x": yolo_bbox[0],
-                "y": yolo_bbox[1],
-                "w": yolo_bbox[2],
-                "h": yolo_bbox[3],
+                CLASS: names[int(yolo_bbox[5])],
+                CONFIDENCE: yolo_bbox[4],
+                X: yolo_bbox[0],
+                Y: yolo_bbox[1],
+                W: yolo_bbox[2],
+                H: yolo_bbox[3],
             }
             detection.append(bbox)
-        data[str(no + 1)] = {"classified": detection}
-    return {"metadata": {"vid": vid_config, "det": det_config}, "data": data}
+        data[str(no + 1)] = {DETECTIONS: detection}
+    return {
+        METADATA: {
+            OTDET_VERSION: version.otdet_version(),
+            VIDEO: vid_config,
+            DETECTION: det_config,
+        },
+        DATA: data,
+    }
 
 
 def _containsvideo(file_chunks: list[list[Path]]) -> bool:

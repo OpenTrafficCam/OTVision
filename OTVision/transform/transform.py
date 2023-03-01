@@ -87,7 +87,9 @@ def main(
     track_filetype = CONFIG[FILETYPES][TRACK]
 
     if refpts_file:
+
         log.info(f"Reading global reference points file at {refpts_file}")
+
         refpts_filetype = CONFIG[FILETYPES][REFPTS]
 
         if not refpts_file.exists():
@@ -104,6 +106,7 @@ def main(
             hemisphere,
             homography_eval_dict,
         ) = get_homography(refpts=refpts)
+
         log.info("Successfully read reference points file")
 
     tracks_files = get_files(paths=paths, filetypes=CONFIG[FILETYPES][TRACK])
@@ -149,6 +152,7 @@ def main(
                 hemisphere,
                 homography_eval_dict,
             ) = get_homography(refpts=refpts)
+
             log.debug("Homography matrix created")
 
         # Read tracks
@@ -162,6 +166,7 @@ def main(
             refpts_utm_upshifted_predecimal_pt1_1row=refpts_utm_upshift_predecimal,
             upshift_utm=upshift_utm,
         )
+
         log.debug("Tracks transformed")
 
         # Add crs information tp metadata dict
@@ -173,6 +178,7 @@ def main(
             utm_zone=utm_zone, hemisphere=hemisphere
         )
         metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
+
         log.debug(f"metadata: {metadata_dict}")
 
         # Write tracks
@@ -183,6 +189,7 @@ def main(
             hemisphere=hemisphere,
             tracks_file=tracks_file,
         )
+
 
         log.info(f"Successfully transformed and wrote {tracks_file}")
 

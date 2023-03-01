@@ -153,12 +153,14 @@ def convert(
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
+    
     if not overwrite and output_video_file.is_file():
         log.warning(
             f"{output_video_file} already exists. To overwrite, set overwrite to True"
         )
         return None
     vid_filetypes = CONFIG["FILETYPES"]["VID"]
+    
     if input_filetype == ".h264" and output_filetype in vid_filetypes:
         if fps_from_filename:
             input_fps = _get_fps_from_filename(input_filename)
@@ -216,7 +218,8 @@ def convert(
                 input_video_file.unlink()
 
     elif input_filetype != ".h264":
-        raise TypeError("Input video filetype has to ne .h264")
+        raise TypeError("Input video filetype has to be .h264")
+
     else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
 
