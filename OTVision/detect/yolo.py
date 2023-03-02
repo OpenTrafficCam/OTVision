@@ -122,6 +122,12 @@ def detect_video(
         )
 
     cap = VideoCapture(str(file))
+
+    width = cap.get(3)  # float
+    height = cap.get(4)  # float
+    fps = cap.get(CAP_PROP_FPS)  # float
+    frames = cap.get(7)  # float (CAP_PROP_FRAME_COUNT)
+
     batch_no = 0
 
     got_frame = True
@@ -159,10 +165,6 @@ def detect_video(
         )
         batch_no += 1
 
-        width = cap.get(3)  # float
-        height = cap.get(4)  # float
-        fps = cap.get(CAP_PROP_FPS)  # float
-        frames = cap.get(7)  # float
         t_loop_overhead = perf_counter() - t_list
 
     t2 = perf_counter()
