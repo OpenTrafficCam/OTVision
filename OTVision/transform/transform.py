@@ -28,6 +28,7 @@ import cv2
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from OTVision.config import (
     CONFIG,
@@ -118,7 +119,7 @@ def main(
             f"No files of type '{track_filetype}' found to transform!"
         )
 
-    for tracks_file in tracks_files:
+    for tracks_file in tqdm(tracks_files, desc="Transformed track files", unit="files"):
         gpkg_file = tracks_file.with_suffix(".gpkg")
 
         if not overwrite and gpkg_file.is_file():
