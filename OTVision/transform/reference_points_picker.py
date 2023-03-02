@@ -109,23 +109,20 @@ class ReferencePointsPicker:
             FrameNotAvailableError: If frame cannt be read
         """
         if not self.video:
-            self.video = cv2.VideoCapture(self.file)
+            self.video = cv2.VideoCapture(str(self.file))
+        if not self.video.isOpened():
+            raise VideoWontOpenError(f"Error opening this video file: {self.file}")
+        total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
+        if random_frame:
+            frame_nr = randrange(0, total_frames)
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_nr)
         else:
-            if self.video.isOpened():
-                raise VideoWontOpenError(
-                    f"Error opening this video file: {self.video_file}"
-                )
-            total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
-            if random_frame:
-                frame_nr = randrange(0, total_frames)
-                self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_nr)
-            else:
-                frame_nr = self.video.get(cv2.CAP_PROP_POS_FRAMES)
-                if frame_nr >= total_frames:
-                    self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, self.base_image = self.video.read()
-            if not ret:
-                raise FrameNotAvailableError("Video Frame cannot be read correctly")
+            frame_nr = self.video.get(cv2.CAP_PROP_POS_FRAMES)
+            if frame_nr >= total_frames:
+                self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        ret, self.base_image = self.video.read()
+        if not ret:
+            raise FrameNotAvailableError("Video Frame cannot be read correctly")
 
     def update_image(self):
         """Show the current image"""
