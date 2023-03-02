@@ -20,13 +20,12 @@ OTVision script to call the track main with arguments parsed from command line
 
 
 import argparse
+import logging
 from pathlib import Path
 
 import OTVision
 import OTVision.config as config
-from OTVision.helpers.log import get_logger
-
-log = get_logger(__name__)
+from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
 def parse() -> argparse.Namespace:
@@ -53,12 +52,6 @@ def parse() -> argparse.Namespace:
         help="Overwrite existing output files",
     )
     parser.add_argument(
-        "-d",
-        "--debug",
-        action=argparse.BooleanOptionalAction,
-        help="Logging in debug mode",
-    )
-    parser.add_argument(
         "--sigma_l",
         type=float,
         help="Set sigma_l paramter for tracking",
@@ -83,6 +76,26 @@ def parse() -> argparse.Namespace:
         type=int,
         help="Set t_miss_max paramter for tracking",
     )
+    parser.add_argument(
+        "--log_level_console",
+        type=str,
+        choices=VALID_LOG_LEVELS,
+        help="Log level for logging to the console",
+        required=False,
+    )
+    parser.add_argument(
+        "--log_level_file",
+        type=str,
+        choices=VALID_LOG_LEVELS,
+        help="Log level for logging to a log file",
+        required=False,
+    )
+    parser.add_argument(
+        "--log_dir",
+        type=str,
+        help="Path to directory to write the log files",
+        required=False,
+    )
     return parser.parse_args()
 
 
@@ -96,38 +109,21 @@ def _process_config(args: argparse.Namespace) -> None:
             config.parse_user_config(str(user_config_cwd))
 
 
-def _extract_paths(args: argparse.Namespace) -> list[str]:
-    if args.paths:
-        return args.paths
-    if len(config.CONFIG[config.TRACK][config.PATHS]) == 0:
-        raise IOError(
-            "No paths have been passed as command line args."
-            "No paths have been defined in the user config."
-        )
-
-    return config.CONFIG[config.TRACK][config.PATHS]
-
-
-def main() -> None:  # sourcery skip: assign-if-exp
-    args = parse()
-    _process_config(args)
+def _process_parameters(
+    args: argparse.Namespace, log: logging.Logger
+) -> tuple[list[Path], float, float, float, int, int, bool]:
     try:
         str_paths = _extract_paths(args)
-    except IOError as ioe:
-        log.exception(ioe)
-        return
+    except IOError:
+        log.exception(
+            f"Unable to extract pathlib.Path from the paths you specified: {str_paths}"
+        )
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
     paths = [Path(str_path) for str_path in str_paths]
-
-    if args.overwrite is None:
-        overwrite = config.CONFIG[config.TRACK][config.OVERWRITE]
-    else:
-        overwrite = args.overwrite
-
-    if args.debug is None:
-        debug = config.CONFIG[config.TRACK][config.DEBUG]
-    else:
-        debug = args.debug
 
     if args.sigma_l is None:
         sigma_l = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_L]
@@ -154,6 +150,77 @@ def main() -> None:  # sourcery skip: assign-if-exp
     else:
         t_miss_max = args.t_miss_max
 
+    if args.overwrite is None:
+        overwrite = config.CONFIG[config.TRACK][config.OVERWRITE]
+    else:
+        overwrite = args.overwrite
+
+    return paths, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max, overwrite
+
+
+def _extract_paths(args: argparse.Namespace) -> list[str]:
+    if args.paths:
+        return args.paths
+    if len(config.CONFIG[config.TRACK][config.PATHS]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
+
+    return config.CONFIG[config.TRACK][config.PATHS]
+
+
+# TODO: Refactor/outsource this function, as it is redundant in each CLI script
+def _configure_logger(args: argparse.Namespace) -> logging.Logger:
+    # Add console handler to existing logger instance
+
+    if args.log_level_console is None:
+        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
+    else:
+        log_level_console = args.log_level_console
+
+    log.add_console_handler(level=log_level_console)
+
+    # Add file handler to existing logger instance
+
+    if args.log_level_file is None:
+        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+    else:
+        log_level_file = args.log_level_file
+
+    if args.log_dir is None:
+        try:
+            log_dir = Path(config.CONFIG[config.LOG][config.LOG_DIR])
+        except TypeError:
+            print("No valid LOG_DIR specified in config, check your config file")
+            raise
+    else:
+        log_dir = Path(args.log_dir)
+
+    log.add_file_handler(log_dir=log_dir, level=log_level_file)
+
+    # Return and overwrite log variable pointing to same global object from log.py
+
+    return logging.getLogger(LOGGER_NAME)
+
+
+def main() -> None:  # sourcery skip: assign-if-exp
+    args = parse()
+
+    _process_config(args)
+
+    log = _configure_logger(args)
+
+    (
+        paths,
+        sigma_l,
+        sigma_h,
+        sigma_iou,
+        t_min,
+        t_miss_max,
+        overwrite,
+    ) = _process_parameters(args, log)
+
     log.info("Call track from command line")
     log.info(f"Arguments: {vars(args)}")
 
@@ -166,10 +233,13 @@ def main() -> None:  # sourcery skip: assign-if-exp
             t_min=t_min,
             t_miss_max=t_miss_max,
             overwrite=overwrite,
-            debug=debug,
         )
-    except FileNotFoundError as fnfe:
-        log.exception(fnfe)
+    except FileNotFoundError:
+        log.exception(f"One of the following files cannot be found: {paths}")
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 if __name__ == "__main__":
