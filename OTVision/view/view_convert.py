@@ -19,16 +19,17 @@ OTVision gui module for convert.py
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import tkinter as tk
 import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.view.view_helpers import FrameRun
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 class FrameConvert(tk.LabelFrame):

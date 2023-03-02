@@ -19,15 +19,16 @@ OTVision gui module for track.py
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.track import main as track
 from OTVision.view.view_helpers import FrameRun
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 class FrameTrack(tk.LabelFrame):

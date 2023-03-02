@@ -19,13 +19,15 @@ OTVision module for calculating a homography from reference points
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
+
 import cv2
 import numpy as np
 import pandas as pd
 
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 # TODO: Type hint nested dict during refactoring

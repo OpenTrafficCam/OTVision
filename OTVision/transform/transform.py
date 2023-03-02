@@ -19,6 +19,7 @@ OTVision main module for transforming tracks from pixel to world coordinates
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 from copy import deepcopy
 from pathlib import Path
 from typing import Union
@@ -30,7 +31,6 @@ import pandas as pd
 
 from OTVision.config import (
     CONFIG,
-    DEBUG,
     DEFAULT_FILETYPE,
     FILETYPES,
     OVERWRITE,
@@ -51,18 +51,17 @@ from OTVision.helpers.formats import (
     _get_time_from_frame_number,
     _ottrk_dict_to_df,
 )
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
 from .get_homography import get_homography
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 def main(
     paths: list[Path],
     refpts_file: Union[Path, None] = None,
     overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
-    debug: bool = CONFIG[TRANSFORM][DEBUG],
 ) -> None:
     """Transform tracks files containing trajectories in pixel coordinates to .gpkg
     files with trajectories in utm coordinates using either one single refpts file for

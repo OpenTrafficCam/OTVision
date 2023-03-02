@@ -18,9 +18,9 @@ OTVision main module to detect objects in single or multiple images or videos.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 import re
 from datetime import datetime, timedelta
-
 from pathlib import Path
 from typing import Union
 
@@ -31,7 +31,6 @@ from OTVision.config import (
     CHUNK_SIZE,
     CONF,
     CONFIG,
-    DEBUG,
     DEFAULT_FILETYPE,
     DETECT,
     FILETYPES,
@@ -45,16 +44,14 @@ from OTVision.config import (
     WEIGHTS,
     YOLO,
 )
-
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.helpers.files import get_files, write_json
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
 
 from . import yolo
 
-
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 START_DATE = "start_date"
 FILE_NAME_PATTERN = (
@@ -73,11 +70,10 @@ def main(
     iou: float = CONFIG[DETECT][YOLO][IOU],
     size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
     chunksize: int = CONFIG[DETECT][YOLO][CHUNK_SIZE],
-    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
-    overwrite: bool = CONFIG[DETECT][OVERWRITE],
-    debug: bool = CONFIG[DETECT][DEBUG],
     half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
     force_reload_torch_hub_cache: bool = CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
+    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
+    overwrite: bool = CONFIG[DETECT][OVERWRITE],
 ) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.

@@ -19,14 +19,15 @@ OTVision config module for setting default values
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 # CONFIG dict keys
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
@@ -78,6 +79,32 @@ VIDEOS = "VIDEOS"
 WEIGHTS = "WEIGHTS"
 WINDOW = "WINDOW"
 YOLO = "YOLO"
+LOG = "LOG"
+LOG_LEVEL_CONSOLE = "LOG_LEVEL_CONSOLE"
+LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
+LOG_DIR = "LOG_DIR"
+
+
+@dataclass
+class _LogConfig:
+    log_level_console: str = "WARNING"
+    log_level_file: str = "DEBUG"
+    log_dir: Path = Path.cwd()
+
+    @staticmethod
+    def from_dict(d: dict) -> "_LogConfig":
+        return _LogConfig(
+            d.get(LOG_LEVEL_CONSOLE, _LogConfig.log_level_console),
+            d.get(LOG_LEVEL_FILE, _LogConfig.log_level_file),
+            d.get(LOG_DIR, _LogConfig.log_dir),
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            LOG_LEVEL_CONSOLE: self.log_level_console,
+            LOG_LEVEL_FILE: self.log_level_file,
+            LOG_DIR: self.log_dir,
+        }
 
 
 @dataclass
@@ -465,6 +492,7 @@ class Config:
     Updates the default configuration with the custom config.
     """
 
+    log: _LogConfig = _LogConfig()
     search_subdirs: bool = True
     default_filetype: _DefaultFiletype = _DefaultFiletype()
     filetypes: _Filetypes = _Filetypes()
@@ -486,6 +514,7 @@ class Config:
         Returns:
             Config: The built `Config` object.
         """
+        log_dict = d.get(LOG)
         default_filtetype_dict = d.get(DEFAULT_FILETYPE)
         convert_dict = d.get(CONVERT)
         detect_dict = d.get(DETECT)
@@ -494,6 +523,7 @@ class Config:
         transform_dict = d.get(TRANSFORM)
         gui_dict = d.get(GUI)
 
+        log_config = _LogConfig.from_dict(log_dict) if log_dict else Config.log
         default_filetype = (
             _DefaultFiletype.from_dict(default_filtetype_dict)
             if default_filtetype_dict
@@ -521,6 +551,7 @@ class Config:
         gui_config = _GuiConfig.from_dict(gui_dict) if gui_dict else Config.gui
 
         return Config(
+            log=log_config,
             search_subdirs=d.get(SEARCH_SUBDIRS, Config.search_subdirs),
             default_filetype=default_filetype,
             convert=convert_config,
@@ -538,6 +569,7 @@ class Config:
             dict: The OTVision config.
         """
         return {
+            LOG: self.log.to_dict(),
             SEARCH_SUBDIRS: self.search_subdirs,
             DEFAULT_FILETYPE: self.default_filetype.to_dict(),
             FILETYPES: self.filetypes.to_dict(),
@@ -584,6 +616,12 @@ def parse_user_config(yaml_file: str) -> None:
 
 # sourcery skip: merge-dict-assign
 CONFIG: dict = {}
+
+# LOGGING
+CONFIG[LOG] = {}
+CONFIG[LOG][LOG_LEVEL_CONSOLE] = "WARNING"
+CONFIG[LOG][LOG_LEVEL_FILE] = "DEBUG"
+CONFIG[LOG][LOG_DIR] = Path.cwd()
 
 # FOLDERS
 CONFIG[SEARCH_SUBDIRS] = True

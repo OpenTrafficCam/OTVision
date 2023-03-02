@@ -19,6 +19,7 @@ OTVision helpers for filehandling
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bz2
+import logging
 import shutil
 import time
 from pathlib import Path
@@ -29,9 +30,9 @@ import ujson
 from OTVision import dataformat
 from OTVision.config import CONFIG
 from OTVision.dataformat import INPUT_FILE_PATH
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 ENCODING = "UTF-8"
 COMPRESSED_FILETYPE = ".bz2"

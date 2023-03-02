@@ -21,6 +21,7 @@ OTVision main module for tracking objects in successive frames of videos
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 from pathlib import Path
 
 from OTVision import dataformat
@@ -46,12 +47,12 @@ from OTVision.helpers.files import (
     get_files,
     write_json,
 )
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Preprocess, Splitter
 
 from .iou import track_iou
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 def main(

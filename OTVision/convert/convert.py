@@ -19,6 +19,7 @@ OTVision main module for converting videos to other formats and frame rates.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -35,9 +36,9 @@ from OTVision.config import (
 )
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 OUTPUT_FPS: Optional[float] = None
 
@@ -49,7 +50,6 @@ def main(
     fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
     overwrite: bool = CONFIG[CONVERT][OVERWRITE],
     delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
-    debug: bool = CONFIG[CONVERT][DEBUG],
 ) -> None:
     """Converts multiple h264-based videos into other formats.
 

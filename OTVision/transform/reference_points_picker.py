@@ -21,6 +21,7 @@ from pixel to world coordinates
 
 
 import json
+import logging
 import tkinter as tk
 from pathlib import Path
 from random import randrange
@@ -31,9 +32,9 @@ from typing import Any, Union
 import cv2
 
 from OTVision.helpers.files import is_image, is_video
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 class ReferencePointsPicker:

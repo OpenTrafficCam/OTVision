@@ -18,6 +18,7 @@ OTVision module to detect objects using yolov5
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Union
@@ -64,9 +65,9 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.helpers.files import has_filetype
-from OTVision.helpers.log import get_logger
+from OTVision.helpers.log import LOGGER_NAME
 
-log = get_logger(__name__)
+log = logging.getLogger(LOGGER_NAME)
 
 
 class VideoFiletypeNotSupportedError(Exception):
