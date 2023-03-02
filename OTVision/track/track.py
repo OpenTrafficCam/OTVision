@@ -24,6 +24,8 @@ OTVision main module for tracking objects in successive frames of videos
 import logging
 from pathlib import Path
 
+from tqdm import tqdm
+
 from OTVision import dataformat
 from OTVision.config import (
     CONFIG,
@@ -109,7 +111,7 @@ def main(
     preprocessed = preprocessor.run(detections_files)
 
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
-    for frame_group in preprocessed.frame_groups:
+    for frame_group in tqdm(preprocessed.frame_groups):
         existing_output_files = frame_group.get_existing_output_files(
             with_suffix=file_type
         )

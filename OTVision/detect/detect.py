@@ -26,6 +26,7 @@ from typing import Union
 
 import torch
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from tqdm import tqdm
 
 from OTVision.config import (
     CHUNK_SIZE,
@@ -135,7 +136,7 @@ def main(
     log.info(model_succes_msg)
     print(model_succes_msg)
 
-    for video_file in video_files:
+    for video_file in tqdm(video_files):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
         if not overwrite and detections_file.is_file():

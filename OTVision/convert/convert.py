@@ -24,6 +24,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from tqdm import tqdm
+
 from OTVision.config import (
     CONFIG,
     CONVERT,
@@ -82,7 +84,7 @@ def main(
 
     check_ffmpeg()
 
-    for h264_file in h264_files:
+    for h264_file in tqdm(h264_files):
         log.info(f"Convert {h264_file} to {output_filetype}")
         convert(
             h264_file,
