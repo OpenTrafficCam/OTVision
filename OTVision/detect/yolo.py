@@ -26,6 +26,7 @@ from typing import Any, Union
 import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
+from tqdm import tqdm
 
 from OTVision import dataformat, version
 from OTVision.config import (
@@ -132,6 +133,10 @@ def detect_video(
 
     got_frame = True
     t_loop_overhead = 0.0
+
+    pbar = tqdm(
+        total=int(frames), desc="Detected frames     ", leave=False, unit="frames"
+    )
     while got_frame:
         t_start = perf_counter()
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
@@ -164,6 +169,8 @@ def detect_video(
             len(img_batch),
         )
         batch_no += 1
+
+        pbar.update(1)
 
         t_loop_overhead = perf_counter() - t_list
 
