@@ -24,40 +24,85 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-FORMATTER = logging.Formatter(
-    "%(asctime)s %(levelname)s (%(name)s in %(funcName)s"
-    " at line %(lineno)d): %(message)s"
-)
+LOGGER_NAME = "OTVision Logger"
 
-DATETIME_STR = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
+DEFAULT_DIR = Path.cwd()
 
-LOG_DIR = Path.cwd() / "otvision_logs"
-
-LOG_FILENAME = f"{DATETIME_STR}.log"
+VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
-def get_log_file() -> Path:
-    if not LOG_DIR.is_dir():
-        LOG_DIR.mkdir(parents=True, exist_ok=True)
-    return LOG_DIR / LOG_FILENAME
+class _OTVisionLogger:
+    """Class for creating a logging.Logger.
+    Should only be instanciated once in the same module as this class.
+    To access this instance, use logging.getLogger(LOGGER_NAME)
+    with LOGGER_NAME from the same module where this class is defined.
+    """
+
+    def __init__(self, name: str = LOGGER_NAME) -> None:
+        self.logger = logging.getLogger(name=name)
+        self.logger.setLevel("DEBUG")
+        self._set_filename()
+        self._set_formatter()
+
+    def _set_formatter(self) -> None:
+        self.formatter = logging.Formatter(
+            "%(asctime)s %(levelname)s (%(filename)s::%(funcName)s"
+            "::%(lineno)d): %(message)s"
+        )
+
+    def _set_filename(self) -> None:
+        datetime_str = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
+        self.filename = f"{datetime_str}.log"
+
+    def _add_handler(self, handler: logging.Handler, level: str) -> None:
+        handler.setFormatter(self.formatter)
+        handler.setLevel(level=level)
+        self.logger.addHandler(handler)
+
+    def add_file_handler(
+        self, log_dir: Path = DEFAULT_DIR, level: str = "DEBUG"
+    ) -> None:
+        """Add a file handler to the already existing global instance of
+        _OTVisionLogger.
+        Should only be used once in each of OTVisions command line or
+        graphical user interfaces.
+
+        Args:
+            log_dir (Path): Path to the directory to write the logs.
+                Defaults to None.
+            level (str): Logging level of the file handler.
+                One from "DEBUG", "INFO", "WARNING", "ERROR" or "CRITICAL".
+
+        IMPORTANT:
+            log_dir and level are not intended to be optional, they have to be provided
+            in every case. The default values provided are a safety net.
+        """
+        log_subdir = log_dir / "_otvision_logs"
+        if not log_subdir.is_dir():
+            log_subdir.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_subdir / self.filename)
+        self._add_handler(file_handler, level)
+
+    def add_console_handler(self, level: str = "WARNING") -> None:
+        """Add a console handler to the already existing global instance of
+        _OTVisionLogger.
+        Should only be used once in each of OTVisions command line or
+        graphical user interfaces.
+
+        Args:
+            level (str): Logging level of the console handler.
+                One from "DEBUG", "INFO", "WARNING", "ERROR" or "CRITICAL".
+                Defaults to "WARNING".
+
+        IMPORTANT:
+            level is not intended to be optional, it has to be provided
+            in every case. The default value provided is a safety net.
+        """
+        console_handler = logging.StreamHandler(sys.stdout)
+        self._add_handler(console_handler, level)
 
 
-FILE_HANDLER: logging.Handler = logging.FileHandler(filename=get_log_file())
-FILE_HANDLER.setFormatter(FORMATTER)
-FILE_HANDLER.setLevel(level=logging.DEBUG)
+# This here should be the only time the _OTVisionLogger is "directly" instanciated
+# In all other module that should be logged from, use logging.getLogger(LOGGER_NAME)
 
-
-def get_console_handler() -> logging.Handler:
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(FORMATTER)
-    console_handler.setLevel(level=logging.WARNING)
-    return console_handler
-
-
-def get_logger(name: str) -> logging.Logger:
-    logger = logging.getLogger(name=name)
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(hdlr=get_console_handler())
-    logger.addHandler(hdlr=FILE_HANDLER)
-    logger.propagate = False
-    return logger
+log = _OTVisionLogger()
