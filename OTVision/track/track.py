@@ -111,7 +111,9 @@ def main(
     preprocessed = preprocessor.run(detections_files)
 
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
-    for frame_group in tqdm(preprocessed.frame_groups):
+    for frame_group in tqdm(
+        preprocessed.frame_groups, desc="Tracked frame groups", unit="framegroups"
+    ):
         existing_output_files = frame_group.get_existing_output_files(
             with_suffix=file_type
         )

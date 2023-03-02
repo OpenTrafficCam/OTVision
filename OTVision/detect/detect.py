@@ -136,7 +136,7 @@ def main(
     log.info(model_succes_msg)
     print(model_succes_msg)
 
-    for video_file in tqdm(video_files):
+    for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
         if not overwrite and detections_file.is_file():
