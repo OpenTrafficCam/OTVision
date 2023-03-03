@@ -195,7 +195,6 @@ def convert(
         # ffmpeg_cmd = rf"ffmpeg {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         ffmpeg_cmd = (
             ["ffmpeg"]
-            + ["-hide_banner -loglevel error-"]
             + input_fps_cmds
             + input_file_cmds
             + filter_cmds
