@@ -195,6 +195,7 @@ def convert(
         # ffmpeg_cmd = rf"ffmpeg {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
         ffmpeg_cmd = (
             ["ffmpeg"]
+            + ["-hide_banner -loglevel error-"]
             + input_fps_cmds
             + input_file_cmds
             + filter_cmds
@@ -229,12 +230,25 @@ def convert(
 def check_ffmpeg() -> None:
     """Checks, if ffmpeg is available"""
 
+    exception_msg = "ffmpeg can not be called, check it's installed correctly"
+
     try:
-        subprocess.call("ffmpeg")
+        subprocess.run(
+            ["ffmpeg"], 
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
         log.info("ffmpeg was found")
-    except FileNotFoundError as e:
-        error_message = "ffmpeg could not be called, make sure ffmpeg is in path"
-        raise FileNotFoundError(error_message) from e
+    except FileNotFoundError:
+        log.exception(exception_msg)
+        raise
+    except subprocess.CalledProcessError:
+        log.exception(exception_msg)
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 def _check_types(
