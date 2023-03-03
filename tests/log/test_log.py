@@ -11,7 +11,6 @@ from .log_maker import LogMaker
 
 class WrongNumberOfFilesFoundError(Exception):
     "Too few or too many log files have been created during this test run"
-    pass
 
 
 class TestLog:
@@ -35,14 +34,14 @@ class TestLog:
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
         # Create log message
-        log_msg = "This is a log message for a custom error"
+        log_msg = "Caught exception"
 
         # Make log
-        self.log_maker.raise_error_and_log(log_msg)
+        self.log_maker.raise_catch_and_log_error(log_msg)
 
         # Check if log message, error message and traceback are correct
         assert log_msg in caplog.text
-        assert "MyCustomError" in caplog.text
+        assert "CaughtError" in caplog.text
 
     @pytest.mark.parametrize("logger_level", VALID_LOG_LEVELS)
     @pytest.mark.parametrize("log_level", VALID_LOG_LEVELS)

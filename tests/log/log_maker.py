@@ -5,8 +5,8 @@ from OTVision.helpers.log import LOG_LEVEL_INTEGERS, LOGGER_NAME
 log = logging.getLogger(LOGGER_NAME)
 
 
-class MyCustomError(Exception):
-    "This is a custom error message"
+class CaughtError(Exception):
+    "This is an error message of a caught error"
 
 
 class LogMaker:
@@ -39,8 +39,8 @@ class LogMaker:
             case 50:
                 log.critical(log_msg)
 
-    def raise_error_and_log(self, log_msg: str) -> None:
+    def raise_catch_and_log_error(self, log_msg: str) -> None:
         try:
-            raise MyCustomError
-        except MyCustomError:
+            raise CaughtError
+        except CaughtError:
             log.exception(msg=log_msg)
