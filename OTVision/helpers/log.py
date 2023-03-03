@@ -109,6 +109,10 @@ class _OTVisionLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         self._add_handler(console_handler, level)
 
+    def _remove_handlers(self) -> None:
+        for handler in self.logger.handlers:
+            self.logger.removeHandler(handler)
+
 
 # This here should be the only time the _OTVisionLogger is "directly" instanciated
 # In all other module that should be logged from, use logging.getLogger(LOGGER_NAME)

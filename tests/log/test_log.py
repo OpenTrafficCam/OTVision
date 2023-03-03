@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from OTVision.helpers.log import LOG_LEVEL_INTEGERS, VALID_LOG_LEVELS, log
+from tests.conftest import YieldFixture
 
 from .log_maker import LogMaker
 
@@ -13,6 +14,13 @@ class WrongNumberOfFilesFoundError(Exception):
     "Too few or too many log files have been created during this test run"
 
 
+@pytest.fixture()
+def teardown_handlers_after_test() -> YieldFixture:
+    yield
+    log._remove_handlers()
+
+
+@pytest.mark.usefixtures("teardown_handlers_after_test")
 class TestLog:
     log_maker: LogMaker = LogMaker()
 
@@ -94,3 +102,5 @@ class TestLog:
 
         # Compare test and reference log files
         assert cmp(ref_log_file, test_log_file)
+
+        # Close and remove file handler
