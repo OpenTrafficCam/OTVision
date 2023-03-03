@@ -233,7 +233,7 @@ def check_ffmpeg() -> None:
 
     try:
         subprocess.run(
-            ["ffmpeg"],
+            ["ffmpeg", "-version"],
             check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
