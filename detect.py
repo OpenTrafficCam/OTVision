@@ -21,6 +21,7 @@ OTVision script to call the detect main with arguments parsed from command line
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 import OTVision
@@ -28,7 +29,7 @@ import OTVision.config as config
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
-def parse() -> argparse.Namespace:
+def parse(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect objects in videos or images")
     parser.add_argument(
         "-p",
@@ -113,7 +114,7 @@ def parse() -> argparse.Namespace:
         help="Path to directory to write the log files",
         required=False,
     )
-    return parser.parse_args()
+    return parser.parse_args(argv[1:])
 
 
 def _process_config(args: argparse.Namespace) -> None:
@@ -239,8 +240,8 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main() -> None:  # sourcery skip: assign-if-exp
-    args = parse()
+def main(argv: list[str]) -> int:  # sourcery skip: assign-if-exp
+    args = parse(argv)
 
     _process_config(args)
 
@@ -280,6 +281,8 @@ def main() -> None:  # sourcery skip: assign-if-exp
         log.exception("")
         raise
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv))

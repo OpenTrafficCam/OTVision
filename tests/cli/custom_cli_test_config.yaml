@@ -8,7 +8,7 @@ CONVERT:
   OVERWRITE: true
 
 DETECT:
-  PATHS: []
+  PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
   DEBUG: false
   FORCE_RELOAD_TORCH_HUB_CACHE: false
   HALF_PRECISION: false
