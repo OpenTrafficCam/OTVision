@@ -1,87 +1,143 @@
 import unittest.mock as mock
 from pathlib import Path
+from typing import Callable
 from unittest.mock import patch
 
-# import pytest
-# import sys
-# from tests.conftest import YieldFixture
+import pytest
+import yaml
 
-# @pytest.fixture()
-# def add_root_dir_to_path() -> YieldFixture:
-#     """Add the root dir of the repository to pythonpath for the time of the test"""
+CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
+with open(CUSTOM_CONFIG_FILE, "r") as file:
+    custom_config = yaml.safe_load(file)
 
-#     # Get the absolute path to the root folder of the repository
-#     root_dir = Path(__file__).resolve().parents[3]
+CWD_CONFIG_FILE = r"user_config.otvision.yaml"
+with open(CWD_CONFIG_FILE, "r") as file:
+    cwd_config = yaml.safe_load(file)
 
-#     # Add the root folder to the PYTHONPATH
-#     sys.path.insert(0, str(root_dir))
-
-#     yield
-
-#     # Remove
-#     sys.path.remove(root_dir)
-
-
-# @pytest.mark.usefixtures("add_root_dir_to_path")
-
-test_data: dict = {"paths": {}, "input_fps": {}}
-
-test_data["paths"]["passed"] = [r"/usr/local/bin", r"C:/Program Files/Python/Scripts"]
-test_data["paths"]["expected"] = [
-    Path("/usr/local/bin"),
-    Path("C:/Program Files/Python/Scripts"),
-]
-
-test_data["input_fps"]
-
-
-def test_convert_cli() -> None:
-    # Import main functions from cli and from subpackage
-    from convert import main as convert_cli  # main from the cli script in the root dir
-    from OTVision import convert  # main from OTVision.convert.convert.py
-
-    # Create a mock object based
-    convert = mock.create_autospec(convert)
-
-    # As long as the patch context manager lives, convert is replaced by mock_convert
-    with patch("OTVision.convert") as mock_convert:
-        # Define commands passed to convert_cli´s main
-        module = "convert.py"
-        paths_tag = "-p"
-        paths = [r"/usr/local/bin", r"C:/Program Files/Python/Scripts"]
-        input_fps_tag = "--input_fps"
-        input_fps = "20"
-        fps_from_filename = "--fps_from_filename"
-        overwrite = "--overwrite"
-        delete_input = "--no-delete_input"
-        cmd = [
-            module,
-            paths_tag,
-            *paths,
-            input_fps_tag,
-            input_fps,
-            fps_from_filename,
-            overwrite,
-            delete_input,
-        ]
-        # Call convert_cli´s main with this command
-        convert_cli(argv=cmd)
-
-        # Define expected arguments
-        expected_paths = [
+TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
+    "paths": {
+        "passed": "-p /usr/local/bin C:/Python/Scripts",
+        "expected": [
             Path("/usr/local/bin"),
-            Path("C:/Program Files/Python/Scripts"),
-        ]
-        expected_input_fps = 20
-        expected_fps_from_filename = True
-        expected_overwrite = True
-        expected_delete_input = False
+            Path("C:/Python/Scripts"),
+        ],
+    },
+    "input_fps": {"passed": "--input_fps 30", "expected": 30},
+    "fps_from_filename": {"passed": "--fps_from_filename", "expected": True},
+    "overwrite": {"passed": "--overwrite", "expected": True},
+    "delete_input": {"passed": "--no-delete_input", "expected": False},
+    "config": {"passed": ""},
+}
 
-        # Asserting that the target function was called once with the expected arguments
-        mock_convert.assert_called_once_with(
-            paths=expected_paths,
-            input_fps=expected_input_fps,
-            fps_from_filename=expected_fps_from_filename,
-            overwrite=expected_overwrite,
-            delete_input=expected_delete_input,
-        )
+TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
+    "paths": {
+        "passed": "-p /usr/local/file.ext C:/Python/file.ext",
+        "expected": [
+            Path("/usr/local/file.ext"),
+            Path("C:/Python/file.ext"),
+        ],
+    },
+    "input_fps": {"passed": "--input_fps 25", "expected": 25},
+    "fps_from_filename": {"passed": "--no-fps_from_filename", "expected": False},
+    "overwrite": {"passed": "--no-overwrite", "expected": False},
+    "delete_input": {"passed": "--delete_input", "expected": True},
+    "config": {"passed": ""},
+}
+
+TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
+    "paths": {
+        "passed": "-p /usr/local/bin",
+        "expected": [
+            Path("/usr/local/bin"),
+        ],
+    },
+    "input_fps": {"passed": "", "expected": cwd_config["CONVERT"]["INPUT_FPS"]},
+    "fps_from_filename": {
+        "passed": "",
+        "expected": cwd_config["CONVERT"]["FPS_FROM_FILENAME"],
+    },
+    "overwrite": {"passed": "", "expected": cwd_config["CONVERT"]["OVERWRITE"]},
+    "delete_input": {"passed": "", "expected": cwd_config["CONVERT"]["DELETE_INPUT"]},
+    "config": {"passed": ""},
+}
+
+TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
+    "paths": {
+        "passed": "-p /usr/local/bin",
+        "expected": [
+            Path("/usr/local/bin"),
+        ],
+    },
+    "input_fps": {"passed": "", "expected": custom_config["CONVERT"]["INPUT_FPS"]},
+    "fps_from_filename": {
+        "passed": "",
+        "expected": custom_config["CONVERT"]["FPS_FROM_FILENAME"],
+    },
+    "overwrite": {"passed": "", "expected": custom_config["CONVERT"]["OVERWRITE"]},
+    "delete_input": {
+        "passed": "",
+        "expected": custom_config["CONVERT"]["DELETE_INPUT"],
+    },
+    "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
+}
+
+
+@pytest.fixture()
+def convert_cli() -> Callable:
+    """Imports and returns the main from the convert.py cli script in the root dir.
+
+    Returns:
+        Callable: main from the convert.py cli script in the root dir
+    """
+    from convert import main as convert_cli
+
+    return convert_cli
+
+
+@pytest.fixture()
+def convert() -> Callable:
+    """Imports and returns the main from OTVision.convert.convert.py
+
+    Returns:
+        Callable: main from OTVision.convert.convert.py
+    """
+    from OTVision import convert
+
+    return convert
+
+
+class TestConvertCLI:
+    @pytest.mark.parametrize(
+        argnames="test_data",
+        argvalues=[
+            TEST_DATA_ALL_PARAMS_FROM_CLI_1,
+            TEST_DATA_ALL_PARAMS_FROM_CLI_2,
+            TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG,
+            TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
+        ],
+    )
+    def test_pass_convert_cli(
+        self, test_data: dict, convert_cli: Callable, convert: Callable
+    ) -> None:
+        convert = mock.create_autospec(convert)
+
+        with patch("OTVision.convert") as mock_convert:
+            command = [
+                "convert.py",
+                *test_data["paths"]["passed"].split(),
+                *test_data["input_fps"]["passed"].split(),
+                *test_data["fps_from_filename"]["passed"].split(),
+                *test_data["overwrite"]["passed"].split(),
+                *test_data["delete_input"]["passed"].split(),
+                *test_data["config"]["passed"].split(),
+            ]
+
+            convert_cli(argv=list(filter(None, command)))
+
+            mock_convert.assert_called_once_with(
+                paths=test_data["paths"]["expected"],
+                input_fps=test_data["input_fps"]["expected"],
+                fps_from_filename=test_data["fps_from_filename"]["expected"],
+                overwrite=test_data["overwrite"]["expected"],
+                delete_input=test_data["delete_input"]["expected"],
+            )
