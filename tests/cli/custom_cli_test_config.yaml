@@ -1,6 +1,6 @@
 ---
 CONVERT:
-  PATHS: []
+  PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
   DEBUG: false
   DELETE_INPUT: false
   FPS_FROM_FILENAME: false

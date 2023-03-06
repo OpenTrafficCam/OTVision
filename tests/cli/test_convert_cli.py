@@ -63,9 +63,10 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
 
 TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "paths": {
-        "passed": "-p /usr/local/bin",
+        "passed": "",
         "expected": [
-            Path("/usr/local/bin"),
+            Path(custom_config["CONVERT"]["PATHS"][0]),
+            Path(custom_config["CONVERT"]["PATHS"][1]),
         ],
     },
     "input_fps": {"passed": "", "expected": custom_config["CONVERT"]["INPUT_FPS"]},
