@@ -16,10 +16,10 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
-        "passed": "-p /usr/local/bin C:/Python/Scripts",
+        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         "expected": [
-            Path("/usr/local/bin"),
-            Path("C:/Python/Scripts"),
+            Path("./"),
+            Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
     "sigma_h": {"passed": "--sigma_h 0.37", "expected": 0.37},
@@ -33,10 +33,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
-        "passed": "-p /usr/local/file.ext C:/Python/file.ext",
+        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         "expected": [
-            Path("/usr/local/file.ext"),
-            Path("C:/Python/file.ext"),
+            Path("./"),
+            Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
     "sigma_h": {"passed": "--sigma_h 0.42", "expected": 0.42},
@@ -49,12 +49,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {
-        "passed": "-p /usr/local/bin",
-        "expected": [
-            Path("/usr/local/bin"),
-        ],
-    },
+    "paths": {"passed": "-p ./", "expected": [Path("./")]},
     "sigma_h": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["SIGMA_H"]},
     "sigma_l": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["SIGMA_L"]},
     "sigma_iou": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["SIGMA_IOU"]},
@@ -83,6 +78,35 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "overwrite": {"passed": "", "expected": custom_config["TRACK"]["OVERWRITE"]},
     "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
 }
+
+TEST_FAIL_DATA = [
+    {"passed": "--sigma_h foo", "error_msg_part": "invalid float value: 'foo'"},
+    {"passed": "--sigma_l foo", "error_msg_part": "invalid float value: 'foo'"},
+    {"passed": "--sigma_iou foo", "error_msg_part": "invalid float value: 'foo'"},
+    {"passed": "--t_min 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {"passed": "--t_miss_max 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {"passed": "--overwrite foo", "error_msg_part": "unrecognized arguments"},
+    {
+        "passed": "--no-sigma_h",
+        "error_msg_part": "unrecognized arguments: --no-sigma_h",
+    },
+    {
+        "passed": "--no-sigma_l",
+        "error_msg_part": "unrecognized arguments: --no-sigma_l",
+    },
+    {
+        "passed": "--no-sigma_iou",
+        "error_msg_part": "unrecognized arguments: --no-sigma_iou",
+    },
+    {
+        "passed": "--no-t_min",
+        "error_msg_part": "unrecognized arguments: --no-t_min",
+    },
+    {
+        "passed": "--no-t_miss_max",
+        "error_msg_part": "unrecognized arguments: --no-t_miss_max",
+    },
+]
 
 
 @pytest.fixture()
@@ -148,3 +172,45 @@ class TestTrackCLI:
                 t_miss_max=test_data["t_miss_max"]["expected"],
                 overwrite=test_data["overwrite"]["expected"],
             )
+
+    @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
+    def test_fail_wrong_types_passed_to_track_cli(
+        self,
+        track_cli: Callable,
+        track: Callable,
+        capsys: pytest.CaptureFixture,
+        test_fail_data: dict,
+    ) -> None:
+        track = mock.create_autospec(track)
+
+        with patch("OTVision.track"):
+            with pytest.raises(SystemExit) as e:
+                command = ["track.py", *test_fail_data["passed"].split()]
+                track_cli(argv=list(filter(None, command)))
+            assert e.value.code == 2
+            captured = capsys.readouterr()
+            assert test_fail_data["error_msg_part"] in captured.err
+
+    @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    def test_fail_not_existing_path_passed_to_track_cli(
+        self, track: Callable, track_cli: Callable, passed: str
+    ) -> None:
+        track = mock.create_autospec(track)
+
+        with patch("OTVision.track"):
+            with pytest.raises(FileNotFoundError):
+                command = ["track.py", *passed.split()]
+                track_cli(argv=list(filter(None, command)))
+
+    def test_fail_no_paths_passed_to_track_cli(
+        self, track: Callable, track_cli: Callable
+    ) -> None:
+        track = mock.create_autospec(track)
+
+        with patch("OTVision.track"):
+            error_msg = (
+                "No paths have been passed as command line args."
+                + "No paths have been defined in the user config."
+            )
+            with pytest.raises(OSError, match=error_msg):
+                track_cli(argv=["track.py"])
