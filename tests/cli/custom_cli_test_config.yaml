@@ -1,7 +1,6 @@
 ---
 CONVERT:
   PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
-  DEBUG: false
   DELETE_INPUT: false
   FPS_FROM_FILENAME: false
   INPUT_FPS: 15.0
@@ -9,7 +8,6 @@ CONVERT:
 
 DETECT:
   PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
-  DEBUG: false
   FORCE_RELOAD_TORCH_HUB_CACHE: false
   HALF_PRECISION: false
   OVERWRITE: true
@@ -21,8 +19,7 @@ DETECT:
     WEIGHTS: yolov5m
 
 TRACK:
-  PATHS: []
-  DEBUG: false
+  PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
   IOU:
     SIGMA_H: 0.32
     SIGMA_IOU: 0.31
