@@ -16,10 +16,10 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
-        "passed": "-p /usr/local/bin C:/Python/Scripts",
+        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         "expected": [
-            Path("/usr/local/bin"),
-            Path("C:/Python/Scripts"),
+            Path("./"),
+            Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
     "weights": {"passed": "--weights yolov5l", "expected": "yolov5l"},
@@ -35,10 +35,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
-        "passed": "-p /usr/local/file.ext C:/Python/file.ext",
+        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         "expected": [
-            Path("/usr/local/file.ext"),
-            Path("C:/Python/file.ext"),
+            Path("./"),
+            Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
     "weights": {"passed": "--weights yolov5x", "expected": "yolov5x"},
@@ -53,12 +53,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {
-        "passed": "-p /usr/local/bin",
-        "expected": [
-            Path("/usr/local/bin"),
-        ],
-    },
+    "paths": {"passed": "-p ./", "expected": [Path("./")]},
     "weights": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["WEIGHTS"]},
     "conf": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["CONF"]},
     "iou": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["IOU"]},
@@ -103,6 +98,36 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "overwrite": {"passed": "", "expected": custom_config["DETECT"]["OVERWRITE"]},
     "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
 }
+
+TEST_FAIL_DATA = [
+    {"passed": "--conf foo", "error_msg_part": "invalid float value: 'foo'"},
+    {"passed": "--iou foo", "error_msg_part": "invalid float value: 'foo'"},
+    {"passed": "--chunksize 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {"passed": "--imagesize 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {"passed": "--half foo", "error_msg_part": "unrecognized arguments"},
+    {"passed": "--force foo", "error_msg_part": "unrecognized arguments"},
+    {"passed": "--overwrite foo", "error_msg_part": "unrecognized arguments"},
+    {
+        "passed": "--no-weights",
+        "error_msg_part": "unrecognized arguments: --no-weights",
+    },
+    {
+        "passed": "--no-conf",
+        "error_msg_part": "unrecognized arguments: --no-conf",
+    },
+    {
+        "passed": "--no-iou",
+        "error_msg_part": "unrecognized arguments: --no-iou",
+    },
+    {
+        "passed": "--no-chunksize",
+        "error_msg_part": "unrecognized arguments: --no-chunksize",
+    },
+    {
+        "passed": "--no-imagesize",
+        "error_msg_part": "unrecognized arguments: --no-imagesize",
+    },
+]
 
 
 @pytest.fixture()
@@ -172,3 +197,45 @@ class TestDetectCLI:
                 force_reload_torch_hub_cache=test_data["force_reload"]["expected"],
                 overwrite=test_data["overwrite"]["expected"],
             )
+
+    @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
+    def test_fail_wrong_types_passed_to_detect_cli(
+        self,
+        detect_cli: Callable,
+        detect: Callable,
+        capsys: pytest.CaptureFixture,
+        test_fail_data: dict,
+    ) -> None:
+        detect = mock.create_autospec(detect)
+
+        with patch("OTVision.detect"):
+            with pytest.raises(SystemExit) as e:
+                command = ["detect.py", *test_fail_data["passed"].split()]
+                detect_cli(argv=list(filter(None, command)))
+            assert e.value.code == 2
+            captured = capsys.readouterr()
+            assert test_fail_data["error_msg_part"] in captured.err
+
+    @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    def test_fail_not_existing_path_passed_to_detect_cli(
+        self, detect: Callable, detect_cli: Callable, passed: str
+    ) -> None:
+        detect = mock.create_autospec(detect)
+
+        with patch("OTVision.detect"):
+            with pytest.raises(FileNotFoundError):
+                command = ["detect.py", *passed.split()]
+                detect_cli(argv=list(filter(None, command)))
+
+    def test_fail_no_paths_passed_to_detect_cli(
+        self, detect: Callable, detect_cli: Callable
+    ) -> None:
+        detect = mock.create_autospec(detect)
+
+        with patch("OTVision.detect"):
+            error_msg = (
+                "No paths have been passed as command line args."
+                + "No paths have been defined in the user config."
+            )
+            with pytest.raises(OSError, match=error_msg):
+                detect_cli(argv=["detect.py"])
