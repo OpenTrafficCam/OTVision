@@ -82,6 +82,17 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
+TEST_FAIL_DATA = [
+    {"passed": "--input_fps foo", "error_msg_part": "invalid float value: 'foo'"},
+    {"passed": "--fps_from_filename 20", "error_msg_part": "unrecognized arguments"},
+    {"passed": "--overwrite foo", "error_msg_part": "unrecognized arguments"},
+    {"passed": "--delete_input foo", "error_msg_part": "unrecognized arguments"},
+    {
+        "passed": "--no-input_fps",
+        "error_msg_part": "unrecognized arguments: --no-input_fps",
+    },
+]
+
 
 @pytest.fixture()
 def convert_cli() -> Callable:
@@ -142,3 +153,32 @@ class TestConvertCLI:
                 overwrite=test_data["overwrite"]["expected"],
                 delete_input=test_data["delete_input"]["expected"],
             )
+
+    @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
+    def test_fail_wrong_types_passed_to_convert_cli(
+        self,
+        convert_cli: Callable,
+        convert: Callable,
+        capsys: pytest.CaptureFixture,
+        test_fail_data: dict,
+    ) -> None:
+        convert = mock.create_autospec(convert)
+
+        with patch("OTVision.convert"):
+            with pytest.raises(SystemExit) as e:
+                command = ["convert.py", *test_fail_data["passed"].split()]
+                convert_cli(argv=list(filter(None, command)))
+            assert e.value.code == 2
+            captured = capsys.readouterr()
+            assert test_fail_data["error_msg_part"] in captured.err
+
+    def test_fail_wrong_config_path_passed_to_convert_cli(
+        self, convert: Callable, convert_cli: Callable
+    ) -> None:
+        convert = mock.create_autospec(convert)
+
+        with patch("OTVision.convert"):
+            with pytest.raises(FileNotFoundError):
+                passed = "--config foo"
+                command = ["convert.py", *passed.split()]
+                convert_cli(argv=list(filter(None, command)))
