@@ -1,13 +1,13 @@
 ---
 CONVERT:
-  PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
+  PATHS: ["tests/cli/", "tests/cli/custom_cli_test_config.yaml"]
   DELETE_INPUT: false
   FPS_FROM_FILENAME: false
   INPUT_FPS: 15.0
   OVERWRITE: true
 
 DETECT:
-  PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
+  PATHS: ["tests/cli/", "tests/cli/custom_cli_test_config.yaml"]
   FORCE_RELOAD_TORCH_HUB_CACHE: false
   HALF_PRECISION: false
   OVERWRITE: true
@@ -19,7 +19,7 @@ DETECT:
     WEIGHTS: yolov5m
 
 TRACK:
-  PATHS: ["/usr/local/bin", "C:/Python/file.ext"]
+  PATHS: ["tests/cli/", "tests/cli/custom_cli_test_config.yaml"]
   IOU:
     SIGMA_H: 0.32
     SIGMA_IOU: 0.31
