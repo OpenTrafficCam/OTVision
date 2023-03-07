@@ -16,10 +16,10 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
-        "passed": "-p /usr/local/bin C:/Python/Scripts",
+        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         "expected": [
-            Path("/usr/local/bin"),
-            Path("C:/Python/Scripts"),
+            Path("./"),
+            Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
     "input_fps": {"passed": "--input_fps 30", "expected": 30},
@@ -31,10 +31,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
-        "passed": "-p /usr/local/file.ext C:/Python/file.ext",
+        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         "expected": [
-            Path("/usr/local/file.ext"),
-            Path("C:/Python/file.ext"),
+            Path("./"),
+            Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
     "input_fps": {"passed": "--input_fps 25", "expected": 25},
@@ -45,12 +45,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {
-        "passed": "-p /usr/local/bin",
-        "expected": [
-            Path("/usr/local/bin"),
-        ],
-    },
+    "paths": {"passed": "-p ./", "expected": [Path("./")]},
     "input_fps": {"passed": "", "expected": cwd_config["CONVERT"]["INPUT_FPS"]},
     "fps_from_filename": {
         "passed": "",
@@ -172,13 +167,26 @@ class TestConvertCLI:
             captured = capsys.readouterr()
             assert test_fail_data["error_msg_part"] in captured.err
 
-    def test_fail_wrong_config_path_passed_to_convert_cli(
-        self, convert: Callable, convert_cli: Callable
+    @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    def test_fail_not_existing_path_passed_to_convert_cli(
+        self, convert: Callable, convert_cli: Callable, passed: str
     ) -> None:
         convert = mock.create_autospec(convert)
 
         with patch("OTVision.convert"):
             with pytest.raises(FileNotFoundError):
-                passed = "--config foo"
                 command = ["convert.py", *passed.split()]
                 convert_cli(argv=list(filter(None, command)))
+
+    def test_fail_no_paths_passed_to_convert_cli(
+        self, convert: Callable, convert_cli: Callable
+    ) -> None:
+        convert = mock.create_autospec(convert)
+
+        with patch("OTVision.convert"):
+            error_msg = (
+                "No paths have been passed as command line args."
+                + "No paths have been defined in the user config."
+            )
+            with pytest.raises(OSError, match=error_msg):
+                convert_cli(argv=["convert.py"])
