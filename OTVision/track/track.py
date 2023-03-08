@@ -29,7 +29,6 @@ from tqdm import tqdm
 from OTVision import dataformat
 from OTVision.config import (
     CONFIG,
-    DEBUG,
     DEFAULT_FILETYPE,
     DETECT,
     FILETYPES,
@@ -65,7 +64,6 @@ def main(
     t_min: int = CONFIG[TRACK][IOU][T_MIN],
     t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
     overwrite: bool = CONFIG[TRACK][OVERWRITE],
-    debug: bool = CONFIG[TRACK][DEBUG],
 ) -> None:
     """Read detections from otdet file, perform tracking using iou tracker and
         save tracks to ottrk file.
@@ -93,8 +91,6 @@ def main(
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
         overwrite (bool, optional): Whether or not to overwrite existing tracks files.
             Defaults to CONFIG["TRACK"]["OVERWRITE"].
-        debug (bool, optional): Whether or not to run in debug mode.
-            Defaults to CONFIG["TRACK"]["DEBUG"].
     """
 
     filetypes = CONFIG[FILETYPES][DETECT]

@@ -10,7 +10,7 @@ class CaughtError(Exception):
 
 
 class LogMaker:
-    def log_str_level(self, level: str) -> None:
+    def log_message_on_str_level(self, level: str) -> None:
         log_msg = f"This is a {level} log"
         match level:
             case "DEBUG":
@@ -24,7 +24,7 @@ class LogMaker:
             case "CRITICAL":
                 log.critical(log_msg)
 
-    def log_int_level(self, level: str) -> None:
+    def log_message_on_int_level(self, level: str) -> None:
         level_int = LOG_LEVEL_INTEGERS[level]
         log_msg = f"This is a numeric level {level_int} a.k.a. {level} log"
         match level_int:
@@ -39,7 +39,7 @@ class LogMaker:
             case 50:
                 log.critical(log_msg)
 
-    def raise_catch_and_log_error(self, log_msg: str) -> None:
+    def log_message_on_caught_error(self, log_msg: str) -> None:
         try:
             raise CaughtError
         except CaughtError:

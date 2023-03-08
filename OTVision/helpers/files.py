@@ -197,7 +197,7 @@ def read_json(
             with bz2.open(json_file, "rt", encoding=ENCODING) as input:
                 dict_from_json_file = ujson.load(input)
         else:
-            log.debug(f"Read {json_file} withoud decompressing")
+            log.debug(f"Read {json_file} withoud decompression")
             with open(json_file, "r", encoding=ENCODING) as input:
                 dict_from_json_file = ujson.load(input)
         log.debug(f"Succesfully read {json_file}")
@@ -245,7 +245,7 @@ def write_json(
             with bz2.open(outfile, "wt", encoding=ENCODING) as output:
                 ujson.dump(dict_to_write, output)
         else:
-            log.debug(f"Write {outfile} without compressing")
+            log.debug(f"Write {outfile} without compression")
             with open(outfile, "w", encoding=ENCODING) as output:
                 ujson.dump(dict_to_write, output)
         t_json_end = time.perf_counter()

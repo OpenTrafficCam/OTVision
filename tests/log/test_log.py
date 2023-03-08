@@ -32,22 +32,17 @@ class TestLog:
     def test_logger_logs_correct_message_for_level_in_other_file(
         self, level: str, caplog: pytest.LogCaptureFixture
     ) -> None:
-        # Make log
-        self.log_maker.log_str_level(level=level)
+        self.log_maker.log_message_on_str_level(level=level)
 
-        # Check if log message including level is in log capture
         assert f"This is a {level} log" in caplog.text
 
     def test_logger_logs_caught_exception_properly(
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
-        # Create log message
         log_msg = "Caught exception"
 
-        # Make log
-        self.log_maker.raise_catch_and_log_error(log_msg)
+        self.log_maker.log_message_on_caught_error(log_msg)
 
-        # Check if log message, error message and traceback are correct
         assert log_msg in caplog.text
         assert "CaughtError" in caplog.text
 
@@ -56,17 +51,13 @@ class TestLog:
     def test_console_handler_logs_correct_message_only_above_his_level(
         self, logger_level: str, log_level: str, capsys: pytest.CaptureFixture
     ) -> None:
-        # Get levels
         log_level_int = LOG_LEVEL_INTEGERS[log_level]
         logger_level_int = LOG_LEVEL_INTEGERS[logger_level]
 
-        # Add console handler
         log.add_console_handler(level=logger_level)
 
-        # Make log
-        self.log_maker.log_int_level(level=log_level)
+        self.log_maker.log_message_on_int_level(level=log_level)
 
-        # Read and return console output
         stdout, stderr = capsys.readouterr()
 
         # Check if log message including level is in console output
@@ -83,24 +74,17 @@ class TestLog:
         test_data_tmp_dir: Path,
         test_data_dir: Path,
     ) -> None:
-        # Add file handler
         log_dir = test_data_tmp_dir / "log"
         log.add_file_handler(level="DEBUG", log_dir=log_dir)
 
-        # Make logs
         for level in VALID_LOG_LEVELS:
-            self.log_maker.log_str_level(level=level)
+            self.log_maker.log_message_on_str_level(level=level)
 
-        # Get reference log file name
         ref_log_file = test_data_dir / "log" / "_otvision_logs" / "test.log"
 
-        # Get test log file name
         test_log_files = list((log_dir / "_otvision_logs").glob("*log"))
         if len(test_log_files) != 1:
             raise WrongNumberOfFilesFoundError
         test_log_file = test_log_files[0]
 
-        # Compare test and reference log files
         assert cmp(ref_log_file, test_log_file)
-
-        # Close and remove file handler

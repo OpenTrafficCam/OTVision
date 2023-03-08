@@ -30,6 +30,10 @@ DEFAULT_DIR = Path.cwd()
 
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
+LOG_FORMAT: str = (
+    "%(asctime)s %(levelname)s (%(filename)s::%(funcName)s::%(lineno)d): %(message)s"
+)
+
 LOG_LEVEL_INTEGERS = {
     "DEBUG": 10,
     "INFO": 20,
@@ -41,7 +45,7 @@ LOG_LEVEL_INTEGERS = {
 
 class _OTVisionLogger:
     """Class for creating a logging.Logger.
-    Should only be instanciated once in the same module as this class.
+    Should only be instantiated once in the same module as this class.
     To access this instance, use logging.getLogger(LOGGER_NAME)
     with LOGGER_NAME from the same module where this class is defined.
     """
@@ -53,10 +57,7 @@ class _OTVisionLogger:
         self._set_formatter()
 
     def _set_formatter(self) -> None:
-        self.formatter = logging.Formatter(
-            "%(asctime)s %(levelname)s (%(filename)s::%(funcName)s"
-            "::%(lineno)d): %(message)s"
-        )
+        self.formatter = logging.Formatter(LOG_FORMAT)
 
     def _set_filename(self) -> None:
         datetime_str = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
@@ -114,7 +115,7 @@ class _OTVisionLogger:
             self.logger.removeHandler(handler)
 
 
-# This here should be the only time the _OTVisionLogger is "directly" instanciated
+# This here should be the only time the _OTVisionLogger is "directly" instantiated
 # In all other module that should be logged from, use logging.getLogger(LOGGER_NAME)
 
 log = _OTVisionLogger()

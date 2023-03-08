@@ -370,7 +370,7 @@ class FrameFiles(tk.LabelFrame):
             file_to_remove = selected_file - delta
             self.listbox_files.delete(first=file_to_remove)
 
-    def debug(self, event):
+    def _debug(self, event):
         log.debug(event)
 
 

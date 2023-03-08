@@ -80,8 +80,6 @@ def main(
         overwrite (bool, optional): Whether or not to overwrite existing tracks files in
             world coordinates.
             Defaults to CONFIG["TRANSFORM"]["OVERWRITE"].
-        debug (bool, optional): Whether or not to run in debug mode.
-            Defaults to CONFIG["TRANSFORM"]["DEBUG"].
     """
 
     track_filetype = CONFIG[FILETYPES][TRACK]

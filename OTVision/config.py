@@ -36,7 +36,6 @@ CHUNK_SIZE = "CHUNKSIZE"
 COL_WIDTH = "COLWIDTH"
 CONF = "CONF"
 CONVERT = "CONVERT"
-DEBUG = "DEBUG"
 DEFAULT_FILETYPE = "DEFAULT_FILETYPE"
 DELETE_INPUT = "DELETE_INPUT"
 DETECT = "DETECT"
@@ -209,7 +208,6 @@ class _ConvertConfig:
     fps_from_filename: bool = True
     delete_input: bool = False
     overwrite: bool = True
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_ConvertConfig":
@@ -222,7 +220,6 @@ class _ConvertConfig:
             d.get(FPS_FROM_FILENAME, _ConvertConfig.fps_from_filename),
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
-            d.get(DEBUG, _ConvertConfig.debug),
         )
 
     def to_dict(self) -> dict:
@@ -235,7 +232,6 @@ class _ConvertConfig:
             FPS_FROM_FILENAME: self.fps_from_filename,
             DELETE_INPUT: self.delete_input,
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
         }
 
 
@@ -289,7 +285,6 @@ class _DetectConfig:
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
     overwrite: bool = True
-    debug: bool = False
     half_precision: bool = False
     force_reload_torch_hub_cache: bool = False
 
@@ -307,7 +302,6 @@ class _DetectConfig:
             d.get(RUN_CHAINED, _DetectConfig.run_chained),
             yolo_config,
             d.get(OVERWRITE, _DetectConfig.overwrite),
-            d.get(DEBUG, _DetectConfig.debug),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
             d.get(
                 FORCE_RELOAD_TORCH_HUB_CACHE,
@@ -321,7 +315,6 @@ class _DetectConfig:
             RUN_CHAINED: self.run_chained,
             YOLO: self.yolo_config.to_dict(),
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
             HALF_PRECISION: self.half_precision,
             FORCE_RELOAD_TORCH_HUB_CACHE: self.force_reload_torch_hub_cache,
         }
@@ -361,7 +354,6 @@ class _TrackConfig:
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_TrackConfig":
@@ -377,7 +369,6 @@ class _TrackConfig:
             d.get(RUN_CHAINED, _TrackConfig.run_chained),
             iou_config,
             d.get(OVERWRITE, _TrackConfig.overwrite),
-            d.get(DEBUG, _TrackConfig.debug),
         )
 
     def to_dict(self) -> dict:
@@ -386,24 +377,21 @@ class _TrackConfig:
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
         }
 
 
 @dataclass
 class _UndistortConfig:
     overwrite: bool = False
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_UndistortConfig":
         return _UndistortConfig(
             d.get(OVERWRITE, _UndistortConfig.overwrite),
-            d.get(DEBUG, _UndistortConfig.debug),
         )
 
     def to_dict(self) -> dict:
-        return {OVERWRITE: self.overwrite, DEBUG: self.debug}
+        return {OVERWRITE: self.overwrite}
 
 
 @dataclass
@@ -411,7 +399,6 @@ class _TransformConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     overwrite: bool = True
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_TransformConfig":
@@ -419,7 +406,6 @@ class _TransformConfig:
             d.get(PATHS, []),
             d.get(RUN_CHAINED, _TransformConfig.run_chained),
             d.get(OVERWRITE, _TransformConfig.overwrite),
-            d.get(DEBUG, _TransformConfig.debug),
         )
 
     def to_dict(self) -> dict:
@@ -427,7 +413,6 @@ class _TransformConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
         }
 
 
@@ -664,7 +649,6 @@ CONFIG[CONVERT][OUTPUT_FPS] = 20.0
 CONFIG[CONVERT][FPS_FROM_FILENAME] = True
 CONFIG[CONVERT][DELETE_INPUT] = False
 CONFIG[CONVERT][OVERWRITE] = True
-CONFIG[CONVERT][DEBUG] = False
 
 # DETECT
 CONFIG[DETECT] = {}
@@ -684,7 +668,6 @@ CONFIG[DETECT][YOLO][IMG_SIZE] = 640
 CONFIG[DETECT][YOLO][CHUNK_SIZE] = 1
 CONFIG[DETECT][YOLO][NORMALIZED] = False
 CONFIG[DETECT][OVERWRITE] = True
-CONFIG[DETECT][DEBUG] = False
 CONFIG[DETECT][HALF_PRECISION] = False
 CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE] = False
 
@@ -699,19 +682,16 @@ CONFIG[TRACK][IOU][SIGMA_IOU] = 0.38  # 0.381
 CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
 CONFIG[TRACK][OVERWRITE] = True
-CONFIG[TRACK][DEBUG] = False
 
 # UNDISTORT
 CONFIG[UNDISTORT] = {}
 CONFIG[UNDISTORT][OVERWRITE] = False
-CONFIG[UNDISTORT][DEBUG] = False
 
 # TRANSFORM
 CONFIG[TRANSFORM] = {}
 CONFIG[TRANSFORM][PATHS] = []
 CONFIG[TRANSFORM][RUN_CHAINED] = True
 CONFIG[TRANSFORM][OVERWRITE] = True
-CONFIG[TRANSFORM][DEBUG] = False
 
 # GUI
 CONFIG[GUI] = {}

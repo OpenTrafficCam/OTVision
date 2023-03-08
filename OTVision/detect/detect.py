@@ -95,17 +95,15 @@ def main(
             Defaults to CONFIG["DETECT"]["YOLO"]["IMGSIZE"].
         chunksize (int, optional): YOLOv5 chunksize.
             Defaults to CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"].
-        normalized (bool, optional): Whether or not to normalize detections
-            to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
-        overwrite (bool, optional): Whether or not to overwrite
-            existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
         half_precision (bool, optional): Whether to use half precision (FP16) for
             inference speed up. Only works for gpu.
             Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
         force_reload_torch_hub_cache (bool, optional): Whether to force reload torch
             hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
-        debug (bool, optional): Whether or not logging in debug mode.
-            Defaults to CONFIG["DETECT"]["DEBUG"].
+        normalized (bool, optional): Whether or not to normalize detections
+            to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
+        overwrite (bool, optional): Whether or not to overwrite
+            existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
 
     video_files = get_files(paths=paths, filetypes=filetypes)
@@ -162,13 +160,6 @@ def main(
         stamped_detections = add_timestamps(detections_video, video_file)
         write_json(
             stamped_detections,
-            file=detections_file,
-            filetype=CONFIG[DEFAULT_FILETYPE][DETECT],
-            overwrite=overwrite,
-        )
-
-        write_json(
-            dict_to_write=detections_video,
             file=detections_file,
             filetype=CONFIG[DEFAULT_FILETYPE][DETECT],
             overwrite=overwrite,

@@ -174,16 +174,10 @@ def _extract_paths(args: argparse.Namespace) -> list[Path]:
 
 # TODO: Refactor/outsource this function, as it is redundant in each CLI script
 def _configure_logger(args: argparse.Namespace) -> logging.Logger:
-    # Add console handler to existing logger instance
-
     if args.log_level_console is None:
         log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
     else:
         log_level_console = args.log_level_console
-
-    log.add_console_handler(level=log_level_console)
-
-    # Add file handler to existing logger instance
 
     if args.log_level_file is None:
         log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
@@ -199,9 +193,9 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     else:
         log_dir = Path(args.log_dir)
 
-    log.add_file_handler(log_dir=log_dir, level=log_level_file)
+    log.add_console_handler(level=log_level_console)
 
-    # Return and overwrite log variable pointing to same global object from log.py
+    log.add_file_handler(log_dir=log_dir, level=log_level_file)
 
     return logging.getLogger(LOGGER_NAME)
 
