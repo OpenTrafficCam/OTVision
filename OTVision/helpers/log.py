@@ -41,7 +41,7 @@ LOG_LEVEL_INTEGERS = {
 
 class _OTVisionLogger:
     """Class for creating a logging.Logger.
-    Should only be instanciated once in the same module as this class.
+    Should only be instantiated once in the same module as this class.
     To access this instance, use logging.getLogger(LOGGER_NAME)
     with LOGGER_NAME from the same module where this class is defined.
     """
@@ -114,7 +114,7 @@ class _OTVisionLogger:
             self.logger.removeHandler(handler)
 
 
-# This here should be the only time the _OTVisionLogger is "directly" instanciated
+# This here should be the only time the _OTVisionLogger is "directly" instantiated
 # In all other module that should be logged from, use logging.getLogger(LOGGER_NAME)
 
 log = _OTVisionLogger()
