@@ -1,7 +1,6 @@
 ---
 CONVERT:
   PATHS: []
-  DEBUG: false
   DELETE_INPUT: false
   FPS_FROM_FILENAME: true
   INPUT_FPS: 20.0
@@ -9,7 +8,6 @@ CONVERT:
 
 DETECT:
   PATHS: []
-  DEBUG: false
   FORCE_RELOAD_TORCH_HUB_CACHE: false
   HALF_PRECISION: false
   OVERWRITE: true
@@ -22,7 +20,6 @@ DETECT:
 
 TRACK:
   PATHS: []
-  DEBUG: false
   IOU:
     SIGMA_H: 0.42
     SIGMA_IOU: 0.38

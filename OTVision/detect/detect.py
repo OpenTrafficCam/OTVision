@@ -104,8 +104,6 @@ def main(
             Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
         force_reload_torch_hub_cache (bool, optional): Whether to force reload torch
             hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
-        debug (bool, optional): Whether or not logging in debug mode.
-            Defaults to CONFIG["DETECT"]["DEBUG"].
     """
 
     video_files = get_files(paths=paths, filetypes=filetypes)

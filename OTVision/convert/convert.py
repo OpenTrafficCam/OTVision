@@ -29,7 +29,6 @@ from tqdm import tqdm
 from OTVision.config import (
     CONFIG,
     CONVERT,
-    DEBUG,
     DELETE_INPUT,
     FPS_FROM_FILENAME,
     INPUT_FPS,
@@ -69,8 +68,6 @@ def main(
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether or not to delete the input h264.
             Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
-        debug (bool, optional): Whether or not to log in debug mode.
-            Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
 
     h264_files = get_files(paths, [".h264"])
@@ -108,7 +105,6 @@ def convert(
     fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
     overwrite: bool = CONFIG[CONVERT][OVERWRITE],
     delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
-    debug: bool = CONFIG[CONVERT][DEBUG],
 ) -> None:
     """Converts h264-based videos into other formats and/or other frame rates.
     Also input frame rates can be given.
@@ -130,8 +126,6 @@ def convert(
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether or not to delete the input h264.
           Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
-        debug (bool, optional): Whether or not logging in debug mode.
-            Defaults to CONFIG["CONVERT"]["DEBUG"].
 
     Raises:
         TypeError: If output video filetype is not supported.
