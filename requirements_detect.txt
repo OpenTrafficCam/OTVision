@@ -1,6 +1,7 @@
 # geopandas==0.12.1
 IPython==8.6.0
 matplotlib==3.6.2
+moviepy==1.0.3
 # numpy==1.23.5
 opencv-python==4.6.0.66
 pandas==1.5.2
