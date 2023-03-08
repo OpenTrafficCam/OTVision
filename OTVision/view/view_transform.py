@@ -19,6 +19,7 @@ OTVision gui module for transform.py
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import shutil
 import tkinter as tk
 from pathlib import Path
@@ -26,11 +27,13 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
 from OTVision.transform.transform import main as transform
 from OTVision.transform.transform import write_refpts
 from OTVision.view.view_helpers import FrameRun
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class FrameTransform(tk.LabelFrame):
@@ -70,7 +73,6 @@ class FrameTransformOptions(tk.Frame):
             self.checkbutton_overwrite.select()
 
     def choose_refpts(self, event):  # sourcery skip: use-named-expression
-
         # Get selected files from files frame
         selected_files = self.master.master.frame_files.get_selected_files()
 
@@ -100,18 +102,12 @@ class FrameTransformOptions(tk.Frame):
             self.master.master.frame_files.update_files_dict()
 
     def click_refpts(self, event):
-
-        # Get selected files from files frame
-        selected_files = self.master.master.frame_files.get_selected_files()
-
-        if selected_files:
+        if selected_files := self.master.master.frame_files.get_selected_files():
             log.debug("click and save refpts for selected files")
 
-            # Get refpts from picker tool
-            refpts = ReferencePointsPicker(video_file=Path(selected_files[0])).refpts
-
-            if refpts:
-
+            if refpts := ReferencePointsPicker(
+                video_file=Path(selected_files[0])
+            ).refpts:
                 # Save refpts for all selected files
                 for selected_file in selected_files:
                     new_refpts_file = Path(selected_file).with_suffix(".otrfpts")
@@ -131,7 +127,6 @@ class FrameRunTransformation(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        log.info("---Starting transformation from gui---")
         tracks_files = replace_filetype(
             files=self.master.master.frame_files.get_tree_files(),
             new_filetype=CONFIG["DEFAULT_FILETYPE"]["TRACK"],
@@ -140,4 +135,5 @@ class FrameRunTransformation(FrameRun):
             paths=tracks_files,
             filetypes=[CONFIG["DEFAULT_FILETYPE"]["TRACK"]],
         )
+        log.info("Call transform from GUI")
         transform(paths=tracks_files)

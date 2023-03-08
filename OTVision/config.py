@@ -19,12 +19,15 @@ OTVision config module for setting default values
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 # CONFIG dict keys
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
@@ -33,7 +36,6 @@ CHUNK_SIZE = "CHUNKSIZE"
 COL_WIDTH = "COLWIDTH"
 CONF = "CONF"
 CONVERT = "CONVERT"
-DEBUG = "DEBUG"
 DEFAULT_FILETYPE = "DEFAULT_FILETYPE"
 DELETE_INPUT = "DELETE_INPUT"
 DETECT = "DETECT"
@@ -76,6 +78,32 @@ VIDEOS = "VIDEOS"
 WEIGHTS = "WEIGHTS"
 WINDOW = "WINDOW"
 YOLO = "YOLO"
+LOG = "LOG"
+LOG_LEVEL_CONSOLE = "LOG_LEVEL_CONSOLE"
+LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
+LOG_DIR = "LOG_DIR"
+
+
+@dataclass
+class _LogConfig:
+    log_level_console: str = "WARNING"
+    log_level_file: str = "DEBUG"
+    log_dir: Path = Path.cwd()
+
+    @staticmethod
+    def from_dict(d: dict) -> "_LogConfig":
+        return _LogConfig(
+            d.get(LOG_LEVEL_CONSOLE, _LogConfig.log_level_console),
+            d.get(LOG_LEVEL_FILE, _LogConfig.log_level_file),
+            d.get(LOG_DIR, _LogConfig.log_dir),
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            LOG_LEVEL_CONSOLE: self.log_level_console,
+            LOG_LEVEL_FILE: self.log_level_file,
+            LOG_DIR: self.log_dir,
+        }
 
 
 @dataclass
@@ -180,7 +208,6 @@ class _ConvertConfig:
     fps_from_filename: bool = True
     delete_input: bool = False
     overwrite: bool = True
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_ConvertConfig":
@@ -193,7 +220,6 @@ class _ConvertConfig:
             d.get(FPS_FROM_FILENAME, _ConvertConfig.fps_from_filename),
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
-            d.get(DEBUG, _ConvertConfig.debug),
         )
 
     def to_dict(self) -> dict:
@@ -206,7 +232,6 @@ class _ConvertConfig:
             FPS_FROM_FILENAME: self.fps_from_filename,
             DELETE_INPUT: self.delete_input,
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
         }
 
 
@@ -260,7 +285,6 @@ class _DetectConfig:
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
     overwrite: bool = True
-    debug: bool = False
     half_precision: bool = False
     force_reload_torch_hub_cache: bool = False
 
@@ -278,7 +302,6 @@ class _DetectConfig:
             d.get(RUN_CHAINED, _DetectConfig.run_chained),
             yolo_config,
             d.get(OVERWRITE, _DetectConfig.overwrite),
-            d.get(DEBUG, _DetectConfig.debug),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
             d.get(
                 FORCE_RELOAD_TORCH_HUB_CACHE,
@@ -292,7 +315,6 @@ class _DetectConfig:
             RUN_CHAINED: self.run_chained,
             YOLO: self.yolo_config.to_dict(),
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
             HALF_PRECISION: self.half_precision,
             FORCE_RELOAD_TORCH_HUB_CACHE: self.force_reload_torch_hub_cache,
         }
@@ -332,7 +354,6 @@ class _TrackConfig:
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_TrackConfig":
@@ -348,7 +369,6 @@ class _TrackConfig:
             d.get(RUN_CHAINED, _TrackConfig.run_chained),
             iou_config,
             d.get(OVERWRITE, _TrackConfig.overwrite),
-            d.get(DEBUG, _TrackConfig.debug),
         )
 
     def to_dict(self) -> dict:
@@ -357,24 +377,21 @@ class _TrackConfig:
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
         }
 
 
 @dataclass
 class _UndistortConfig:
     overwrite: bool = False
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_UndistortConfig":
         return _UndistortConfig(
             d.get(OVERWRITE, _UndistortConfig.overwrite),
-            d.get(DEBUG, _UndistortConfig.debug),
         )
 
     def to_dict(self) -> dict:
-        return {OVERWRITE: self.overwrite, DEBUG: self.debug}
+        return {OVERWRITE: self.overwrite}
 
 
 @dataclass
@@ -382,7 +399,6 @@ class _TransformConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     overwrite: bool = True
-    debug: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_TransformConfig":
@@ -390,7 +406,6 @@ class _TransformConfig:
             d.get(PATHS, []),
             d.get(RUN_CHAINED, _TransformConfig.run_chained),
             d.get(OVERWRITE, _TransformConfig.overwrite),
-            d.get(DEBUG, _TransformConfig.debug),
         )
 
     def to_dict(self) -> dict:
@@ -398,7 +413,6 @@ class _TransformConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             OVERWRITE: self.overwrite,
-            DEBUG: self.debug,
         }
 
 
@@ -463,6 +477,7 @@ class Config:
     Updates the default configuration with the custom config.
     """
 
+    log: _LogConfig = _LogConfig()
     search_subdirs: bool = True
     default_filetype: _DefaultFiletype = _DefaultFiletype()
     filetypes: _Filetypes = _Filetypes()
@@ -484,6 +499,7 @@ class Config:
         Returns:
             Config: The built `Config` object.
         """
+        log_dict = d.get(LOG)
         default_filtetype_dict = d.get(DEFAULT_FILETYPE)
         convert_dict = d.get(CONVERT)
         detect_dict = d.get(DETECT)
@@ -492,6 +508,7 @@ class Config:
         transform_dict = d.get(TRANSFORM)
         gui_dict = d.get(GUI)
 
+        log_config = _LogConfig.from_dict(log_dict) if log_dict else Config.log
         default_filetype = (
             _DefaultFiletype.from_dict(default_filtetype_dict)
             if default_filtetype_dict
@@ -519,6 +536,7 @@ class Config:
         gui_config = _GuiConfig.from_dict(gui_dict) if gui_dict else Config.gui
 
         return Config(
+            log=log_config,
             search_subdirs=d.get(SEARCH_SUBDIRS, Config.search_subdirs),
             default_filetype=default_filetype,
             convert=convert_config,
@@ -536,6 +554,7 @@ class Config:
             dict: The OTVision config.
         """
         return {
+            LOG: self.log.to_dict(),
             SEARCH_SUBDIRS: self.search_subdirs,
             DEFAULT_FILETYPE: self.default_filetype.to_dict(),
             FILETYPES: self.filetypes.to_dict(),
@@ -562,7 +581,7 @@ class Config:
             try:
                 yaml_config = yaml.safe_load(file)
             except yaml.YAMLError:
-                log.error("Unable to parse user config. Using default config.")
+                log.exception("Unable to parse user config. Using default config.")
                 raise
         config = Config.from_dict(yaml_config)
 
@@ -582,6 +601,12 @@ def parse_user_config(yaml_file: str) -> None:
 
 # sourcery skip: merge-dict-assign
 CONFIG: dict = {}
+
+# LOGGING
+CONFIG[LOG] = {}
+CONFIG[LOG][LOG_LEVEL_CONSOLE] = "WARNING"
+CONFIG[LOG][LOG_LEVEL_FILE] = "DEBUG"
+CONFIG[LOG][LOG_DIR] = Path.cwd()
 
 # FOLDERS
 CONFIG[SEARCH_SUBDIRS] = True
@@ -624,7 +649,6 @@ CONFIG[CONVERT][OUTPUT_FPS] = 20.0
 CONFIG[CONVERT][FPS_FROM_FILENAME] = True
 CONFIG[CONVERT][DELETE_INPUT] = False
 CONFIG[CONVERT][OVERWRITE] = True
-CONFIG[CONVERT][DEBUG] = False
 
 # DETECT
 CONFIG[DETECT] = {}
@@ -644,7 +668,6 @@ CONFIG[DETECT][YOLO][IMG_SIZE] = 640
 CONFIG[DETECT][YOLO][CHUNK_SIZE] = 1
 CONFIG[DETECT][YOLO][NORMALIZED] = False
 CONFIG[DETECT][OVERWRITE] = True
-CONFIG[DETECT][DEBUG] = False
 CONFIG[DETECT][HALF_PRECISION] = False
 CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE] = False
 
@@ -659,19 +682,16 @@ CONFIG[TRACK][IOU][SIGMA_IOU] = 0.38  # 0.381
 CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
 CONFIG[TRACK][OVERWRITE] = True
-CONFIG[TRACK][DEBUG] = False
 
 # UNDISTORT
 CONFIG[UNDISTORT] = {}
 CONFIG[UNDISTORT][OVERWRITE] = False
-CONFIG[UNDISTORT][DEBUG] = False
 
 # TRANSFORM
 CONFIG[TRANSFORM] = {}
 CONFIG[TRANSFORM][PATHS] = []
 CONFIG[TRANSFORM][RUN_CHAINED] = True
 CONFIG[TRANSFORM][OVERWRITE] = True
-CONFIG[TRANSFORM][DEBUG] = False
 
 # GUI
 CONFIG[GUI] = {}

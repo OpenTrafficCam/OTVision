@@ -19,14 +19,16 @@ OTVision main module for converting videos to other formats and frame rates.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import subprocess
 from pathlib import Path
 from typing import Optional
 
+from tqdm import tqdm
+
 from OTVision.config import (
     CONFIG,
     CONVERT,
-    DEBUG,
     DELETE_INPUT,
     FPS_FROM_FILENAME,
     INPUT_FPS,
@@ -35,7 +37,9 @@ from OTVision.config import (
 )
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 OUTPUT_FPS: Optional[float] = None
 
@@ -47,7 +51,6 @@ def main(
     fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
     overwrite: bool = CONFIG[CONVERT][OVERWRITE],
     delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
-    debug: bool = CONFIG[CONVERT][DEBUG],
 ) -> None:
     """Converts multiple h264-based videos into other formats.
 
@@ -65,22 +68,21 @@ def main(
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether or not to delete the input h264.
             Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
-        debug (bool, optional): Whether or not to log in debug mode.
-            Defaults to CONFIG["CONVERT"]["DEBUG"].
     """
 
-    log.info("Start conversion")
-    if debug:
-        set_debug()
-
     h264_files = get_files(paths, [".h264"])
+
+    start_msg = f"Start conversion of {len(h264_files)} .h264 files"
+    log.info(start_msg)
+    print(start_msg)
 
     if not h264_files:
         raise FileNotFoundError("No files of type 'h264' found to convert!")
 
     check_ffmpeg()
 
-    for h264_file in h264_files:
+    for h264_file in tqdm(h264_files, desc="Converted .h264 files", unit="files"):
+        log.info(f"Convert {h264_file} to {output_filetype}")
         convert(
             h264_file,
             output_filetype,
@@ -89,8 +91,11 @@ def main(
             overwrite,
             delete_input,
         )
-    if debug:
-        reset_debug()
+        log.info(f"Successfully converted {h264_file} to {output_filetype}")
+
+    finished_msg = "Finished conversion"
+    log.info(finished_msg)
+    print(finished_msg)
 
 
 def convert(
@@ -100,7 +105,6 @@ def convert(
     fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
     overwrite: bool = CONFIG[CONVERT][OVERWRITE],
     delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
-    debug: bool = CONFIG[CONVERT][DEBUG],
 ) -> None:
     """Converts h264-based videos into other formats and/or other frame rates.
     Also input frame rates can be given.
@@ -122,8 +126,6 @@ def convert(
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether or not to delete the input h264.
           Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
-        debug (bool, optional): Whether or not logging in debug mode.
-            Defaults to CONFIG["CONVERT"]["DEBUG"].
 
     Raises:
         TypeError: If output video filetype is not supported.
@@ -134,9 +136,6 @@ def convert(
         None: If output video file already exists and overwrite is not enabled.
     """
 
-    if debug:
-        set_debug()
-
     _check_types(
         output_filetype=output_filetype,
         input_fps=input_fps,
@@ -145,61 +144,28 @@ def convert(
         delete_input=delete_input,
     )
 
-    log.info(f"Try converting {input_video_file} to {output_filetype}")
-
     output_fps = OUTPUT_FPS
+    if output_fps is not None:
+        delete_input = False  # Never delete input if re-encoding file.
 
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
     output_video_file = input_video_file.with_suffix(output_filetype)
+
     if not overwrite and output_video_file.is_file():
         log.warning(
             f"{output_video_file} already exists. To overwrite, set overwrite to True"
         )
-        if debug:
-            reset_debug()
         return None
     vid_filetypes = CONFIG["FILETYPES"]["VID"]
+
     if input_filetype == ".h264" and output_filetype in vid_filetypes:
         if fps_from_filename:
             input_fps = _get_fps_from_filename(input_filename)
-        # Create ffmpeg command
 
-        # Input frame rate
-        # ? Change -framerate to -r?
-        input_fps_cmds = ["-framerate", str(input_fps)]
-
-        # Output frame rate and copy commands
-        if output_fps is not None:
-            output_fps_cmds: list[str] = ["-r", str(output_fps)]
-            copy_cmds: list[str] = []
-            delete_input = False  # Never delete input if re-encoding file.
-        else:
-            output_fps_cmds = []
-            copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
-
-        # Input file
-        input_file_cmds = ["-i", str(input_video_file)]
-
-        # Filters (mybe necessary for special cases, insert if needed)
-        # ffmpeg_cmd_filter = "-c:v libx264"
-        filter_cmds: list[str] = []
-
-        # Output file
-        output_file_cmds = ["-y", str(output_video_file)]
-
-        # Concat and run ffmpeg command
-        # ffmpeg_cmd = rf"ffmpeg {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
-        ffmpeg_cmd = (
-            ["ffmpeg"]
-            + input_fps_cmds
-            + input_file_cmds
-            + filter_cmds
-            + output_fps_cmds
-            + copy_cmds
-            + output_file_cmds
+        ffmpeg_cmd = _get_ffmpeg_command(
+            input_video_file, input_fps, output_fps, output_video_file
         )
-        log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
         subprocess.run(
             ffmpeg_cmd,
@@ -210,30 +176,83 @@ def convert(
         log.info(f"{output_video_file} created an input fps of {input_fps}")
 
         if delete_input:
-            in_size = input_video_file.stat().st_size
-            out_size = output_video_file.stat().st_size
-            if in_size <= out_size:
-                log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
-                input_video_file.unlink()
+            _delete_input_video_file(input_video_file, output_video_file)
 
     elif input_filetype != ".h264":
         raise TypeError("Input video filetype has to be .h264")
+
     else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
 
-    if debug:
-        reset_debug()
+
+def _get_ffmpeg_command(
+    input_video_file: Path,
+    input_fps: float,
+    output_fps: Optional[float],
+    output_video_file: Path,
+) -> list[str]:
+    # ? Change -framerate to -r?
+    input_fps_cmds = ["-framerate", str(input_fps)]
+
+    if output_fps is not None:
+        output_fps_cmds: list[str] = ["-r", str(output_fps)]
+        copy_cmds: list[str] = []
+    else:
+        output_fps_cmds = []
+        copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
+
+    input_file_cmds = ["-i", str(input_video_file)]
+
+    # Filters (mybe necessary for special cases, insert if needed)
+    # ffmpeg_cmd_filter = "-c:v libx264"
+    filter_cmds: list[str] = []
+
+    output_file_cmds = ["-y", str(output_video_file)]
+
+    ffmpeg_cmd = (
+        ["ffmpeg"]
+        + input_fps_cmds
+        + input_file_cmds
+        + filter_cmds
+        + output_fps_cmds
+        + copy_cmds
+        + output_file_cmds
+    )
+    log.debug(f"ffmpeg command: {ffmpeg_cmd}")
+    return ffmpeg_cmd
+
+
+def _delete_input_video_file(input_video_file: Path, output_video_file: Path) -> None:
+    in_size = input_video_file.stat().st_size
+    out_size = output_video_file.stat().st_size
+    if in_size <= out_size:
+        log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
+        input_video_file.unlink()
+        log.info(f"Input file {input_video_file} deleted.")
 
 
 def check_ffmpeg() -> None:
     """Checks, if ffmpeg is available"""
 
+    exception_msg = "ffmpeg can not be called, check it's installed correctly"
+
     try:
-        subprocess.call("ffmpeg")
+        subprocess.run(
+            ["ffmpeg", "-version"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
         log.info("ffmpeg was found")
-    except FileNotFoundError as e:
-        error_message = "ffmpeg could not be called, make sure ffmpeg is in path"
-        raise FileNotFoundError(error_message) from e
+    except FileNotFoundError:
+        log.exception(exception_msg)
+        raise
+    except subprocess.CalledProcessError:
+        log.exception(exception_msg)
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 def _check_types(

@@ -21,6 +21,7 @@ from pixel to world coordinates
 
 
 import json
+import logging
 import tkinter as tk
 from pathlib import Path
 from random import randrange
@@ -31,7 +32,9 @@ from typing import Any, Union
 import cv2
 
 from OTVision.helpers.files import is_image, is_video
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class ReferencePointsPicker:
@@ -54,7 +57,6 @@ class ReferencePointsPicker:
         title: str = "Reference Points Picker",
         popup_root: Union[tk.Tk, None] = None,
     ):
-
         # Attributes
         self.title = title
         self.left_button_down = False
@@ -108,23 +110,20 @@ class ReferencePointsPicker:
             FrameNotAvailableError: If frame cannt be read
         """
         if not self.video:
-            self.video = cv2.VideoCapture(self.file)
+            self.video = cv2.VideoCapture(str(self.file))
+        if not self.video.isOpened():
+            raise VideoWontOpenError(f"Error opening this video file: {self.file}")
+        total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
+        if random_frame:
+            frame_nr = randrange(0, total_frames)
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_nr)
         else:
-            if self.video.isOpened():
-                raise VideoWontOpenError(
-                    f"Error opening this video file: {self.video_file}"
-                )
-            total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
-            if random_frame:
-                frame_nr = randrange(0, total_frames)
-                self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_nr)
-            else:
-                frame_nr = self.video.get(cv2.CAP_PROP_POS_FRAMES)
-                if frame_nr >= total_frames:
-                    self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, self.base_image = self.video.read()
-            if not ret:
-                raise FrameNotAvailableError("Video Frame cannot be read correctly")
+            frame_nr = self.video.get(cv2.CAP_PROP_POS_FRAMES)
+            if frame_nr >= total_frames:
+                self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        ret, self.base_image = self.video.read()
+        if not ret:
+            raise FrameNotAvailableError("Video Frame cannot be read correctly")
 
     def update_image(self):
         """Show the current image"""
@@ -138,7 +137,6 @@ class ReferencePointsPicker:
         cv2.setMouseCallback(self.title, self.handle_mouse_events)
 
         while True:
-
             # wait for a key press to close the window (0 = indefinite loop)
             key = cv2.waitKey(-1) & 0xFF  # BUG: #150 on mac
 
@@ -400,7 +398,6 @@ class DialogUTMCoordinates(Dialog):
     def body(
         self, master: tk.Frame
     ):  # sourcery skip: assign-if-exp, swap-if-expression
-
         # Labels
         if not self.try_again:
             text_provide = "Provide reference point\nin UTM coordinates!"

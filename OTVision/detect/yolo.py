@@ -18,6 +18,7 @@ OTVision module to detect objects using yolov5
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Union
@@ -25,6 +26,7 @@ from typing import Any, Union
 import numpy
 import torch
 from cv2 import CAP_PROP_FPS, VideoCapture
+from tqdm import tqdm
 
 from OTVision import dataformat, version
 from OTVision.config import (
@@ -64,7 +66,9 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.helpers.files import has_filetype
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class VideoFiletypeNotSupportedError(Exception):
@@ -119,12 +123,20 @@ def detect_video(
         )
 
     cap = VideoCapture(str(file))
-    batch_no = 0
 
-    log.info(f"Run detection on video: {file}")
+    width = cap.get(3)  # float
+    height = cap.get(4)  # float
+    fps = cap.get(CAP_PROP_FPS)  # float
+    frames = cap.get(7)  # float (CAP_PROP_FRAME_COUNT)
+
+    batch_no = 0
 
     got_frame = True
     t_loop_overhead = 0.0
+
+    pbar = tqdm(
+        total=int(frames), desc="Detected frames     ", leave=False, unit="frames"
+    )
     while got_frame:
         t_start = perf_counter()
         got_frame, img_batch = _get_batch_of_frames(cap, chunksize)
@@ -158,10 +170,8 @@ def detect_video(
         )
         batch_no += 1
 
-        width = cap.get(3)  # float
-        height = cap.get(4)  # float
-        fps = cap.get(CAP_PROP_FPS)  # float
-        frames = cap.get(7)  # float
+        pbar.update(1)
+
         t_loop_overhead = perf_counter() - t_list
 
     t2 = perf_counter()
@@ -233,7 +243,7 @@ def _log_batch_performances_stats(
         f"{batch_no_str}, {batch}, {transformed_batch}, {det}, "
         f"{add_list}, {loop_overhead}, {batch_len}, {fps}"
     )
-    log.info(log_msg)
+    log.debug(log_msg)
 
 
 def _add_detection_results(
@@ -299,7 +309,7 @@ def loadmodel(
         if force_reload:
             # cache already force reloaded
             raise
-        log.error(e)
+        log.exception(e)
         log.info("Force reload cache and try again.")
         if is_custom:
             model = _load_custom_model(weights=Path(weights), force_reload=True)

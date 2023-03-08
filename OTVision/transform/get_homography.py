@@ -19,11 +19,15 @@ OTVision module for calculating a homography from reference points
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
+
 import cv2
 import numpy as np
 import pandas as pd
 
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 # TODO: Type hint nested dict during refactoring
@@ -142,8 +146,8 @@ def evaluate_homography(
     # Normalize error vectors using sentence of pythagoras
     eval_df["delta"] = np.linalg.norm(eval_df[["x_delta", "y_delta"]].values, axis=1)
     eval_df["delta_abs"] = eval_df["delta"].abs()
-    log.info("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
-    log.info("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
+    log.debug("Mean transformation error [m]: " + str(eval_df["delta_abs"].mean()))
+    log.debug("Maximum transformation error [m]: " + str(eval_df["delta_abs"].max()))
     # sourcery skip: merge-dict-assign
     eval_dict = {}
     eval_dict["mean_transformation_error_m"] = eval_df["delta_abs"].mean()

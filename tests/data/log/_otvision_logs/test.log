@@ -1,0 +1,5 @@
+DEBUG (log_maker.py::log_message_on_str_level::17): This is a DEBUG log
+INFO (log_maker.py::log_message_on_str_level::19): This is a INFO log
+WARNING (log_maker.py::log_message_on_str_level::21): This is a WARNING log
+ERROR (log_maker.py::log_message_on_str_level::23): This is a ERROR log
+CRITICAL (log_maker.py::log_message_on_str_level::25): This is a CRITICAL log
