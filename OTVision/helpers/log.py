@@ -30,6 +30,10 @@ DEFAULT_DIR = Path.cwd()
 
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
+LOG_FORMAT: str = (
+    "%(asctime)s %(levelname)s (%(filename)s::%(funcName)s::%(lineno)d): %(message)s"
+)
+
 LOG_LEVEL_INTEGERS = {
     "DEBUG": 10,
     "INFO": 20,
@@ -53,10 +57,7 @@ class _OTVisionLogger:
         self._set_formatter()
 
     def _set_formatter(self) -> None:
-        self.formatter = logging.Formatter(
-            "%(asctime)s %(levelname)s (%(filename)s::%(funcName)s"
-            "::%(lineno)d): %(message)s"
-        )
+        self.formatter = logging.Formatter(LOG_FORMAT)
 
     def _set_filename(self) -> None:
         datetime_str = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
