@@ -2,8 +2,8 @@
 # will be the same in the cuda container
 FROM python:3.10-bullseye
 WORKDIR /OpenTrafficCam/OTVision
-COPY requirements-track.txt requirements-track.txt
-RUN pip3.10 install --no-cache-dir -r requirements-track.txt
+COPY requirements_track.txt requirements_track.txt
+RUN pip3.10 install --no-cache-dir -r requirements_track.txt
 
 ENV PYTHONPATH /OpenTrafficCam/OTVision
 COPY OTVision OTVision
