@@ -165,13 +165,6 @@ def main(
             overwrite=overwrite,
         )
 
-        write_json(
-            dict_to_write=detections_video,
-            file=detections_file,
-            filetype=CONFIG[DEFAULT_FILETYPE][DETECT],
-            overwrite=overwrite,
-        )
-
         log.info(f"Successfully detected and wrote {detections_file}")
 
     finished_msg = "Finished detection"
