@@ -32,7 +32,7 @@ class TestLog:
     def test_logger_logs_correct_message_for_level_in_other_file(
         self, level: str, caplog: pytest.LogCaptureFixture
     ) -> None:
-        self.log_maker.log_str_level(level=level)
+        self.log_maker.log_message_on_str_level(level=level)
 
         assert f"This is a {level} log" in caplog.text
 
@@ -41,7 +41,7 @@ class TestLog:
     ) -> None:
         log_msg = "Caught exception"
 
-        self.log_maker.raise_catch_and_log_error(log_msg)
+        self.log_maker.log_message_on_caught_error(log_msg)
 
         assert log_msg in caplog.text
         assert "CaughtError" in caplog.text
@@ -56,7 +56,7 @@ class TestLog:
 
         log.add_console_handler(level=logger_level)
 
-        self.log_maker.log_int_level(level=log_level)
+        self.log_maker.log_message_on_int_level(level=log_level)
 
         stdout, stderr = capsys.readouterr()
 
@@ -78,7 +78,7 @@ class TestLog:
         log.add_file_handler(level="DEBUG", log_dir=log_dir)
 
         for level in VALID_LOG_LEVELS:
-            self.log_maker.log_str_level(level=level)
+            self.log_maker.log_message_on_str_level(level=level)
 
         ref_log_file = test_data_dir / "log" / "_otvision_logs" / "test.log"
 
