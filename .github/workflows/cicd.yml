@@ -55,7 +55,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        packages: ["detect", "track"]
+        package: ["detect", "track"]
     steps:
       - uses: actions/checkout@v3
       - name: Log in to the Container registry
