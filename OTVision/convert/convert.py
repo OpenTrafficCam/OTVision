@@ -145,6 +145,8 @@ def convert(
     )
 
     output_fps = OUTPUT_FPS
+    if output_fps is not None:
+        delete_input = False  # Never delete input if re-encoding file.
 
     input_filename = input_video_file.stem
     input_filetype = input_video_file.suffix
@@ -160,43 +162,10 @@ def convert(
     if input_filetype == ".h264" and output_filetype in vid_filetypes:
         if fps_from_filename:
             input_fps = _get_fps_from_filename(input_filename)
-        # Create ffmpeg command
 
-        # Input frame rate
-        # ? Change -framerate to -r?
-        input_fps_cmds = ["-framerate", str(input_fps)]
-
-        # Output frame rate and copy commands
-        if output_fps is not None:
-            output_fps_cmds: list[str] = ["-r", str(output_fps)]
-            copy_cmds: list[str] = []
-            delete_input = False  # Never delete input if re-encoding file.
-        else:
-            output_fps_cmds = []
-            copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
-
-        # Input file
-        input_file_cmds = ["-i", str(input_video_file)]
-
-        # Filters (mybe necessary for special cases, insert if needed)
-        # ffmpeg_cmd_filter = "-c:v libx264"
-        filter_cmds: list[str] = []
-
-        # Output file
-        output_file_cmds = ["-y", str(output_video_file)]
-
-        # Concat and run ffmpeg command
-        # ffmpeg_cmd = rf"ffmpeg {ffmpeg_cmd_in} {ffmpeg_cmd_out}"
-        ffmpeg_cmd = (
-            ["ffmpeg"]
-            + input_fps_cmds
-            + input_file_cmds
-            + filter_cmds
-            + output_fps_cmds
-            + copy_cmds
-            + output_file_cmds
+        ffmpeg_cmd = _get_ffmpeg_command(
+            input_video_file, input_fps, output_fps, output_video_file
         )
-        log.debug(f"ffmpeg command: {ffmpeg_cmd}")
 
         subprocess.run(
             ffmpeg_cmd,
@@ -207,17 +176,59 @@ def convert(
         log.info(f"{output_video_file} created an input fps of {input_fps}")
 
         if delete_input:
-            in_size = input_video_file.stat().st_size
-            out_size = output_video_file.stat().st_size
-            if in_size <= out_size:
-                log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
-                input_video_file.unlink()
+            _delete_input_video_file(input_video_file, output_video_file)
 
     elif input_filetype != ".h264":
         raise TypeError("Input video filetype has to be .h264")
 
     else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
+
+
+def _get_ffmpeg_command(
+    input_video_file: Path,
+    input_fps: float,
+    output_fps: Optional[float],
+    output_video_file: Path,
+) -> list[str]:
+    # ? Change -framerate to -r?
+    input_fps_cmds = ["-framerate", str(input_fps)]
+
+    if output_fps is not None:
+        output_fps_cmds: list[str] = ["-r", str(output_fps)]
+        copy_cmds: list[str] = []
+    else:
+        output_fps_cmds = []
+        copy_cmds = ["-vcodec", "copy"]  # No re-encoding, only demuxing
+
+    input_file_cmds = ["-i", str(input_video_file)]
+
+    # Filters (mybe necessary for special cases, insert if needed)
+    # ffmpeg_cmd_filter = "-c:v libx264"
+    filter_cmds: list[str] = []
+
+    output_file_cmds = ["-y", str(output_video_file)]
+
+    ffmpeg_cmd = (
+        ["ffmpeg"]
+        + input_fps_cmds
+        + input_file_cmds
+        + filter_cmds
+        + output_fps_cmds
+        + copy_cmds
+        + output_file_cmds
+    )
+    log.debug(f"ffmpeg command: {ffmpeg_cmd}")
+    return ffmpeg_cmd
+
+
+def _delete_input_video_file(input_video_file: Path, output_video_file: Path) -> None:
+    in_size = input_video_file.stat().st_size
+    out_size = output_video_file.stat().st_size
+    if in_size <= out_size:
+        log.debug(f"Input file ({in_size}) <= output file ({out_size}).")
+        input_video_file.unlink()
+        log.info(f"Input file {input_video_file} deleted.")
 
 
 def check_ffmpeg() -> None:
