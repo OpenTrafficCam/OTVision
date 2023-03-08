@@ -124,7 +124,7 @@ def _extract_paths(args: argparse.Namespace) -> list[str]:
         return args.paths
     if len(config.CONFIG[config.TRANSFORM][config.PATHS]) == 0:
         raise IOError(
-            "No paths have been passed from command line args."
+            "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
 
