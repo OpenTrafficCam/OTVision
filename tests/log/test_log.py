@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from OTVision.helpers.log import LOG_LEVEL_INTEGERS, VALID_LOG_LEVELS, log
+from OTVision.helpers.log import LOG_FORMAT, LOG_LEVEL_INTEGERS, VALID_LOG_LEVELS, log
 from tests.conftest import YieldFixture
 
 from .log_maker import LogMaker
@@ -24,9 +24,7 @@ def teardown_handlers_after_test() -> YieldFixture:
 class TestLog:
     log_maker: LogMaker = LogMaker()
 
-    log.formatter = logging.Formatter(
-        "%(levelname)s (%(filename)s::%(funcName)s" "::%(lineno)d): %(message)s"
-    )
+    log.formatter = logging.Formatter(LOG_FORMAT)
 
     @pytest.mark.parametrize("level", VALID_LOG_LEVELS)
     def test_logger_logs_correct_message_for_level_in_other_file(
