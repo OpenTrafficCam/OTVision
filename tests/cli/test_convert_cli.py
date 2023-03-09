@@ -6,6 +6,15 @@ from unittest.mock import patch
 import pytest
 import yaml
 
+from OTVision.config import (
+    CONVERT,
+    DELETE_INPUT,
+    FPS_FROM_FILENAME,
+    INPUT_FPS,
+    OVERWRITE,
+    PATHS,
+)
+
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
 with open(CUSTOM_CONFIG_FILE, "r") as file:
     custom_config = yaml.safe_load(file)
@@ -14,76 +23,79 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+PASSED: str = "passed"
+EXPECTED: str = "expected"
+CONVERT_PY: str = "convert.py"
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
-        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
-        "expected": [
+        PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
+        EXPECTED: [
             Path("./"),
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "input_fps": {"passed": "--input_fps 30", "expected": 30},
-    "fps_from_filename": {"passed": "--fps_from_filename", "expected": True},
-    "overwrite": {"passed": "--overwrite", "expected": True},
-    "delete_input": {"passed": "--no-delete_input", "expected": False},
-    "config": {"passed": ""},
+    "input_fps": {PASSED: "--input_fps 30", EXPECTED: 30},
+    "fps_from_filename": {PASSED: "--fps_from_filename", EXPECTED: True},
+    "overwrite": {PASSED: "--overwrite", EXPECTED: True},
+    "delete_input": {PASSED: "--no-delete_input", EXPECTED: False},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
-        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
-        "expected": [
+        PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
+        EXPECTED: [
             Path("./"),
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "input_fps": {"passed": "--input_fps 25", "expected": 25},
-    "fps_from_filename": {"passed": "--no-fps_from_filename", "expected": False},
-    "overwrite": {"passed": "--no-overwrite", "expected": False},
-    "delete_input": {"passed": "--delete_input", "expected": True},
-    "config": {"passed": ""},
+    "input_fps": {PASSED: "--input_fps 25", EXPECTED: 25},
+    "fps_from_filename": {PASSED: "--no-fps_from_filename", EXPECTED: False},
+    "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "delete_input": {PASSED: "--delete_input", EXPECTED: True},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {"passed": "-p ./", "expected": [Path("./")]},
-    "input_fps": {"passed": "", "expected": cwd_config["CONVERT"]["INPUT_FPS"]},
+    "paths": {PASSED: "-p ./", EXPECTED: [Path("./")]},
+    "input_fps": {PASSED: "", EXPECTED: cwd_config[CONVERT][INPUT_FPS]},
     "fps_from_filename": {
-        "passed": "",
-        "expected": cwd_config["CONVERT"]["FPS_FROM_FILENAME"],
+        PASSED: "",
+        EXPECTED: cwd_config[CONVERT][FPS_FROM_FILENAME],
     },
-    "overwrite": {"passed": "", "expected": cwd_config["CONVERT"]["OVERWRITE"]},
-    "delete_input": {"passed": "", "expected": cwd_config["CONVERT"]["DELETE_INPUT"]},
-    "config": {"passed": ""},
+    "overwrite": {PASSED: "", EXPECTED: cwd_config[CONVERT][OVERWRITE]},
+    "delete_input": {PASSED: "", EXPECTED: cwd_config[CONVERT][DELETE_INPUT]},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "paths": {
-        "passed": "",
-        "expected": [
-            Path(custom_config["CONVERT"]["PATHS"][0]),
-            Path(custom_config["CONVERT"]["PATHS"][1]),
+        PASSED: "",
+        EXPECTED: [
+            Path(custom_config[CONVERT][PATHS][0]),
+            Path(custom_config[CONVERT][PATHS][1]),
         ],
     },
-    "input_fps": {"passed": "", "expected": custom_config["CONVERT"]["INPUT_FPS"]},
+    "input_fps": {PASSED: "", EXPECTED: custom_config[CONVERT][INPUT_FPS]},
     "fps_from_filename": {
-        "passed": "",
-        "expected": custom_config["CONVERT"]["FPS_FROM_FILENAME"],
+        PASSED: "",
+        EXPECTED: custom_config[CONVERT][FPS_FROM_FILENAME],
     },
-    "overwrite": {"passed": "", "expected": custom_config["CONVERT"]["OVERWRITE"]},
+    "overwrite": {PASSED: "", EXPECTED: custom_config[CONVERT][OVERWRITE]},
     "delete_input": {
-        "passed": "",
-        "expected": custom_config["CONVERT"]["DELETE_INPUT"],
+        PASSED: "",
+        EXPECTED: custom_config[CONVERT][DELETE_INPUT],
     },
-    "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
+    "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
 TEST_FAIL_DATA = [
-    {"passed": "--input_fps foo", "error_msg_part": "invalid float value: 'foo'"},
-    {"passed": "--fps_from_filename 20", "error_msg_part": "unrecognized arguments"},
-    {"passed": "--overwrite foo", "error_msg_part": "unrecognized arguments"},
-    {"passed": "--delete_input foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--input_fps foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--fps_from_filename 20", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--delete_input foo", "error_msg_part": "unrecognized arguments"},
     {
-        "passed": "--no-input_fps",
+        PASSED: "--no-input_fps",
         "error_msg_part": "unrecognized arguments: --no-input_fps",
     },
 ]
@@ -130,23 +142,23 @@ class TestConvertCLI:
 
         with patch("OTVision.convert") as mock_convert:
             command = [
-                "convert.py",
-                *test_data["paths"]["passed"].split(),
-                *test_data["input_fps"]["passed"].split(),
-                *test_data["fps_from_filename"]["passed"].split(),
-                *test_data["overwrite"]["passed"].split(),
-                *test_data["delete_input"]["passed"].split(),
-                *test_data["config"]["passed"].split(),
+                CONVERT_PY,
+                *test_data["paths"][PASSED].split(),
+                *test_data["input_fps"][PASSED].split(),
+                *test_data["fps_from_filename"][PASSED].split(),
+                *test_data["overwrite"][PASSED].split(),
+                *test_data["delete_input"][PASSED].split(),
+                *test_data["config"][PASSED].split(),
             ]
 
             convert_cli(argv=list(filter(None, command)))
 
             mock_convert.assert_called_once_with(
-                paths=test_data["paths"]["expected"],
-                input_fps=test_data["input_fps"]["expected"],
-                fps_from_filename=test_data["fps_from_filename"]["expected"],
-                overwrite=test_data["overwrite"]["expected"],
-                delete_input=test_data["delete_input"]["expected"],
+                paths=test_data["paths"][EXPECTED],
+                input_fps=test_data["input_fps"][EXPECTED],
+                fps_from_filename=test_data["fps_from_filename"][EXPECTED],
+                overwrite=test_data["overwrite"][EXPECTED],
+                delete_input=test_data["delete_input"][EXPECTED],
             )
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
@@ -161,13 +173,13 @@ class TestConvertCLI:
 
         with patch("OTVision.convert"):
             with pytest.raises(SystemExit) as e:
-                command = ["convert.py", *test_fail_data["passed"].split()]
+                command = [CONVERT_PY, *test_fail_data[PASSED].split()]
                 convert_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
             assert test_fail_data["error_msg_part"] in captured.err
 
-    @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    @pytest.mark.parametrize(PASSED, argvalues=["--config foo", "--paths foo"])
     def test_fail_not_existing_path_passed_to_convert_cli(
         self, convert: Callable, convert_cli: Callable, passed: str
     ) -> None:
@@ -175,7 +187,7 @@ class TestConvertCLI:
 
         with patch("OTVision.convert"):
             with pytest.raises(FileNotFoundError):
-                command = ["convert.py", *passed.split()]
+                command = [CONVERT_PY, *passed.split()]
                 convert_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_convert_cli(
@@ -189,4 +201,4 @@ class TestConvertCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                convert_cli(argv=["convert.py"])
+                convert_cli(argv=[CONVERT_PY])

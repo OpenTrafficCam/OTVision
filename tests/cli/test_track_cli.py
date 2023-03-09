@@ -6,6 +6,18 @@ from unittest.mock import patch
 import pytest
 import yaml
 
+from OTVision.config import (
+    IOU,
+    OVERWRITE,
+    PATHS,
+    SIGMA_H,
+    SIGMA_IOU,
+    SIGMA_L,
+    T_MIN,
+    T_MISS_MAX,
+    TRACK,
+)
+
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
 with open(CUSTOM_CONFIG_FILE, "r") as file:
     custom_config = yaml.safe_load(file)
@@ -14,96 +26,99 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+PASSED: str = "passed"
+EXPECTED: str = "expected"
+TRACK_PY: str = "track.py"
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
-        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
-        "expected": [
+        PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
+        EXPECTED: [
             Path("./"),
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "sigma_h": {"passed": "--sigma_h 0.37", "expected": 0.37},
-    "sigma_l": {"passed": "--sigma_l 0.29", "expected": 0.29},
-    "sigma_iou": {"passed": "--sigma_iou 0.36", "expected": 0.36},
-    "t_min": {"passed": "--t_min 5", "expected": 5},
-    "t_miss_max": {"passed": "--t_miss_max 38", "expected": 38},
-    "overwrite": {"passed": "--overwrite", "expected": True},
-    "config": {"passed": ""},
+    "sigma_h": {PASSED: "--sigma_h 0.37", EXPECTED: 0.37},
+    "sigma_l": {PASSED: "--sigma_l 0.29", EXPECTED: 0.29},
+    "sigma_iou": {PASSED: "--sigma_iou 0.36", EXPECTED: 0.36},
+    "t_min": {PASSED: "--t_min 5", EXPECTED: 5},
+    "t_miss_max": {PASSED: "--t_miss_max 38", EXPECTED: 38},
+    "overwrite": {PASSED: "--overwrite", EXPECTED: True},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
-        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
-        "expected": [
+        PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
+        EXPECTED: [
             Path("./"),
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "sigma_h": {"passed": "--sigma_h 0.42", "expected": 0.42},
-    "sigma_l": {"passed": "--sigma_l 0.34", "expected": 0.34},
-    "sigma_iou": {"passed": "--sigma_iou 0.41", "expected": 0.41},
-    "t_min": {"passed": "--t_min 7", "expected": 7},
-    "t_miss_max": {"passed": "--t_miss_max 43", "expected": 43},
-    "overwrite": {"passed": "--no-overwrite", "expected": False},
-    "config": {"passed": ""},
+    "sigma_h": {PASSED: "--sigma_h 0.42", EXPECTED: 0.42},
+    "sigma_l": {PASSED: "--sigma_l 0.34", EXPECTED: 0.34},
+    "sigma_iou": {PASSED: "--sigma_iou 0.41", EXPECTED: 0.41},
+    "t_min": {PASSED: "--t_min 7", EXPECTED: 7},
+    "t_miss_max": {PASSED: "--t_miss_max 43", EXPECTED: 43},
+    "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {"passed": "-p ./", "expected": [Path("./")]},
-    "sigma_h": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["SIGMA_H"]},
-    "sigma_l": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["SIGMA_L"]},
-    "sigma_iou": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["SIGMA_IOU"]},
-    "t_min": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["T_MIN"]},
-    "t_miss_max": {"passed": "", "expected": cwd_config["TRACK"]["IOU"]["T_MISS_MAX"]},
-    "overwrite": {"passed": "", "expected": cwd_config["TRACK"]["OVERWRITE"]},
-    "config": {"passed": ""},
+    "paths": {PASSED: "-p ./", EXPECTED: [Path("./")]},
+    "sigma_h": {PASSED: "", EXPECTED: cwd_config[TRACK][IOU][SIGMA_H]},
+    "sigma_l": {PASSED: "", EXPECTED: cwd_config[TRACK][IOU][SIGMA_L]},
+    "sigma_iou": {PASSED: "", EXPECTED: cwd_config[TRACK][IOU][SIGMA_IOU]},
+    "t_min": {PASSED: "", EXPECTED: cwd_config[TRACK][IOU][T_MIN]},
+    "t_miss_max": {PASSED: "", EXPECTED: cwd_config[TRACK][IOU][T_MISS_MAX]},
+    "overwrite": {PASSED: "", EXPECTED: cwd_config[TRACK][OVERWRITE]},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "paths": {
-        "passed": "",
-        "expected": [
-            Path(custom_config["TRACK"]["PATHS"][0]),
-            Path(custom_config["TRACK"]["PATHS"][1]),
+        PASSED: "",
+        EXPECTED: [
+            Path(custom_config[TRACK][PATHS][0]),
+            Path(custom_config[TRACK][PATHS][1]),
         ],
     },
-    "sigma_h": {"passed": "", "expected": custom_config["TRACK"]["IOU"]["SIGMA_H"]},
-    "sigma_l": {"passed": "", "expected": custom_config["TRACK"]["IOU"]["SIGMA_L"]},
-    "sigma_iou": {"passed": "", "expected": custom_config["TRACK"]["IOU"]["SIGMA_IOU"]},
-    "t_min": {"passed": "", "expected": custom_config["TRACK"]["IOU"]["T_MIN"]},
+    "sigma_h": {PASSED: "", EXPECTED: custom_config[TRACK][IOU][SIGMA_H]},
+    "sigma_l": {PASSED: "", EXPECTED: custom_config[TRACK][IOU][SIGMA_L]},
+    "sigma_iou": {PASSED: "", EXPECTED: custom_config[TRACK][IOU][SIGMA_IOU]},
+    "t_min": {PASSED: "", EXPECTED: custom_config[TRACK][IOU][T_MIN]},
     "t_miss_max": {
-        "passed": "",
-        "expected": custom_config["TRACK"]["IOU"]["T_MISS_MAX"],
+        PASSED: "",
+        EXPECTED: custom_config[TRACK][IOU][T_MISS_MAX],
     },
-    "overwrite": {"passed": "", "expected": custom_config["TRACK"]["OVERWRITE"]},
-    "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
+    "overwrite": {PASSED: "", EXPECTED: custom_config[TRACK][OVERWRITE]},
+    "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
 TEST_FAIL_DATA = [
-    {"passed": "--sigma_h foo", "error_msg_part": "invalid float value: 'foo'"},
-    {"passed": "--sigma_l foo", "error_msg_part": "invalid float value: 'foo'"},
-    {"passed": "--sigma_iou foo", "error_msg_part": "invalid float value: 'foo'"},
-    {"passed": "--t_min 2.2", "error_msg_part": "invalid int value: '2.2'"},
-    {"passed": "--t_miss_max 2.2", "error_msg_part": "invalid int value: '2.2'"},
-    {"passed": "--overwrite foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--sigma_h foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--sigma_l foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--sigma_iou foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--t_min 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {PASSED: "--t_miss_max 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
     {
-        "passed": "--no-sigma_h",
+        PASSED: "--no-sigma_h",
         "error_msg_part": "unrecognized arguments: --no-sigma_h",
     },
     {
-        "passed": "--no-sigma_l",
+        PASSED: "--no-sigma_l",
         "error_msg_part": "unrecognized arguments: --no-sigma_l",
     },
     {
-        "passed": "--no-sigma_iou",
+        PASSED: "--no-sigma_iou",
         "error_msg_part": "unrecognized arguments: --no-sigma_iou",
     },
     {
-        "passed": "--no-t_min",
+        PASSED: "--no-t_min",
         "error_msg_part": "unrecognized arguments: --no-t_min",
     },
     {
-        "passed": "--no-t_miss_max",
+        PASSED: "--no-t_miss_max",
         "error_msg_part": "unrecognized arguments: --no-t_miss_max",
     },
 ]
@@ -150,7 +165,7 @@ class TestTrackCLI:
 
         with patch("OTVision.track") as mock_track:
             command = [
-                "track.py",
+                TRACK_PY,
                 *test_data["paths"]["passed"].split(),
                 *test_data["sigma_l"]["passed"].split(),
                 *test_data["sigma_h"]["passed"].split(),
@@ -164,13 +179,13 @@ class TestTrackCLI:
             track_cli(argv=list(filter(None, command)))
 
             mock_track.assert_called_once_with(
-                paths=test_data["paths"]["expected"],
-                sigma_l=test_data["sigma_l"]["expected"],
-                sigma_h=test_data["sigma_h"]["expected"],
-                sigma_iou=test_data["sigma_iou"]["expected"],
-                t_min=test_data["t_min"]["expected"],
-                t_miss_max=test_data["t_miss_max"]["expected"],
-                overwrite=test_data["overwrite"]["expected"],
+                paths=test_data["paths"][EXPECTED],
+                sigma_l=test_data["sigma_l"][EXPECTED],
+                sigma_h=test_data["sigma_h"][EXPECTED],
+                sigma_iou=test_data["sigma_iou"][EXPECTED],
+                t_min=test_data["t_min"][EXPECTED],
+                t_miss_max=test_data["t_miss_max"][EXPECTED],
+                overwrite=test_data["overwrite"][EXPECTED],
             )
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
@@ -185,7 +200,7 @@ class TestTrackCLI:
 
         with patch("OTVision.track"):
             with pytest.raises(SystemExit) as e:
-                command = ["track.py", *test_fail_data["passed"].split()]
+                command = [TRACK_PY, *test_fail_data["passed"].split()]
                 track_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
@@ -199,7 +214,7 @@ class TestTrackCLI:
 
         with patch("OTVision.track"):
             with pytest.raises(FileNotFoundError):
-                command = ["track.py", *passed.split()]
+                command = [TRACK_PY, *passed.split()]
                 track_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_track_cli(
@@ -213,4 +228,4 @@ class TestTrackCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                track_cli(argv=["track.py"])
+                track_cli(argv=[TRACK_PY])

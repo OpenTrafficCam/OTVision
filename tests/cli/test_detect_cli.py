@@ -6,6 +6,20 @@ from unittest.mock import patch
 import pytest
 import yaml
 
+from OTVision.config import (
+    CHUNK_SIZE,
+    CONF,
+    DETECT,
+    FORCE_RELOAD_TORCH_HUB_CACHE,
+    HALF_PRECISION,
+    IMG_SIZE,
+    IOU,
+    OVERWRITE,
+    PATHS,
+    WEIGHTS,
+    YOLO,
+)
+
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
 with open(CUSTOM_CONFIG_FILE, "r") as file:
     custom_config = yaml.safe_load(file)
@@ -14,117 +28,120 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+PASSED: str = "passed"
+EXPECTED: str = "expected"
+DETECT_PY: str = "detect.py"
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
-        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
-        "expected": [
+        PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
+        EXPECTED: [
             Path("./"),
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "weights": {"passed": "--weights yolov5l", "expected": "yolov5l"},
-    "conf": {"passed": "--conf 0.5", "expected": 0.5},
-    "iou": {"passed": "--iou 0.55", "expected": 0.55},
-    "chunksize": {"passed": "--chunksize 10", "expected": 10},
-    "imagesize": {"passed": "--imagesize 1240", "expected": 1240},
-    "half_precision": {"passed": "--half", "expected": True},
-    "force_reload": {"passed": "--force", "expected": True},
-    "overwrite": {"passed": "--overwrite", "expected": True},
-    "config": {"passed": ""},
+    "weights": {PASSED: "--weights yolov5l", EXPECTED: "yolov5l"},
+    "conf": {PASSED: "--conf 0.5", EXPECTED: 0.5},
+    "iou": {PASSED: "--iou 0.55", EXPECTED: 0.55},
+    "chunksize": {PASSED: "--chunksize 10", EXPECTED: 10},
+    "imagesize": {PASSED: "--imagesize 1240", EXPECTED: 1240},
+    "half_precision": {PASSED: "--half", EXPECTED: True},
+    "force_reload": {PASSED: "--force", EXPECTED: True},
+    "overwrite": {PASSED: "--overwrite", EXPECTED: True},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
-        "passed": f"-p ./ ./{CUSTOM_CONFIG_FILE}",
-        "expected": [
+        PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
+        EXPECTED: [
             Path("./"),
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "weights": {"passed": "--weights yolov5x", "expected": "yolov5x"},
-    "conf": {"passed": "--conf 0.6", "expected": 0.6},
-    "iou": {"passed": "--iou 0.65", "expected": 0.65},
-    "chunksize": {"passed": "--chunksize 20", "expected": 20},
-    "imagesize": {"passed": "--imagesize 320", "expected": 320},
-    "half_precision": {"passed": "--no-half", "expected": False},
-    "force_reload": {"passed": "--no-force", "expected": False},
-    "overwrite": {"passed": "--no-overwrite", "expected": False},
-    "config": {"passed": ""},
+    "weights": {PASSED: "--weights yolov5x", EXPECTED: "yolov5x"},
+    "conf": {PASSED: "--conf 0.6", EXPECTED: 0.6},
+    "iou": {PASSED: "--iou 0.65", EXPECTED: 0.65},
+    "chunksize": {PASSED: "--chunksize 20", EXPECTED: 20},
+    "imagesize": {PASSED: "--imagesize 320", EXPECTED: 320},
+    "half_precision": {PASSED: "--no-half", EXPECTED: False},
+    "force_reload": {PASSED: "--no-force", EXPECTED: False},
+    "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {"passed": "-p ./", "expected": [Path("./")]},
-    "weights": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["WEIGHTS"]},
-    "conf": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["CONF"]},
-    "iou": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["IOU"]},
-    "chunksize": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["CHUNKSIZE"]},
-    "imagesize": {"passed": "", "expected": cwd_config["DETECT"]["YOLO"]["IMGSIZE"]},
+    "paths": {PASSED: "-p ./", EXPECTED: [Path("./")]},
+    "weights": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][WEIGHTS]},
+    "conf": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][CONF]},
+    "iou": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][IOU]},
+    "chunksize": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][CHUNK_SIZE]},
+    "imagesize": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][IMG_SIZE]},
     "half_precision": {
-        "passed": "",
-        "expected": cwd_config["DETECT"]["HALF_PRECISION"],
+        PASSED: "",
+        EXPECTED: cwd_config[DETECT][HALF_PRECISION],
     },
     "force_reload": {
-        "passed": "",
-        "expected": cwd_config["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE"],
+        PASSED: "",
+        EXPECTED: cwd_config[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
     },
-    "overwrite": {"passed": "", "expected": cwd_config["DETECT"]["OVERWRITE"]},
-    "config": {"passed": ""},
+    "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
+    "config": {PASSED: ""},
 }
 
 TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "paths": {
-        "passed": "",
-        "expected": [
-            Path(custom_config["DETECT"]["PATHS"][0]),
-            Path(custom_config["DETECT"]["PATHS"][1]),
+        PASSED: "",
+        EXPECTED: [
+            Path(custom_config[DETECT][PATHS][0]),
+            Path(custom_config[DETECT][PATHS][1]),
         ],
     },
-    "weights": {"passed": "", "expected": custom_config["DETECT"]["YOLO"]["WEIGHTS"]},
-    "conf": {"passed": "", "expected": custom_config["DETECT"]["YOLO"]["CONF"]},
-    "iou": {"passed": "", "expected": custom_config["DETECT"]["YOLO"]["IOU"]},
+    "weights": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][WEIGHTS]},
+    "conf": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][CONF]},
+    "iou": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][IOU]},
     "chunksize": {
-        "passed": "",
-        "expected": custom_config["DETECT"]["YOLO"]["CHUNKSIZE"],
+        PASSED: "",
+        EXPECTED: custom_config[DETECT][YOLO][CHUNK_SIZE],
     },
-    "imagesize": {"passed": "", "expected": custom_config["DETECT"]["YOLO"]["IMGSIZE"]},
+    "imagesize": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][IMG_SIZE]},
     "half_precision": {
-        "passed": "",
-        "expected": custom_config["DETECT"]["HALF_PRECISION"],
+        PASSED: "",
+        EXPECTED: custom_config[DETECT][HALF_PRECISION],
     },
     "force_reload": {
-        "passed": "",
-        "expected": custom_config["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE"],
+        PASSED: "",
+        EXPECTED: custom_config[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
     },
-    "overwrite": {"passed": "", "expected": custom_config["DETECT"]["OVERWRITE"]},
-    "config": {"passed": f"--config {CUSTOM_CONFIG_FILE}"},
+    "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
+    "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
 TEST_FAIL_DATA = [
-    {"passed": "--conf foo", "error_msg_part": "invalid float value: 'foo'"},
-    {"passed": "--iou foo", "error_msg_part": "invalid float value: 'foo'"},
-    {"passed": "--chunksize 2.2", "error_msg_part": "invalid int value: '2.2'"},
-    {"passed": "--imagesize 2.2", "error_msg_part": "invalid int value: '2.2'"},
-    {"passed": "--half foo", "error_msg_part": "unrecognized arguments"},
-    {"passed": "--force foo", "error_msg_part": "unrecognized arguments"},
-    {"passed": "--overwrite foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--conf foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--iou foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--chunksize 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {PASSED: "--imagesize 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {PASSED: "--half foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--force foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
     {
-        "passed": "--no-weights",
+        PASSED: "--no-weights",
         "error_msg_part": "unrecognized arguments: --no-weights",
     },
     {
-        "passed": "--no-conf",
+        PASSED: "--no-conf",
         "error_msg_part": "unrecognized arguments: --no-conf",
     },
     {
-        "passed": "--no-iou",
+        PASSED: "--no-iou",
         "error_msg_part": "unrecognized arguments: --no-iou",
     },
     {
-        "passed": "--no-chunksize",
+        PASSED: "--no-chunksize",
         "error_msg_part": "unrecognized arguments: --no-chunksize",
     },
     {
-        "passed": "--no-imagesize",
+        PASSED: "--no-imagesize",
         "error_msg_part": "unrecognized arguments: --no-imagesize",
     },
 ]
@@ -171,31 +188,31 @@ class TestDetectCLI:
 
         with patch("OTVision.detect") as mock_detect:
             command = [
-                "detect.py",
-                *test_data["paths"]["passed"].split(),
-                *test_data["weights"]["passed"].split(),
-                *test_data["conf"]["passed"].split(),
-                *test_data["iou"]["passed"].split(),
-                *test_data["chunksize"]["passed"].split(),
-                *test_data["imagesize"]["passed"].split(),
-                *test_data["half_precision"]["passed"].split(),
-                *test_data["force_reload"]["passed"].split(),
-                *test_data["overwrite"]["passed"].split(),
-                *test_data["config"]["passed"].split(),
+                DETECT_PY,
+                *test_data["paths"][PASSED].split(),
+                *test_data["weights"][PASSED].split(),
+                *test_data["conf"][PASSED].split(),
+                *test_data["iou"][PASSED].split(),
+                *test_data["chunksize"][PASSED].split(),
+                *test_data["imagesize"][PASSED].split(),
+                *test_data["half_precision"][PASSED].split(),
+                *test_data["force_reload"][PASSED].split(),
+                *test_data["overwrite"][PASSED].split(),
+                *test_data["config"][PASSED].split(),
             ]
 
             detect_cli(argv=list(filter(None, command)))
 
             mock_detect.assert_called_once_with(
-                paths=test_data["paths"]["expected"],
-                weights=test_data["weights"]["expected"],
-                conf=test_data["conf"]["expected"],
-                iou=test_data["iou"]["expected"],
-                size=test_data["imagesize"]["expected"],
-                chunksize=test_data["chunksize"]["expected"],
-                half_precision=test_data["half_precision"]["expected"],
-                force_reload_torch_hub_cache=test_data["force_reload"]["expected"],
-                overwrite=test_data["overwrite"]["expected"],
+                paths=test_data["paths"][EXPECTED],
+                weights=test_data["weights"][EXPECTED],
+                conf=test_data["conf"][EXPECTED],
+                iou=test_data["iou"][EXPECTED],
+                size=test_data["imagesize"][EXPECTED],
+                chunksize=test_data["chunksize"][EXPECTED],
+                half_precision=test_data["half_precision"][EXPECTED],
+                force_reload_torch_hub_cache=test_data["force_reload"][EXPECTED],
+                overwrite=test_data["overwrite"][EXPECTED],
             )
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
@@ -210,13 +227,13 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(SystemExit) as e:
-                command = ["detect.py", *test_fail_data["passed"].split()]
+                command = [DETECT_PY, *test_fail_data[PASSED].split()]
                 detect_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
             assert test_fail_data["error_msg_part"] in captured.err
 
-    @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    @pytest.mark.parametrize(PASSED, argvalues=["--config foo", "--paths foo"])
     def test_fail_not_existing_path_passed_to_detect_cli(
         self, detect: Callable, detect_cli: Callable, passed: str
     ) -> None:
@@ -224,7 +241,7 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(FileNotFoundError):
-                command = ["detect.py", *passed.split()]
+                command = [DETECT_PY, *passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_detect_cli(
@@ -238,4 +255,4 @@ class TestDetectCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                detect_cli(argv=["detect.py"])
+                detect_cli(argv=[DETECT_PY])
