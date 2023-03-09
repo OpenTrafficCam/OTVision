@@ -138,7 +138,7 @@ def _process_parameters(
 
 def _extract_paths(args: argparse.Namespace) -> list[Path]:
     if args.paths is None:
-        str_paths = config.CONFIG[config.DETECT][config.PATHS]
+        str_paths = config.CONFIG[config.CONVERT][config.PATHS]
     else:
         str_paths = args.paths
     if len(str_paths) == 0:
