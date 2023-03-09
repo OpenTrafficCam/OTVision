@@ -235,7 +235,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main(argv: list[str]) -> int:  # sourcery skip: assign-if-exp
+def main(argv: list[str]) -> None:  # sourcery skip: assign-if-exp
     args = parse(argv)
 
     _process_config(args)
@@ -276,8 +276,6 @@ def main(argv: list[str]) -> int:  # sourcery skip: assign-if-exp
         log.exception("")
         raise
 
-    return 0
-
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    main(sys.argv)
