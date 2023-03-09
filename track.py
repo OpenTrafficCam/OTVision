@@ -24,9 +24,8 @@ import logging
 from pathlib import Path
 
 import OTVision.config as config
-from OTVision.helpers.log import log
-from OTVision.track.track import main as track
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
+from OTVision.track.track import main as track
 
 
 def parse() -> argparse.Namespace:

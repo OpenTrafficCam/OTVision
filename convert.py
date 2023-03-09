@@ -25,7 +25,6 @@ from pathlib import Path
 
 import OTVision.config as config
 from OTVision.convert.convert import main as convert
-from OTVision.helpers.log import log
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
