@@ -20,11 +20,12 @@ OTVision script to call the detect main with arguments parsed from command line
 
 
 import argparse
+import logging
 from pathlib import Path
 
 import OTVision
 import OTVision.config as config
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
 def parse() -> argparse.Namespace:
@@ -93,10 +94,24 @@ def parse() -> argparse.Namespace:
         help="Overwrite existing output files",
     )
     parser.add_argument(
-        "-d",
-        "--debug",
-        action=argparse.BooleanOptionalAction,
-        help="Logging in debug mode",
+        "--log_level_console",
+        type=str,
+        choices=VALID_LOG_LEVELS,
+        help="Log level for logging to the console",
+        required=False,
+    )
+    parser.add_argument(
+        "--log_level_file",
+        type=str,
+        choices=VALID_LOG_LEVELS,
+        help="Log level for logging to a log file",
+        required=False,
+    )
+    parser.add_argument(
+        "--log_dir",
+        type=str,
+        help="Path to directory to write the log files",
+        required=False,
     )
     return parser.parse_args()
 
@@ -111,26 +126,19 @@ def _process_config(args: argparse.Namespace) -> None:
             config.parse_user_config(str(user_config_cwd))
 
 
-def _extract_paths(args: argparse.Namespace) -> list[str]:
-    if args.paths:
-        return args.paths
-    if len(config.CONFIG[config.DETECT][config.PATHS]) == 0:
-        raise IOError(
-            "No paths have been passed as command line args."
-            "No paths have been defined in the user config."
-        )
-
-    return config.CONFIG[config.DETECT][config.PATHS]
-
-
-def main() -> None:  # sourcery skip: assign-if-exp
-    args = parse()
-    _process_config(args)
-
+def _process_parameters(
+    args: argparse.Namespace, log: logging.Logger
+) -> tuple[list[Path], str, float, float, int, int, bool, bool, bool]:
     try:
         str_paths = _extract_paths(args)
-    except IOError as ioe:
-        log.error(ioe)
+    except IOError:
+        log.exception(
+            f"Unable to extract pathlib.Path from the paths you specified: {str_paths}"
+        )
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
     paths = [Path(str_path) for str_path in str_paths]
 
@@ -149,15 +157,16 @@ def main() -> None:  # sourcery skip: assign-if-exp
     else:
         iou = args.iou
 
+    if args.imagesize is None:
+        imagesize = config.CONFIG[config.DETECT][config.YOLO][config.IMG_SIZE]
+    else:
+        imagesize = args.imagesize
+
     if args.chunksize is None:
         chunksize = config.CONFIG[config.DETECT][config.YOLO][config.CHUNK_SIZE]
     else:
         chunksize = args.chunksize
 
-    if args.imagesize is None:
-        imagesize = config.CONFIG[config.DETECT][config.YOLO][config.IMG_SIZE]
-    else:
-        imagesize = args.imagesize
     if args.half is None:
         half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
     else:
@@ -172,13 +181,78 @@ def main() -> None:  # sourcery skip: assign-if-exp
         overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
     else:
         overwrite = args.overwrite
+    return (
+        paths,
+        weights,
+        conf,
+        iou,
+        imagesize,
+        chunksize,
+        half,
+        force_reload,
+        overwrite,
+    )
 
-    if args.debug is None:
-        debug = config.CONFIG[config.DETECT][config.DEBUG]
+
+def _extract_paths(args: argparse.Namespace) -> list[str]:
+    if args.paths:
+        return args.paths
+    if len(config.CONFIG[config.DETECT][config.PATHS]) == 0:
+        raise IOError(
+            "No paths have been passed as command line args."
+            "No paths have been defined in the user config."
+        )
+
+    return config.CONFIG[config.DETECT][config.PATHS]
+
+
+def _configure_logger(args: argparse.Namespace) -> logging.Logger:
+    if args.log_level_console is None:
+        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
     else:
-        debug = args.debug
+        log_level_console = args.log_level_console
 
-    log.info("Starting detection from command line")
+    if args.log_level_file is None:
+        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+    else:
+        log_level_file = args.log_level_file
+
+    if args.log_dir is None:
+        try:
+            log_dir = Path(config.CONFIG[config.LOG][config.LOG_DIR])
+        except TypeError:
+            print("No valid LOG_DIR specified in config, check your config file")
+            raise
+    else:
+        log_dir = Path(args.log_dir)
+
+    log.add_console_handler(level=log_level_console)
+
+    log.add_file_handler(log_dir=log_dir, level=log_level_file)
+
+    return logging.getLogger(LOGGER_NAME)
+
+
+def main() -> None:  # sourcery skip: assign-if-exp
+    args = parse()
+
+    _process_config(args)
+
+    log = _configure_logger(args)
+
+    (
+        paths,
+        weights,
+        conf,
+        iou,
+        imagesize,
+        chunksize,
+        half,
+        force_reload,
+        overwrite,
+    ) = _process_parameters(args, log)
+
+    log.info("Call detect from command line")
     log.info(f"Arguments: {vars(args)}")
 
     try:
@@ -187,16 +261,18 @@ def main() -> None:  # sourcery skip: assign-if-exp
             weights=weights,
             conf=conf,
             iou=iou,
-            chunksize=chunksize,
             size=imagesize,
+            chunksize=chunksize,
             half_precision=half,
             force_reload_torch_hub_cache=force_reload,
             overwrite=overwrite,
-            debug=debug,
         )
-        log.info("Finished detection from command line")
-    except FileNotFoundError as fnfe:
-        log.error(fnfe)
+    except FileNotFoundError:
+        log.exception(f"One of the following files cannot be found: {paths}")
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 if __name__ == "__main__":

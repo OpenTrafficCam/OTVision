@@ -18,7 +18,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
+import logging
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -26,12 +26,12 @@ from typing import Union
 
 import torch
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from tqdm import tqdm
 
 from OTVision.config import (
     CHUNK_SIZE,
     CONF,
     CONFIG,
-    DEBUG,
     DEFAULT_FILETYPE,
     DETECT,
     FILETYPES,
@@ -47,10 +47,12 @@ from OTVision.config import (
 )
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.helpers.files import get_files, write_json
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
 
 from . import yolo
+
+log = logging.getLogger(LOGGER_NAME)
 
 START_DATE = "start_date"
 FILE_NAME_PATTERN = (
@@ -69,11 +71,10 @@ def main(
     iou: float = CONFIG[DETECT][YOLO][IOU],
     size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
     chunksize: int = CONFIG[DETECT][YOLO][CHUNK_SIZE],
-    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
-    overwrite: bool = CONFIG[DETECT][OVERWRITE],
-    debug: bool = CONFIG[DETECT][DEBUG],
     half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
     force_reload_torch_hub_cache: bool = CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
+    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
+    overwrite: bool = CONFIG[DETECT][OVERWRITE],
 ) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
@@ -94,23 +95,22 @@ def main(
             Defaults to CONFIG["DETECT"]["YOLO"]["IMGSIZE"].
         chunksize (int, optional): YOLOv5 chunksize.
             Defaults to CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"].
-        normalized (bool, optional): Whether or not to normalize detections
-            to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
-        overwrite (bool, optional): Whether or not to overwrite
-            existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
         half_precision (bool, optional): Whether to use half precision (FP16) for
             inference speed up. Only works for gpu.
             Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
         force_reload_torch_hub_cache (bool, optional): Whether to force reload torch
             hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
-        debug (bool, optional): Whether or not logging in debug mode.
-            Defaults to CONFIG["DETECT"]["DEBUG"].
+        normalized (bool, optional): Whether or not to normalize detections
+            to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
+        overwrite (bool, optional): Whether or not to overwrite
+            existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
-    log.info("Start detection")
-    if debug:
-        set_debug()
 
     video_files = get_files(paths=paths, filetypes=filetypes)
+
+    start_msg = f"Start detection of {len(video_files)} video files"
+    log.info(start_msg)
+    print(start_msg)
 
     if not video_files:
         raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
@@ -129,9 +129,12 @@ def main(
         )
         yolo_model.conf = conf
         yolo_model.iou = iou
-    log.info("Model prepared")
 
-    for video_file in video_files:
+    model_succes_msg = f"Model {weights} prepared"
+    log.info(model_succes_msg)
+    print(model_succes_msg)
+
+    for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
         if not overwrite and detections_file.is_file():
@@ -140,7 +143,8 @@ def main(
             )
             continue
 
-        log.info(f"Try detecting {video_file}")
+        log.info(f"Detect {video_file}")
+
         detections_video = yolo.detect_video(
             file=video_file,
             model=yolo_model,
@@ -152,7 +156,6 @@ def main(
             chunksize=chunksize,
             normalized=normalized,
         )
-        log.info(f"Successfully detected {video_file}")
 
         stamped_detections = add_timestamps(detections_video, video_file)
         write_json(
@@ -162,8 +165,12 @@ def main(
             overwrite=overwrite,
         )
 
-    if debug:
-        reset_debug()
+        log.info(f"Successfully detected and wrote {detections_file}")
+
+    finished_msg = "Finished detection"
+    log.info(finished_msg)
+    print(finished_msg)
+
     return None
 
 

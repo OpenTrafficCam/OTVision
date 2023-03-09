@@ -21,12 +21,14 @@ OTVision main module for tracking objects in successive frames of videos
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 from pathlib import Path
+
+from tqdm import tqdm
 
 from OTVision import dataformat
 from OTVision.config import (
     CONFIG,
-    DEBUG,
     DEFAULT_FILETYPE,
     DETECT,
     FILETYPES,
@@ -46,10 +48,12 @@ from OTVision.helpers.files import (
     get_files,
     write_json,
 )
-from OTVision.helpers.log import log, reset_debug, set_debug
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Preprocess, Splitter
 
 from .iou import track_iou
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 def main(
@@ -60,7 +64,6 @@ def main(
     t_min: int = CONFIG[TRACK][IOU][T_MIN],
     t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
     overwrite: bool = CONFIG[TRACK][OVERWRITE],
-    debug: bool = CONFIG[TRACK][DEBUG],
 ) -> None:
     """Read detections from otdet file, perform tracking using iou tracker and
         save tracks to ottrk file.
@@ -88,15 +91,14 @@ def main(
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
         overwrite (bool, optional): Whether or not to overwrite existing tracks files.
             Defaults to CONFIG["TRACK"]["OVERWRITE"].
-        debug (bool, optional): Whether or not to run in debug mode.
-            Defaults to CONFIG["TRACK"]["DEBUG"].
     """
-    log.info("Start tracking")
-    if debug:
-        set_debug()
 
     filetypes = CONFIG[FILETYPES][DETECT]
     detections_files = get_files(paths=paths, filetypes=filetypes)
+
+    start_msg = f"Start tracking of {len(detections_files)} detections files"
+    log.info(start_msg)
+    print(start_msg)
 
     if not detections_files:
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
@@ -105,7 +107,9 @@ def main(
     preprocessed = preprocessor.run(detections_files)
 
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
-    for frame_group in preprocessed.frame_groups:
+    for frame_group in tqdm(
+        preprocessed.frame_groups, desc="Tracked frame groups", unit="framegroups"
+    ):
         existing_output_files = frame_group.get_existing_output_files(
             with_suffix=file_type
         )
@@ -118,6 +122,8 @@ def main(
                 )
             )
             continue
+
+        log.info(f"Track {str(frame_group.order_key)}")
 
         metadata = preprocessed.metadata
         detections = frame_group.to_dict()
@@ -142,7 +148,8 @@ def main(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
-        log.info(f"Successfully tracked {frame_group.order_key}")
+
+        log.debug(f"Successfully tracked {frame_group.order_key}")
 
         # Split into files of group
         splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
@@ -155,8 +162,11 @@ def main(
                 overwrite=overwrite,
             )
 
-    if debug:
-        reset_debug()
+        log.info(f"Successfully tracked and wrote {frame_group.order_key}")
+
+    finished_msg = "Finished tracking"
+    log.info(finished_msg)
+    print(finished_msg)
 
 
 def track(

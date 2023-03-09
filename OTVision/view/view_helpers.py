@@ -19,6 +19,7 @@ OTVision helper gui module
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import tkinter as tk
 import tkinter.ttk as ttk
 from pathlib import Path
@@ -26,7 +27,9 @@ from tkinter import filedialog
 
 from OTVision.config import CONFIG, PAD
 from OTVision.helpers.files import get_files
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class FrameFileTree(tk.LabelFrame):
@@ -367,7 +370,7 @@ class FrameFiles(tk.LabelFrame):
             file_to_remove = selected_file - delta
             self.listbox_files.delete(first=file_to_remove)
 
-    def debug(self, event):
+    def _debug(self, event):
         log.debug(event)
 
 

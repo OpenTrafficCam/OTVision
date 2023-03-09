@@ -19,14 +19,17 @@ OTVision gui module for convert.py
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import tkinter as tk
 import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.view.view_helpers import FrameRun
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class FrameConvert(tk.LabelFrame):
@@ -98,7 +101,6 @@ class FrameRunConversion(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        log.debug("---Starting conversion from gui---")
         fps_from_filename = (
             self.master.frame_options.checkbutton_use_framerate_var.get()
         )
@@ -113,6 +115,7 @@ class FrameRunConversion(FrameRun):
         input_fps = self.master.frame_options.entry_framerate.get()
         output_fps = self.master.frame_options.entry_framerate.get()
         overwrite = self.master.frame_options.checkbutton_use_framerate_var.get()
+        log.info("Call convert from GUI")
         convert(
             paths=files,
             output_filetype=output_filetype,

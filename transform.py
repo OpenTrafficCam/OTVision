@@ -20,11 +20,12 @@ OTVision script to call the transform main with arguments parsed from command li
 
 
 import argparse
+import logging
 from pathlib import Path
 
 import OTVision
 import OTVision.config as config
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
 def parse() -> argparse.Namespace:
@@ -57,10 +58,24 @@ def parse() -> argparse.Namespace:
         help="Overwrite existing output files",
     )
     parser.add_argument(
-        "-d",
-        "--debug",
-        action=argparse.BooleanOptionalAction,
-        help="Logging in debug mode",
+        "--log_level_console",
+        type=str,
+        choices=VALID_LOG_LEVELS,
+        help="Log level for logging to the console",
+        required=False,
+    )
+    parser.add_argument(
+        "--log_level_file",
+        type=str,
+        choices=VALID_LOG_LEVELS,
+        help="Log level for logging to a log file",
+        required=False,
+    )
+    parser.add_argument(
+        "--log_dir",
+        type=str,
+        help="Path to directory to write the log files",
+        required=False,
     )
     return parser.parse_args()
 
@@ -75,6 +90,35 @@ def _process_config(args: argparse.Namespace) -> None:
             config.parse_user_config(str(user_config_cwd))
 
 
+def _process_parameters(
+    args: argparse.Namespace, log: logging.Logger
+) -> tuple[list[Path], Path | None, bool]:  # sourcery skip: assign-if-exp
+    try:
+        str_paths = _extract_paths(args)
+    except IOError:
+        log.exception(
+            f"Unable to extract pathlib.Path from the paths you specified: {str_paths}"
+        )
+        raise
+    except Exception:
+        log.exception("")
+        raise
+
+    paths = [Path(str_path) for str_path in str_paths]
+
+    # TODO: Check if path to refpts_file is given from CLI (like e.g. for overwrite)
+    if args.refpts_file:
+        refpts_file = Path(args.refpts_file)
+    else:
+        refpts_file = None
+
+    if args.overwrite is None:
+        overwrite = config.CONFIG[config.TRANSFORM][config.OVERWRITE]
+    else:
+        overwrite = args.overwrite
+    return paths, refpts_file, overwrite
+
+
 def _extract_paths(args: argparse.Namespace) -> list[str]:
     if args.paths:
         return args.paths
@@ -87,41 +131,53 @@ def _extract_paths(args: argparse.Namespace) -> list[str]:
     return config.CONFIG[config.TRANSFORM][config.PATHS]
 
 
+def _configure_logger(args: argparse.Namespace) -> logging.Logger:
+    if args.log_level_console is None:
+        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
+    else:
+        log_level_console = args.log_level_console
+
+    if args.log_level_file is None:
+        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+    else:
+        log_level_file = args.log_level_file
+
+    if args.log_dir is None:
+        try:
+            log_dir = Path(config.CONFIG[config.LOG][config.LOG_DIR])
+        except TypeError:
+            print("No valid LOG_DIR specified in config, check your config file")
+            raise
+    else:
+        log_dir = Path(args.log_dir)
+
+    log.add_console_handler(level=log_level_console)
+
+    log.add_file_handler(log_dir=log_dir, level=log_level_file)
+
+    return logging.getLogger(LOGGER_NAME)
+
+
 def main() -> None:
     args = parse()
+
     _process_config(args)
-    try:
-        str_paths = _extract_paths(args)
-    except IOError as ioe:
-        log.error(ioe)
 
-    paths = [Path(str_path) for str_path in str_paths]
+    log = _configure_logger(args)
 
-    if args.refpts_file:
-        refpts_file = Path(args.refpts_file)
-    else:
-        refpts_file = None
+    paths, refpts_file, overwrite = _process_parameters(args, log)
 
-    if args.overwrite is None:
-        overwrite = config.CONFIG[config.TRANSFORM][config.OVERWRITE]
-    else:
-        overwrite = args.overwrite
-
-    if args.debug is None:
-        debug = config.CONFIG[config.TRANSFORM][config.DEBUG]
-    else:
-        debug = args.debug
-
-    log.info("Starting transforming to world coordinates from command line")
+    log.info("Call transform from command line")
     log.info(f"Arguments: {vars(args)}")
 
     try:
-        OTVision.transform(
-            paths=paths, refpts_file=refpts_file, overwrite=overwrite, debug=debug
-        )
-        log.info("Finished transforming to world coordinates  from command line")
-    except FileNotFoundError as fnfe:
-        log.error(fnfe)
+        OTVision.transform(paths=paths, refpts_file=refpts_file, overwrite=overwrite)
+    except FileNotFoundError:
+        log.exception(f"One of the following files cannot be found: {paths}")
+        raise
+    except Exception:
+        log.exception("")
+        raise
 
 
 if __name__ == "__main__":

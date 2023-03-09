@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from deepdiff import DeepDiff
 
 from OTVision import config
 
@@ -28,9 +27,7 @@ class TestConfig:
         self,
     ) -> None:
         result = config.Config().to_dict()
-        diff = DeepDiff(self.default_config, result)
         assert result == self.default_config
-        assert diff.to_dict() == {}
 
     def test_parse_user_config_overwrite_default(
         self, default_config: dict, user_config: Path
@@ -38,6 +35,4 @@ class TestConfig:
         # assert config.CONFIG == self.default_config
         config.parse_user_config(str(user_config))
         default_config["DETECT"]["YOLO"]["WEIGHTS"] = "my_weights"
-        diff = DeepDiff(self.default_config, config.CONFIG)
-        assert diff.to_dict() == {}
         assert config.CONFIG == self.default_config

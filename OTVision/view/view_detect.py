@@ -19,14 +19,17 @@ OTVision gui module for detect.py
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import logging
 import tkinter as tk
 import tkinter.ttk as ttk
 
 from OTVision.config import CONFIG, PAD
 from OTVision.detect.detect import main as detect
 from OTVision.helpers.files import get_files, replace_filetype
-from OTVision.helpers.log import log
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.view.view_helpers import FrameRun
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class FrameDetect(tk.LabelFrame):
@@ -108,7 +111,6 @@ class FrameRunDetection(FrameRun):
             self.checkbutton_run_chained.select()
 
     def run(self, event):
-        log.debug("---Starting detection from gui---")
         input_filetype = f".{self.master.master.frame_files.combo_vid_filetype.get()}"
 
         files = replace_filetype(
@@ -127,6 +129,7 @@ class FrameRunDetection(FrameRun):
         chunksize = self.master.frame_options.scale_chunksize.get()
         normalized = self.master.frame_options.checkbutton_normalized_var.get()
         overwrite = self.master.frame_options.checkbutton_overwrite_var.get()
+        log.info("Call detect from GUI")
         detect(
             paths=files,
             filetypes=[input_filetype],
