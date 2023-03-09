@@ -1,4 +1,5 @@
 # OTVision
+data/
 OTVision/user.conf
 yolov5*.pt
 obj_train_data/*

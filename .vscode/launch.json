@@ -64,6 +64,22 @@
             },
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "Python: Transform",
+            "type": "python",
+            "request": "launch",
+            "preLaunchTask": "Build detect debug environment",
+            "postDebugTask": "Tear down debug environment",
+            "program": "${workspaceFolder}/transform.py",
+            "args": [
+                "-p",
+                "/Users/michaelheilig/GIT/OTC/OTVision/data/Blox2_3min.ottrk",
+                "-r",
+                 "/Users/michaelheilig/GIT/OTC/OTVision/data/Blox2_3min.otrfpts"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }
