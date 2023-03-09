@@ -89,7 +89,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
         help="Path to directory to write the log files",
         required=False,
     )
-    return parser.parse_args(argv[1:])
+    return parser.parse_args(argv)
 
 
 def _process_config(args: argparse.Namespace) -> None:

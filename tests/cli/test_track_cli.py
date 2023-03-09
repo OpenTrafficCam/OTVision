@@ -28,7 +28,7 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 PASSED: str = "passed"
 EXPECTED: str = "expected"
-TRACK_PY: str = "track.py"
+
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
         PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
@@ -165,7 +165,6 @@ class TestTrackCLI:
 
         with patch("OTVision.track") as mock_track:
             command = [
-                TRACK_PY,
                 *test_data["paths"]["passed"].split(),
                 *test_data["sigma_l"]["passed"].split(),
                 *test_data["sigma_h"]["passed"].split(),
@@ -200,7 +199,7 @@ class TestTrackCLI:
 
         with patch("OTVision.track"):
             with pytest.raises(SystemExit) as e:
-                command = [TRACK_PY, *test_fail_data["passed"].split()]
+                command = [*test_fail_data["passed"].split()]
                 track_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
@@ -214,7 +213,7 @@ class TestTrackCLI:
 
         with patch("OTVision.track"):
             with pytest.raises(FileNotFoundError):
-                command = [TRACK_PY, *passed.split()]
+                command = [*passed.split()]
                 track_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_track_cli(
@@ -228,4 +227,4 @@ class TestTrackCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                track_cli(argv=[TRACK_PY])
+                track_cli(argv=[])

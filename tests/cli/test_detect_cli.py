@@ -30,7 +30,7 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 PASSED: str = "passed"
 EXPECTED: str = "expected"
-DETECT_PY: str = "detect.py"
+
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
         PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
@@ -188,7 +188,6 @@ class TestDetectCLI:
 
         with patch("OTVision.detect") as mock_detect:
             command = [
-                DETECT_PY,
                 *test_data["paths"][PASSED].split(),
                 *test_data["weights"][PASSED].split(),
                 *test_data["conf"][PASSED].split(),
@@ -227,7 +226,7 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(SystemExit) as e:
-                command = [DETECT_PY, *test_fail_data[PASSED].split()]
+                command = [*test_fail_data[PASSED].split()]
                 detect_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
@@ -241,7 +240,7 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(FileNotFoundError):
-                command = [DETECT_PY, *passed.split()]
+                command = [*passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_detect_cli(
@@ -255,4 +254,4 @@ class TestDetectCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                detect_cli(argv=[DETECT_PY])
+                detect_cli(argv=[])

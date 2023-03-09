@@ -25,7 +25,7 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 PASSED: str = "passed"
 EXPECTED: str = "expected"
-CONVERT_PY: str = "convert.py"
+
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
         PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
@@ -142,7 +142,6 @@ class TestConvertCLI:
 
         with patch("OTVision.convert") as mock_convert:
             command = [
-                CONVERT_PY,
                 *test_data["paths"][PASSED].split(),
                 *test_data["input_fps"][PASSED].split(),
                 *test_data["fps_from_filename"][PASSED].split(),
@@ -173,7 +172,7 @@ class TestConvertCLI:
 
         with patch("OTVision.convert"):
             with pytest.raises(SystemExit) as e:
-                command = [CONVERT_PY, *test_fail_data[PASSED].split()]
+                command = [*test_fail_data[PASSED].split()]
                 convert_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
@@ -187,7 +186,7 @@ class TestConvertCLI:
 
         with patch("OTVision.convert"):
             with pytest.raises(FileNotFoundError):
-                command = [CONVERT_PY, *passed.split()]
+                command = [*passed.split()]
                 convert_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_convert_cli(
@@ -201,4 +200,4 @@ class TestConvertCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                convert_cli(argv=[CONVERT_PY])
+                convert_cli(argv=[])
