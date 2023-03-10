@@ -353,6 +353,9 @@ def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
             ) from re
         else:
             raise
+
+    model.eval()
+
     return model.cuda() if torch.cuda.is_available() else model.cpu()
 
 
@@ -378,6 +381,9 @@ def _load_custom_model(weights: Path, force_reload: bool) -> Any:
         path=weights,
         force_reload=force_reload,
     )
+
+    model.eval()
+
     return model.cuda() if torch.cuda.is_available() else model.cpu()
 
 
