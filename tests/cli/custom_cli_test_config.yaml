@@ -1,0 +1,46 @@
+---
+CONVERT:
+  PATHS:
+    [
+      "tests/data/convert/default/",
+      "tests/data/convert/default/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.h264",
+    ]
+  DELETE_INPUT: false
+  FPS_FROM_FILENAME: false
+  INPUT_FPS: 15.0
+  OVERWRITE: true
+
+DETECT:
+  PATHS:
+    [
+      "tests/data/detect/",
+      "tests/data/detect/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
+    ]
+  FORCE_RELOAD_TORCH_HUB_CACHE: false
+  HALF_PRECISION: false
+  OVERWRITE: true
+  YOLO:
+    CHUNKSIZE: 2
+    CONF: 0.15
+    IMGSIZE: 1080
+    IOU: 0.39
+    WEIGHTS: yolov5m
+
+TRACK:
+  PATHS:
+    [
+      "tests/data/track/default/",
+      "tests/data/track/default/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet",
+    ]
+  IOU:
+    SIGMA_H: 0.32
+    SIGMA_IOU: 0.31
+    SIGMA_L: 0.24
+    T_MIN: 3
+    T_MISS_MAX: 33
+  OVERWRITE: false
+
+LOG:
+  LOG_LEVEL_CONSOLE: WARNING
+  LOG_LEVEL_FILE: DEBUG
+  LOG_DIR: .
