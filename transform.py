@@ -25,6 +25,7 @@ from pathlib import Path
 
 import OTVision
 import OTVision.config as config
+from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
@@ -94,17 +95,13 @@ def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
 ) -> tuple[list[Path], Path | None, bool]:  # sourcery skip: assign-if-exp
     try:
-        str_paths = _extract_paths(args)
+        paths = _extract_paths(args)
     except IOError:
-        log.exception(
-            f"Unable to extract pathlib.Path from the paths you specified: {str_paths}"
-        )
+        log.exception("Unable to extract paths from command line or config.yaml")
         raise
     except Exception:
         log.exception("")
         raise
-
-    paths = [Path(str_path) for str_path in str_paths]
 
     # TODO: Check if path to refpts_file is given from CLI (like e.g. for overwrite)
     if args.refpts_file:
@@ -119,16 +116,20 @@ def _process_parameters(
     return paths, refpts_file, overwrite
 
 
-def _extract_paths(args: argparse.Namespace) -> list[str]:
-    if args.paths:
-        return args.paths
-    if len(config.CONFIG[config.TRANSFORM][config.PATHS]) == 0:
+def _extract_paths(args: argparse.Namespace) -> list[Path]:
+    if args.paths is None:
+        str_paths = config.CONFIG[config.TRANSFORM][config.PATHS]
+    else:
+        str_paths = args.paths
+    if len(str_paths) == 0:
         raise IOError(
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
+    paths = [Path(str_path) for str_path in str_paths]
+    check_if_all_paths_exist(paths)
 
-    return config.CONFIG[config.TRANSFORM][config.PATHS]
+    return paths
 
 
 def _configure_logger(args: argparse.Namespace) -> logging.Logger:

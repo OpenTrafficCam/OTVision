@@ -143,6 +143,12 @@ def replace_filetype(
     return new_paths
 
 
+def check_if_all_paths_exist(paths: list[Path]) -> None:
+    for path in paths:
+        if not path.exists():
+            raise FileNotFoundError(f"{path} is not an existing file or directory")
+
+
 def _remove_dir(dir_to_remove: Path) -> None:
     """Helper to remove a directory and all of its subdirectories.
 
