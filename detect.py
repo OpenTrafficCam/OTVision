@@ -21,14 +21,16 @@ OTVision script to call the detect main with arguments parsed from command line
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 import OTVision.config as config
 from OTVision.detect.detect import main as detect
+from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
-def parse() -> argparse.Namespace:
+def parse(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect objects in videos or images")
     parser.add_argument(
         "-p",
@@ -113,7 +115,7 @@ def parse() -> argparse.Namespace:
         help="Path to directory to write the log files",
         required=False,
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def _process_config(args: argparse.Namespace) -> None:
@@ -130,17 +132,13 @@ def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
 ) -> tuple[list[Path], str, float, float, int, int, bool, bool, bool]:
     try:
-        str_paths = _extract_paths(args)
+        paths = _extract_paths(args)
     except IOError:
-        log.exception(
-            f"Unable to extract pathlib.Path from the paths you specified: {str_paths}"
-        )
+        log.exception("Unable to extract paths from command line or config.yaml")
         raise
     except Exception:
         log.exception("")
         raise
-
-    paths = [Path(str_path) for str_path in str_paths]
 
     if args.weights is None:
         weights = config.CONFIG[config.DETECT][config.YOLO][config.WEIGHTS]
@@ -194,16 +192,20 @@ def _process_parameters(
     )
 
 
-def _extract_paths(args: argparse.Namespace) -> list[str]:
-    if args.paths:
-        return args.paths
-    if len(config.CONFIG[config.DETECT][config.PATHS]) == 0:
+def _extract_paths(args: argparse.Namespace) -> list[Path]:
+    if args.paths is None:
+        str_paths = config.CONFIG[config.DETECT][config.PATHS]
+    else:
+        str_paths = args.paths
+    if len(str_paths) == 0:
         raise IOError(
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
+    paths = [Path(str_path) for str_path in str_paths]
+    check_if_all_paths_exist(paths)
 
-    return config.CONFIG[config.DETECT][config.PATHS]
+    return paths
 
 
 def _configure_logger(args: argparse.Namespace) -> logging.Logger:
@@ -233,8 +235,8 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main() -> None:  # sourcery skip: assign-if-exp
-    args = parse()
+def main(argv: list[str]) -> None:  # sourcery skip: assign-if-exp
+    args = parse(argv)
 
     _process_config(args)
 
@@ -276,4 +278,4 @@ def main() -> None:  # sourcery skip: assign-if-exp
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
