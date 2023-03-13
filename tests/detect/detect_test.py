@@ -189,7 +189,13 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
 
 @pytest.fixture(scope="session")
 def yolov5m() -> Any:
-    model = loadmodel("yolov5m", conf=0.25, iou=0.25, force_reload=True)
+    model = loadmodel(
+        "yolov5m",
+        conf=0.25,
+        iou=0.25,
+        force_reload=True,
+        skip_validation=True,
+    )
     return model
 
 
