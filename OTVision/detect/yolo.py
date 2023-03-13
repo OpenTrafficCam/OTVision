@@ -170,7 +170,7 @@ def detect_video(
         )
         batch_no += 1
 
-        pbar.update(chunksize)
+        pbar.update(len(rgb_transformed_batch))
 
         t_loop_overhead = perf_counter() - t_list
 
