@@ -55,11 +55,7 @@ from . import yolo
 log = logging.getLogger(LOGGER_NAME)
 
 START_DATE = "start_date"
-FILE_NAME_PATTERN = (
-    r"(?P<prefix>[A-Za-z0-9]+)"
-    r"_FR(?P<frame_rate>\d+)"
-    r"_(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
-)
+FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
 
 
 def main(
