@@ -4,7 +4,7 @@ matplotlib==3.6.2
 moviepy==1.0.3
 numpy==1.23.5
 opencv-python==4.6.0.66
-pandas==1.5.2
+pandas==1.5.3
 progressbar==2.5
 psutil==5.9.4
 pyogrio==0.5.0
