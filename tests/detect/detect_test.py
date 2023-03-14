@@ -390,6 +390,8 @@ class TestTimestamper:
             ("prefix_FR20_2022-01-01_00-00-00.mp4", datetime(2022, 1, 1, 0, 0, 0)),
             ("Test-Cars_FR20_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
             ("Test_Cars_FR20_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
+            ("Test_Cars_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
+            ("2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
         ],
     )
     def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
