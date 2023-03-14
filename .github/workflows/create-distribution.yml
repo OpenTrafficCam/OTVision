@@ -6,13 +6,13 @@ name: Create distributions
 on: pull_request
 
 jobs:
-  test:
+  create_distributions:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: True
       max-parallel: 1
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         python-version: ["3.10"]
 
     steps:
