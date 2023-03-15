@@ -292,7 +292,7 @@ def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
     """
     try:
         model = torch.hub.load(
-            repo_or_dir="ultralytics/yolov5",
+            repo_or_dir="OpenTrafficCam/tph-yolov5",
             model=model_name,
             pretrained=True,
             force_reload=force_reload,
@@ -324,7 +324,7 @@ def _load_custom_model(weights: Path, force_reload: bool) -> Any:
         raise ValueError(f"Weights at '{weights}' is not a pt file!")
 
     model = torch.hub.load(
-        repo_or_dir="ultralytics/yolov5",
+        repo_or_dir="OpenTrafficCam/tph-yolov5",
         model="custom",
         path=weights,
         force_reload=force_reload,
