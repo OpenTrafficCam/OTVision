@@ -80,6 +80,7 @@ class Configuration:
             output_directory (Path): directory to store the zip file in.
             temp_directory (Path): directory for temporal artifacts.
         """
+        clean_directory(build_path)
         zip_file = Path(output_directory, f"{file_name}-{self._suffix}.zip")
         self._copy_to_output_directory(temp_directory)
         self._apply_cuda(temp_directory)
@@ -201,7 +202,6 @@ configurations: list[Configuration] = [
     ),
 ]
 
-clean_directory(build_path)
 clean_directory(distribution_path)
 for configuration in configurations:
     configuration.create_zip(
