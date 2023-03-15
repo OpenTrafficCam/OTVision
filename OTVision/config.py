@@ -64,6 +64,7 @@ PATHS = "PATHS"
 RUN_CHAINED = "RUN_CHAINED"
 REFPTS = "REFPTS"
 SEARCH_SUBDIRS = "SEARCH_SUBDIRS"
+SKIP_VALIDATION = "SKIP_VALIDATION"
 SIGMA_H = "SIGMA_H"
 SIGMA_IOU = "SIGMA_IOU"
 SIGMA_L = "SIGMA_L"
@@ -287,6 +288,7 @@ class _DetectConfig:
     overwrite: bool = True
     half_precision: bool = False
     force_reload_torch_hub_cache: bool = False
+    skip_validation: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_DetectConfig":
@@ -307,6 +309,7 @@ class _DetectConfig:
                 FORCE_RELOAD_TORCH_HUB_CACHE,
                 _DetectConfig.force_reload_torch_hub_cache,
             ),
+            d.get(SKIP_VALIDATION, _DetectConfig.skip_validation),
         )
 
     def to_dict(self) -> dict:
@@ -317,6 +320,7 @@ class _DetectConfig:
             OVERWRITE: self.overwrite,
             HALF_PRECISION: self.half_precision,
             FORCE_RELOAD_TORCH_HUB_CACHE: self.force_reload_torch_hub_cache,
+            SKIP_VALIDATION: self.skip_validation,
         }
 
 
@@ -670,6 +674,7 @@ CONFIG[DETECT][YOLO][NORMALIZED] = False
 CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
 CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE] = False
+CONFIG[DETECT][SKIP_VALIDATION] = False
 
 # TRACK
 CONFIG[TRACK] = {}
