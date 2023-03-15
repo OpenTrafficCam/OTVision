@@ -83,17 +83,8 @@ def _ottrk_dict_to_df(nested_dict: dict) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame of tracks
     """
-    return (
-        pd.DataFrame.from_dict(
-            {
-                (i, j): nested_dict[i][j]
-                for i in nested_dict
-                for j in nested_dict[i].keys()
-            },
-            orient="index",
-        )
-        .reset_index()
-        .rename(columns={"level_0": "frame", "level_1": "object"})
+    return pd.DataFrame(nested_dict["detections"]).rename(
+        columns={"track-id": "object", "occurrence": "datetime"}
     )
 
 
