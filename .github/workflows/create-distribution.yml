@@ -1,13 +1,20 @@
 ---
 # This workflow will install Python dependencies, run tests
 
-name: Create distributions
+name: Create release
 
-on: pull_request
+on:
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows: ["Run CI/CD"]
+    types: ["completed"]
 
 jobs:
   create_distributions:
     runs-on: ${{ matrix.os }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: True
       max-parallel: 1
