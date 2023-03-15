@@ -45,12 +45,7 @@ from OTVision.helpers.files import (
     replace_filetype,
     write_json,
 )
-from OTVision.helpers.formats import (
-    _get_datetime_from_filename,
-    _get_epsg_from_utm_zone,
-    _get_time_from_frame_number,
-    _ottrk_dict_to_df,
-)
+from OTVision.helpers.formats import _get_epsg_from_utm_zone, _ottrk_dict_to_df
 from OTVision.helpers.log import log, reset_debug, set_debug
 
 from .get_homography import get_homography
@@ -147,7 +142,7 @@ def main(
             log.info("Homography matrix created")
 
         # Read tracks
-        tracks_px_df, metadata_dict = read_tracks(tracks_file)
+        tracks_px_df = read_tracks(tracks_file)
         log.info("Tracks read")
 
         # Actual transformation
@@ -161,19 +156,18 @@ def main(
 
         # Add crs information tp metadata dict
         # TODO: Declare constant for the dictionary keys
-        metadata_dict["trk"]["utm"] = True
+        """metadata_dict["trk"]["utm"] = True
         metadata_dict["trk"]["utm_zone"] = utm_zone
         metadata_dict["trk"]["hemisphere"] = hemisphere
         metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
             utm_zone=utm_zone, hemisphere=hemisphere
         )
         metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
-        log.debug(f"config_dict: {metadata_dict}")
+        log.debug(f"config_dict: {metadata_dict}")"""
 
         # Write tracks
         write_tracks(
             tracks_utm_df=tracks_utm_df,
-            metadata_dict=metadata_dict,
             utm_zone=utm_zone,
             hemisphere=hemisphere,
             tracks_file=tracks_file,
@@ -202,15 +196,15 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix)
     _check_and_update_metadata_inplace(tracks_dict)
     tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
-    metadata_dict = tracks_dict["metadata"]
+    # metadata_dict = tracks_dict["metadata"]
 
     # Create datetime column from frame number
-    fps = int(metadata_dict["vid"]["fps"])
+    """fps = int(metadata_dict["vid"]["fps"])
     start_datetime = _get_datetime_from_filename(filename=str(tracks_file))
     tracks_df["datetime"], tracks_df["datetime_ms"] = _get_time_from_frame_number(
         frame_series=tracks_df["frame"], start_datetime=start_datetime, fps=fps
-    )
-    return tracks_df, metadata_dict
+    )"""
+    return tracks_df  # , metadata_dict
 
 
 def read_refpts(
@@ -307,7 +301,6 @@ def write_refpts(refpts: dict, refpts_file: Path) -> None:
 # TODO: Type hint nested dict during refactoring
 def write_tracks(
     tracks_utm_df: pd.DataFrame,
-    metadata_dict: dict,
     utm_zone: int,
     hemisphere: str,
     tracks_file: Path,
