@@ -36,5 +36,6 @@ jobs:
             This is the latest release and is not production ready.
             Use at your own risk.
           name: latest
+          draft: True
           prerelease: True
           files: dist/*.zip
