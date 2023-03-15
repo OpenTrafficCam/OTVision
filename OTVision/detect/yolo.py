@@ -289,6 +289,9 @@ def loadmodel(
         Defaults to False.
         half_precision (bool, optional): Whether to use half precision (FP 16) to speed
         up inference. Only works for gpu. Defaults to False.
+        skip_validation (bool): If `false` it is validated that the branch or commit of
+            the model belongs to the repo owner. Defaults to
+            CONFIG[DETECT][SKIP_VALIDATION].
 
     Raises:
         ValueError: If the path to the model weights is not a .pt file.
