@@ -74,7 +74,7 @@
             "program": "${workspaceFolder}/transform.py",
             "args": [
                 "-p",
-                "/Users/michaelheilig/GIT/OTC/OTVision/data/Blox2_3min.ottrk",
+                "/Users/michaelheilig/GIT/OTC/OTVision/data/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.ottrk",
                 "-r",
                  "/Users/michaelheilig/GIT/OTC/OTVision/data/Blox2_3min.otrfpts"
             ],
