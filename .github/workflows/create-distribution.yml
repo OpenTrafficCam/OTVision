@@ -30,7 +30,6 @@ jobs:
           path: dist
       - name: Release
         uses: softprops/action-gh-release@v1
-        # if: startsWith(github.ref, 'refs/tags/')
         with:
           body: |
             This is the latest release and is not production ready.
