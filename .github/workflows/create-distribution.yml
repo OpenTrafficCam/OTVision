@@ -4,12 +4,10 @@
 name: Create release
 
 on:
-  push:
-    branches:
-      - main
   workflow_run:
     workflows: ["Run CI/CD"]
     types: ["completed"]
+    branches: ["main"]
 
 jobs:
   create_distributions:
