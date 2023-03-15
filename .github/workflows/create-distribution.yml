@@ -32,6 +32,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         # if: startsWith(github.ref, 'refs/tags/')
         with:
-          draft: True
+          body: |
+            This is the latest release and is not production ready.
+            Use at your own risk.
+          name: latest
           prerelease: True
           files: dist/*.zip
