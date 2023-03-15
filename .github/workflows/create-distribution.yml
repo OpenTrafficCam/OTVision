@@ -28,11 +28,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Create distributions
         run: python build.py
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
-        with:
-          name: distributions
-          path: dist
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
