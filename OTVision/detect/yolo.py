@@ -39,6 +39,7 @@ from OTVision.config import (
     IMG_SIZE,
     IOU,
     NORMALIZED,
+    SKIP_VALIDATION,
     VID,
     WEIGHTS,
     YOLO,
@@ -93,6 +94,7 @@ def detect_video(
     half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
     chunksize: int = CONFIG[DETECT][YOLO][CHUNK_SIZE],
     normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
+    skip_validation: bool = CONFIG[DETECT][SKIP_VALIDATION],
 ) -> dict[str, dict]:  # TODO: Type hint nested dict during refactoring
     """Detect and classify bounding boxes in videos using YOLOv5
     Args:
@@ -105,11 +107,14 @@ def detect_video(
         chunksize (int, optional): Number of files per detection chunk. Defaults to 0.
         normalized (bool, optional): Coords in % of image/frame size (True) or pixels
             (False). Defaults to False.
+        skip_validation (bool): If `false` it is validated that the branch or commit of
+            the model belongs to the repo owner. Defaults to
+            CONFIG[DETECT][SKIP_VALIDATION].
     Returns:
         dict[str, dict]: Dict with subdicts of metadata and actual detections
     """
     if model is None:
-        model = loadmodel(weights, conf, iou)
+        model = loadmodel(weights, conf, iou, skip_validation=skip_validation)
 
     yolo_detections: list = []
     t1 = perf_counter()
@@ -270,6 +275,7 @@ def loadmodel(
     iou: float,
     force_reload: bool = False,
     half_precision: bool = False,
+    skip_validation: bool = False,
 ) -> Any:
     """Loads a local custom trained YOLOv5 model or a pretrained YOLOv5 model from torch
     hub.
@@ -283,6 +289,9 @@ def loadmodel(
         Defaults to False.
         half_precision (bool, optional): Whether to use half precision (FP 16) to speed
         up inference. Only works for gpu. Defaults to False.
+        skip_validation (bool): If `false` it is validated that the branch or commit of
+            the model belongs to the repo owner. Defaults to
+            CONFIG[DETECT][SKIP_VALIDATION].
 
     Raises:
         ValueError: If the path to the model weights is not a .pt file.
@@ -296,10 +305,16 @@ def loadmodel(
 
     try:
         if is_custom:
-            model = _load_custom_model(weights=Path(weights), force_reload=force_reload)
+            model = _load_custom_model(
+                weights=Path(weights),
+                force_reload=force_reload,
+                skip_validation=skip_validation,
+            )
         else:
             model = _load_pretrained_model(
-                model_name=weights, force_reload=force_reload
+                model_name=weights,
+                force_reload=force_reload,
+                skip_validation=skip_validation,
             )
     except ValueError:
         raise
@@ -312,9 +327,17 @@ def loadmodel(
         log.exception(e)
         log.info("Force reload cache and try again.")
         if is_custom:
-            model = _load_custom_model(weights=Path(weights), force_reload=True)
+            model = _load_custom_model(
+                weights=Path(weights),
+                force_reload=True,
+                skip_validation=skip_validation,
+            )
         else:
-            model = _load_pretrained_model(model_name=weights, force_reload=True)
+            model = _load_pretrained_model(
+                model_name=weights,
+                force_reload=True,
+                skip_validation=skip_validation,
+            )
 
     model.conf = conf
     model.iou = iou
@@ -325,12 +348,16 @@ def loadmodel(
     return model.half() if torch.cuda.is_available() and half_precision else model
 
 
-def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
+def _load_pretrained_model(
+    model_name: str, force_reload: bool, skip_validation: bool
+) -> Any:
     """Load pretrained YOLOv5 model from torch hub.
 
     Args:
         model_name (str): As in ['yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
         force_reload (bool): Whether to force reload the cache.
+        skip_validation (bool): If `false` it is validated that the branch or commit of
+            the model belongs to the repo owner.
 
     Raises:
         YOLOv5ModelNotFoundError: If YOLOv5 model could not be found on torch hub.
@@ -345,6 +372,7 @@ def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
             model=model_name,
             pretrained=True,
             force_reload=force_reload,
+            skip_validation=skip_validation,
         )
     except RuntimeError as re:
         if str(re).startswith("Cannot find callable"):
@@ -359,12 +387,14 @@ def _load_pretrained_model(model_name: str, force_reload: bool) -> Any:
     return model.cuda() if torch.cuda.is_available() else model.cpu()
 
 
-def _load_custom_model(weights: Path, force_reload: bool) -> Any:
+def _load_custom_model(weights: Path, force_reload: bool, skip_validation: bool) -> Any:
     """Load custom trained YOLOv5 model.
 
     Args:
         weights (Path): Path to model weights.
         force_reload (bool): Whether to force reload the cache.
+        skip_validation (bool): If `false` it is validated that the branch or commit of
+            the model belongs to the repo owner.
 
     Raises:
         ValueError: If the path to the model weights is not a .pt file.
@@ -380,6 +410,7 @@ def _load_custom_model(weights: Path, force_reload: bool) -> Any:
         model="custom",
         path=weights,
         force_reload=force_reload,
+        skip_validation=skip_validation,
     )
 
     model.eval()
