@@ -86,7 +86,7 @@ class Configuration:
         zip_output_folder(temp_directory, zip_file)
 
     def _copy_to_output_directory(self, output_directory: Path) -> None:
-        files = collect_files(base_path=self._otvision_path)
+        files = collect_files(base_path=self._otvision_path, file_extension=".py")
         self._copy_files(files, output_directory=output_directory)
 
         self._copy_files(self._files, output_directory=output_directory)
