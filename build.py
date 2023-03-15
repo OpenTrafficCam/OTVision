@@ -150,17 +150,13 @@ base_files = [
     Path("requirements.txt"),
     Path("track.py"),
     Path("user_config.otvision.yaml"),
-    Path("view.py"),
 ]
 
 windows_files = [
-    Path("install_dev.cmd"),
     Path("install.cmd"),
-    Path("OTVision.bat"),
 ]
 
 unix_files = [
-    Path("install_dev.sh"),
     Path("install.sh"),
 ]
 
