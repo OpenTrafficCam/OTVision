@@ -21,7 +21,6 @@ OTVision script to call the convert main with arguments parsed from command line
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 
 import OTVision
@@ -30,7 +29,7 @@ from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
-def parse(argv: list[str]) -> argparse.Namespace:
+def parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert h264 to mp4")
     parser.add_argument(
         "-p",
@@ -179,7 +178,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main(argv: list[str]) -> None:  # sourcery skip: assign-if-exp
+def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     args = parse(argv)
 
     _process_config(args)
@@ -210,4 +209,4 @@ def main(argv: list[str]) -> None:  # sourcery skip: assign-if-exp
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
