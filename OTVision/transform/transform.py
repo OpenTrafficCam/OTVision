@@ -46,12 +46,7 @@ from OTVision.helpers.files import (
     replace_filetype,
     write_json,
 )
-from OTVision.helpers.formats import (
-    _get_datetime_from_filename,
-    _get_epsg_from_utm_zone,
-    _get_time_from_frame_number,
-    _ottrk_dict_to_df,
-)
+from OTVision.helpers.formats import _get_epsg_from_utm_zone, _ottrk_detections_to_df
 from OTVision.helpers.log import LOGGER_NAME
 
 from .get_homography import get_homography
@@ -63,7 +58,7 @@ def main(
     paths: list[Path],
     refpts_file: Union[Path, None] = None,
     overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
-) -> None:
+) -> None:  # sourcery skip: merge-dict-assign
     """Transform tracks files containing trajectories in pixel coordinates to .gpkg
     files with trajectories in utm coordinates using either one single refpts file for
     all tracks files containing corresponding reference points in both pixel and utm
@@ -168,13 +163,14 @@ def main(
 
         # Add crs information tp metadata dict
         # TODO: Declare constant for the dictionary keys
-        metadata_dict["trk"]["utm"] = True
-        metadata_dict["trk"]["utm_zone"] = utm_zone
-        metadata_dict["trk"]["hemisphere"] = hemisphere
-        metadata_dict["trk"]["epsg"] = _get_epsg_from_utm_zone(
+        metadata_dict["transformer"] = {}
+        metadata_dict["transformer"]["utm"] = True
+        metadata_dict["transformer"]["utm_zone"] = utm_zone
+        metadata_dict["transformer"]["hemisphere"] = hemisphere
+        metadata_dict["transformer"]["epsg"] = _get_epsg_from_utm_zone(
             utm_zone=utm_zone, hemisphere=hemisphere
         )
-        metadata_dict["trk"]["transformation accuracy"] = homography_eval_dict
+        metadata_dict["transformer"]["accuracy"] = homography_eval_dict
 
         log.debug(f"metadata: {metadata_dict}")
 
@@ -210,15 +206,9 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
     # Read dicts and turn tracks into DataFrame
     tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix)
     _check_and_update_metadata_inplace(tracks_dict)
-    tracks_df = _ottrk_dict_to_df(tracks_dict["data"])
+    tracks_df = _ottrk_detections_to_df(tracks_dict["data"]["detections"])
     metadata_dict = tracks_dict["metadata"]
 
-    # Create datetime column from frame number
-    fps = int(metadata_dict["vid"]["fps"])
-    start_datetime = _get_datetime_from_filename(filename=str(tracks_file))
-    tracks_df["datetime"], tracks_df["datetime_ms"] = _get_time_from_frame_number(
-        frame_series=tracks_df["frame"], start_datetime=start_datetime, fps=fps
-    )
     return tracks_df, metadata_dict
 
 
