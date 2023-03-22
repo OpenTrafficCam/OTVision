@@ -21,7 +21,6 @@ OTVision script to call the track main with arguments parsed from command line
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 
 import OTVision.config as config
@@ -30,7 +29,7 @@ from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 from OTVision.track.track import main as track
 
 
-def parse(argv: list[str]) -> argparse.Namespace:
+def parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Track objects through detections")
     parser.add_argument(
         "-p",
@@ -200,7 +199,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main(argv: list[str]) -> None:  # sourcery skip: assign-if-exp
+def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     args = parse(argv)
 
     _process_config(args)
@@ -239,4 +238,4 @@ def main(argv: list[str]) -> None:  # sourcery skip: assign-if-exp
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

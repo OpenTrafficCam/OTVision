@@ -94,30 +94,44 @@ class TestLoadModel:
         self,
     ) -> None:
         with pytest.raises(YOLOv5ModelNotFoundError):
-            _load_pretrained_model("NotPretrainedModelName", False)
+            _load_pretrained_model(
+                "NotPretrainedModelName",
+                False,
+                skip_validation=True,
+            )
 
     def test_load_pretrained_model_withCorrectParams(self) -> None:
-        model = _load_pretrained_model("yolov5s", False)
+        model = _load_pretrained_model("yolov5s", False, skip_validation=True)
         assert isinstance(model, torch.nn.Module)
 
     def test_load_custom_model_notAPtFileAsParam_raiseAttributeError(
         self, text_file: Path
     ) -> None:
         with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
-            _load_custom_model(text_file, False)
+            _load_custom_model(text_file, False, skip_validation=True)
 
     def test_load_model_notPretrainedModelName_raiseYOLOv5ModelNotFoundError(
         self,
     ) -> None:
         model_name = "NotPretrainedModelName"
         with pytest.raises(YOLOv5ModelNotFoundError):
-            loadmodel(model_name, self.CONF_THRESH, self.IOU_THRESH)
+            loadmodel(
+                model_name,
+                self.CONF_THRESH,
+                self.IOU_THRESH,
+                skip_validation=True,
+            )
 
     def test_load_model_notAPtFileAsParam_raiseAttributeError(
         self, text_file: Path
     ) -> None:
         with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
-            loadmodel(str(text_file), self.CONF_THRESH, self.IOU_THRESH)
+            loadmodel(
+                str(text_file),
+                self.CONF_THRESH,
+                self.IOU_THRESH,
+                skip_validation=True,
+            )
 
 
 class TestBgrToRgbConverter:
