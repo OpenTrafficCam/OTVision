@@ -1,6 +1,6 @@
 # OTVision
 OTVision/user.conf
-yolov5*.pt
+*yolov5*.pt
 obj_train_data/*
 *ffmpeg.exe
 *ffmpeg.zip
