@@ -85,6 +85,7 @@ class Configuration:
         self._copy_to_output_directory(temp_directory)
         self._apply_cuda(temp_directory)
         zip_output_folder(temp_directory, zip_file)
+        clean_directory(build_path)
 
     def _copy_to_output_directory(self, output_directory: Path) -> None:
         files = collect_files(base_path=self._otvision_path, file_extension=".py")
