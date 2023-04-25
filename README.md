@@ -51,6 +51,62 @@ make PY_VERSION=3.10 run
 make PY_VERSION=3.10 install
 ```
 
+## Docker and container
+
+In the long run it is planned to ship modules of OTVision as dedicated containers. Allowing users to configure the container input (mount data storage and config file) and run OTVision in a container environment. The container contains all necessary dependencies. There is no need to install anything more than the container engine. Therefore, two docker files are prepared.
+
+The container were tested on a slurm cluster. Unfortunately, the container for detection grow extremly in size (about 5GB). Therefore, the approach was set on hold. For the next steps, the base images of the containers should be checked. nvidia, pytorch and yolo provide base containers to use for ml tasks. One of them could be a good start.
+
+### Dockerfile.detect
+
+`Dockerfile.detect` runs OTVisions detection. The following bash-Script shows the usage of the container. The name of the container and its version are parameters of the script together with the config for OTVision to run detection.
+
+```bash
+#!/bin/sh
+
+if [ 3 -gt $# ]; then
+    echo "Please provide a container name and a version and a config name!"
+    exit 1
+fi
+
+host_input_dir="/scratch/ws/1/labr704e-p_trafficcam_t_30"
+base_container="/OpenTrafficCam/OTVision"
+home_dir=$(realpath ~)
+container_folder=/projects/p_trafficcam/container
+container_name=$1
+container_version=$2
+config_name=$3
+execution_path=${container_folder}/"${container_name}"-"${container_version}".sif
+
+singularity run --nv --contain \
+-B "${home_dir}" \
+--bind "${host_input_dir}"/config/"${config_name}":"${base_container}"/config/user_config.otvision.yaml:ro \
+--bind "${host_input_dir}"/data:"${base_container}"/data \
+--bind "${host_input_dir}"/models:"${base_container}"/models \
+--pwd ${base_container}/ \
+--env PYTHONPATH=${base_container} \
+"${execution_path}"
+```
+
+### Dockerfile.track
+
+`Dockerfile.track` runs OTVisions tracking. The following bash-Script shows the usage of the container.
+
+```bash
+#!/bin/sh
+
+otvision_dir=../OTVision
+host_input_dir=$(realpath ${otvision_dir})
+base_container="/OpenTrafficCam/OTVision"
+config_name="user_config.otvision.miovision.yaml"
+
+docker run -it \
+--mount type=bind,source="${host_input_dir}"/models,target=${base_container}/models \
+--mount type=bind,source="${host_input_dir}"/config/${config_name},target=${base_container}/config/user_config.otvision.yaml,readonly \
+--mount type=bind,source="${host_input_dir}"/data,target=${base_container}/data \
+ otvision:0.1.3-track
+ ```
+
 ## Development
 
 For development please install also the ```requirements_dev.txt``` (and use flake8 for linting and black for autoformatting with line length 88).
