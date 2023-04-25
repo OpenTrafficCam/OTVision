@@ -1,12 +1,13 @@
 # OTVision
 OTVision/user.conf
-yolov5*.pt
+*yolov5*.pt
 obj_train_data/*
 *ffmpeg.exe
 *ffmpeg.zip
 tests/resources/
 *.log
 !test.log
+*.otvision.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -175,3 +176,6 @@ Thumbs.db
 
 # Vim
 .vim
+
+#data
+/data/*
