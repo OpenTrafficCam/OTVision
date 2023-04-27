@@ -493,13 +493,19 @@ def _convert_detections(
         # TODO: #81 Detections: Nested dict instead of dict of lists of dicts
         detection: list = []
         for yolo_bbox in yolo_detection:
+            x_yolo = yolo_bbox[0]
+            y_yolo = yolo_bbox[1]
+            width = yolo_bbox[2]
+            height = yolo_bbox[3]
+            x = x_yolo - width / 2
+            y = y_yolo - height / 2
             bbox = {
                 CLASS: names[int(yolo_bbox[5])],
                 CONFIDENCE: yolo_bbox[4],
-                X: yolo_bbox[0],
-                Y: yolo_bbox[1],
-                W: yolo_bbox[2],
-                H: yolo_bbox[3],
+                X: x,
+                Y: y,
+                W: width,
+                H: height,
             }
             detection.append(bbox)
         data[str(no + 1)] = {DETECTIONS: detection}
