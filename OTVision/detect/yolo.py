@@ -497,8 +497,8 @@ def _convert_detections(
             y_yolo = yolo_bbox[1]
             width = yolo_bbox[2]
             height = yolo_bbox[3]
-            x = int(x_yolo - width / 2)
-            y = int(y_yolo - height / 2)
+            x = x_yolo - width / 2
+            y = y_yolo - height / 2
             bbox = {
                 CLASS: names[int(yolo_bbox[5])],
                 CONFIDENCE: yolo_bbox[4],
