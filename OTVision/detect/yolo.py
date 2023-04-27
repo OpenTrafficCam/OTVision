@@ -343,7 +343,10 @@ def loadmodel(
     model.iou = iou
 
     t2 = perf_counter()
-    log.info(f"Model loaded in {round(t2 - t1)} sec")
+
+    model_source = "Custom" if is_custom else "Pretrained"
+    model_type = "CUDA" if torch.cuda.is_available() else "CPU"
+    log.info(f"{model_source} {model_type} model loaded on in {round(t2 - t1)} sec")
 
     return model.half() if torch.cuda.is_available() and half_precision else model
 
