@@ -5,8 +5,10 @@ import pytest
 import torch
 from cv2 import COLOR_BGR2RGB, VideoCapture, cvtColor
 
+from OTVision.dataformat import CLASS, CONFIDENCE, DATA, DETECTIONS, H, W, X, Y
 from OTVision.detect.yolo import (
     YOLOv5ModelNotFoundError,
+    _convert_detections,
     _get_batch_of_frames,
     _load_custom_model,
     _load_pretrained_model,
@@ -147,3 +149,48 @@ class TestBgrToRgbConverter:
         assert not (image_as_array == result).all()
         expected = cvtColor(image_as_array, COLOR_BGR2RGB)
         assert (result == expected).all()
+
+
+class TestConvertDetections:
+    def test_convert_x_y_coordinates(self) -> None:
+        classification: int = 1
+        name: str = "name"
+        names = {classification: name}
+        vid_config: dict = {}
+        det_config: dict = {}
+        x_input = 20
+        x_output = 15
+        y_input = 20
+        y_output = 15
+        width = 10
+        height = 10
+        confidence = 0.5
+        yolo_detections: list[list[list]] = [
+            [[x_input, y_input, width, height, confidence, classification]]
+        ]
+
+        converted = _convert_detections(
+            yolo_detections=yolo_detections,
+            names=names,
+            vid_config=vid_config,
+            det_config=det_config,
+        )
+
+        converted_detections = converted[DATA]
+
+        expected_detections = {
+            "1": {
+                DETECTIONS: [
+                    {
+                        CLASS: name,
+                        CONFIDENCE: confidence,
+                        X: x_output,
+                        Y: y_output,
+                        W: width,
+                        H: height,
+                    }
+                ]
+            }
+        }
+
+        assert converted_detections == expected_detections
