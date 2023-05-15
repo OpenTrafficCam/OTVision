@@ -6,7 +6,6 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DATA,
-    DATE_FORMAT,
     DETECTIONS,
     FILENAME,
     FRAME,
@@ -46,8 +45,8 @@ def occurrence_from(key: int, start_date: datetime = DEFAULT_START_DATE) -> date
     return start_date
 
 
-def occurrence_as_string(key: int, start_date: datetime = DEFAULT_START_DATE) -> str:
-    return occurrence_from(key, start_date).strftime(DATE_FORMAT)
+def occurrence_serialized(key: int, start_date: datetime = DEFAULT_START_DATE) -> float:
+    return occurrence_from(key, start_date).timestamp()
 
 
 def create_frame(
@@ -100,7 +99,7 @@ class DataBuilder:
 
     def append_non_classified_frame(self) -> "DataBuilder":
         frame_number = self.next_key()
-        occurrence = occurrence_from(frame_number, start_date=self.start_date)
+        occurrence = occurrence_serialized(frame_number, start_date=self.start_date)
         self.data[frame_number] = {
             FRAME: frame_number,
             OCCURRENCE: occurrence,
@@ -126,7 +125,7 @@ class DataBuilder:
         w: float = DEFAULT_W,
         h: float = DEFAULT_H,
         frame_number: int = 1,
-        occurrence: str = DEFAULT_START_DATE.strftime(DATE_FORMAT),
+        occurrence: float = DEFAULT_START_DATE.timestamp(),
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
         interpolated_detection: bool = False,
     ) -> dict[str, object]:
@@ -154,7 +153,7 @@ class DataBuilder:
         h: float = DEFAULT_H,
     ) -> "DataBuilder":
         frame_number: int = self.next_key()
-        occurrence = occurrence_as_string(frame_number, self.start_date)
+        occurrence = occurrence_serialized(frame_number, self.start_date)
         self.data[frame_number] = {
             FRAME: frame_number,
             OCCURRENCE: occurrence,
@@ -216,7 +215,7 @@ class DataBuilder:
             METADATA: {
                 VIDEO: {
                     FILENAME: self.input_file_path.as_posix(),
-                    RECORDED_START_DATE: self.start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: self.start_date.timestamp(),
                 }
             },
             DATA: self.build(),
@@ -315,7 +314,7 @@ class TestPreprocess:
             file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: file_path.as_posix(),
-                    RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: start_date.timestamp(),
                 }
             }
         }
@@ -394,19 +393,19 @@ class TestPreprocess:
             first_file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: first_file_path.as_posix(),
-                    RECORDED_START_DATE: first_start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: first_start_date.timestamp(),
                 }
             },
             second_file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: second_file_path.as_posix(),
-                    RECORDED_START_DATE: second_start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: second_start_date.timestamp(),
                 }
             },
             third_file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: third_file_path.as_posix(),
-                    RECORDED_START_DATE: third_start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: third_start_date.timestamp(),
                 }
             },
         }

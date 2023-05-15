@@ -49,7 +49,7 @@ from OTVision.config import (
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
+from OTVision.track.preprocess import OCCURRENCE
 
 from . import yolo
 
@@ -273,9 +273,7 @@ class Timestamper:
     def _update_metadata(
         self, detections: dict, start_time: datetime, duration: timedelta
     ) -> dict:
-        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.strftime(
-            DATE_FORMAT
-        )
+        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.timestamp()
         detections[METADATA][VIDEO][LENGTH] = str(duration)
         return detections
 
@@ -295,5 +293,5 @@ class Timestamper:
         data: dict = detections[DATA]
         for key, value in data.items():
             occurrence = start_date + (int(key) - 1) * time_per_frame
-            value[OCCURRENCE] = occurrence.strftime(DATE_FORMAT)
+            value[OCCURRENCE] = occurrence.timestamp()
         return detections

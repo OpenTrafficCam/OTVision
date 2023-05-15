@@ -15,7 +15,6 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DATA,
-    DATE_FORMAT,
     DETECTION,
     DETECTIONS,
     METADATA,
@@ -414,9 +413,9 @@ class TestTimestamper:
         second_frame = start_date + time_per_frame
         third_frame = second_frame + time_per_frame
         expected_dict = copy.deepcopy(detections)
-        expected_dict[DATA]["1"][OCCURRENCE] = start_date.strftime(DATE_FORMAT)
-        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.strftime(DATE_FORMAT)
-        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.strftime(DATE_FORMAT)
+        expected_dict[DATA]["1"][OCCURRENCE] = start_date.timestamp()
+        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.timestamp()
+        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.timestamp()
         stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
 
         assert expected_dict == stamped_dict

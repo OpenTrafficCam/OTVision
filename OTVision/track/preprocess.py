@@ -29,6 +29,12 @@ from OTVision.helpers.files import read_json
 MISSING_START_DATE = datetime(1900, 1, 1)
 
 
+def parse_datetime(date: str | float) -> datetime:
+    if isinstance(date, str) and ("-" in date):
+        return datetime.strptime(date, DATE_FORMAT)
+    return datetime.fromtimestamp(float(date))
+
+
 @dataclass(frozen=True, repr=True)
 class Detection:
     """
@@ -51,7 +57,7 @@ class Detection:
             W: self.w,
             H: self.h,
             FRAME: frame,
-            OCCURRENCE: occurrence.strftime(DATE_FORMAT),
+            OCCURRENCE: occurrence.timestamp(),
             INPUT_FILE_PATH: input_file_path,
             INTERPOLATED_DETECTION: False,
         }
@@ -67,7 +73,7 @@ class Frame:
     def to_dict(self) -> dict:
         return {
             FRAME: self.frame,
-            OCCURRENCE: self.occurrence.strftime(DATE_FORMAT),
+            OCCURRENCE: self.occurrence.timestamp(),
             INPUT_FILE_PATH: self.input_file_path.as_posix(),
             DETECTIONS: [
                 detection.to_dict(
@@ -126,12 +132,8 @@ class FrameGroup:
             metadata[filepath][OTTRACK_VERSION] = version.ottrack_version()
             metadata[filepath][dataformat.TRACKING] = {
                 dataformat.OTVISION_VERSION: version.otvision_version(),
-                dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().strftime(
-                    DATE_FORMAT
-                ),
-                dataformat.LAST_TRACKED_VIDEO_END: self.end_date().strftime(
-                    DATE_FORMAT
-                ),
+                dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().timestamp(),
+                dataformat.LAST_TRACKED_VIDEO_END: self.end_date().timestamp(),
                 dataformat.TRACKER: tracker_data,
             }
         return metadata
@@ -201,9 +203,7 @@ class FrameGroupParser:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
-            occurrence: datetime = datetime.strptime(
-                str(value[OCCURRENCE]), DATE_FORMAT
-            )
+            occurrence: datetime = parse_datetime(value[OCCURRENCE])
             data_detections = value[DETECTIONS]
             detections = detection_parser.convert(data_detections)
             parsed_frame = Frame(
@@ -321,7 +321,6 @@ class Preprocess:
 
     def extract_start_date_from(self, recording: dict) -> datetime:
         if RECORDED_START_DATE in recording[METADATA][VIDEO].keys():
-            return datetime.strptime(
-                str(recording[METADATA][VIDEO][RECORDED_START_DATE]), DATE_FORMAT
-            )
+            recorded_start_date = recording[METADATA][VIDEO][RECORDED_START_DATE]
+            return parse_datetime(recorded_start_date)
         return MISSING_START_DATE
