@@ -20,7 +20,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Union
 
@@ -47,9 +47,10 @@ from OTVision.config import (
     YOLO,
 )
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
+from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
+from OTVision.track.preprocess import OCCURRENCE
 
 from . import yolo
 
@@ -241,7 +242,10 @@ class Timestamper:
         )
         if match:
             start_date: str = match.group(START_DATE)
-            return datetime.strptime(start_date, "%Y-%m-%d_%H-%M-%S")
+            return parse_date_string_to_utc_datime(
+                start_date, "%Y-%m-%d_%H-%M-%S"
+            ).replace(tzinfo=timezone.utc)
+
         raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
     def _get_time_per_frame(self, detections: dict, duration: timedelta) -> timedelta:
@@ -273,9 +277,7 @@ class Timestamper:
     def _update_metadata(
         self, detections: dict, start_time: datetime, duration: timedelta
     ) -> dict:
-        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.strftime(
-            DATE_FORMAT
-        )
+        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.timestamp()
         detections[METADATA][VIDEO][LENGTH] = str(duration)
         return detections
 
@@ -295,5 +297,5 @@ class Timestamper:
         data: dict = detections[DATA]
         for key, value in data.items():
             occurrence = start_date + (int(key) - 1) * time_per_frame
-            value[OCCURRENCE] = occurrence.strftime(DATE_FORMAT)
+            value[OCCURRENCE] = occurrence.timestamp()
         return detections

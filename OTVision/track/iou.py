@@ -21,7 +21,7 @@ OTVision module to track road users in frames detected by OTVision
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+from tqdm import tqdm
 
 from OTVision.config import CONFIG
 from OTVision.dataformat import (
@@ -110,7 +110,7 @@ def track_iou(
     vehIDs_finished: list = []
     new_detections: dict = {}
 
-    for frame_num in detections:
+    for frame_num in tqdm(detections, desc="Tracked frames", unit="frames"):
         detections_frame = detections[frame_num][DETECTIONS]
         # apply low threshold to detections
         dets = [det for det in detections_frame if det[CONFIDENCE] >= sigma_l]
