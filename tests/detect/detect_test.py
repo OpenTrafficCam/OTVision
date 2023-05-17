@@ -3,7 +3,7 @@ import copy
 import json
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,6 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DATA,
-    DATE_FORMAT,
     DETECTION,
     DETECTIONS,
     METADATA,
@@ -387,11 +386,26 @@ class TestTimestamper:
     @pytest.mark.parametrize(
         "file_name, start_date",
         [
-            ("prefix_FR20_2022-01-01_00-00-00.mp4", datetime(2022, 1, 1, 0, 0, 0)),
-            ("Test-Cars_FR20_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
-            ("Test_Cars_FR20_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
-            ("Test_Cars_2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
-            ("2022-02-03_04-05-06.mp4", datetime(2022, 2, 3, 4, 5, 6)),
+            (
+                "prefix_FR20_2022-01-01_00-00-00.mp4",
+                datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+            ),
+            (
+                "Test-Cars_FR20_2022-02-03_04-05-06.mp4",
+                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
+            ),
+            (
+                "Test_Cars_FR20_2022-02-03_04-05-06.mp4",
+                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
+            ),
+            (
+                "Test_Cars_2022-02-03_04-05-06.mp4",
+                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
+            ),
+            (
+                "2022-02-03_04-05-06.mp4",
+                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
+            ),
         ],
     )
     def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
@@ -414,9 +428,9 @@ class TestTimestamper:
         second_frame = start_date + time_per_frame
         third_frame = second_frame + time_per_frame
         expected_dict = copy.deepcopy(detections)
-        expected_dict[DATA]["1"][OCCURRENCE] = start_date.strftime(DATE_FORMAT)
-        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.strftime(DATE_FORMAT)
-        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.strftime(DATE_FORMAT)
+        expected_dict[DATA]["1"][OCCURRENCE] = start_date.timestamp()
+        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.timestamp()
+        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.timestamp()
         stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
 
         assert expected_dict == stamped_dict
