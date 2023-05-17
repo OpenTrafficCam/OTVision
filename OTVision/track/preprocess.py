@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -24,6 +24,10 @@ from OTVision.dataformat import (
     X,
     Y,
 )
+from OTVision.helpers.date import (
+    parse_date_string_to_utc_datime,
+    parse_timestamp_string_to_utc_datetime,
+)
 from OTVision.helpers.files import read_json
 
 MISSING_START_DATE = datetime(1900, 1, 1)
@@ -39,8 +43,8 @@ def parse_datetime(date: str | float) -> datetime:
         datetime: the parsed datetime object with UTC set as timezone
     """
     if isinstance(date, str) and ("-" in date):
-        return datetime.strptime(date, DATE_FORMAT).replace(tzinfo=timezone.utc)
-    return datetime.fromtimestamp(float(date), timezone.utc)
+        return parse_date_string_to_utc_datime(date, DATE_FORMAT)
+    return parse_timestamp_string_to_utc_datetime(date)
 
 
 @dataclass(frozen=True, repr=True)

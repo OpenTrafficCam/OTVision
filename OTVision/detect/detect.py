@@ -20,7 +20,7 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Union
 
@@ -47,6 +47,7 @@ from OTVision.config import (
     YOLO,
 )
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
+from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import OCCURRENCE
@@ -241,7 +242,10 @@ class Timestamper:
         )
         if match:
             start_date: str = match.group(START_DATE)
-            return datetime.strptime(start_date, "%Y-%m-%d_%H-%M-%S")
+            return parse_date_string_to_utc_datime(
+                start_date, "%Y-%m-%d_%H-%M-%S"
+            ).replace(tzinfo=timezone.utc)
+
         raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
     def _get_time_per_frame(self, detections: dict, duration: timedelta) -> timedelta:
