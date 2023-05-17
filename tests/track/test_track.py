@@ -64,6 +64,7 @@ def test_track_tmp_dir(
         ("t_miss_max_75", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75),
     ],
 )
+@pytest.mark.skip(reason="Only used to update test data when tracking changes")
 def test_update_test_data(
     test_track_dir: Path,
     test_track_tmp_dir: Path,
