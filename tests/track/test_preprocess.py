@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -29,7 +29,7 @@ from OTVision.track.preprocess import (
     Preprocess,
 )
 
-DEFAULT_START_DATE = datetime(year=2022, month=5, day=4)
+DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
 DEFAULT_INPUT_FILE_PATH = Path("input-file.otdet")
 DEFAULT_LABEL = "car"
 DEFAULT_CONFIDENCE = 1.0
@@ -322,7 +322,7 @@ class TestPreprocess:
     def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
         first_file_path = Path(f"{order_key}/first-file.otdet")
-        first_start_date = datetime(2022, 5, 4, 12, 0, 1)
+        first_start_date = datetime(2022, 5, 4, 12, 0, 1, tzinfo=timezone.utc)
         first_builder = DataBuilder(
             input_file_path=first_file_path,
             start_date=first_start_date,
@@ -331,7 +331,7 @@ class TestPreprocess:
         first_detections = first_builder.build_ot_det()
 
         second_file_path = Path(f"{order_key}/second-file.otdet")
-        second_start_date = datetime(2022, 5, 4, 12, 0, 0)
+        second_start_date = datetime(2022, 5, 4, 12, 0, 0, tzinfo=timezone.utc)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
             start_date=second_start_date,
@@ -340,7 +340,7 @@ class TestPreprocess:
         second_detections = second_builder.build_ot_det()
 
         third_file_path = Path(f"{order_key}/third-file.otdet")
-        third_start_date = datetime(2022, 5, 4, 13, 0, 1)
+        third_start_date = datetime(2022, 5, 4, 13, 0, 1, tzinfo=timezone.utc)
         third_builder = DataBuilder(
             input_file_path=third_file_path,
             start_date=third_start_date,

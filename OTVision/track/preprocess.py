@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -30,9 +30,17 @@ MISSING_START_DATE = datetime(1900, 1, 1)
 
 
 def parse_datetime(date: str | float) -> datetime:
+    """Parse a date string or timestamp to a datetime with UTC as timezone.
+
+    Args:
+        date (str | float): the date to parse
+
+    Returns:
+        datetime: the parsed datetime object with UTC set as timezone
+    """
     if isinstance(date, str) and ("-" in date):
-        return datetime.strptime(date, DATE_FORMAT)
-    return datetime.fromtimestamp(float(date))
+        return datetime.strptime(date, DATE_FORMAT).replace(tzinfo=timezone.utc)
+    return datetime.fromtimestamp(float(date), timezone.utc)
 
 
 @dataclass(frozen=True, repr=True)
