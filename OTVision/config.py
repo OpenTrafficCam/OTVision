@@ -32,7 +32,6 @@ log = logging.getLogger(LOGGER_NAME)
 # CONFIG dict keys
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
 CALIBRATIONS = "CALIBRATIONS"
-CHUNK_SIZE = "CHUNKSIZE"
 COL_WIDTH = "COLWIDTH"
 CONF = "CONF"
 CONVERT = "CONVERT"
@@ -43,7 +42,6 @@ DETECTIONS = "DETECTIONS"
 FILETYPES = "FILETYPES"
 FONT = "FONT"
 FONT_SIZE = "FONTSIZE"
-FORCE_RELOAD_TORCH_HUB_CACHE = "FORCE_RELOAD_TORCH_HUB_CACHE"
 FPS_FROM_FILENAME = "FPS_FROM_FILENAME"
 FRAME_WIDTH = "FRAMEWIDTH"
 GUI = "GUI"
@@ -64,7 +62,6 @@ PATHS = "PATHS"
 RUN_CHAINED = "RUN_CHAINED"
 REFPTS = "REFPTS"
 SEARCH_SUBDIRS = "SEARCH_SUBDIRS"
-SKIP_VALIDATION = "SKIP_VALIDATION"
 SIGMA_H = "SIGMA_H"
 SIGMA_IOU = "SIGMA_IOU"
 SIGMA_L = "SIGMA_L"
@@ -238,10 +235,10 @@ class _ConvertConfig:
 
 @dataclass(frozen=True)
 class _YoloWeights:
-    yolov5s: str = "yolov5s"
-    yolov5m: str = "yolov5m"
-    yolov5l: str = "yolov5l"
-    yolov5x: str = "yolov5x"
+    yolov5s: str = "yolov8s"
+    yolov5m: str = "yolov8m"
+    yolov5l: str = "yolov8l"
+    yolov5x: str = "yolov8x"
 
     def to_list(self) -> list:
         return [self.yolov5s, self.yolov5m, self.yolov5l, self.yolov5x]
@@ -264,7 +261,6 @@ class _YoloConfig:
             conf=d.get(CONF, _YoloConfig.conf),
             iou=d.get(IOU, _YoloConfig.iou),
             img_size=d.get(IMG_SIZE, _YoloConfig.img_size),
-            chunk_size=d.get(CHUNK_SIZE, _YoloConfig.chunk_size),
             normalized=d.get(NORMALIZED, _YoloConfig.normalized),
         )
 
@@ -275,7 +271,6 @@ class _YoloConfig:
             CONF: self.conf,
             IOU: self.iou,
             IMG_SIZE: self.img_size,
-            CHUNK_SIZE: self.chunk_size,
             NORMALIZED: self.normalized,
         }
 
@@ -287,8 +282,6 @@ class _DetectConfig:
     yolo_config: _YoloConfig = _YoloConfig()
     overwrite: bool = True
     half_precision: bool = False
-    force_reload_torch_hub_cache: bool = False
-    skip_validation: bool = False
 
     @staticmethod
     def from_dict(d: dict) -> "_DetectConfig":
@@ -305,11 +298,6 @@ class _DetectConfig:
             yolo_config,
             d.get(OVERWRITE, _DetectConfig.overwrite),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
-            d.get(
-                FORCE_RELOAD_TORCH_HUB_CACHE,
-                _DetectConfig.force_reload_torch_hub_cache,
-            ),
-            d.get(SKIP_VALIDATION, _DetectConfig.skip_validation),
         )
 
     def to_dict(self) -> dict:
@@ -319,8 +307,6 @@ class _DetectConfig:
             YOLO: self.yolo_config.to_dict(),
             OVERWRITE: self.overwrite,
             HALF_PRECISION: self.half_precision,
-            FORCE_RELOAD_TORCH_HUB_CACHE: self.force_reload_torch_hub_cache,
-            SKIP_VALIDATION: self.skip_validation,
         }
 
 
@@ -661,20 +647,17 @@ CONFIG[DETECT][RUN_CHAINED] = True
 CONFIG[DETECT][YOLO] = {}
 CONFIG[DETECT][YOLO][WEIGHTS] = "yolov5s"
 CONFIG[DETECT][YOLO][AVAILABLE_WEIGHTS] = [
-    "yolov5s",
-    "yolov5m",
-    "yolov5l",
-    "yolov5x",
+    "yolov8s",
+    "yolov8m",
+    "yolov8l",
+    "yolov8x",
 ]
 CONFIG[DETECT][YOLO][CONF] = 0.25
 CONFIG[DETECT][YOLO][IOU] = 0.45
 CONFIG[DETECT][YOLO][IMG_SIZE] = 640
-CONFIG[DETECT][YOLO][CHUNK_SIZE] = 1
 CONFIG[DETECT][YOLO][NORMALIZED] = False
 CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
-CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE] = False
-CONFIG[DETECT][SKIP_VALIDATION] = False
 
 # TRACK
 CONFIG[TRACK] = {}
