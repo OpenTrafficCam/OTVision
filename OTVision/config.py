@@ -235,18 +235,18 @@ class _ConvertConfig:
 
 @dataclass(frozen=True)
 class _YoloWeights:
-    yolov5s: str = "yolov8s"
-    yolov5m: str = "yolov8m"
-    yolov5l: str = "yolov8l"
-    yolov5x: str = "yolov8x"
+    yolov8s: str = "yolov8s"
+    yolov8m: str = "yolov8m"
+    yolov8l: str = "yolov8l"
+    yolov8x: str = "yolov8x"
 
     def to_list(self) -> list:
-        return [self.yolov5s, self.yolov5m, self.yolov5l, self.yolov5x]
+        return [self.yolov8s, self.yolov8m, self.yolov8l, self.yolov8x]
 
 
 @dataclass
 class _YoloConfig:
-    weights: str = _YoloWeights.yolov5s
+    weights: str = _YoloWeights.yolov8s
     available_weights: _YoloWeights = _YoloWeights()
     conf: float = 0.25
     iou: float = 0.45
@@ -645,7 +645,7 @@ CONFIG[DETECT] = {}
 CONFIG[DETECT][PATHS] = []
 CONFIG[DETECT][RUN_CHAINED] = True
 CONFIG[DETECT][YOLO] = {}
-CONFIG[DETECT][YOLO][WEIGHTS] = "yolov5s"
+CONFIG[DETECT][YOLO][WEIGHTS] = "yolov8s"
 CONFIG[DETECT][YOLO][AVAILABLE_WEIGHTS] = [
     "yolov8s",
     "yolov8m",
