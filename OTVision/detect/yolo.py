@@ -128,11 +128,8 @@ class Yolov8(ObjectDetection):
         return frames
 
     def _load_model(self) -> YOLOv8:
-        if torch.cuda.is_available():
-            model = YOLOv8(model=self.weights, device="gpu", task="detect")
-            return model.to(device=0)
-
-        return YOLOv8(model=self.weights, task="detect")
+        model = YOLOv8(model=self.weights, task="detect")
+        return model
 
     def _predict(self, video: Path) -> Generator[Results, None, None]:
         return self.model.predict(
@@ -141,8 +138,9 @@ class Yolov8(ObjectDetection):
             iou=self.iou,
             half=self.half_precision,
             imgsz=self.img_size,
+            device=0 if torch.cuda.is_available() else "cpu",
             stream=True,
-            verbose=False,
+            verbose=True,
         )
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
