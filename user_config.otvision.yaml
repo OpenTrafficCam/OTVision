@@ -12,11 +12,10 @@ DETECT:
   HALF_PRECISION: false
   OVERWRITE: true
   YOLO:
-    CHUNKSIZE: 1
     CONF: 0.25
     IMGSIZE: 640
     IOU: 0.45
-    WEIGHTS: yolov5s
+    WEIGHTS: yolov8s
 
 TRACK:
   PATHS: []

@@ -28,6 +28,17 @@ import torch
 from ultralytics import YOLO as YOLOv8
 from ultralytics.yolo.engine.results import Boxes, Results
 
+from OTVision.config import (
+    CONF,
+    CONFIG,
+    DETECT,
+    HALF_PRECISION,
+    IMG_SIZE,
+    IOU,
+    NORMALIZED,
+    WEIGHTS,
+    YOLO,
+)
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Detection
 
@@ -162,12 +173,12 @@ class Yolov8(ObjectDetection):
 
 
 def loadmodel(
-    weights: str | Path,
-    confidence: float,
-    iou: float,
-    img_size: int,
-    half_precision: bool,
-    normalized: bool,
+    weights: str | Path = CONFIG[DETECT][YOLO][WEIGHTS],
+    confidence: float = CONFIG[DETECT][YOLO][CONF],
+    iou: float = CONFIG[DETECT][YOLO][IOU],
+    img_size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
+    half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
+    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
 ) -> Yolov8:
     """Loads a custom trained or a pretrained YOLOv8 mode.
 
