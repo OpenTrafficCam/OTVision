@@ -197,6 +197,7 @@ def loadmodel(
     """
     log.info(f"Try loading model {weights}")
     t1 = perf_counter()
+    is_custom = Path(weights).is_file()
     model = Yolov8(
         weights=weights,
         confidence=confidence,
@@ -206,7 +207,11 @@ def loadmodel(
         normalized=normalized,
     )
     t2 = perf_counter()
-    log.info(f"Model loaded in {round(t2 - t1)} sec")
+
+    model_source = "Custom" if is_custom else "Pretrained"
+    model_type = "CUDA" if torch.cuda.is_available() else "CPU"
+    runtime = round(t2 - t1)
+    log.info(f"{model_source} {model_type} model loaded in {runtime} sec")
 
     model_succes_msg = f"Model {model.weights} prepared"
     log.info(model_succes_msg)
