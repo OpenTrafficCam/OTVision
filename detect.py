@@ -25,6 +25,7 @@ from pathlib import Path
 
 import OTVision
 import OTVision.config as config
+from OTVision.detect.yolo import loadmodel
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
@@ -230,14 +231,19 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info("Call detect from command line")
     log.info(f"Arguments: {vars(args)}")
 
+    model = loadmodel(
+        weights=weights,
+        confidence=conf,
+        iou=iou,
+        img_size=imagesize,
+        half_precision=half,
+        normalized=config.CONFIG[config.DETECT][config.YOLO][config.NORMALIZED],
+    )
+
     try:
         OTVision.detect(
+            model=model,
             paths=paths,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=imagesize,
-            half_precision=half,
             overwrite=overwrite,
         )
     except FileNotFoundError:

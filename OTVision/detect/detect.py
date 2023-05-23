@@ -26,24 +26,10 @@ from pathlib import Path
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from tqdm import tqdm
 
-from OTVision.config import (
-    CONF,
-    CONFIG,
-    DEFAULT_FILETYPE,
-    DETECT,
-    FILETYPES,
-    HALF_PRECISION,
-    IMG_SIZE,
-    IOU,
-    NORMALIZED,
-    OVERWRITE,
-    VID,
-    WEIGHTS,
-    YOLO,
-)
+from OTVision.config import CONFIG, DEFAULT_FILETYPE, DETECT, FILETYPES, OVERWRITE, VID
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder
-from OTVision.detect.yolo import loadmodel
+from OTVision.detect.yolo import Yolov8
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
@@ -57,38 +43,19 @@ FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
 
 
 def main(
+    model: Yolov8,
     paths: list[Path],
     filetypes: list[str] = CONFIG[FILETYPES][VID],
-    weights: str = CONFIG[DETECT][YOLO][WEIGHTS],
-    conf: float = CONFIG[DETECT][YOLO][CONF],
-    iou: float = CONFIG[DETECT][YOLO][IOU],
-    size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
-    half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
-    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
     overwrite: bool = CONFIG[DETECT][OVERWRITE],
 ) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
 
     Args:
+        model (Yolov8): YOLOv8 detection model.
         paths (list[Path]): List of paths to video files.
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
-        weights (str, optional): (Pre-)trained weights for YOLOv5 detection model.
-            Defaults to CONFIG["DETECT"]["YOLO"]["WEIGHTS"].
-        conf (float, optional): YOLOv5 minimum confidence threshold
-            for detecting objects. Defaults to CONFIG["DETECT"]["YOLO"]["CONF"].
-        iou (float, optional): YOLOv5 IOU threshold for detecting objects.
-            Defaults to CONFIG["DETECT"]["YOLO"]["IOU"].
-        size (int, optional): YOLOv5 image size.
-            Defaults to CONFIG["DETECT"]["YOLO"]["IMGSIZE"].
-        chunksize (int, optional): YOLOv5 chunksize.
-            Defaults to CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"].
-        half_precision (bool, optional): Whether to use half precision (FP16) for
-            inference speed up. Only works for gpu.
-            Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
-        normalized (bool, optional): Whether or not to normalize detections
-            to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
         overwrite (bool, optional): Whether or not to overwrite
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
@@ -102,12 +69,6 @@ def main(
     if not video_files:
         raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
 
-    yolo_model = loadmodel(weights, conf, iou, size, half_precision, normalized)
-
-    model_succes_msg = f"Model {weights} prepared"
-    log.info(model_succes_msg)
-    print(model_succes_msg)
-
     for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
@@ -119,24 +80,24 @@ def main(
 
         log.info(f"Detect {video_file}")
 
-        detections = yolo_model.detect(video=video_file)
+        detections = model.detect(video=video_file)
 
         video_width, video_height = get_video_dimensions(video_file)
         video_fps = get_fps(video_file)
         otdet = OtdetBuilder(
-            conf=conf,
-            iou=iou,
+            conf=model.confidence,
+            iou=model.iou,
             video=video_file,
             video_width=video_width,
             video_height=video_height,
             fps=video_fps,
             frames=len(detections),
-            detection_img_size=size,
-            normalized=normalized,
-            detection_model=weights,
-            half_precision=half_precision,
+            detection_img_size=model.img_size,
+            normalized=model.normalized,
+            detection_model=model.weights,
+            half_precision=model.half_precision,
             chunksize=1,
-            classifications=yolo_model.classifications,
+            classifications=model.classifications,
         ).build(detections)
 
         stamped_detections = add_timestamps(otdet, video_file)

@@ -196,4 +196,9 @@ def loadmodel(
     )
     t2 = perf_counter()
     log.info(f"Model loaded in {round(t2 - t1)} sec")
+
+    model_succes_msg = f"Model {model.weights} prepared"
+    log.info(model_succes_msg)
+    print(model_succes_msg)
+
     return model
