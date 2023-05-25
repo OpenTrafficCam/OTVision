@@ -5,6 +5,9 @@ obj_train_data/*
 *ffmpeg.exe
 *ffmpeg.zip
 tests/resources/
+data
+models
+config
 *.log
 !test.log
 *.otvision.yaml

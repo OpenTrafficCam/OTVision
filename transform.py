@@ -23,10 +23,10 @@ import argparse
 import logging
 from pathlib import Path
 
-import OTVision
 import OTVision.config as config
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
+from OTVision.transform.transform import main as transform
 
 
 def parse() -> argparse.Namespace:
@@ -172,7 +172,7 @@ def main() -> None:
     log.info(f"Arguments: {vars(args)}")
 
     try:
-        OTVision.transform(paths=paths, refpts_file=refpts_file, overwrite=overwrite)
+        transform(paths=paths, refpts_file=refpts_file, overwrite=overwrite)
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {paths}")
         raise

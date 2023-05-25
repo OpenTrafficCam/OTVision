@@ -1,0 +1,10 @@
+# Use ubuntu as base image instead of a python image, because the rest of the layers
+# will be the same in the cuda container
+FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+WORKDIR /OpenTrafficCam/OTVision
+COPY requirements_detect.txt requirements_detect.txt
+RUN pip install --no-cache-dir -r requirements_detect.txt
+ENV PYTHONPATH /OpenTrafficCam/OTVision
+COPY OTVision OTVision
+COPY detect.py .
+ENTRYPOINT [ "python3.10", "detect.py", "--config", "config/user_config.otvision.yaml" ]
