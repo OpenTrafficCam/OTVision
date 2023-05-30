@@ -23,7 +23,6 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from moviepy.video.io.VideoFileClip import VideoFileClip
 from tqdm import tqdm
 
 from OTVision.config import CONFIG, DEFAULT_FILETYPE, DETECT, FILETYPES, OVERWRITE, VID
@@ -33,7 +32,7 @@ from OTVision.detect.yolo import Yolov8
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.helpers.video import get_fps, get_video_dimensions
+from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
@@ -142,7 +141,7 @@ class Timestamper:
             dict: input dictionary with additional occurrence per frame
         """
         start_time = self._get_start_time_from(video_file)
-        duration = self._get_duration(video_file)
+        duration = get_duration(video_file)
         time_per_frame = self._get_time_per_frame(detections, duration)
         self._update_metadata(detections, start_time, duration)
         return self._stamp(detections, start_time, time_per_frame)
@@ -185,18 +184,6 @@ class Timestamper:
         """
         number_of_frames = len(detections[DATA].keys())
         return duration / number_of_frames
-
-    def _get_duration(self, video_file: Path) -> timedelta:
-        """Get the duration of the video
-
-        Args:
-            video_file (Path): path to video file
-
-        Returns:
-            timedelta: duration of the video
-        """
-        clip = VideoFileClip(str(video_file.absolute()))
-        return timedelta(seconds=clip.duration)
 
     def _update_metadata(
         self, detections: dict, start_time: datetime, duration: timedelta

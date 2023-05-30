@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -33,3 +34,14 @@ def get_fps(video: str) -> float:
     video_clip.close()
 
     return fps
+
+
+def get_duration(video_file: Path) -> timedelta:
+    """Get the duration of the video
+    Args:
+        video_file (Path): path to video file
+    Returns:
+        timedelta: duration of the video
+    """
+    clip = VideoFileClip(str(video_file.absolute()))
+    return timedelta(seconds=clip.duration)
