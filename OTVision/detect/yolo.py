@@ -25,6 +25,7 @@ from time import perf_counter
 from typing import Generator
 
 import torch
+from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.yolo.engine.results import Boxes, Results
 
@@ -39,6 +40,7 @@ from OTVision.config import (
     WEIGHTS,
     YOLO,
 )
+from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Detection
 
@@ -112,7 +114,7 @@ class Yolov8(ObjectDetection):
         """
         return self.model.names
 
-    def detect(self, video: Path) -> list[list[Detection]]:
+    def detect(self, file: Path) -> list[list[Detection]]:
         """Run object detection on video and return detection result.
 
         Args:
@@ -122,8 +124,13 @@ class Yolov8(ObjectDetection):
             list[list[Detection]]: the detections for each frame in the video
         """
         frames: list[list[Detection]] = []
-
-        for prediction_result in self._predict(video):
+        length = video.get_number_of_frames(file)
+        for prediction_result in tqdm(
+            self._predict(file),
+            desc="Detected frames",
+            unit="frames",
+            total=length,
+        ):
             frames.append(self._parse_detections(prediction_result.boxes))
 
         return frames

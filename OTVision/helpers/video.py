@@ -45,3 +45,14 @@ def get_duration(video_file: Path) -> timedelta:
     """
     clip = VideoFileClip(str(video_file.absolute()))
     return timedelta(seconds=clip.duration)
+
+
+def get_number_of_frames(video_file: Path) -> int:
+    """Get the number of frames of the video
+    Args:
+        video_file (Path): path to video file
+    Returns:
+        timedelta: number of frames of the video
+    """
+    clip = VideoFileClip(str(video_file.absolute()))
+    return clip.reader.nframes

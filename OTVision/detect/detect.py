@@ -79,7 +79,7 @@ def main(
 
         log.info(f"Detect {video_file}")
 
-        detections = model.detect(video=video_file)
+        detections = model.detect(file=video_file)
 
         video_width, video_height = get_video_dimensions(video_file)
         video_fps = get_fps(video_file)
