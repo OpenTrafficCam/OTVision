@@ -149,6 +149,7 @@ class Yolov8(ObjectDetection):
             device=0 if torch.cuda.is_available() else "cpu",
             stream=True,
             verbose=False,
+            batch=128,
         )
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
