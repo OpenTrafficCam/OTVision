@@ -65,7 +65,8 @@ class ObjectDetection(ABC):
             video (Path): the path to the video.
 
         Returns:
-            list[list[Detection]]: _description_
+            list[list[Detection]]: nested list of detections. First level is frames,
+            second level is detections within frame
         """
         pass
 
