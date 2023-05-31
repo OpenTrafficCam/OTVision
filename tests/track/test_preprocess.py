@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -6,7 +6,6 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DATA,
-    DATE_FORMAT,
     DETECTIONS,
     FILENAME,
     FRAME,
@@ -30,7 +29,7 @@ from OTVision.track.preprocess import (
     Preprocess,
 )
 
-DEFAULT_START_DATE = datetime(year=2022, month=5, day=4)
+DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
 DEFAULT_INPUT_FILE_PATH = Path("input-file.otdet")
 DEFAULT_LABEL = "car"
 DEFAULT_CONFIDENCE = 1.0
@@ -46,8 +45,8 @@ def occurrence_from(key: int, start_date: datetime = DEFAULT_START_DATE) -> date
     return start_date
 
 
-def occurrence_as_string(key: int, start_date: datetime = DEFAULT_START_DATE) -> str:
-    return occurrence_from(key, start_date).strftime(DATE_FORMAT)
+def occurrence_serialized(key: int, start_date: datetime = DEFAULT_START_DATE) -> float:
+    return occurrence_from(key, start_date).timestamp()
 
 
 def create_frame(
@@ -100,7 +99,7 @@ class DataBuilder:
 
     def append_non_classified_frame(self) -> "DataBuilder":
         frame_number = self.next_key()
-        occurrence = occurrence_from(frame_number, start_date=self.start_date)
+        occurrence = occurrence_serialized(frame_number, start_date=self.start_date)
         self.data[frame_number] = {
             FRAME: frame_number,
             OCCURRENCE: occurrence,
@@ -126,7 +125,7 @@ class DataBuilder:
         w: float = DEFAULT_W,
         h: float = DEFAULT_H,
         frame_number: int = 1,
-        occurrence: str = DEFAULT_START_DATE.strftime(DATE_FORMAT),
+        occurrence: float = DEFAULT_START_DATE.timestamp(),
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
         interpolated_detection: bool = False,
     ) -> dict[str, object]:
@@ -154,7 +153,7 @@ class DataBuilder:
         h: float = DEFAULT_H,
     ) -> "DataBuilder":
         frame_number: int = self.next_key()
-        occurrence = occurrence_as_string(frame_number, self.start_date)
+        occurrence = occurrence_serialized(frame_number, self.start_date)
         self.data[frame_number] = {
             FRAME: frame_number,
             OCCURRENCE: occurrence,
@@ -216,7 +215,7 @@ class DataBuilder:
             METADATA: {
                 VIDEO: {
                     FILENAME: self.input_file_path.as_posix(),
-                    RECORDED_START_DATE: self.start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: self.start_date.timestamp(),
                 }
             },
             DATA: self.build(),
@@ -315,7 +314,7 @@ class TestPreprocess:
             file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: file_path.as_posix(),
-                    RECORDED_START_DATE: start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: start_date.timestamp(),
                 }
             }
         }
@@ -323,7 +322,7 @@ class TestPreprocess:
     def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
         first_file_path = Path(f"{order_key}/first-file.otdet")
-        first_start_date = datetime(2022, 5, 4, 12, 0, 1)
+        first_start_date = datetime(2022, 5, 4, 12, 0, 1, tzinfo=timezone.utc)
         first_builder = DataBuilder(
             input_file_path=first_file_path,
             start_date=first_start_date,
@@ -332,7 +331,7 @@ class TestPreprocess:
         first_detections = first_builder.build_ot_det()
 
         second_file_path = Path(f"{order_key}/second-file.otdet")
-        second_start_date = datetime(2022, 5, 4, 12, 0, 0)
+        second_start_date = datetime(2022, 5, 4, 12, 0, 0, tzinfo=timezone.utc)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
             start_date=second_start_date,
@@ -341,7 +340,7 @@ class TestPreprocess:
         second_detections = second_builder.build_ot_det()
 
         third_file_path = Path(f"{order_key}/third-file.otdet")
-        third_start_date = datetime(2022, 5, 4, 13, 0, 1)
+        third_start_date = datetime(2022, 5, 4, 13, 0, 1, tzinfo=timezone.utc)
         third_builder = DataBuilder(
             input_file_path=third_file_path,
             start_date=third_start_date,
@@ -394,19 +393,19 @@ class TestPreprocess:
             first_file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: first_file_path.as_posix(),
-                    RECORDED_START_DATE: first_start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: first_start_date.timestamp(),
                 }
             },
             second_file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: second_file_path.as_posix(),
-                    RECORDED_START_DATE: second_start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: second_start_date.timestamp(),
                 }
             },
             third_file_path.as_posix(): {
                 VIDEO: {
                     FILENAME: third_file_path.as_posix(),
-                    RECORDED_START_DATE: third_start_date.strftime(DATE_FORMAT),
+                    RECORDED_START_DATE: third_start_date.timestamp(),
                 }
             },
         }

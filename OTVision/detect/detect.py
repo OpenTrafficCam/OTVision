@@ -20,38 +20,20 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Union
 
-import torch
-from moviepy.video.io.VideoFileClip import VideoFileClip
 from tqdm import tqdm
 
-from OTVision.config import (
-    CHUNK_SIZE,
-    CONF,
-    CONFIG,
-    DEFAULT_FILETYPE,
-    DETECT,
-    FILETYPES,
-    FORCE_RELOAD_TORCH_HUB_CACHE,
-    HALF_PRECISION,
-    IMG_SIZE,
-    IOU,
-    NORMALIZED,
-    OVERWRITE,
-    SKIP_VALIDATION,
-    VID,
-    WEIGHTS,
-    YOLO,
-)
+from OTVision.config import CONFIG, DEFAULT_FILETYPE, DETECT, FILETYPES, OVERWRITE, VID
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
+from OTVision.detect.otdet import OtdetBuilder
+from OTVision.detect.yolo import Yolov8
+from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import DATE_FORMAT, OCCURRENCE
-
-from . import yolo
+from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
+from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
 
@@ -60,49 +42,19 @@ FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
 
 
 def main(
+    model: Yolov8,
     paths: list[Path],
     filetypes: list[str] = CONFIG[FILETYPES][VID],
-    model: Union[torch.nn.Module, None] = None,
-    weights: str = CONFIG[DETECT][YOLO][WEIGHTS],
-    conf: float = CONFIG[DETECT][YOLO][CONF],
-    iou: float = CONFIG[DETECT][YOLO][IOU],
-    size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
-    chunksize: int = CONFIG[DETECT][YOLO][CHUNK_SIZE],
-    half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
-    force_reload_torch_hub_cache: bool = CONFIG[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
-    skip_validation: bool = CONFIG[DETECT][SKIP_VALIDATION],
-    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
     overwrite: bool = CONFIG[DETECT][OVERWRITE],
 ) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
 
     Args:
+        model (Yolov8): YOLOv8 detection model.
         paths (list[Path]): List of paths to video files.
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
-        model (torch.nn.Module, optional): YOLOv5 detection model.
-            Defaults to None.
-        weights (str, optional): (Pre-)trained weights for YOLOv5 detection model.
-            Defaults to CONFIG["DETECT"]["YOLO"]["WEIGHTS"].
-        conf (float, optional): YOLOv5 minimum confidence threshold
-            for detecting objects. Defaults to CONFIG["DETECT"]["YOLO"]["CONF"].
-        iou (float, optional): YOLOv5 IOU threshold for detecting objects.
-            Defaults to CONFIG["DETECT"]["YOLO"]["IOU"].
-        size (int, optional): YOLOv5 image size.
-            Defaults to CONFIG["DETECT"]["YOLO"]["IMGSIZE"].
-        chunksize (int, optional): YOLOv5 chunksize.
-            Defaults to CONFIG["DETECT"]["YOLO"]["CHUNKSIZE"].
-        half_precision (bool, optional): Whether to use half precision (FP16) for
-            inference speed up. Only works for gpu.
-            Defaults to CONFIG["DETECT"]["HALF_PRECISION"].
-        force_reload_torch_hub_cache (bool, optional): Whether to force reload torch
-            hub cache. Defaults to CONFIG["DETECT"]["FORCE_RELOAD_TORCH_HUB_CACHE].
-        skip_validation (bool): If `false` it is validated that the branch or commit of
-            the model belongs to the repo owner. Defaults to
-            CONFIG[DETECT][SKIP_VALIDATION].
-        normalized (bool, optional): Whether or not to normalize detections
-            to image dimensions. Defaults to CONFIG["DETECT"]["YOLO"]["NORMALIZED"].
         overwrite (bool, optional): Whether or not to overwrite
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
     """
@@ -116,26 +68,6 @@ def main(
     if not video_files:
         raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
 
-    if not model:
-        yolo_model = yolo.loadmodel(
-            weights,
-            conf,
-            iou,
-            force_reload=force_reload_torch_hub_cache,
-            half_precision=half_precision,
-            skip_validation=skip_validation,
-        )
-    else:
-        yolo_model = (
-            model.half() if torch.cuda.is_available() and half_precision else model
-        )
-        yolo_model.conf = conf
-        yolo_model.iou = iou
-
-    model_succes_msg = f"Model {weights} prepared"
-    log.info(model_succes_msg)
-    print(model_succes_msg)
-
     for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
@@ -147,19 +79,27 @@ def main(
 
         log.info(f"Detect {video_file}")
 
-        detections_video = yolo.detect_video(
-            file=video_file,
-            model=yolo_model,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=size,
-            half_precision=half_precision,
-            chunksize=chunksize,
-            normalized=normalized,
-        )
+        detections = model.detect(file=video_file)
 
-        stamped_detections = add_timestamps(detections_video, video_file)
+        video_width, video_height = get_video_dimensions(video_file)
+        video_fps = get_fps(video_file)
+        otdet = OtdetBuilder(
+            conf=model.confidence,
+            iou=model.iou,
+            video=video_file,
+            video_width=video_width,
+            video_height=video_height,
+            fps=video_fps,
+            frames=len(detections),
+            detection_img_size=model.img_size,
+            normalized=model.normalized,
+            detection_model=model.weights,
+            half_precision=model.half_precision,
+            chunksize=1,
+            classifications=model.classifications,
+        ).build(detections)
+
+        stamped_detections = add_timestamps(otdet, video_file)
         write_json(
             stamped_detections,
             file=detections_file,
@@ -178,22 +118,6 @@ def main(
 
 class FormatNotSupportedError(Exception):
     pass
-
-
-def _create_chunks(files: list[Path], chunksize: int) -> list[list[Path]]:
-    """Splits list in several lists of certain chunksize.
-
-    Args:
-        files (list[Path]): Full list.
-        chunksize (int): Chunksize to split list into.
-
-    Returns:
-        list[list[Path]]: list of lists of certain chunksize.
-    """
-    if chunksize == 0:
-        return [files]
-    chunk_starts = range(0, len(files), chunksize)
-    return [files[i : i + chunksize] for i in chunk_starts]
 
 
 def add_timestamps(detections: dict, video_file: Path) -> dict:
@@ -217,7 +141,7 @@ class Timestamper:
             dict: input dictionary with additional occurrence per frame
         """
         start_time = self._get_start_time_from(video_file)
-        duration = self._get_duration(video_file)
+        duration = get_duration(video_file)
         time_per_frame = self._get_time_per_frame(detections, duration)
         self._update_metadata(detections, start_time, duration)
         return self._stamp(detections, start_time, time_per_frame)
@@ -241,7 +165,10 @@ class Timestamper:
         )
         if match:
             start_date: str = match.group(START_DATE)
-            return datetime.strptime(start_date, "%Y-%m-%d_%H-%M-%S")
+            return parse_date_string_to_utc_datime(
+                start_date, "%Y-%m-%d_%H-%M-%S"
+            ).replace(tzinfo=timezone.utc)
+
         raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
     def _get_time_per_frame(self, detections: dict, duration: timedelta) -> timedelta:
@@ -258,24 +185,10 @@ class Timestamper:
         number_of_frames = len(detections[DATA].keys())
         return duration / number_of_frames
 
-    def _get_duration(self, video_file: Path) -> timedelta:
-        """Get the duration of the video
-
-        Args:
-            video_file (Path): path to video file
-
-        Returns:
-            timedelta: duration of the video
-        """
-        clip = VideoFileClip(str(video_file.absolute()))
-        return timedelta(seconds=clip.duration)
-
     def _update_metadata(
         self, detections: dict, start_time: datetime, duration: timedelta
     ) -> dict:
-        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.strftime(
-            DATE_FORMAT
-        )
+        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.timestamp()
         detections[METADATA][VIDEO][LENGTH] = str(duration)
         return detections
 
@@ -295,5 +208,5 @@ class Timestamper:
         data: dict = detections[DATA]
         for key, value in data.items():
             occurrence = start_date + (int(key) - 1) * time_per_frame
-            value[OCCURRENCE] = occurrence.strftime(DATE_FORMAT)
+            value[OCCURRENCE] = occurrence.timestamp()
         return detections
