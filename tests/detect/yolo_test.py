@@ -1,20 +1,12 @@
 from pathlib import Path
+from unittest.mock import Mock, patch
 
-import numpy
 import pytest
-import torch
-from cv2 import COLOR_BGR2RGB, VideoCapture, cvtColor
+from cv2 import VideoCapture
+from torch import Tensor
 
-from OTVision.dataformat import CLASS, CONFIDENCE, DATA, DETECTIONS, H, W, X, Y
-from OTVision.detect.yolo import (
-    YOLOv5ModelNotFoundError,
-    _convert_detections,
-    _get_batch_of_frames,
-    _load_custom_model,
-    _load_pretrained_model,
-    convert_bgr_to_rgb,
-    loadmodel,
-)
+from OTVision.detect.yolo import Yolov8
+from OTVision.track.preprocess import Detection
 
 
 @pytest.fixture
@@ -42,122 +34,12 @@ def num_frames(video_path: str) -> int:
     return len_frames
 
 
-def test_get_batch_of_frames_chunksizeGreaterThanVideoFramesParam(
-    video_path: str, num_frames: int
-) -> None:
-    cap = VideoCapture(video_path)
-    gotframe, frames = _get_batch_of_frames(cap, num_frames + 1)
-    assert len(frames) == num_frames
-    assert gotframe is False
-
-
-def test_get_batch_of_frames_chunksizeZero(video_path: str) -> None:
-    cap = VideoCapture(video_path)
-    gotframe, frames = _get_batch_of_frames(cap, 0)
-    assert len(frames) == 0
-    assert gotframe is False
-
-
-def test_get_batch_of_frames_chunksize5(video_path: str) -> None:
-    chunksize = 5
-    cap = VideoCapture(video_path)
-    while True:
-        gotframe, frames = _get_batch_of_frames(cap, chunksize)
-
-        if not frames:
-            break
-
-        if gotframe:
-            assert len(frames) == chunksize
-        else:
-            assert len(frames) < chunksize
-            assert len(frames) >= 0
-
-
-def test_get_batch_of_frames_chunksize0(video_path: str) -> None:
-    chunksize = 0
-    cap = VideoCapture(video_path)
-    gotframe, frames = _get_batch_of_frames(cap, chunksize)
-    assert gotframe is False
-    assert not frames
-
-
-class TestLoadModel:
-    CONF_THRESH: float = 0.25
-    IOU_THRESH: float = 0.25
-
-    @pytest.fixture
-    def text_file(self, test_data_tmp_dir: Path) -> Path:
-        text_file = Path(test_data_tmp_dir, "text_file.txt")
-        text_file.touch(exist_ok=True)
-        return text_file
-
-    def test_load_pretrained_model_notPretrainedModelName_raiseAttributeException(
-        self,
-    ) -> None:
-        with pytest.raises(YOLOv5ModelNotFoundError):
-            _load_pretrained_model(
-                "NotPretrainedModelName",
-                False,
-                skip_validation=True,
-            )
-
-    def test_load_pretrained_model_withCorrectParams(self) -> None:
-        model = _load_pretrained_model("yolov5s", False, skip_validation=True)
-        assert isinstance(model, torch.nn.Module)
-
-    def test_load_custom_model_notAPtFileAsParam_raiseAttributeError(
-        self, text_file: Path
-    ) -> None:
-        with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
-            _load_custom_model(text_file, False, skip_validation=True)
-
-    def test_load_model_notPretrainedModelName_raiseYOLOv5ModelNotFoundError(
-        self,
-    ) -> None:
-        model_name = "NotPretrainedModelName"
-        with pytest.raises(YOLOv5ModelNotFoundError):
-            loadmodel(
-                model_name,
-                self.CONF_THRESH,
-                self.IOU_THRESH,
-                skip_validation=True,
-            )
-
-    def test_load_model_notAPtFileAsParam_raiseAttributeError(
-        self, text_file: Path
-    ) -> None:
-        with pytest.raises(ValueError, match=r"Weights at '.*' is not a pt file!"):
-            loadmodel(
-                str(text_file),
-                self.CONF_THRESH,
-                self.IOU_THRESH,
-                skip_validation=True,
-            )
-
-
-class TestBgrToRgbConverter:
-    @pytest.fixture()
-    def image_as_array(self, video_path: str) -> numpy.ndarray:
-        cap = VideoCapture(video_path)
-        _, image_as_array = cap.read()
-        cap.release()
-        return image_as_array
-
-    def test_convert_bgr_to_rgb(self, image_as_array: numpy.ndarray) -> None:
-        result = convert_bgr_to_rgb(image_as_array)
-        assert not (image_as_array == result).all()
-        expected = cvtColor(image_as_array, COLOR_BGR2RGB)
-        assert (result == expected).all()
-
-
 class TestConvertDetections:
-    def test_convert_x_y_coordinates(self) -> None:
+    @patch.object(Yolov8, "_load_model")
+    def test_convert_x_y_coordinates(self, mock_load_model: Mock) -> None:
         classification: int = 1
         name: str = "name"
         names = {classification: name}
-        vid_config: dict = {}
-        det_config: dict = {}
         x_input = 20
         x_output = 15
         y_input = 20
@@ -165,32 +47,22 @@ class TestConvertDetections:
         width = 10
         height = 10
         confidence = 0.5
-        yolo_detections: list[list[list]] = [
-            [[x_input, y_input, width, height, confidence, classification]]
-        ]
 
-        converted = _convert_detections(
-            yolo_detections=yolo_detections,
-            names=names,
-            vid_config=vid_config,
-            det_config=det_config,
+        mock_yolo = Mock().return_value
+        mock_yolo.names = names
+        mock_load_model.return_value = mock_yolo
+
+        model = Yolov8(
+            Mock(),
+            confidence=0.25,
+            iou=0.25,
+            img_size=640,
+            half_precision=False,
+            normalized=False,
         )
 
-        converted_detections = converted[DATA]
+        result = model._parse_detection(
+            Tensor([x_input, y_input, width, height]), classification, confidence
+        )
 
-        expected_detections = {
-            "1": {
-                DETECTIONS: [
-                    {
-                        CLASS: name,
-                        CONFIDENCE: confidence,
-                        X: x_output,
-                        Y: y_output,
-                        W: width,
-                        H: height,
-                    }
-                ]
-            }
-        }
-
-        assert converted_detections == expected_detections
+        assert result == Detection(name, confidence, x_output, y_output, width, height)

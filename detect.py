@@ -25,6 +25,7 @@ from pathlib import Path
 
 import OTVision
 import OTVision.config as config
+from OTVision.detect.yolo import loadmodel
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
@@ -66,12 +67,6 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--chunksize",
-        type=int,
-        help="The number of frames of a video to be inferred in one iteration.",
-        required=False,
-    )
-    parser.add_argument(
         "--imagesize",
         type=int,
         help="YOLOv5 image size.",
@@ -81,12 +76,6 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         "--half",
         action=argparse.BooleanOptionalAction,
         help="Use half precision for detection.",
-    )
-    parser.add_argument(
-        "-f",
-        "--force",
-        help="Force reload model in torch hub instead of using cache.",
-        action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
         "-o",
@@ -129,7 +118,7 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
-) -> tuple[list[Path], str, float, float, int, int, bool, bool, bool]:
+) -> tuple[list[Path], str, float, float, int, bool, bool]:
     try:
         paths = _extract_paths(args)
     except IOError:
@@ -159,20 +148,10 @@ def _process_parameters(
     else:
         imagesize = args.imagesize
 
-    if args.chunksize is None:
-        chunksize = config.CONFIG[config.DETECT][config.YOLO][config.CHUNK_SIZE]
-    else:
-        chunksize = args.chunksize
-
     if args.half is None:
         half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
     else:
         half = args.half
-
-    if args.force is None:
-        force_reload = config.CONFIG[config.DETECT][config.FORCE_RELOAD_TORCH_HUB_CACHE]
-    else:
-        force_reload = args.force
 
     if args.overwrite is None:
         overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
@@ -184,9 +163,7 @@ def _process_parameters(
         conf,
         iou,
         imagesize,
-        chunksize,
         half,
-        force_reload,
         overwrite,
     )
 
@@ -247,25 +224,26 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         conf,
         iou,
         imagesize,
-        chunksize,
         half,
-        force_reload,
         overwrite,
     ) = _process_parameters(args, log)
 
     log.info("Call detect from command line")
     log.info(f"Arguments: {vars(args)}")
 
+    model = loadmodel(
+        weights=weights,
+        confidence=conf,
+        iou=iou,
+        img_size=imagesize,
+        half_precision=half,
+        normalized=config.CONFIG[config.DETECT][config.YOLO][config.NORMALIZED],
+    )
+
     try:
         OTVision.detect(
+            model=model,
             paths=paths,
-            weights=weights,
-            conf=conf,
-            iou=iou,
-            size=imagesize,
-            chunksize=chunksize,
-            half_precision=half,
-            force_reload_torch_hub_cache=force_reload,
             overwrite=overwrite,
         )
     except FileNotFoundError:

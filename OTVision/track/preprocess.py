@@ -74,6 +74,16 @@ class Detection:
             INTERPOLATED_DETECTION: False,
         }
 
+    def to_otdet(self) -> dict:
+        return {
+            CLASS: self.label,
+            CONFIDENCE: self.conf,
+            X: self.x,
+            Y: self.y,
+            W: self.w,
+            H: self.h,
+        }
+
 
 @dataclass(frozen=True)
 class Frame:

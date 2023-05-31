@@ -74,27 +74,17 @@ def _get_datetime_from_filename(
 
 
 # TODO: Type hint nested dict during refactoring
-def _ottrk_dict_to_df(nested_dict: dict) -> pd.DataFrame:
-    """Turns a dict of tracks into a dataframe
+def _ottrk_detections_to_df(ottrk: list) -> pd.DataFrame:
+    """Turns a list of tracked detections into a dataframe
 
     Args:
-        nested_dict (dict): Nested dict of tracks from .ottrk file
+        ottrk (list): List of dicts, each dict is a tracked detection.
+            Comes from from .ottrk file.
 
     Returns:
         pd.DataFrame: DataFrame of tracks
     """
-    return (
-        pd.DataFrame.from_dict(
-            {
-                (i, j): nested_dict[i][j]
-                for i in nested_dict
-                for j in nested_dict[i].keys()
-            },
-            orient="index",
-        )
-        .reset_index()
-        .rename(columns={"level_0": "frame", "level_1": "object"})
-    )
+    return pd.DataFrame(ottrk)
 
 
 def _get_time_from_frame_number(
