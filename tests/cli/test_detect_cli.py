@@ -1,16 +1,14 @@
 import unittest.mock as mock
 from pathlib import Path
 from typing import Callable
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
 
 from OTVision.config import (
-    CHUNK_SIZE,
     CONF,
     DETECT,
-    FORCE_RELOAD_TORCH_HUB_CACHE,
     HALF_PRECISION,
     IMG_SIZE,
     IOU,
@@ -31,6 +29,7 @@ with open(CWD_CONFIG_FILE, "r") as file:
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
+
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
         PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
@@ -39,13 +38,11 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "weights": {PASSED: "--weights yolov5l", EXPECTED: "yolov5l"},
+    "weights": {PASSED: "--weights yolov8l", EXPECTED: "yolov8l"},
     "conf": {PASSED: "--conf 0.5", EXPECTED: 0.5},
     "iou": {PASSED: "--iou 0.55", EXPECTED: 0.55},
-    "chunksize": {PASSED: "--chunksize 10", EXPECTED: 10},
     "imagesize": {PASSED: "--imagesize 1240", EXPECTED: 1240},
     "half_precision": {PASSED: "--half", EXPECTED: True},
-    "force_reload": {PASSED: "--force", EXPECTED: True},
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "config": {PASSED: ""},
 }
@@ -58,13 +55,11 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "weights": {PASSED: "--weights yolov5x", EXPECTED: "yolov5x"},
+    "weights": {PASSED: "--weights yolov8x", EXPECTED: "yolov8x"},
     "conf": {PASSED: "--conf 0.6", EXPECTED: 0.6},
     "iou": {PASSED: "--iou 0.65", EXPECTED: 0.65},
-    "chunksize": {PASSED: "--chunksize 20", EXPECTED: 20},
     "imagesize": {PASSED: "--imagesize 320", EXPECTED: 320},
     "half_precision": {PASSED: "--no-half", EXPECTED: False},
-    "force_reload": {PASSED: "--no-force", EXPECTED: False},
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
     "config": {PASSED: ""},
 }
@@ -74,15 +69,10 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
     "weights": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][WEIGHTS]},
     "conf": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][CONF]},
     "iou": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][IOU]},
-    "chunksize": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][CHUNK_SIZE]},
     "imagesize": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][IMG_SIZE]},
     "half_precision": {
         PASSED: "",
         EXPECTED: cwd_config[DETECT][HALF_PRECISION],
-    },
-    "force_reload": {
-        PASSED: "",
-        EXPECTED: cwd_config[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
     },
     "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
     "config": {PASSED: ""},
@@ -99,18 +89,10 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "weights": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][WEIGHTS]},
     "conf": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][CONF]},
     "iou": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][IOU]},
-    "chunksize": {
-        PASSED: "",
-        EXPECTED: custom_config[DETECT][YOLO][CHUNK_SIZE],
-    },
     "imagesize": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][IMG_SIZE]},
     "half_precision": {
         PASSED: "",
         EXPECTED: custom_config[DETECT][HALF_PRECISION],
-    },
-    "force_reload": {
-        PASSED: "",
-        EXPECTED: custom_config[DETECT][FORCE_RELOAD_TORCH_HUB_CACHE],
     },
     "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
@@ -119,10 +101,8 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
 TEST_FAIL_DATA = [
     {PASSED: "--conf foo", "error_msg_part": "invalid float value: 'foo'"},
     {PASSED: "--iou foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--chunksize 2.2", "error_msg_part": "invalid int value: '2.2'"},
     {PASSED: "--imagesize 2.2", "error_msg_part": "invalid int value: '2.2'"},
     {PASSED: "--half foo", "error_msg_part": "unrecognized arguments"},
-    {PASSED: "--force foo", "error_msg_part": "unrecognized arguments"},
     {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
     {
         PASSED: "--no-weights",
@@ -137,17 +117,13 @@ TEST_FAIL_DATA = [
         "error_msg_part": "unrecognized arguments: --no-iou",
     },
     {
-        PASSED: "--no-chunksize",
-        "error_msg_part": "unrecognized arguments: --no-chunksize",
-    },
-    {
         PASSED: "--no-imagesize",
         "error_msg_part": "unrecognized arguments: --no-imagesize",
     },
 ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def detect_cli() -> Callable:
     """Imports and returns the main from the detect.py cli script in the root dir.
 
@@ -159,7 +135,7 @@ def detect_cli() -> Callable:
     return detect_cli
 
 
-@pytest.fixture()
+@pytest.fixture
 def detect() -> Callable:
     """Imports and returns the main from OTVision.detect.detect.py
 
@@ -169,6 +145,18 @@ def detect() -> Callable:
     from OTVision import detect
 
     return detect
+
+
+@pytest.fixture
+def loadmodel() -> Callable:
+    """Imports and returns the main from OTVision.detect.detect.py
+
+    Returns:
+        Callable: loadmodel from OTVision.detect.yolo.py
+    """
+    from OTVision.detect.yolo import loadmodel
+
+    return loadmodel
 
 
 class TestDetectCLI:
@@ -182,37 +170,48 @@ class TestDetectCLI:
         ],
     )
     def test_pass_detect_cli(
-        self, test_data: dict, detect_cli: Callable, detect: Callable
+        self,
+        test_data: dict,
+        detect_cli: Callable,
+        detect: Callable,
+        loadmodel: Callable,
     ) -> None:
         detect = mock.create_autospec(detect)
+        loadmodel = mock.create_autospec(loadmodel)
+        mock_model = Mock()
 
         with patch("OTVision.detect") as mock_detect:
-            command = [
-                *test_data["paths"][PASSED].split(),
-                *test_data["weights"][PASSED].split(),
-                *test_data["conf"][PASSED].split(),
-                *test_data["iou"][PASSED].split(),
-                *test_data["chunksize"][PASSED].split(),
-                *test_data["imagesize"][PASSED].split(),
-                *test_data["half_precision"][PASSED].split(),
-                *test_data["force_reload"][PASSED].split(),
-                *test_data["overwrite"][PASSED].split(),
-                *test_data["config"][PASSED].split(),
-            ]
+            with patch("detect.loadmodel") as mock_loadmodel:
+                mock_loadmodel.return_value = mock_model
+                command = [
+                    *test_data["paths"][PASSED].split(),
+                    *test_data["weights"][PASSED].split(),
+                    *test_data["conf"][PASSED].split(),
+                    *test_data["iou"][PASSED].split(),
+                    *test_data["imagesize"][PASSED].split(),
+                    *test_data["half_precision"][PASSED].split(),
+                    *test_data["overwrite"][PASSED].split(),
+                    *test_data["config"][PASSED].split(),
+                ]
 
-            detect_cli(argv=list(filter(None, command)))
+                detect_cli(argv=list(filter(None, command)))
 
-            mock_detect.assert_called_once_with(
-                paths=test_data["paths"][EXPECTED],
-                weights=test_data["weights"][EXPECTED],
-                conf=test_data["conf"][EXPECTED],
-                iou=test_data["iou"][EXPECTED],
-                size=test_data["imagesize"][EXPECTED],
-                chunksize=test_data["chunksize"][EXPECTED],
-                half_precision=test_data["half_precision"][EXPECTED],
-                force_reload_torch_hub_cache=test_data["force_reload"][EXPECTED],
-                overwrite=test_data["overwrite"][EXPECTED],
-            )
+                mock_loadmodel.assert_any_call(
+                    weights=test_data["weights"][EXPECTED],
+                    confidence=test_data["conf"][EXPECTED],
+                    iou=test_data["iou"][EXPECTED],
+                    img_size=test_data["imagesize"][EXPECTED],
+                    half_precision=test_data["half_precision"][EXPECTED],
+                    normalized=False,
+                )
+                assert mock_loadmodel.call_count == 1
+
+                mock_detect.assert_any_call(
+                    model=mock_model,
+                    paths=test_data["paths"][EXPECTED],
+                    overwrite=test_data["overwrite"][EXPECTED],
+                )
+                assert mock_detect.call_count == 1
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
