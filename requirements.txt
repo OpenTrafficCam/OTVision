@@ -9,9 +9,11 @@ progressbar==2.5
 psutil==5.9.4
 pyogrio==0.5.0
 PyYAML==5.4.1
-seaborn==0.12.1
+seaborn==0.12.2
 # Follow instructions at https://pytorch.org to install torch with CUDA
 torch==1.13.1 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.14.1 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.64.1
 ujson==5.7.0
+ultralytics==8.0.100
+yolov5==7.0.11
