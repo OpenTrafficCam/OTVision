@@ -6,7 +6,7 @@ numpy==1.24.3
 opencv-python==4.6.0.66
 pandas==2.0.0
 progressbar==2.5
-psutil==5.9.4
+psutil==5.9.5
 pyogrio==0.5.1
 PyYAML==6.0
 seaborn==0.12.2
