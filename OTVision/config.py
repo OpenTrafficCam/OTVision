@@ -82,7 +82,7 @@ LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
 LOG_DIR = "LOG_DIR"
 
 
-@dataclass
+@dataclass(frozen=True)
 class _LogConfig:
     log_level_console: str = "WARNING"
     log_level_file: str = "DEBUG"
@@ -104,7 +104,7 @@ class _LogConfig:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _DefaultFiletype:
     video: str = ".mp4"
     image: str = ".jpg"
@@ -178,7 +178,7 @@ class _Filetypes:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _LastPaths:
     videos: list = field(default_factory=list)
     detections: list = field(default_factory=list)
@@ -196,7 +196,7 @@ class _LastPaths:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _ConvertConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
@@ -244,7 +244,7 @@ class _YoloWeights:
         return [self.yolov8s, self.yolov8m, self.yolov8l, self.yolov8x]
 
 
-@dataclass
+@dataclass(frozen=True)
 class _YoloConfig:
     weights: str = _YoloWeights.yolov8s
     available_weights: _YoloWeights = _YoloWeights()
@@ -275,7 +275,7 @@ class _YoloConfig:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
@@ -310,7 +310,7 @@ class _DetectConfig:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _TrackIouConfig:
     sigma_l: float = 0.27
     sigma_h: float = 0.42
@@ -338,7 +338,7 @@ class _TrackIouConfig:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _TrackConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
@@ -370,7 +370,7 @@ class _TrackConfig:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _UndistortConfig:
     overwrite: bool = False
 
@@ -384,7 +384,7 @@ class _UndistortConfig:
         return {OVERWRITE: self.overwrite}
 
 
-@dataclass
+@dataclass(frozen=True)
 class _TransformConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
@@ -406,7 +406,7 @@ class _TransformConfig:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
 class _GuiWindowConfig:
     location_x: int = 0
     location_y: int = 0
@@ -422,7 +422,7 @@ class _GuiWindowConfig:
         return {LOCATION_X: self.location_x, LOCATION_Y: self.location_y}
 
 
-@dataclass
+@dataclass(frozen=True)
 class _GuiConfig:
     otc_icon: str = str(Path(__file__).parents[0] / r"view" / r"helpers" / r"OTC.ico")
     font: str = "Open Sans"
