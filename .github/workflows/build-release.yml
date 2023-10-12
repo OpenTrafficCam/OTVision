@@ -1,0 +1,24 @@
+---
+name: Build Release Version
+
+on:
+  # Create release if tag is pushed to main.
+  # Needs: secrets.PLATOMO_BUILDER_ACCESS
+  push:
+    tags:
+      - "v*.*.*.*"
+
+jobs:
+  test:
+    if: endsWith(github.event.base_ref, 'main')
+    uses: './.github/workflows/test.yml'
+  create_release:
+    needs: test
+    uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
+    secrets:
+      PLATOMO_BUILDER_ACCESS: ${{ secrets.PLATOMO_BUILDER_ACCESS }}
+    with:
+      package-version: ${{ github.ref_name }}
+      draft-release: false
+      pre-release: false
+      delete-existing: false
