@@ -21,3 +21,4 @@ jobs:
       draft-release: false
       pre-release: true
       delete-existing: true
+      ffmpeg-required: true
