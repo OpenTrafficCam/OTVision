@@ -38,7 +38,7 @@ from OTVision.track.preprocess import OCCURRENCE
 log = logging.getLogger(LOGGER_NAME)
 
 START_DATE = "start_date"
-FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
+FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).*"
 
 
 def main(
