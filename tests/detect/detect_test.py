@@ -387,6 +387,10 @@ class TestTimestamper:
                 "2022-02-03_04-05-06.mp4",
                 datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
             ),
+            (
+                "2022-02-03_04-05-06-suffix.mp4",
+                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
+            ),
         ],
     )
     def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
