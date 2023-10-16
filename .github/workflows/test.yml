@@ -20,3 +20,4 @@ jobs:
       os: ${{ matrix.os }}
       py-version: ${{ matrix.py }}
       test_path: OTVision
+      ffmpeg-required: true
