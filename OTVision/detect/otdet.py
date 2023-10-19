@@ -12,8 +12,10 @@ class OtdetBuilder:
         video: Path,
         video_width: int,
         video_height: int,
-        fps: float,
-        frames: int,
+        expected_duration: int,
+        recorded_fps: float,
+        actual_fps: float,
+        actual_frames: int,
         detection_img_size: int,
         normalized: bool,
         detection_model: str | Path,
@@ -26,8 +28,10 @@ class OtdetBuilder:
         self._video = video
         self._video_width = video_width
         self._video_height = video_height
-        self._fps = fps
-        self._frames = frames
+        self._expected_duration = expected_duration
+        self._recorded_fps = recorded_fps
+        self._actual_fps = actual_fps
+        self._actual_frames = actual_frames
         self._detection_img_size = detection_img_size
         self._normalized = normalized
         self._detection_model = detection_model
@@ -61,8 +65,10 @@ class OtdetBuilder:
             dataformat.FILETYPE: str(self._video.suffix),
             dataformat.WIDTH: self._video_width,
             dataformat.HEIGHT: self._video_height,
-            dataformat.RECORDED_FPS: self._fps,
-            dataformat.NUMBER_OF_FRAMES: self._frames,
+            dataformat.EXPECTED_DURATION: self._expected_duration,
+            dataformat.RECORDED_FPS: self._recorded_fps,
+            dataformat.ACTUAL_FPS: self._actual_fps,
+            dataformat.NUMBER_OF_FRAMES: self._actual_frames,
         }
 
     def _build_detection_config(self) -> dict:

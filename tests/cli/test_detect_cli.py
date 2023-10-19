@@ -8,6 +8,7 @@ import yaml
 
 from OTVision.config import (
     CONF,
+    DEFAULT_EXPECTED_DURATION,
     DETECT,
     HALF_PRECISION,
     IMG_SIZE,
@@ -17,6 +18,8 @@ from OTVision.config import (
     WEIGHTS,
     YOLO,
 )
+
+EXPECTED_DURATION = int(DEFAULT_EXPECTED_DURATION.total_seconds())
 
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
 with open(CUSTOM_CONFIG_FILE, "r") as file:
@@ -28,7 +31,6 @@ with open(CWD_CONFIG_FILE, "r") as file:
 
 PASSED: str = "passed"
 EXPECTED: str = "expected"
-
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
@@ -43,6 +45,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "iou": {PASSED: "--iou 0.55", EXPECTED: 0.55},
     "imagesize": {PASSED: "--imagesize 1240", EXPECTED: 1240},
     "half_precision": {PASSED: "--half", EXPECTED: True},
+    "expected_duration": {
+        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        EXPECTED: EXPECTED_DURATION,
+    },
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "config": {PASSED: ""},
 }
@@ -60,6 +66,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "iou": {PASSED: "--iou 0.65", EXPECTED: 0.65},
     "imagesize": {PASSED: "--imagesize 320", EXPECTED: 320},
     "half_precision": {PASSED: "--no-half", EXPECTED: False},
+    "expected_duration": {
+        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        EXPECTED: EXPECTED_DURATION,
+    },
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
     "config": {PASSED: ""},
 }
@@ -73,6 +83,10 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
     "half_precision": {
         PASSED: "",
         EXPECTED: cwd_config[DETECT][HALF_PRECISION],
+    },
+    "expected_duration": {
+        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
     "config": {PASSED: ""},
@@ -94,30 +108,50 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
         PASSED: "",
         EXPECTED: custom_config[DETECT][HALF_PRECISION],
     },
+    "expected_duration": {
+        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        EXPECTED: EXPECTED_DURATION,
+    },
     "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
+required_arguments = f"--expected_duration {EXPECTED_DURATION}"
 TEST_FAIL_DATA = [
-    {PASSED: "--conf foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--iou foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--imagesize 2.2", "error_msg_part": "invalid int value: '2.2'"},
-    {PASSED: "--half foo", "error_msg_part": "unrecognized arguments"},
-    {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
     {
-        PASSED: "--no-weights",
+        PASSED: f"{required_arguments} --conf foo",
+        "error_msg_part": "invalid float value: 'foo'",
+    },
+    {
+        PASSED: f"{required_arguments} --iou foo",
+        "error_msg_part": "invalid float value: 'foo'",
+    },
+    {
+        PASSED: f"{required_arguments} --imagesize 2.2",
+        "error_msg_part": "invalid int value: '2.2'",
+    },
+    {
+        PASSED: f"{required_arguments} --half foo",
+        "error_msg_part": "unrecognized arguments",
+    },
+    {
+        PASSED: f"{required_arguments} --overwrite foo",
+        "error_msg_part": "unrecognized arguments",
+    },
+    {
+        PASSED: f"{required_arguments} --no-weights",
         "error_msg_part": "unrecognized arguments: --no-weights",
     },
     {
-        PASSED: "--no-conf",
+        PASSED: f"{required_arguments} --no-conf",
         "error_msg_part": "unrecognized arguments: --no-conf",
     },
     {
-        PASSED: "--no-iou",
+        PASSED: f"{required_arguments} --no-iou",
         "error_msg_part": "unrecognized arguments: --no-iou",
     },
     {
-        PASSED: "--no-imagesize",
+        PASSED: f"{required_arguments} --no-imagesize",
         "error_msg_part": "unrecognized arguments: --no-imagesize",
     },
 ]
@@ -190,6 +224,7 @@ class TestDetectCLI:
                     *test_data["iou"][PASSED].split(),
                     *test_data["imagesize"][PASSED].split(),
                     *test_data["half_precision"][PASSED].split(),
+                    *test_data["expected_duration"][PASSED].split(),
                     *test_data["overwrite"][PASSED].split(),
                     *test_data["config"][PASSED].split(),
                 ]
@@ -239,7 +274,7 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(FileNotFoundError):
-                command = [*passed.split()]
+                command = required_arguments.split() + [*passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_detect_cli(
@@ -253,4 +288,4 @@ class TestDetectCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                detect_cli(argv=[])
+                detect_cli(argv=required_arguments.split())

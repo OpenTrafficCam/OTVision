@@ -21,6 +21,7 @@ OTVision script to call the detect main with arguments parsed from command line
 
 import argparse
 import logging
+from datetime import timedelta
 from pathlib import Path
 
 import OTVision
@@ -78,6 +79,12 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         help="Use half precision for detection.",
     )
     parser.add_argument(
+        "--expected_duration",
+        type=int,
+        help="Expected duration of the video in seconds.",
+        required=True,
+    )
+    parser.add_argument(
         "-o",
         "--overwrite",
         action=argparse.BooleanOptionalAction,
@@ -118,7 +125,7 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
-) -> tuple[list[Path], str, float, float, int, bool, bool]:
+) -> tuple[list[Path], str, float, float, int, timedelta, bool, bool]:
     try:
         paths = _extract_paths(args)
     except IOError:
@@ -148,6 +155,11 @@ def _process_parameters(
     else:
         imagesize = args.imagesize
 
+    if args.expected_duration is None:
+        expected_duration = config.CONFIG[config.DETECT][config.EXPECTED_DURATION]
+    else:
+        expected_duration = args.expected_duration
+
     if args.half is None:
         half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
     else:
@@ -163,6 +175,7 @@ def _process_parameters(
         conf,
         iou,
         imagesize,
+        expected_duration,
         half,
         overwrite,
     )
@@ -224,6 +237,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         conf,
         iou,
         imagesize,
+        expected_duration,
         half,
         overwrite,
     ) = _process_parameters(args, log)
@@ -244,6 +258,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         OTVision.detect(
             model=model,
             paths=paths,
+            expected_duration=expected_duration,
             overwrite=overwrite,
         )
     except FileNotFoundError:
