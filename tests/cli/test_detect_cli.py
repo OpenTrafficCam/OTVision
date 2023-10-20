@@ -19,7 +19,8 @@ from OTVision.config import (
     YOLO,
 )
 
-EXPECTED_DURATION = int(DEFAULT_EXPECTED_DURATION.total_seconds())
+EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
+INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())
 
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
 with open(CUSTOM_CONFIG_FILE, "r") as file:
@@ -46,7 +47,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "imagesize": {PASSED: "--imagesize 1240", EXPECTED: 1240},
     "half_precision": {PASSED: "--half", EXPECTED: True},
     "expected_duration": {
-        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
@@ -67,7 +68,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "imagesize": {PASSED: "--imagesize 320", EXPECTED: 320},
     "half_precision": {PASSED: "--no-half", EXPECTED: False},
     "expected_duration": {
-        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
@@ -85,7 +86,7 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
         EXPECTED: cwd_config[DETECT][HALF_PRECISION],
     },
     "expected_duration": {
-        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
@@ -109,14 +110,14 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
         EXPECTED: custom_config[DETECT][HALF_PRECISION],
     },
     "expected_duration": {
-        PASSED: f"--expected_duration {EXPECTED_DURATION}",
+        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
-required_arguments = f"--expected_duration {EXPECTED_DURATION}"
+required_arguments = f"--expected_duration {INPUT_EXPECTED_DURATION}"
 TEST_FAIL_DATA = [
     {
         PASSED: f"{required_arguments} --conf foo",
@@ -244,6 +245,7 @@ class TestDetectCLI:
                 mock_detect.assert_any_call(
                     model=mock_model,
                     paths=test_data["paths"][EXPECTED],
+                    expected_duration=test_data["expected_duration"][EXPECTED],
                     overwrite=test_data["overwrite"][EXPECTED],
                 )
                 assert mock_detect.call_count == 1

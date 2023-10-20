@@ -156,9 +156,11 @@ def _process_parameters(
         imagesize = args.imagesize
 
     if args.expected_duration is None:
-        expected_duration = config.CONFIG[config.DETECT][config.EXPECTED_DURATION]
+        expected_duration = timedelta(
+            seconds=config.CONFIG[config.DETECT][config.EXPECTED_DURATION]
+        )
     else:
-        expected_duration = args.expected_duration
+        expected_duration = timedelta(seconds=args.expected_duration)
 
     if args.half is None:
         half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
