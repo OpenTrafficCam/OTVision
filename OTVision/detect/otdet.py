@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from OTVision import dataformat, version
@@ -12,7 +13,7 @@ class OtdetBuilder:
         video: Path,
         video_width: int,
         video_height: int,
-        expected_duration: int,
+        expected_duration: timedelta,
         recorded_fps: float,
         actual_fps: float,
         actual_frames: int,
@@ -65,7 +66,7 @@ class OtdetBuilder:
             dataformat.FILETYPE: str(self._video.suffix),
             dataformat.WIDTH: self._video_width,
             dataformat.HEIGHT: self._video_height,
-            dataformat.EXPECTED_DURATION: self._expected_duration,
+            dataformat.EXPECTED_DURATION: int(self._expected_duration.total_seconds()),
             dataformat.RECORDED_FPS: self._recorded_fps,
             dataformat.ACTUAL_FPS: self._actual_fps,
             dataformat.NUMBER_OF_FRAMES: self._actual_frames,

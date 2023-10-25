@@ -94,7 +94,7 @@ def main(
             video=video_file,
             video_width=video_width,
             video_height=video_height,
-            expected_duration=int(expected_duration.total_seconds()),
+            expected_duration=expected_duration,
             recorded_fps=video_fps,
             actual_fps=actual_fps,
             actual_frames=actual_frames,
