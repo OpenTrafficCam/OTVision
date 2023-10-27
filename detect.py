@@ -31,6 +31,10 @@ from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
+class ParseError(Exception):
+    pass
+
+
 def parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect objects in videos or images")
     parser.add_argument(
@@ -82,7 +86,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         "--expected_duration",
         type=int,
         help="Expected duration of the video in seconds.",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "-o",
@@ -155,10 +159,23 @@ def _process_parameters(
     else:
         imagesize = args.imagesize
 
+    # TODO: Future Work: instead of checking each CLI option for existence and
+    # returning them, overwrite all passed CLI options in the config object.
+    # Get rid of the config.CONFIG dictionary entirely and pass the updated
+    # Config object to the detect function. Required options should then be
+    # declared in the Config class itself. Their absence must raise a ParseException.
     if args.expected_duration is None:
-        expected_duration = timedelta(
-            seconds=config.CONFIG[config.DETECT][config.EXPECTED_DURATION]
-        )
+        config_expected_duration: int | None = config.CONFIG[config.DETECT][
+            config.EXPECTED_DURATION
+        ]
+        if config_expected_duration is None:
+            raise ParseError(
+                "Required option 'expected duration' is missing! "
+                "It must be specified in the config yaml file under "
+                "key 'EXPECTED_DURATION' "
+                "or passed as CLI option 'expected_duration'."
+            )
+        expected_duration = timedelta(seconds=config_expected_duration)
     else:
         expected_duration = timedelta(seconds=args.expected_duration)
 

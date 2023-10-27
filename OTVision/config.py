@@ -285,7 +285,7 @@ class _DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
-    expected_duration: int = int(DEFAULT_EXPECTED_DURATION.total_seconds())
+    expected_duration: int | None = None
     overwrite: bool = True
     half_precision: bool = False
 
@@ -298,11 +298,14 @@ class _DetectConfig:
             else _DetectConfig.yolo_config
         )
 
+        # TODO: Future work: Raise error if expected_duration is not passed
+        # Change expected duration's type to be strictly int
+
         return _DetectConfig(
             d.get(PATHS, []),
             d.get(RUN_CHAINED, _DetectConfig.run_chained),
             yolo_config,
-            d.get(EXPECTED_DURATION, _DetectConfig.expected_duration),
+            d.get(EXPECTED_DURATION, None),
             d.get(OVERWRITE, _DetectConfig.overwrite),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
         )
@@ -664,7 +667,7 @@ CONFIG[DETECT][YOLO][CONF] = 0.25
 CONFIG[DETECT][YOLO][IOU] = 0.45
 CONFIG[DETECT][YOLO][IMG_SIZE] = 640
 CONFIG[DETECT][YOLO][NORMALIZED] = False
-CONFIG[DETECT][EXPECTED_DURATION] = int(DEFAULT_EXPECTED_DURATION.total_seconds())
+CONFIG[DETECT][EXPECTED_DURATION] = None
 CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
 
