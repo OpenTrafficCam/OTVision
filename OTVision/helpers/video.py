@@ -20,7 +20,7 @@ def get_video_dimensions(video: Path) -> tuple[int, int]:
     return video_dimensions
 
 
-def get_fps(video: str) -> float:
+def get_fps(video: Path) -> float:
     """Get video's fps.
 
     Args:
