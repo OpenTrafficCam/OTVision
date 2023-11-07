@@ -26,7 +26,7 @@ from pathlib import Path
 import OTVision
 import OTVision.config as config
 from OTVision.helpers.files import check_if_all_paths_exist
-from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
+from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 
 
 def parse() -> argparse.Namespace:
@@ -73,11 +73,19 @@ def parse() -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--log_dir",
+        "--logfile",
+        default=str(DEFAULT_LOG_FILE),
         type=str,
-        help="Path to directory to write the log files",
+        help="Specify log file directory.",
         required=False,
     )
+    parser.add_argument(
+        "--logfile_overwrite",
+        action="store_true",
+        help="Overwrite log file if it already exists.",
+        required=False,
+    )
+
     return parser.parse_args()
 
 
@@ -143,19 +151,12 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     else:
         log_level_file = args.log_level_file
 
-    if args.log_dir is None:
-        try:
-            log_dir = Path(config.CONFIG[config.LOG][config.LOG_DIR])
-        except TypeError:
-            print("No valid LOG_DIR specified in config, check your config file")
-            raise
-    else:
-        log_dir = Path(args.log_dir)
-
     log.add_console_handler(level=log_level_console)
-
-    log.add_file_handler(log_dir=log_dir, level=log_level_file)
-
+    log.add_file_handler(
+        Path(args.logfile).expanduser().resolve(),
+        log_level_file,
+        args.logfile_overwrite,
+    )
     return logging.getLogger(LOGGER_NAME)
 
 
