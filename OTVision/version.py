@@ -1,5 +1,5 @@
 def otdet_version() -> str:
-    return "1.2"
+    return "1.3"
 
 
 def ottrack_version() -> str:

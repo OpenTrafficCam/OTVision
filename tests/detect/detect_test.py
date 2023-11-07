@@ -10,6 +10,7 @@ import pytest
 from jsonschema import validate
 
 import OTVision.config as config
+from OTVision.config import DEFAULT_EXPECTED_DURATION
 from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
@@ -205,7 +206,11 @@ class TestDetect:
     def result_cyclist_otdet(
         self, yolov8m: Yolov8, cyclist_mp4: Path, detect_test_tmp_dir: Path
     ) -> Path:
-        detect(paths=[cyclist_mp4], model=yolov8m)
+        detect(
+            paths=[cyclist_mp4],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+        )
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
@@ -217,13 +222,17 @@ class TestDetect:
         with pytest.raises(
             FileNotFoundError, match=r"No videos of type .* found to detect!"
         ):
-            detect(paths=[empty_dir], model=yolov8m)
+            detect(
+                paths=[empty_dir],
+                model=yolov8m,
+                expected_duration=DEFAULT_EXPECTED_DURATION,
+            )
 
     def test_detect_emptyListAsParam(self, yolov8m: Yolov8) -> None:
         with pytest.raises(
             FileNotFoundError, match=r"No videos of type .* found to detect!"
         ):
-            detect(model=yolov8m, paths=[])
+            detect(model=yolov8m, paths=[], expected_duration=DEFAULT_EXPECTED_DURATION)
 
     def test_detect_create_otdet(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
@@ -261,14 +270,22 @@ class TestDetect:
         with pytest.raises(
             FileNotFoundError, match=r"No videos of type .* found to detect!"
         ):
-            detect(paths=[video_path], model=yolov8m)
+            detect(
+                paths=[video_path],
+                model=yolov8m,
+                expected_duration=DEFAULT_EXPECTED_DURATION,
+            )
 
     def test_detect_bboxes_normalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.confidence = 0.25
         yolov8m.normalized = True
-        detect(paths=[truck_mp4], model=yolov8m)
+        detect(
+            paths=[truck_mp4],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+        )
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -287,6 +304,7 @@ class TestDetect:
         detect(
             model=yolov8m,
             paths=[truck_mp4],
+            expected_duration=DEFAULT_EXPECTED_DURATION,
         )
         otdet_dict = read_bz2_otdet(otdet_file)
 
@@ -310,7 +328,11 @@ class TestDetect:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.confidence = conf
-        detect(paths=[truck_mp4], model=yolov8m)
+        detect(
+            paths=[truck_mp4],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+        )
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -327,10 +349,20 @@ class TestDetect:
     ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        detect(paths=[truck_mp4], model=yolov8m, overwrite=True)
+        detect(
+            paths=[truck_mp4],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+            overwrite=True,
+        )
 
         first_mtime = otdet_file.stat().st_mtime_ns
-        detect(paths=[truck_mp4], model=yolov8m, overwrite=overwrite)
+        detect(
+            paths=[truck_mp4],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+            overwrite=overwrite,
+        )
         second_mtime = otdet_file.stat().st_mtime_ns
 
         if overwrite:
@@ -344,7 +376,11 @@ class TestDetect:
     ) -> None:
         deviation = 0.2
         yolov8m.confidence = 0.5
-        detect(paths=[cyclist_mp4], model=yolov8m)
+        detect(
+            paths=[cyclist_mp4],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+        )
         result_otdet = cyclist_mp4.parent / cyclist_mp4.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
 
@@ -385,6 +421,10 @@ class TestTimestamper:
             ),
             (
                 "2022-02-03_04-05-06.mp4",
+                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
+            ),
+            (
+                "2022-02-03_04-05-06-suffix.mp4",
                 datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
             ),
         ],

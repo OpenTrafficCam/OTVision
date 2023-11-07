@@ -21,6 +21,7 @@ OTVision config module for setting default values
 
 import logging
 from dataclasses import dataclass, field
+from datetime import timedelta
 from pathlib import Path
 
 import yaml
@@ -60,6 +61,7 @@ OUTPUT_FILETYPE = "OUTPUT_FILETYPE"
 OVERWRITE = "OVERWRITE"
 PATHS = "PATHS"
 RUN_CHAINED = "RUN_CHAINED"
+EXPECTED_DURATION = "EXPECTED_DURATION"
 REFPTS = "REFPTS"
 SEARCH_SUBDIRS = "SEARCH_SUBDIRS"
 SIGMA_H = "SIGMA_H"
@@ -80,6 +82,9 @@ LOG = "LOG"
 LOG_LEVEL_CONSOLE = "LOG_LEVEL_CONSOLE"
 LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
 LOG_DIR = "LOG_DIR"
+
+"""Default length of a video is 15 minutes."""
+DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
 
 
 @dataclass
@@ -277,6 +282,7 @@ class _DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
+    expected_duration: int | None = None
     overwrite: bool = True
     half_precision: bool = False
 
@@ -289,10 +295,14 @@ class _DetectConfig:
             else _DetectConfig.yolo_config
         )
 
+        # TODO: Future work: Raise error if expected_duration is not passed
+        # Change expected duration's type to be strictly int
+
         return _DetectConfig(
             d.get(PATHS, []),
             d.get(RUN_CHAINED, _DetectConfig.run_chained),
             yolo_config,
+            d.get(EXPECTED_DURATION, None),
             d.get(OVERWRITE, _DetectConfig.overwrite),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
         )
@@ -302,6 +312,7 @@ class _DetectConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             YOLO: self.yolo_config.to_dict(),
+            EXPECTED_DURATION: self.expected_duration,
             OVERWRITE: self.overwrite,
             HALF_PRECISION: self.half_precision,
         }
@@ -652,6 +663,7 @@ CONFIG[DETECT][YOLO][CONF] = 0.25
 CONFIG[DETECT][YOLO][IOU] = 0.45
 CONFIG[DETECT][YOLO][IMG_SIZE] = 640
 CONFIG[DETECT][YOLO][NORMALIZED] = False
+CONFIG[DETECT][EXPECTED_DURATION] = None
 CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
 
@@ -690,6 +702,5 @@ CONFIG[GUI][WINDOW][LOCATION_Y] = 0
 CONFIG[GUI][FRAME_WIDTH] = 80
 CONFIG[GUI][COL_WIDTH] = 50
 PAD = {"padx": 10, "pady": 10}
-
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)

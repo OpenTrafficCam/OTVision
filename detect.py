@@ -21,6 +21,7 @@ OTVision script to call the detect main with arguments parsed from command line
 
 import argparse
 import logging
+from datetime import timedelta
 from pathlib import Path
 
 import OTVision
@@ -28,6 +29,10 @@ import OTVision.config as config
 from OTVision.detect.yolo import loadmodel
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
+
+
+class ParseError(Exception):
+    pass
 
 
 def parse(argv: list[str] | None) -> argparse.Namespace:
@@ -78,6 +83,12 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         help="Use half precision for detection.",
     )
     parser.add_argument(
+        "--expected_duration",
+        type=int,
+        help="Expected duration of the video in seconds.",
+        required=False,
+    )
+    parser.add_argument(
         "-o",
         "--overwrite",
         action=argparse.BooleanOptionalAction,
@@ -125,7 +136,7 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
-) -> tuple[list[Path], str, float, float, int, bool, bool]:
+) -> tuple[list[Path], str, float, float, int, timedelta, bool, bool]:
     try:
         paths = _extract_paths(args)
     except IOError:
@@ -155,6 +166,26 @@ def _process_parameters(
     else:
         imagesize = args.imagesize
 
+    # TODO: Future Work: instead of checking each CLI option for existence and
+    # returning them, overwrite all passed CLI options in the config object.
+    # Get rid of the config.CONFIG dictionary entirely and pass the updated
+    # Config object to the detect function. Required options should then be
+    # declared in the Config class itself. Their absence must raise a ParseException.
+    if args.expected_duration is None:
+        config_expected_duration: int | None = config.CONFIG[config.DETECT][
+            config.EXPECTED_DURATION
+        ]
+        if config_expected_duration is None:
+            raise ParseError(
+                "Required option 'expected duration' is missing! "
+                "It must be specified in the config yaml file under "
+                "key 'EXPECTED_DURATION' "
+                "or passed as CLI option 'expected_duration'."
+            )
+        expected_duration = timedelta(seconds=config_expected_duration)
+    else:
+        expected_duration = timedelta(seconds=args.expected_duration)
+
     if args.half is None:
         half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
     else:
@@ -170,6 +201,7 @@ def _process_parameters(
         conf,
         iou,
         imagesize,
+        expected_duration,
         half,
         overwrite,
     )
@@ -224,6 +256,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         conf,
         iou,
         imagesize,
+        expected_duration,
         half,
         overwrite,
     ) = _process_parameters(args, log)
@@ -244,6 +277,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         OTVision.detect(
             model=model,
             paths=paths,
+            expected_duration=expected_duration,
             overwrite=overwrite,
         )
     except FileNotFoundError:

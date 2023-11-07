@@ -204,15 +204,15 @@ def read_json(
         t_json_end = time.perf_counter()
         log.debug(f"Reading {json_file} took: {t_json_end - t_json_start:0.4f}s")
         return dict_from_json_file
-    except OSError:
-        log.exception(f"Could not open {json_file}")
-        raise
-    except ujson.JSONDecodeError:
-        log.exception(f'Unable to decode "{json_file}" as JSON.')
-        raise
-    except Exception:
-        log.exception("")
-        raise
+    except OSError as cause:
+        log.exception(f"Could not open {json_file}", exc_info=cause)
+        raise cause
+    except ujson.JSONDecodeError as cause:
+        log.exception(f'Unable to decode "{json_file}" as JSON.', exc_info=cause)
+        raise cause
+    except Exception as cause:
+        log.exception("", exc_info=cause)
+        raise cause
 
 
 # TODO: Type hint nested dict during refactoring

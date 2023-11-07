@@ -11,6 +11,7 @@ CONVERT:
   OVERWRITE: true
 
 DETECT:
+  EXPECTED_DURATION: 3
   PATHS:
     [
       "tests/data/detect/",
