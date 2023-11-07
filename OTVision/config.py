@@ -86,21 +86,18 @@ LOG_DIR = "LOG_DIR"
 class _LogConfig:
     log_level_console: str = "WARNING"
     log_level_file: str = "DEBUG"
-    log_dir: Path = Path.cwd()
 
     @staticmethod
     def from_dict(d: dict) -> "_LogConfig":
         return _LogConfig(
             d.get(LOG_LEVEL_CONSOLE, _LogConfig.log_level_console),
             d.get(LOG_LEVEL_FILE, _LogConfig.log_level_file),
-            d.get(LOG_DIR, _LogConfig.log_dir),
         )
 
     def to_dict(self) -> dict:
         return {
             LOG_LEVEL_CONSOLE: self.log_level_console,
             LOG_LEVEL_FILE: self.log_level_file,
-            LOG_DIR: self.log_dir,
         }
 
 
@@ -596,7 +593,6 @@ CONFIG: dict = {}
 CONFIG[LOG] = {}
 CONFIG[LOG][LOG_LEVEL_CONSOLE] = "WARNING"
 CONFIG[LOG][LOG_LEVEL_FILE] = "DEBUG"
-CONFIG[LOG][LOG_DIR] = Path.cwd()
 
 # FOLDERS
 CONFIG[SEARCH_SUBDIRS] = True
