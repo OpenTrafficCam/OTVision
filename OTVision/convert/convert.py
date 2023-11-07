@@ -62,11 +62,11 @@ def main(
         input_fps (float, optional): Frame rate of input h264.
             If fps_from_filename is set to True, input_fps will be ignored.
             Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
-        fps_from_filename (bool, optional): Whether or not to parse frame rate
+        fps_from_filename (bool, optional): Whether to parse frame rate
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
-        overwrite (bool, optional): Whether or not to overwrite existing video files.
+        overwrite (bool, optional): Whether to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
-        delete_input (bool, optional): Whether or not to delete the input h264.
+        delete_input (bool, optional): Whether to delete the input h264.
             Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
     """
 
