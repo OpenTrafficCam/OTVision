@@ -26,7 +26,9 @@ from pathlib import Path
 
 LOGGER_NAME = "OTVision Logger"
 
-DEFAULT_DIR = Path.cwd()
+DEFAULT_LOG_NAME = f"{datetime.now().strftime(r'%Y-%m-%d_%H-%M-%S')}"
+LOG_EXT = "log"
+DEFAULT_LOG_FILE = Path(f"logs/{DEFAULT_LOG_NAME}.{LOG_EXT}")
 
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
@@ -43,6 +45,10 @@ LOG_LEVEL_INTEGERS = {
 }
 
 
+class LogFileAlreadyExists(Exception):
+    pass
+
+
 class _OTVisionLogger:
     """Class for creating a logging.Logger.
     Should only be instantiated once in the same module as this class.
@@ -53,15 +59,10 @@ class _OTVisionLogger:
     def __init__(self, name: str = LOGGER_NAME) -> None:
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel("DEBUG")
-        self._set_filename()
         self._set_formatter()
 
     def _set_formatter(self) -> None:
         self.formatter = logging.Formatter(LOG_FORMAT)
-
-    def _set_filename(self) -> None:
-        datetime_str = datetime.now().strftime(r"%Y-%m-%d_%H-%M-%S")
-        self.filename = f"{datetime_str}.log"
 
     def _add_handler(self, handler: logging.Handler, level: str) -> None:
         handler.setFormatter(self.formatter)
@@ -69,27 +70,35 @@ class _OTVisionLogger:
         self.logger.addHandler(handler)
 
     def add_file_handler(
-        self, log_dir: Path = DEFAULT_DIR, level: str = "DEBUG"
+        self,
+        log_file: Path = DEFAULT_LOG_FILE,
+        level: str = "DEBUG",
+        overwrite: bool = False,
     ) -> None:
         """Add a file handler to the already existing global instance of
         _OTVisionLogger.
+
         Should only be used once in each of OTVisions command line or
         graphical user interfaces.
 
         Args:
-            log_dir (Path): Path to the directory to write the logs.
-                Defaults to None.
+            log_file (Path): file path to write the logs. Defaults to None.
             level (str): Logging level of the file handler.
                 One from "DEBUG", "INFO", "WARNING", "ERROR" or "CRITICAL".
+            overwrite (bool): if True, overwrite existing log file. Defaults to False.
 
         IMPORTANT:
-            log_dir and level are not intended to be optional, they have to be provided
+            log_file and level are not intended to be optional, they have to be provided
             in every case. The default values provided are a safety net.
         """
-        log_subdir = log_dir / "_otvision_logs"
-        if not log_subdir.is_dir():
-            log_subdir.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_subdir / self.filename)
+        if log_file.exists() and not overwrite:
+            raise LogFileAlreadyExists(
+                f"Log file '{log_file}' already exists. "
+                "Please specify option to overwrite the log file when using the CLI."
+            )
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        log_file.touch()
+        file_handler = logging.FileHandler(log_file, mode="w")
         self._add_handler(file_handler, level)
 
     def add_console_handler(self, level: str = "WARNING") -> None:
