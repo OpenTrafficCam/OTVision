@@ -26,6 +26,7 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -192,11 +193,12 @@ class TestDetectCLI:
                     *test_data["half_precision"][PASSED].split(),
                     *test_data["overwrite"][PASSED].split(),
                     *test_data["config"][PASSED].split(),
+                    LOGFILE_OVERWRITE_CMD,
                 ]
 
                 detect_cli(argv=list(filter(None, command)))
 
-                mock_loadmodel.assert_any_call(
+                mock_loadmodel.assert_called_once_with(
                     weights=test_data["weights"][EXPECTED],
                     confidence=test_data["conf"][EXPECTED],
                     iou=test_data["iou"][EXPECTED],
@@ -206,12 +208,13 @@ class TestDetectCLI:
                 )
                 assert mock_loadmodel.call_count == 1
 
-                mock_detect.assert_any_call(
-                    model=mock_model,
-                    paths=test_data["paths"][EXPECTED],
-                    overwrite=test_data["overwrite"][EXPECTED],
-                )
-                assert mock_detect.call_count == 1
+                assert mock_detect.call_args_list == [
+                    mock.call(
+                        model=mock_model,
+                        paths=test_data["paths"][EXPECTED],
+                        overwrite=test_data["overwrite"][EXPECTED],
+                    )
+                ]
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
@@ -225,7 +228,7 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(SystemExit) as e:
-                command = [*test_fail_data[PASSED].split()]
+                command = [*test_fail_data[PASSED].split(), LOGFILE_OVERWRITE_CMD]
                 detect_cli(argv=list(filter(None, command)))
             assert e.value.code == 2
             captured = capsys.readouterr()
@@ -239,7 +242,7 @@ class TestDetectCLI:
 
         with patch("OTVision.detect"):
             with pytest.raises(FileNotFoundError):
-                command = [*passed.split()]
+                command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
                 detect_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_detect_cli(
@@ -253,4 +256,4 @@ class TestDetectCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                detect_cli(argv=[])
+                detect_cli(argv=[LOGFILE_OVERWRITE_CMD])
