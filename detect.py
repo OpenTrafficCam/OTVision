@@ -185,7 +185,7 @@ def _extract_paths(args: argparse.Namespace) -> list[Path]:
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
-    paths = [Path(str_path) for str_path in str_paths]
+    paths = [Path(str_path).expanduser() for str_path in str_paths]
     check_if_all_paths_exist(paths)
 
     return paths
@@ -204,7 +204,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
 
     log.add_console_handler(level=log_level_console)
     log.add_file_handler(
-        Path(args.logfile).expanduser().resolve(),
+        Path(args.logfile).expanduser(),
         log_level_file,
         args.logfile_overwrite,
     )

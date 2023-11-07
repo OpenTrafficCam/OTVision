@@ -145,7 +145,7 @@ def replace_filetype(
 
 def check_if_all_paths_exist(paths: list[Path]) -> None:
     for path in paths:
-        if not path.exists():
+        if not path.expanduser().resolve().exists():
             raise FileNotFoundError(f"{path} is not an existing file or directory")
 
 
