@@ -110,7 +110,7 @@ def replace_filetype(
     Directories remain unchanged in the new list.
 
     Args:
-        paths (list[Path]): List of paths (can be files or directories).
+        files (list[Path]): List of paths (can be files or directories).
         new_filetype (str): New file type after replacement.
         old_filetype (str): File type to be replaced. If None, filetypes of all files
             will be replaced.
