@@ -64,7 +64,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     else:
         log_dir = Path(args.log_dir)
 
-    log.add_file_handler(log_dir=log_dir, level=log_level_file)
+    log.add_file_handler(log_file=log_dir, level=log_level_file)
 
     # Return and overwrite log variable pointing to same global object from log.py
 
