@@ -42,12 +42,7 @@ from OTVision.config import (
     TRACK,
 )
 from OTVision.dataformat import DATA, DETECTIONS, METADATA
-from OTVision.helpers.files import (
-    _check_and_update_metadata_inplace,
-    denormalize_bbox,
-    get_files,
-    write_json,
-)
+from OTVision.helpers.files import denormalize_bbox, get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Preprocess, Splitter
 
@@ -127,7 +122,6 @@ def main(
 
         metadata = preprocessed.metadata
         detections = frame_group.to_dict()
-        _check_and_update_metadata_inplace(otdict=detections)
         tracker_data: dict = {
             dataformat.NAME: "IOU",
             dataformat.SIGMA_L: sigma_l,
