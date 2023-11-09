@@ -150,7 +150,7 @@ class Yolov8(ObjectDetection):
             stream=True,
             verbose=False,
             batch=-1,
-            agnostic_nms=True
+            agnostic_nms=True,
         )
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:

@@ -23,6 +23,7 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -148,6 +149,7 @@ class TestConvertCLI:
                 *test_data["overwrite"][PASSED].split(),
                 *test_data["delete_input"][PASSED].split(),
                 *test_data["config"][PASSED].split(),
+                LOGFILE_OVERWRITE_CMD,
             ]
 
             convert_cli(argv=list(filter(None, command)))
@@ -186,7 +188,7 @@ class TestConvertCLI:
 
         with patch("OTVision.convert"):
             with pytest.raises(FileNotFoundError):
-                command = [*passed.split()]
+                command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
                 convert_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_convert_cli(
@@ -200,4 +202,4 @@ class TestConvertCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                convert_cli(argv=[])
+                convert_cli(argv=[LOGFILE_OVERWRITE_CMD])
