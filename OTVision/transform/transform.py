@@ -205,9 +205,8 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
 
     # Read dicts and turn tracks into DataFrame
     tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix)
-    get_metadata(tracks_dict)
+    metadata_dict = get_metadata(tracks_dict)
     tracks_df = _ottrk_detections_to_df(tracks_dict["data"]["detections"])
-    metadata_dict = tracks_dict["metadata"]
 
     return tracks_df, metadata_dict
 
