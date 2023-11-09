@@ -278,7 +278,7 @@ def get_metadata(otdict: dict) -> dict:
             metadata[dataformat.DETECTION] = otdict["det_config"]
         if "trk_config" in otdict:
             metadata[dataformat.TRACKING] = otdict["trk_config"]
-        log.info("metadata updated from historic format to new format")
+        log.info("new metadata created from historic information")
         return metadata
 
     except Exception:
