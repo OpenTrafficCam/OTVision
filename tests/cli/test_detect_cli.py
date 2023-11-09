@@ -30,6 +30,7 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -117,7 +118,9 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
 }
 
-required_arguments = f"--expected_duration {INPUT_EXPECTED_DURATION}"
+required_arguments = (
+    f"--expected_duration {INPUT_EXPECTED_DURATION} {LOGFILE_OVERWRITE_CMD}"
+)
 TEST_FAIL_DATA = [
     {
         PASSED: f"{required_arguments} --conf foo",
@@ -228,11 +231,12 @@ class TestDetectCLI:
                     *test_data["expected_duration"][PASSED].split(),
                     *test_data["overwrite"][PASSED].split(),
                     *test_data["config"][PASSED].split(),
+                    LOGFILE_OVERWRITE_CMD,
                 ]
 
                 detect_cli(argv=list(filter(None, command)))
 
-                mock_loadmodel.assert_any_call(
+                mock_loadmodel.assert_called_once_with(
                     weights=test_data["weights"][EXPECTED],
                     confidence=test_data["conf"][EXPECTED],
                     iou=test_data["iou"][EXPECTED],
@@ -242,13 +246,14 @@ class TestDetectCLI:
                 )
                 assert mock_loadmodel.call_count == 1
 
-                mock_detect.assert_any_call(
-                    model=mock_model,
-                    paths=test_data["paths"][EXPECTED],
-                    expected_duration=test_data["expected_duration"][EXPECTED],
-                    overwrite=test_data["overwrite"][EXPECTED],
-                )
-                assert mock_detect.call_count == 1
+                assert mock_detect.call_args_list == [
+                    mock.call(
+                        model=mock_model,
+                        paths=test_data["paths"][EXPECTED],
+                        expected_duration=(test_data["expected_duration"][EXPECTED]),
+                        overwrite=test_data["overwrite"][EXPECTED],
+                    )
+                ]
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
