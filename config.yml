@@ -9,14 +9,14 @@ base_files:
 configurations:
   - package_path: OTVision
     files:
-      - "install.cmd"
+      - source: "install.cmd"
     suffix: "win"
     output_file_name: otvision
     additional_requirements:
       - ""
   - package_path: OTVision
     files:
-      - "install.sh"
+      - source: "install.sh"
     suffix: "linux"
     output_file_name: otvision
     additional_requirements:
@@ -31,7 +31,7 @@ configurations:
       - ""
   - package_path: OTVision
     files:
-      - "install.cmd"
+      - source: "install.cmd"
     suffix: "win-cuda"
     output_file_name: otvision
     additional_requirements:
