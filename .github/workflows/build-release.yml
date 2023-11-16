@@ -12,6 +12,15 @@ jobs:
   test:
     if: endsWith(github.event.base_ref, 'main')
     uses: './.github/workflows/test.yml'
+  update_version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update Version
+        run: |
+          cp OTVision/version.py version.py.backup
+          echo "__version__ = \"$GITHUB_REF_NAME\"" > ./OTVision/version.py
+          cat version.py.backup |tail -n+2>> ./OTVision/version.py
   create_release:
     needs: test
     uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
