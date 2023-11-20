@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "0.0"
 
 
 def otdet_version() -> str:
