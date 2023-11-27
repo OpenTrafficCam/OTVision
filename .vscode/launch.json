@@ -18,6 +18,26 @@
             "justMyCode": false
         },
         {
+            "name": "Python: Convert",
+            "type": "python",
+            "request": "launch",
+            "preLaunchTask": "Build detect debug environment",
+            "postDebugTask": "Tear down debug environment",
+            "program": "${workspaceFolder}/convert.py",
+            "args": [
+                "--path",
+                ".tmp/debug/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.h264"
+            ],
+            "windows": {
+                "args": [
+                    "--path",
+                    ".tmp\\debug\\Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.h264"
+                ]
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "Python: Detect",
             "type": "python",
             "request": "launch",
@@ -28,14 +48,18 @@
                 "--path",
                 ".tmp/debug/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
                 "--weights",
-                "yolov8s"
+                "yolov8s",
+                "--expected_duration",
+                "3"
             ],
             "windows": {
                 "args": [
                     "--path",
                     ".tmp\\debug\\Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4",
                     "--weights",
-                    "yolov8s"
+                    "yolov8s",
+                    "--expected_duration",
+                    "3"
                 ]
             },
             "console": "integratedTerminal",
