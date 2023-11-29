@@ -182,7 +182,7 @@ class Splitter:
         frame_offset = 0
         for detection in detections:
             if detection[INPUT_FILE_PATH] != current_input_path:
-                if len(current_group_detections) > 0:
+                if current_input_path:
                     groups[current_input_path] = current_group_detections
                 current_group_detections = []
                 current_input_path = detection[INPUT_FILE_PATH]
