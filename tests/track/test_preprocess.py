@@ -14,6 +14,7 @@ from OTVision.dataformat import (
     METADATA,
     OCCURRENCE,
     RECORDED_START_DATE,
+    TRACK_ID,
     VIDEO,
     H,
     W,
@@ -27,6 +28,7 @@ from OTVision.track.preprocess import (
     FrameGroup,
     FrameGroupParser,
     Preprocess,
+    Splitter,
 )
 
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
@@ -457,3 +459,27 @@ class TestFrameGroup:
         path = f"{order_key}/detection.otdet"
         group = FrameGroup(frames, order_key=path)
         return group
+
+
+class TestSplitter:
+    def test_split(self) -> None:
+        input_builder = DataBuilder()
+        input_builder.append_classified_frame()
+        input_builder.append_non_classified_frame()
+        input_builder.append_classified_frame()
+        input = input_builder.build_as_detections()
+        frames = input.to_dict()
+        track_id = "1"
+        tracked_frames: dict[str, dict] = {}
+        tracked_frames["1"] = {
+            key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+        }
+        expected_result = {}
+        expected_result[str(DEFAULT_INPUT_FILE_PATH)] = [
+            value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+        ]
+
+        splitter = Splitter()
+        result = splitter.split(tracked_frames)
+
+        assert result == expected_result
