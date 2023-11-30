@@ -48,6 +48,8 @@ HALF_PRECISION: str = "half_precision"
 CLASSES: str = "classes"
 
 # Tracker config
+TRACKING_RUN_ID: str = "tracking_run_id"
+FRAME_GROUP: str = "frame_group"
 FIRST_TRACKED_VIDEO_START: str = "first_tracked_video_start"
 LAST_TRACKED_VIDEO_END: str = "last_tracked_video_end"
 TRACKER: str = "tracker"
