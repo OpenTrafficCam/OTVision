@@ -182,14 +182,15 @@ class Splitter:
         frame_offset = 0
         for detection in detections:
             if detection[INPUT_FILE_PATH] != current_input_path:
-                if current_input_path:
+                if len(current_group_detections) > 0:
                     groups[current_input_path] = current_group_detections
                 current_group_detections = []
                 current_input_path = detection[INPUT_FILE_PATH]
                 frame_offset = detection[FRAME] - 1
             detection[FRAME] = detection[FRAME] - frame_offset
             current_group_detections.append(detection)
-        groups[current_input_path] = current_group_detections
+        if current_input_path:
+            groups[current_input_path] = current_group_detections
         return groups
 
     def flatten(self, frames: dict[str, dict]) -> list[dict]:

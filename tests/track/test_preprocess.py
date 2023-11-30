@@ -483,3 +483,12 @@ class TestSplitter:
         result = splitter.split(tracked_frames)
 
         assert result == expected_result
+
+    def test_split_empty(self) -> None:
+        tracked_frames: dict[str, dict] = {}
+        expected_result: dict[str, list[dict]] = {}
+
+        splitter = Splitter()
+        result = splitter.split(tracked_frames)
+
+        assert result == expected_result
