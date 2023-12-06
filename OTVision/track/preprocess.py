@@ -189,7 +189,8 @@ class Splitter:
                 frame_offset = detection[FRAME] - 1
             detection[FRAME] = detection[FRAME] - frame_offset
             current_group_detections.append(detection)
-        groups[current_input_path] = current_group_detections
+        if current_input_path:
+            groups[current_input_path] = current_group_detections
         return groups
 
     def flatten(self, frames: dict[str, dict]) -> list[dict]:
