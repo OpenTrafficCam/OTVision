@@ -125,12 +125,13 @@ def test_pass_convert(
         array_ref_video = array_from_video(ref_video_file)
         array_test_video = array_from_video(test_video_file)
 
-        assert array_ref_video.shape == array_test_video.shape
+        assert array_test_video.shape == array_ref_video.shape
+        assert (array_test_video == array_ref_video).all()
 
         # Assert size of ef and test video files
 
-        assert ref_video_file.stat().st_size == pytest.approx(
-            test_video_file.stat().st_size, rel=0.01
+        assert test_video_file.stat().st_size == pytest.approx(
+            ref_video_file.stat().st_size, rel=0.01
         )
 
     # BUG: Video files converted from h264 are different on each platform
