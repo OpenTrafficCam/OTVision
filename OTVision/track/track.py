@@ -22,7 +22,9 @@ OTVision main module for tracking objects in successive frames of videos
 
 
 import logging
+import uuid
 from pathlib import Path
+from typing import Callable
 
 from tqdm import tqdm
 
@@ -50,6 +52,8 @@ from .iou import track_iou
 
 log = logging.getLogger(LOGGER_NAME)
 
+IdGenerator = Callable[[], str]
+
 
 def main(
     paths: list[Path],
@@ -59,6 +63,7 @@ def main(
     t_min: int = CONFIG[TRACK][IOU][T_MIN],
     t_miss_max: int = CONFIG[TRACK][IOU][T_MISS_MAX],
     overwrite: bool = CONFIG[TRACK][OVERWRITE],
+    tracking_run_id_generator: IdGenerator = lambda: str(uuid.uuid4()),
 ) -> None:
     """Read detections from otdet file, perform tracking using iou tracker and
         save tracks to ottrk file.
@@ -86,6 +91,8 @@ def main(
             Defaults to CONFIG["TRACK"]["IOU"]["T_MISS_MAX"].
         overwrite (bool, optional): Whether or not to overwrite existing tracks files.
             Defaults to CONFIG["TRACK"]["OVERWRITE"].
+        tracking_run_id_generator (IdGenerator): Generator used to create a unique id
+            for this tracking run
     """
 
     filetypes = CONFIG[FILETYPES][DETECT]
@@ -98,12 +105,15 @@ def main(
     if not detections_files:
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
 
+    tracking_run_id = tracking_run_id_generator()
     preprocessor = Preprocess()
     preprocessed = preprocessor.run(detections_files)
 
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
-    for frame_group in tqdm(
-        preprocessed.frame_groups, desc="Tracked frame groups", unit="framegroups"
+    for frame_group_id, frame_group in tqdm(
+        enumerate(preprocessed.frame_groups),
+        desc="Tracked frame groups",
+        unit="framegroups",
     ):
         existing_output_files = frame_group.get_existing_output_files(
             with_suffix=file_type
@@ -146,9 +156,15 @@ def main(
         log.debug(f"Successfully tracked {frame_group.order_key}")
 
         # Split into files of group
-        splitted: dict[str, list[dict]] = Splitter().split(tracks_px)
-        for file_path, serializable_detections in splitted.items():
-            output = build_output(file_path, serializable_detections, metadata)
+        tracks_per_file: dict[str, list[dict]] = Splitter().split(tracks_px)
+        for file_path, serializable_detections in tracks_per_file.items():
+            output = build_output(
+                file_path,
+                serializable_detections,
+                metadata,
+                tracking_run_id,
+                frame_group_id,
+            )
             write_json(
                 dict_to_write=output,
                 file=Path(file_path),
@@ -213,6 +229,14 @@ def track(
 
 
 def build_output(
-    file_path: str, detections: list[dict], metadata: dict[str, dict]
+    file_path: str,
+    detections: list[dict],
+    metadata: dict[str, dict],
+    tracking_run_id: str,
+    frame_group_id: int,
 ) -> dict:
+    metadata[file_path][dataformat.TRACKING][
+        dataformat.TRACKING_RUN_ID
+    ] = tracking_run_id
+    metadata[file_path][dataformat.TRACKING][dataformat.FRAME_GROUP] = frame_group_id
     return {METADATA: metadata[file_path], DATA: {DETECTIONS: detections}}
