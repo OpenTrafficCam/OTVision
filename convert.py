@@ -64,7 +64,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--r",
+        "-r",
         "--rotation",
         type=int,
         help="Add rotation information to video metadata.",
