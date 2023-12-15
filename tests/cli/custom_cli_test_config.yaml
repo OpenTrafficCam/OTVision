@@ -7,6 +7,7 @@ CONVERT:
     ]
   DELETE_INPUT: false
   FPS_FROM_FILENAME: false
+  ROTATION: 0
   INPUT_FPS: 15.0
   OVERWRITE: true
 
