@@ -40,6 +40,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "delete_input": {PASSED: "--no-delete_input", EXPECTED: False},
     "config": {PASSED: ""},
+    "rotation": {PASSED: "--rotation 2", EXPECTED: 2},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
@@ -55,6 +56,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
     "delete_input": {PASSED: "--delete_input", EXPECTED: True},
     "config": {PASSED: ""},
+    "rotation": {PASSED: "--rotation 3", EXPECTED: 3},
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
@@ -67,6 +69,7 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
     "overwrite": {PASSED: "", EXPECTED: cwd_config[CONVERT][OVERWRITE]},
     "delete_input": {PASSED: "", EXPECTED: cwd_config[CONVERT][DELETE_INPUT]},
     "config": {PASSED: ""},
+    "rotation": {PASSED: "", EXPECTED: 0},
 }
 
 TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
@@ -88,6 +91,7 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
         EXPECTED: custom_config[CONVERT][DELETE_INPUT],
     },
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
+    "rotation": {PASSED: "", EXPECTED: 0},
 }
 
 TEST_FAIL_DATA = [
@@ -149,6 +153,7 @@ class TestConvertCLI:
                 *test_data["overwrite"][PASSED].split(),
                 *test_data["delete_input"][PASSED].split(),
                 *test_data["config"][PASSED].split(),
+                *test_data["rotation"][PASSED].split(),
                 LOGFILE_OVERWRITE_CMD,
             ]
 
@@ -160,6 +165,7 @@ class TestConvertCLI:
                 fps_from_filename=test_data["fps_from_filename"][EXPECTED],
                 overwrite=test_data["overwrite"][EXPECTED],
                 delete_input=test_data["delete_input"][EXPECTED],
+                rotation=test_data["rotation"][EXPECTED],
             )
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
