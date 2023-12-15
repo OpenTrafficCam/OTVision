@@ -293,12 +293,3 @@ def _check_types(
         raise ValueError("overwrite has to be bool")
     if not isinstance(delete_input, bool):
         raise ValueError("delete_input has to be bool")
-
-
-# Useful ffmpeg commands:
-# "-vcodec"=Get video only
-# "copy"=only demuxing and muxing
-# "-bsf:v h264_mp4toannexb"
-# "-c:v libx264"= encoder for h264 input stream
-# "-bsf:v h264_mp4toannexb"=?
-# "-y"=Overwrite output file

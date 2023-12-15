@@ -190,7 +190,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
+def main(argv: list[str] | None = None) -> None:
     args = parse(argv)
 
     _process_config(args)
