@@ -208,6 +208,7 @@ class _ConvertConfig:
     output_fps: float = 20.0
     fps_from_filename: bool = True
     delete_input: bool = False
+    rotation: int = 0
     overwrite: bool = True
 
     @staticmethod
@@ -220,6 +221,7 @@ class _ConvertConfig:
             d.get(OUTPUT_FPS, _ConvertConfig.output_fps),
             d.get(FPS_FROM_FILENAME, _ConvertConfig.fps_from_filename),
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
+            d.get(ROTATION, _ConvertConfig.rotation),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
         )
 
@@ -232,6 +234,7 @@ class _ConvertConfig:
             OUTPUT_FPS: self.output_fps,
             FPS_FROM_FILENAME: self.fps_from_filename,
             DELETE_INPUT: self.delete_input,
+            ROTATION: self.rotation,
             OVERWRITE: self.overwrite,
         }
 
