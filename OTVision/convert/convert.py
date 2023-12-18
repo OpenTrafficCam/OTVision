@@ -204,7 +204,7 @@ def _get_ffmpeg_command(
     output_video_file: Path,
 ) -> list[str]:
     # ? Change -framerate to -r?
-    input_fps_cmds = ["-framerate", str(input_fps)]
+    input_fps_cmds = ["-r", str(input_fps)]
 
     if rotation == 0:
         rotation_cmds: list[str] = []
