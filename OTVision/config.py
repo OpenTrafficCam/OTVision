@@ -75,6 +75,7 @@ TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
 VID = "VID"
+VID_ROTATABLE = "VID_ROTATABLE"
 VIDEOS = "VIDEOS"
 WEIGHTS = "WEIGHTS"
 WINDOW = "WINDOW"
@@ -150,6 +151,9 @@ class _VideoFiletypes:
             self.mp4,
         ]
 
+    def rotatable_to_list(self) -> list:
+        return [self.mov, self.mp4]
+
 
 @dataclass(frozen=True)
 class _ImageFiletypes:
@@ -173,6 +177,7 @@ class _Filetypes:
     def to_dict(self) -> dict:
         return {
             VID: self.video_filetypes.to_list(),
+            VID_ROTATABLE: self.video_filetypes.rotatable_to_list(),
             IMG: self.image_filetypes.to_list(),
             DETECT: [self.detect],
             TRACK: [self.track],
@@ -623,6 +628,10 @@ CONFIG[FILETYPES] = {}
 CONFIG[FILETYPES][VID] = [
     ".avi",
     ".mkv",
+    ".mov",
+    ".mp4",
+]
+CONFIG[FILETYPES][VID_ROTATABLE] = [
     ".mov",
     ".mp4",
 ]

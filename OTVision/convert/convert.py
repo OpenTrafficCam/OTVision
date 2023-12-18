@@ -30,11 +30,13 @@ from OTVision.config import (
     CONFIG,
     CONVERT,
     DELETE_INPUT,
+    FILETYPES,
     FPS_FROM_FILENAME,
     INPUT_FPS,
     OUTPUT_FILETYPE,
     OVERWRITE,
     ROTATION,
+    VID_ROTATABLE,
 )
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
@@ -207,6 +209,11 @@ def _get_ffmpeg_command(
     if rotation == 0:
         rotation_cmds: list[str] = []
     else:
+        if output_video_file.suffix not in CONFIG[FILETYPES][VID_ROTATABLE]:
+            raise TypeError(
+                f"{output_video_file.suffix} files are not rotatable."
+                f"Use {CONFIG[FILETYPES][VID_ROTATABLE]} or rotation=0 instead."
+            )
         rotation_cmds = ["-display_rotation", str(rotation)]
 
     if output_fps is not None:
