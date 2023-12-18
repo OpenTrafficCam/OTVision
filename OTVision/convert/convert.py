@@ -69,7 +69,7 @@ def main(
         fps_from_filename (bool, optional): Whether to parse frame rate
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
         rotation (int, optional): Add rotation information to video metadata.
-            Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
+            Defaults to CONFIG["CONVERT"]["ROTATION"].
         overwrite (bool, optional): Whether to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether to delete the input h264.
