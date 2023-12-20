@@ -202,7 +202,24 @@ def _get_ffmpeg_command(
     rotation: int,
     output_fps: Optional[float],
     output_video_file: Path,
+    filter_cmds: Optional[list[str]] = None,
 ) -> list[str]:
+    """
+    Generate an ffmpeg command using the given options.
+
+    Args:
+        input_video_file (Path): Path to h264 video file (or other format).
+        input_fps (float, optional): Frame rate of input h264.
+            If fps_from_filename is set to True, input_fps will be ignored.
+        rotation (int, optional): Add rotation information to video metadata.
+        output_fps (Optional[float]): Frame rate of the output file.
+        output_video_file (Path): Path to the output video file.
+        filter_cmds (Optional[list[str]]): Filter to use with ffmpeg. Filters (maybe
+            necessary for special cases, insert if needed)
+
+    Returns:
+
+    """
     # ? Change -framerate to -r?
     input_fps_cmds = ["-r", str(input_fps)]
 
@@ -225,9 +242,7 @@ def _get_ffmpeg_command(
 
     input_file_cmds = ["-i", str(input_video_file)]
 
-    # Filters (mybe necessary for special cases, insert if needed)
-    # ffmpeg_cmd_filter = "-c:v libx264"
-    filter_cmds: list[str] = []
+    filter_cmds = filter_cmds if filter_cmds else []
 
     output_file_cmds = ["-y", str(output_video_file)]
 

@@ -2,6 +2,7 @@ import bz2
 import copy
 import json
 import shutil
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,6 +12,7 @@ from jsonschema import validate
 
 import OTVision.config as config
 from OTVision.config import DEFAULT_EXPECTED_DURATION
+from OTVision.convert.convert import _get_ffmpeg_command, convert
 from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
@@ -375,28 +377,90 @@ class TestDetect:
         self, yolov8m: Yolov8, cyclist_mp4: Path
     ) -> None:
         deviation = 0.2
+
+        class_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
+
+        assert class_counts[CAR] >= 120 * (1 - deviation)
+        assert class_counts[PERSON] >= 120 * (1 - deviation)
+        assert class_counts[BICYCLE] >= 60 * (1 - deviation)
+        assert class_counts[CAR] <= 120 * (1 + deviation)
+        assert class_counts[PERSON] <= 120 * (1 + deviation)
+        assert class_counts[BICYCLE] <= 60 * (1 + deviation)
+
+    def test_detection_in_rotated_video(
+        self,
+        yolov8m: Yolov8,
+        cyclist_mp4: Path,
+        test_data_dir: Path,
+        test_data_tmp_dir: Path,
+    ) -> None:
+        output_filetype = ".mp4"
+        input_file = (
+            test_data_dir / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.h264"
+        )
+        rotated_video = test_data_tmp_dir / f"rotate-{input_file.name}"
+        filter_cmds = ["-vf", "transpose=1, transpose=1"]
+        ffmpeg_cmd = _get_ffmpeg_command(
+            input_file,
+            20,
+            0,
+            20,
+            rotated_video,
+            filter_cmds=filter_cmds,
+        )
+
+        subprocess.run(
+            ffmpeg_cmd,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
+
+        convert(
+            input_video_file=rotated_video,
+            output_filetype=output_filetype,
+            rotation=180,
+            fps_from_filename=False,
+        )
+
+        converted_video = test_data_tmp_dir / f"{rotated_video.stem}{output_filetype}"
+
+        deviation = 0.2
+        rotated_counts = self._get_detection_counts_for(converted_video, yolov8m)
+
+        # TODO approach 1: we compare the detections against the hard coded values as in
+        #  test_detect_fulfill_minimum_detection_requirements
+        assert rotated_counts[CAR] >= 120 * (1 - deviation)
+        assert rotated_counts[PERSON] >= 120 * (1 - deviation)
+        assert rotated_counts[BICYCLE] >= 60 * (1 - deviation)
+        assert rotated_counts[CAR] <= 120 * (1 + deviation)
+        assert rotated_counts[PERSON] <= 120 * (1 + deviation)
+        assert rotated_counts[BICYCLE] <= 60 * (1 + deviation)
+
+        # TODO approach 2: we compare the detections against the detections of the same
+        #  video but without transformation and rotation via convert
+        normal_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
+        deviation = 0.05
+        for key in [CAR, PERSON, BICYCLE]:
+            assert rotated_counts[key] >= normal_counts[key] * (1 - deviation)
+            assert rotated_counts[key] <= normal_counts[key] * (1 + deviation)
+
+    def _get_detection_counts_for(
+        self, converted_video: Path, yolov8m: Yolov8
+    ) -> dict[str, float]:
         yolov8m.confidence = 0.5
         detect(
-            paths=[cyclist_mp4],
+            paths=[converted_video],
             model=yolov8m,
             expected_duration=DEFAULT_EXPECTED_DURATION,
         )
-        result_otdet = cyclist_mp4.parent / cyclist_mp4.with_suffix(".otdet")
+        result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
-
         frames = [
             Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
         ]
         class_counts = count_classes(frames)
-        assert class_counts[CAR] >= 120 * (1 - deviation)
-        # not able to detect any trucks at conf_thresh=0.5
-        # assert class_counts[TRUCK] >= 60 * (1 - deviation)
-        assert class_counts[PERSON] >= 120 * (1 - deviation)
-        assert class_counts[BICYCLE] >= 60 * (1 - deviation)
-        assert class_counts[CAR] <= 120 * (1 + deviation)
-        # assert class_counts[TRUCK] <= 60 * (1 + deviation)
-        assert class_counts[PERSON] <= 120 * (1 + deviation)
-        assert class_counts[BICYCLE] <= 60 * (1 + deviation)
+        return class_counts
 
 
 class TestTimestamper:
