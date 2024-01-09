@@ -162,28 +162,22 @@ def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
     shutil.rmtree(detect_tmp_dir)
 
 
-@pytest.fixture(scope="function")
-def cyclist_mp4(
-    detect_test_data_dir: Path, detect_test_tmp_dir: Path
-) -> YieldFixture[Path]:
+@pytest.fixture(scope="module")
+def cyclist_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
     fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
     src = detect_test_data_dir / fname
     dest = detect_test_tmp_dir / fname
     shutil.copy2(src, dest)
-    yield dest
-    dest.unlink()
+    return dest
 
 
-@pytest.fixture(scope="function")
-def truck_mp4(
-    detect_test_data_dir: Path, detect_test_tmp_dir: Path
-) -> YieldFixture[Path]:
+@pytest.fixture(scope="module")
+def truck_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
     fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
     src = detect_test_data_dir / fname
     dest = detect_test_tmp_dir / fname
     shutil.copy2(src, dest)
-    yield dest
-    dest.unlink()
+    return dest
 
 
 @pytest.fixture(scope="module")
@@ -208,7 +202,7 @@ class TestDetect:
     conf: float = 0.25
     filetypes: list[str] = config.CONFIG[config.FILETYPES][config.VID]
 
-    @pytest.fixture(scope="function")
+    @pytest.fixture(scope="class")
     def result_cyclist_otdet(
         self, yolov8m: Yolov8, cyclist_mp4: Path, detect_test_tmp_dir: Path
     ) -> Path:
