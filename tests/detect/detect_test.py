@@ -238,11 +238,7 @@ class TestDetect:
         assert result_cyclist_otdet.exists()
 
     def test_detect_otdet_valid_json(self, result_cyclist_otdet: Path) -> None:
-        try:
-            otdet_file = bz2.open(str(result_cyclist_otdet), "r")
-            json.load(otdet_file)
-        finally:
-            otdet_file.close()
+        read_bz2_otdet(result_cyclist_otdet)
 
     def test_detect_otdet_matches_schema(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
