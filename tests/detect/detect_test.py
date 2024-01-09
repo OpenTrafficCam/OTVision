@@ -279,7 +279,6 @@ class TestDetect:
             )
 
     def test_detect_bboxes_normalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
-        # TODO uses truck_mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.confidence = 0.25
@@ -301,7 +300,6 @@ class TestDetect:
         otdet_file.unlink()
 
     def test_detect_bboxes_denormalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
-        # TODO: uses truck mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.normalized = False
@@ -329,7 +327,6 @@ class TestDetect:
     def test_detect_conf_bbox_above_thresh(
         self, yolov8m: Yolov8, truck_mp4: Path, conf: float
     ) -> None:
-        # TODO: Uses truck mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.confidence = conf
@@ -352,7 +349,6 @@ class TestDetect:
     def test_detect_overwrite(
         self, yolov8m: Yolov8, truck_mp4: Path, overwrite: bool
     ) -> None:
-        # TODO: Uses truck mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         detect(
