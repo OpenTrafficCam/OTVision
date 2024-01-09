@@ -164,26 +164,26 @@ def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
 
 @pytest.fixture(scope="module")
 def cyclist_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
-    src = detect_test_data_dir / fname
-    dest = detect_test_tmp_dir / fname
+    file_name = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
+    src = detect_test_data_dir / file_name
+    dest = detect_test_tmp_dir / file_name
     shutil.copy2(src, dest)
     return dest
 
 
 @pytest.fixture(scope="module")
 def truck_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
-    src = detect_test_data_dir / fname
-    dest = detect_test_tmp_dir / fname
+    file_name = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
+    src = detect_test_data_dir / file_name
+    dest = detect_test_tmp_dir / file_name
     shutil.copy2(src, dest)
     return dest
 
 
 @pytest.fixture(scope="module")
 def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
-    return detect_test_data_dir / "default" / fname
+    file_name = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
+    return detect_test_data_dir / "default" / file_name
 
 
 @pytest.fixture(scope="session")
