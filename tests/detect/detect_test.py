@@ -339,7 +339,7 @@ class TestDetect:
                 assert bbox.conf >= conf
         otdet_file.unlink()
 
-    @pytest.mark.parametrize("overwrite", [(True), (False)])
+    @pytest.mark.parametrize("overwrite", [True, False])
     def test_detect_overwrite(
         self, yolov8m: Yolov8, truck_mp4: Path, overwrite: bool
     ) -> None:
