@@ -157,7 +157,7 @@ def detect_test_data_dir(test_data_dir: Path) -> Path:
 @pytest.fixture(scope="module")
 def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
     detect_tmp_dir = test_data_tmp_dir / "detect"
-    detect_tmp_dir.mkdir(exist_ok=True)
+    detect_tmp_dir.mkdir(exist_ok=False)
     yield detect_tmp_dir
     shutil.rmtree(detect_tmp_dir)
 
