@@ -163,21 +163,27 @@ def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
 
 
 @pytest.fixture(scope="module")
-def cyclist_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
+def cyclist_mp4(
+    detect_test_data_dir: Path, detect_test_tmp_dir: Path
+) -> YieldFixture[Path]:
     fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
     src = detect_test_data_dir / fname
     dest = detect_test_tmp_dir / fname
     shutil.copy2(src, dest)
-    return dest
+    yield dest
+    dest.unlink()
 
 
 @pytest.fixture(scope="module")
-def truck_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
+def truck_mp4(
+    detect_test_data_dir: Path, detect_test_tmp_dir: Path
+) -> YieldFixture[Path]:
     fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
     src = detect_test_data_dir / fname
     dest = detect_test_tmp_dir / fname
     shutil.copy2(src, dest)
-    return dest
+    yield dest
+    dest.unlink()
 
 
 @pytest.fixture(scope="module")
@@ -273,6 +279,7 @@ class TestDetect:
             )
 
     def test_detect_bboxes_normalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
+        # TODO uses truck_mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.confidence = 0.25
@@ -294,6 +301,7 @@ class TestDetect:
         otdet_file.unlink()
 
     def test_detect_bboxes_denormalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
+        # TODO: uses truck mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.normalized = False
@@ -321,6 +329,7 @@ class TestDetect:
     def test_detect_conf_bbox_above_thresh(
         self, yolov8m: Yolov8, truck_mp4: Path, conf: float
     ) -> None:
+        # TODO: Uses truck mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         yolov8m.confidence = conf
@@ -343,6 +352,7 @@ class TestDetect:
     def test_detect_overwrite(
         self, yolov8m: Yolov8, truck_mp4: Path, overwrite: bool
     ) -> None:
+        # TODO: Uses truck mp4
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
         detect(
