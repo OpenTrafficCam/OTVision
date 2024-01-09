@@ -162,7 +162,7 @@ def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
     shutil.rmtree(detect_tmp_dir)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def cyclist_mp4(
     detect_test_data_dir: Path, detect_test_tmp_dir: Path
 ) -> YieldFixture[Path]:
@@ -174,7 +174,7 @@ def cyclist_mp4(
     dest.unlink()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def truck_mp4(
     detect_test_data_dir: Path, detect_test_tmp_dir: Path
 ) -> YieldFixture[Path]:
@@ -208,7 +208,7 @@ class TestDetect:
     conf: float = 0.25
     filetypes: list[str] = config.CONFIG[config.FILETYPES][config.VID]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="function")
     def result_cyclist_otdet(
         self, yolov8m: Yolov8, cyclist_mp4: Path, detect_test_tmp_dir: Path
     ) -> Path:
