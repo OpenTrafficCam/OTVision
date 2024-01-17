@@ -85,7 +85,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--expected_duration",
         type=int,
-        help="Expected duration of the video in seconds.",
+        help="Expected duration of a single video in seconds.",
         required=False,
     )
     parser.add_argument(
