@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
-from OTVision.config import CONFIG
+from OTVision.config import CONFIG, FILETYPES, VID_ROTATABLE
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 
@@ -46,6 +46,19 @@ def test_convert_tmp_dir(
     shutil.rmtree(test_convert_tmp_dir)
 
 
+@pytest.fixture
+def convert_rotate_tmp_dir(
+    test_data_tmp_dir: Path, test_convert_dir: Path
+) -> YieldFixture[Path]:
+    test_convert_tmp_dir = test_data_tmp_dir / "convert" / "rotation"
+    test_convert_tmp_dir.mkdir(exist_ok=True, parents=True)
+    h264files = (test_convert_dir / "rotation").glob("*.h264")
+    for h264file in h264files:
+        shutil.copy2(h264file, test_convert_tmp_dir / h264file.name)
+    yield test_convert_tmp_dir
+    shutil.rmtree(test_convert_tmp_dir)
+
+
 def test_check_ffmpeg() -> None:
     """Tests if ffmpeg can be called as a subprocess"""
     check_ffmpeg()
@@ -77,7 +90,7 @@ def test_pass_convert(
     framerate specified as part of the file path using ffmpeg.exe
     """
 
-    # Buil test dir paths
+    # Build test dir paths
     test_case_dir = test_convert_dir / test_case
     test_case_tmp_dir = test_convert_tmp_dir / test_case
 
@@ -89,28 +102,6 @@ def test_pass_convert(
         fps_from_filename=fps_from_filename,
     )
 
-    # Local function to turn videos into np arrays for comparison
-    def array_from_video(file: Path) -> np.ndarray:
-        """Turn videos into np arrays for comparison
-
-        Args:
-            path (Path): Path to the video file
-
-        Returns:
-            np.ndarray: Video file as numpy array
-        """
-        frames = []
-        cap = cv2.VideoCapture(str(file))
-        ret = True
-        while ret:
-            (
-                ret,
-                img,
-            ) = cap.read()
-            if ret:
-                frames.append(img)
-        return np.stack(frames, axis=0)
-
     # Get reference video files
     ref_video_files = list(test_case_dir.glob(f"*{output_filetype}"))
 
@@ -119,20 +110,7 @@ def test_pass_convert(
 
     for ref_video_file in ref_video_files:
         test_video_file = test_case_tmp_dir / ref_video_file.name
-
-        # Assert shapes of ref and test video arrays
-
-        array_ref_video = array_from_video(ref_video_file)
-        array_test_video = array_from_video(test_video_file)
-
-        assert array_test_video.shape == array_ref_video.shape
-        assert (array_test_video == array_ref_video).all()
-
-        # Assert size of ef and test video files
-
-        assert test_video_file.stat().st_size == pytest.approx(
-            ref_video_file.stat().st_size, rel=0.01
-        )
+        assert_videos_are_equal(actual=test_video_file, expected=ref_video_file)
 
     # BUG: Video files converted from h264 are different on each platform
     # # Compare all test video files to their respective reference video files
@@ -147,6 +125,89 @@ def test_pass_convert(
     #     assert equal_file in video_file_names
     # assert not different_files
     # assert not irregular_files
+
+
+def assert_videos_are_equal(actual: Path, expected: Path) -> None:
+    # Assert shapes of ref and test video arrays
+
+    actual_array = array_from_video(actual)
+    expected_array = array_from_video(expected)
+
+    assert actual_array.shape == expected_array.shape
+    assert (actual_array == expected_array).all()
+
+    # Assert size of ef and test video files
+
+    assert actual.stat().st_size == pytest.approx(expected.stat().st_size, rel=0.001)
+
+    # Local function to turn videos into np arrays for comparison
+
+
+def array_from_video(file: Path) -> np.ndarray:
+    """Turn videos into np arrays for comparison
+
+    Args:
+        file (Path): Path to the video file
+
+    Returns:
+        np.ndarray: Video file as numpy array
+    """
+    frames = []
+    cap = cv2.VideoCapture(str(file))
+    ret = True
+    while ret:
+        (
+            ret,
+            img,
+        ) = cap.read()
+        if ret:
+            frames.append(img)
+    return np.stack(frames, axis=0)
+
+
+@pytest.mark.parametrize(
+    "video_folder, output_filetype, rotation",
+    [
+        ("rotation", ".avi", 90),
+        ("rotation", ".mkv", 90),
+        ("rotation", ".mov", 90),
+        ("rotation", ".mp4", 90),
+    ],
+)
+def test_convert_rotate(
+    test_convert_dir: Path,
+    convert_rotate_tmp_dir: Path,
+    video_folder: str,
+    output_filetype: str,
+    rotation: int,
+) -> None:
+    test_case_dir = test_convert_dir / video_folder
+    test_case_tmp_dir = convert_rotate_tmp_dir
+
+    if output_filetype in CONFIG[FILETYPES][VID_ROTATABLE]:
+        convert(
+            paths=[test_case_tmp_dir],
+            output_filetype=output_filetype,
+            rotation=rotation,
+        )
+
+        ref_video_files = list(test_case_dir.glob(f"*{output_filetype}"))
+
+        if not ref_video_files:
+            raise FileNotFoundError(
+                f"No reference video files found in {test_case_dir}"
+            )
+
+        for ref_video_file in ref_video_files:
+            test_video_file = test_case_tmp_dir / ref_video_file.name
+            assert_videos_are_equal(actual=test_video_file, expected=ref_video_file)
+    else:
+        with pytest.raises(TypeError):
+            convert(
+                paths=[test_case_tmp_dir],
+                output_filetype=output_filetype,
+                rotation=rotation,
+            )
 
 
 @pytest.mark.parametrize("delete_input", [(True), (False)])
@@ -167,7 +228,7 @@ def test_pass_convert_delete_input(
     convert(paths=[test_case_tmp_dir], delete_input=delete_input)
 
     # Get all h264 files to test for
-    post_test_h264_files = list((test_case_tmp_dir).glob(f"*{extension}"))
+    post_test_h264_files = list(test_case_tmp_dir.glob(f"*{extension}"))
 
     # Check if 264 still exists
     if delete_input:

@@ -38,6 +38,7 @@ CONF = "CONF"
 CONVERT = "CONVERT"
 DEFAULT_FILETYPE = "DEFAULT_FILETYPE"
 DELETE_INPUT = "DELETE_INPUT"
+ROTATION = "ROTATION"
 DETECT = "DETECT"
 DETECTIONS = "DETECTIONS"
 FILETYPES = "FILETYPES"
@@ -74,6 +75,7 @@ TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
 VID = "VID"
+VID_ROTATABLE = "VID_ROTATABLE"
 VIDEOS = "VIDEOS"
 WEIGHTS = "WEIGHTS"
 WINDOW = "WINDOW"
@@ -149,6 +151,9 @@ class _VideoFiletypes:
             self.mp4,
         ]
 
+    def rotatable_to_list(self) -> list:
+        return [self.mov, self.mp4]
+
 
 @dataclass(frozen=True)
 class _ImageFiletypes:
@@ -172,6 +177,7 @@ class _Filetypes:
     def to_dict(self) -> dict:
         return {
             VID: self.video_filetypes.to_list(),
+            VID_ROTATABLE: self.video_filetypes.rotatable_to_list(),
             IMG: self.image_filetypes.to_list(),
             DETECT: [self.detect],
             TRACK: [self.track],
@@ -207,6 +213,7 @@ class _ConvertConfig:
     output_fps: float = 20.0
     fps_from_filename: bool = True
     delete_input: bool = False
+    rotation: int = 0
     overwrite: bool = True
 
     @staticmethod
@@ -219,6 +226,7 @@ class _ConvertConfig:
             d.get(OUTPUT_FPS, _ConvertConfig.output_fps),
             d.get(FPS_FROM_FILENAME, _ConvertConfig.fps_from_filename),
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
+            d.get(ROTATION, _ConvertConfig.rotation),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
         )
 
@@ -231,6 +239,7 @@ class _ConvertConfig:
             OUTPUT_FPS: self.output_fps,
             FPS_FROM_FILENAME: self.fps_from_filename,
             DELETE_INPUT: self.delete_input,
+            ROTATION: self.rotation,
             OVERWRITE: self.overwrite,
         }
 
@@ -622,6 +631,10 @@ CONFIG[FILETYPES][VID] = [
     ".mov",
     ".mp4",
 ]
+CONFIG[FILETYPES][VID_ROTATABLE] = [
+    ".mov",
+    ".mp4",
+]
 CONFIG[FILETYPES][IMG] = [".jpg", ".jpeg", ".png"]
 CONFIG[FILETYPES][DETECT] = [".otdet"]
 CONFIG[FILETYPES][TRACK] = [".ottrk"]
@@ -645,6 +658,7 @@ CONFIG[CONVERT][INPUT_FPS] = 20.0
 CONFIG[CONVERT][OUTPUT_FPS] = 20.0
 CONFIG[CONVERT][FPS_FROM_FILENAME] = True
 CONFIG[CONVERT][DELETE_INPUT] = False
+CONFIG[CONVERT][ROTATION] = 0
 CONFIG[CONVERT][OVERWRITE] = True
 
 # DETECT

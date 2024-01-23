@@ -30,10 +30,13 @@ from OTVision.config import (
     CONFIG,
     CONVERT,
     DELETE_INPUT,
+    FILETYPES,
     FPS_FROM_FILENAME,
     INPUT_FPS,
     OUTPUT_FILETYPE,
     OVERWRITE,
+    ROTATION,
+    VID_ROTATABLE,
 )
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
@@ -49,6 +52,7 @@ def main(
     output_filetype: str = CONFIG[CONVERT][OUTPUT_FILETYPE],
     input_fps: float = CONFIG[CONVERT][INPUT_FPS],
     fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
+    rotation: int = CONFIG[CONVERT][ROTATION],
     overwrite: bool = CONFIG[CONVERT][OVERWRITE],
     delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
 ) -> None:
@@ -64,6 +68,8 @@ def main(
             Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
         fps_from_filename (bool, optional): Whether to parse frame rate
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
+        rotation (int, optional): Add rotation information to video metadata.
+            Defaults to CONFIG["CONVERT"]["ROTATION"].
         overwrite (bool, optional): Whether to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether to delete the input h264.
@@ -88,6 +94,7 @@ def main(
             output_filetype,
             input_fps,
             fps_from_filename,
+            rotation,
             overwrite,
             delete_input,
         )
@@ -103,6 +110,7 @@ def convert(
     output_filetype: str = CONFIG[CONVERT][OUTPUT_FILETYPE],
     input_fps: float = CONFIG[CONVERT][INPUT_FPS],
     fps_from_filename: bool = CONFIG[CONVERT][FPS_FROM_FILENAME],
+    rotation: int = CONFIG[CONVERT][ROTATION],
     overwrite: bool = CONFIG[CONVERT][OVERWRITE],
     delete_input: bool = CONFIG[CONVERT][DELETE_INPUT],
 ) -> None:
@@ -120,11 +128,13 @@ def convert(
         input_fps (float, optional): Frame rate of input h264.
             If fps_from_filename is set to True, input_fps will be ignored.
             Defaults to CONFIG["CONVERT"]["INPUT_FPS"].
-        fps_from_filename (bool, optional): Whether or not to parse frame rate
+        fps_from_filename (bool, optional): Whether to parse frame rate
             from file name. Defaults to CONFIG["CONVERT"]["FPS_FROM_FILENAME"].
-        overwrite (bool, optional): Whether or not to overwrite existing video files.
+        rotation (int, optional): Add rotation information to video metadata.
+            Defaults to CONFIG["CONVERT"]["ROTATION"].
+        overwrite (bool, optional): Whether to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
-        delete_input (bool, optional): Whether or not to delete the input h264.
+        delete_input (bool, optional): Whether to delete the input h264.
           Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
 
     Raises:
@@ -140,6 +150,7 @@ def convert(
         output_filetype=output_filetype,
         input_fps=input_fps,
         fps_from_filename=fps_from_filename,
+        rotation=rotation,
         overwrite=overwrite,
         delete_input=delete_input,
     )
@@ -164,7 +175,7 @@ def convert(
             input_fps = _get_fps_from_filename(input_filename)
 
         ffmpeg_cmd = _get_ffmpeg_command(
-            input_video_file, input_fps, output_fps, output_video_file
+            input_video_file, input_fps, rotation, output_fps, output_video_file
         )
 
         subprocess.run(
@@ -188,11 +199,39 @@ def convert(
 def _get_ffmpeg_command(
     input_video_file: Path,
     input_fps: float,
+    rotation: int,
     output_fps: Optional[float],
     output_video_file: Path,
+    filter_cmds: Optional[list[str]] = None,
 ) -> list[str]:
+    """
+    Generate an ffmpeg command using the given options.
+
+    Args:
+        input_video_file (Path): Path to h264 video file (or other format).
+        input_fps (float, optional): Frame rate of input h264.
+            If fps_from_filename is set to True, input_fps will be ignored.
+        rotation (int, optional): Add rotation information to video metadata.
+        output_fps (Optional[float]): Frame rate of the output file.
+        output_video_file (Path): Path to the output video file.
+        filter_cmds (Optional[list[str]]): Filter to use with ffmpeg. Filters (maybe
+            necessary for special cases, insert if needed)
+
+    Returns:
+
+    """
     # ? Change -framerate to -r?
-    input_fps_cmds = ["-framerate", str(input_fps)]
+    input_fps_cmds = ["-r", str(input_fps)]
+
+    if rotation == 0:
+        rotation_cmds: list[str] = []
+    else:
+        if output_video_file.suffix not in CONFIG[FILETYPES][VID_ROTATABLE]:
+            raise TypeError(
+                f"{output_video_file.suffix} files are not rotatable."
+                f"Use {CONFIG[FILETYPES][VID_ROTATABLE]} or rotation=0 instead."
+            )
+        rotation_cmds = ["-display_rotation", str(rotation)]
 
     if output_fps is not None:
         output_fps_cmds: list[str] = ["-r", str(output_fps)]
@@ -203,14 +242,13 @@ def _get_ffmpeg_command(
 
     input_file_cmds = ["-i", str(input_video_file)]
 
-    # Filters (mybe necessary for special cases, insert if needed)
-    # ffmpeg_cmd_filter = "-c:v libx264"
-    filter_cmds: list[str] = []
+    filter_cmds = filter_cmds if filter_cmds else []
 
     output_file_cmds = ["-y", str(output_video_file)]
 
     ffmpeg_cmd = (
         ["ffmpeg"]
+        + rotation_cmds
         + input_fps_cmds
         + input_file_cmds
         + filter_cmds
@@ -259,6 +297,7 @@ def _check_types(
     output_filetype: str,
     input_fps: float,
     fps_from_filename: bool,
+    rotation: int,
     overwrite: bool,
     delete_input: bool,
 ) -> None:
@@ -270,16 +309,9 @@ def _check_types(
         raise ValueError("input_fps has to be int or float")
     if not isinstance(fps_from_filename, bool):
         raise ValueError("fps_from_filename has to be bool")
+    if not isinstance(rotation, int):
+        raise ValueError("rotation has to be int")
     if not isinstance(overwrite, bool):
         raise ValueError("overwrite has to be bool")
     if not isinstance(delete_input, bool):
         raise ValueError("delete_input has to be bool")
-
-
-# Useful ffmpeg commands:
-# "-vcodec"=Get video only
-# "copy"=only demuxing and muxing
-# "-bsf:v h264_mp4toannexb"
-# "-c:v libx264"= encoder for h264 input stream
-# "-bsf:v h264_mp4toannexb"=?
-# "-y"=Overwrite output file

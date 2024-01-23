@@ -64,6 +64,13 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
+        "-r",
+        "--rotation",
+        type=int,
+        help="Add rotation information to video metadata.",
+        required=False,
+    )
+    parser.add_argument(
         "--fps_from_filename",
         action=argparse.BooleanOptionalAction,
         help="Whether or not to parse frame rate from file name.",
@@ -110,7 +117,7 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
-) -> tuple[list[Path], float, bool, bool, bool]:
+) -> tuple[list[Path], float, bool, int, bool, bool]:
     try:
         paths = _extract_paths(args)
     except IOError:
@@ -130,6 +137,11 @@ def _process_parameters(
     else:
         fps_from_filename = args.fps_from_filename
 
+    if args.rotation is None:
+        rotation = config.CONFIG[config.CONVERT][config.ROTATION]
+    else:
+        rotation = args.rotation
+
     if args.overwrite is None:
         overwrite = config.CONFIG[config.CONVERT][config.OVERWRITE]
     else:
@@ -139,7 +151,7 @@ def _process_parameters(
         delete_input = config.CONFIG[config.CONVERT][config.DELETE_INPUT]
     else:
         delete_input = args.delete_input
-    return paths, input_fps, fps_from_filename, overwrite, delete_input
+    return paths, input_fps, fps_from_filename, rotation, overwrite, delete_input
 
 
 def _extract_paths(args: argparse.Namespace) -> list[Path]:
@@ -178,16 +190,21 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     return logging.getLogger(LOGGER_NAME)
 
 
-def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
+def main(argv: list[str] | None = None) -> None:
     args = parse(argv)
 
     _process_config(args)
 
     log = _configure_logger(args)
 
-    paths, input_fps, fps_from_filename, overwrite, delete_input = _process_parameters(
-        args, log
-    )
+    (
+        paths,
+        input_fps,
+        fps_from_filename,
+        rotation,
+        overwrite,
+        delete_input,
+    ) = _process_parameters(args, log)
 
     log.info("Call convert from command line")
     log.info(f"Arguments: {vars(args)}")
@@ -197,6 +214,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
             paths=paths,
             input_fps=input_fps,
             fps_from_filename=fps_from_filename,
+            rotation=rotation,
             overwrite=overwrite,
             delete_input=delete_input,
         )
