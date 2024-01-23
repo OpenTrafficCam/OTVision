@@ -13,11 +13,9 @@ def get_video_dimensions(video: Path) -> tuple[int, int]:
     Returns:
         tuple[int, int]: width and height of video
     """
-    video_clip = VideoFileClip(str(video))
-    video_dimensions = video_clip.size
-    video_clip.close()
-
-    return video_dimensions
+    with VideoFileClip(str(video)) as clip:
+        video_dimensions = clip.size
+        return video_dimensions
 
 
 def get_fps(video: Path) -> float:
@@ -29,11 +27,9 @@ def get_fps(video: Path) -> float:
     Returns:
         float: the video's fps
     """
-    video_clip = VideoFileClip(str(video))
-    fps = video_clip.fps
-    video_clip.close()
-
-    return fps
+    with VideoFileClip(str(video)) as clip:
+        fps = clip.fps
+        return fps
 
 
 def get_duration(video_file: Path) -> timedelta:
@@ -43,8 +39,8 @@ def get_duration(video_file: Path) -> timedelta:
     Returns:
         timedelta: duration of the video
     """
-    clip = VideoFileClip(str(video_file.absolute()))
-    return timedelta(seconds=clip.duration)
+    with VideoFileClip(str(video_file.absolute())) as clip:
+        return timedelta(seconds=clip.duration)
 
 
 def get_number_of_frames(video_file: Path) -> int:
@@ -54,5 +50,5 @@ def get_number_of_frames(video_file: Path) -> int:
     Returns:
         timedelta: number of frames of the video
     """
-    clip = VideoFileClip(str(video_file.absolute()))
-    return clip.reader.nframes
+    with VideoFileClip(str(video_file.absolute())) as clip:
+        return clip.reader.nframes

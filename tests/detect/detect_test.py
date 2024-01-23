@@ -159,33 +159,33 @@ def detect_test_data_dir(test_data_dir: Path) -> Path:
 @pytest.fixture(scope="module")
 def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
     detect_tmp_dir = test_data_tmp_dir / "detect"
-    detect_tmp_dir.mkdir(exist_ok=True)
+    detect_tmp_dir.mkdir(exist_ok=False)
     yield detect_tmp_dir
     shutil.rmtree(detect_tmp_dir)
 
 
 @pytest.fixture(scope="module")
 def cyclist_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
-    src = detect_test_data_dir / fname
-    dest = detect_test_tmp_dir / fname
+    file_name = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
+    src = detect_test_data_dir / file_name
+    dest = detect_test_tmp_dir / file_name
     shutil.copy2(src, dest)
     return dest
 
 
 @pytest.fixture(scope="module")
 def truck_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
-    src = detect_test_data_dir / fname
-    dest = detect_test_tmp_dir / fname
+    file_name = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
+    src = detect_test_data_dir / file_name
+    dest = detect_test_tmp_dir / file_name
     shutil.copy2(src, dest)
     return dest
 
 
 @pytest.fixture(scope="module")
 def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
-    fname = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
-    return detect_test_data_dir / "default" / fname
+    file_name = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet"
+    return detect_test_data_dir / "default" / file_name
 
 
 @pytest.fixture(scope="session")
@@ -240,11 +240,7 @@ class TestDetect:
         assert result_cyclist_otdet.exists()
 
     def test_detect_otdet_valid_json(self, result_cyclist_otdet: Path) -> None:
-        try:
-            otdet_file = bz2.open(str(result_cyclist_otdet), "r")
-            json.load(otdet_file)
-        finally:
-            otdet_file.close()
+        read_bz2_otdet(result_cyclist_otdet)
 
     def test_detect_otdet_matches_schema(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
@@ -345,7 +341,7 @@ class TestDetect:
                 assert bbox.conf >= conf
         otdet_file.unlink()
 
-    @pytest.mark.parametrize("overwrite", [(True), (False)])
+    @pytest.mark.parametrize("overwrite", [True, False])
     def test_detect_overwrite(
         self, yolov8m: Yolov8, truck_mp4: Path, overwrite: bool
     ) -> None:
