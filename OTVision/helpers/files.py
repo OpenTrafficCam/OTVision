@@ -110,7 +110,7 @@ def replace_filetype(
     Directories remain unchanged in the new list.
 
     Args:
-        paths (list[Path]): List of paths (can be files or directories).
+        files (list[Path]): List of paths (can be files or directories).
         new_filetype (str): New file type after replacement.
         old_filetype (str): File type to be replaced. If None, filetypes of all files
             will be replaced.
@@ -145,7 +145,7 @@ def replace_filetype(
 
 def check_if_all_paths_exist(paths: list[Path]) -> None:
     for path in paths:
-        if not path.exists():
+        if not path.expanduser().resolve().exists():
             raise FileNotFoundError(f"{path} is not an existing file or directory")
 
 
@@ -204,15 +204,15 @@ def read_json(
         t_json_end = time.perf_counter()
         log.debug(f"Reading {json_file} took: {t_json_end - t_json_start:0.4f}s")
         return dict_from_json_file
-    except OSError:
-        log.exception(f"Could not open {json_file}")
-        raise
-    except ujson.JSONDecodeError:
-        log.exception(f'Unable to decode "{json_file}" as JSON.')
-        raise
-    except Exception:
-        log.exception("")
-        raise
+    except OSError as cause:
+        log.exception(f"Could not open {json_file}", exc_info=cause)
+        raise cause
+    except ujson.JSONDecodeError as cause:
+        log.exception(f'Unable to decode "{json_file}" as JSON.', exc_info=cause)
+        raise cause
+    except Exception as cause:
+        log.exception("", exc_info=cause)
+        raise cause
 
 
 # TODO: Type hint nested dict during refactoring
@@ -261,25 +261,26 @@ def write_json(
 
 
 # TODO: Type hint nested dict during refactoring
-def _check_and_update_metadata_inplace(otdict: dict) -> None:
+def get_metadata(otdict: dict) -> dict:
     """Check if dict of detections or tracks has subdict metadata.
-        If not, try to convert from historic format.
-        Atttention: Updates the input dict inplace.
+    If not, try to convert from historic format.
 
     Args:
         otdict (dict): dict of detections or tracks
     """
     if dataformat.METADATA in otdict:
-        return
+        return otdict[dataformat.METADATA]
     try:
-        otdict[dataformat.METADATA] = {}
+        metadata = {}
         if "vid_config" in otdict:
-            otdict[dataformat.METADATA][dataformat.VIDEO] = otdict["vid_config"]
+            metadata[dataformat.VIDEO] = otdict["vid_config"]
         if "det_config" in otdict:
-            otdict[dataformat.METADATA][dataformat.DETECTION] = otdict["det_config"]
+            metadata[dataformat.DETECTION] = otdict["det_config"]
         if "trk_config" in otdict:
-            otdict[dataformat.METADATA][dataformat.TRACKING] = otdict["trk_config"]
-        log.info("metadata updated from historic format to new format")
+            metadata[dataformat.TRACKING] = otdict["trk_config"]
+        log.info("new metadata created from historic information")
+        return metadata
+
     except Exception:
         log.exception("Metadata not found and not in historic config format")
         raise

@@ -8,14 +8,14 @@ name: super-linter
 on: pull_request
 
 jobs:
-  build:
-    name: lint
+  lint:
+    name: Lint many languages with super-linter
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Lint Code Base
-        uses: docker://github/super-linter:v4
+        uses: github/super-linter/slim@v5
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: master

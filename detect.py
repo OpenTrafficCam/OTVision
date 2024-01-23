@@ -21,13 +21,18 @@ OTVision script to call the detect main with arguments parsed from command line
 
 import argparse
 import logging
+from datetime import timedelta
 from pathlib import Path
 
 import OTVision
 import OTVision.config as config
 from OTVision.detect.yolo import loadmodel
 from OTVision.helpers.files import check_if_all_paths_exist
-from OTVision.helpers.log import LOGGER_NAME, VALID_LOG_LEVELS, log
+from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
+
+
+class ParseError(Exception):
+    pass
 
 
 def parse(argv: list[str] | None) -> argparse.Namespace:
@@ -78,6 +83,12 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         help="Use half precision for detection.",
     )
     parser.add_argument(
+        "--expected_duration",
+        type=int,
+        help="Expected duration of a single video in seconds.",
+        required=False,
+    )
+    parser.add_argument(
         "-o",
         "--overwrite",
         action=argparse.BooleanOptionalAction,
@@ -98,9 +109,16 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--log_dir",
+        "--logfile",
+        default=str(DEFAULT_LOG_FILE),
         type=str,
-        help="Path to directory to write the log files",
+        help="Specify log file directory.",
+        required=False,
+    )
+    parser.add_argument(
+        "--logfile_overwrite",
+        action="store_true",
+        help="Overwrite log file if it already exists.",
         required=False,
     )
     return parser.parse_args(argv)
@@ -118,7 +136,7 @@ def _process_config(args: argparse.Namespace) -> None:
 
 def _process_parameters(
     args: argparse.Namespace, log: logging.Logger
-) -> tuple[list[Path], str, float, float, int, bool, bool]:
+) -> tuple[list[Path], str, float, float, int, timedelta, bool, bool]:
     try:
         paths = _extract_paths(args)
     except IOError:
@@ -148,6 +166,26 @@ def _process_parameters(
     else:
         imagesize = args.imagesize
 
+    # TODO: Future Work: instead of checking each CLI option for existence and
+    # returning them, overwrite all passed CLI options in the config object.
+    # Get rid of the config.CONFIG dictionary entirely and pass the updated
+    # Config object to the detect function. Required options should then be
+    # declared in the Config class itself. Their absence must raise a ParseException.
+    if args.expected_duration is None:
+        config_expected_duration: int | None = config.CONFIG[config.DETECT][
+            config.EXPECTED_DURATION
+        ]
+        if config_expected_duration is None:
+            raise ParseError(
+                "Required option 'expected duration' is missing! "
+                "It must be specified in the config yaml file under "
+                "key 'EXPECTED_DURATION' "
+                "or passed as CLI option 'expected_duration'."
+            )
+        expected_duration = timedelta(seconds=config_expected_duration)
+    else:
+        expected_duration = timedelta(seconds=args.expected_duration)
+
     if args.half is None:
         half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
     else:
@@ -163,6 +201,7 @@ def _process_parameters(
         conf,
         iou,
         imagesize,
+        expected_duration,
         half,
         overwrite,
     )
@@ -178,7 +217,7 @@ def _extract_paths(args: argparse.Namespace) -> list[Path]:
             "No paths have been passed as command line args."
             "No paths have been defined in the user config."
         )
-    paths = [Path(str_path) for str_path in str_paths]
+    paths = [Path(str_path).expanduser() for str_path in str_paths]
     check_if_all_paths_exist(paths)
 
     return paths
@@ -195,19 +234,12 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     else:
         log_level_file = args.log_level_file
 
-    if args.log_dir is None:
-        try:
-            log_dir = Path(config.CONFIG[config.LOG][config.LOG_DIR])
-        except TypeError:
-            print("No valid LOG_DIR specified in config, check your config file")
-            raise
-    else:
-        log_dir = Path(args.log_dir)
-
     log.add_console_handler(level=log_level_console)
-
-    log.add_file_handler(log_dir=log_dir, level=log_level_file)
-
+    log.add_file_handler(
+        Path(args.logfile).expanduser(),
+        log_level_file,
+        args.logfile_overwrite,
+    )
     return logging.getLogger(LOGGER_NAME)
 
 
@@ -224,6 +256,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         conf,
         iou,
         imagesize,
+        expected_duration,
         half,
         overwrite,
     ) = _process_parameters(args, log)
@@ -244,6 +277,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
         OTVision.detect(
             model=model,
             paths=paths,
+            expected_duration=expected_duration,
             overwrite=overwrite,
         )
     except FileNotFoundError:

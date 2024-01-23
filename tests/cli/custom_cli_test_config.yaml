@@ -7,10 +7,12 @@ CONVERT:
     ]
   DELETE_INPUT: false
   FPS_FROM_FILENAME: false
+  ROTATION: 0
   INPUT_FPS: 15.0
   OVERWRITE: true
 
 DETECT:
+  EXPECTED_DURATION: 3
   PATHS:
     [
       "tests/data/detect/",

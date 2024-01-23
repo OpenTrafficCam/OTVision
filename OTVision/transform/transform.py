@@ -40,8 +40,8 @@ from OTVision.config import (
     TRANSFORM,
 )
 from OTVision.helpers.files import (
-    _check_and_update_metadata_inplace,
     get_files,
+    get_metadata,
     read_json,
     replace_filetype,
     write_json,
@@ -205,9 +205,8 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
 
     # Read dicts and turn tracks into DataFrame
     tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix)
-    _check_and_update_metadata_inplace(tracks_dict)
+    metadata_dict = get_metadata(tracks_dict)
     tracks_df = _ottrk_detections_to_df(tracks_dict["data"]["detections"])
-    metadata_dict = tracks_dict["metadata"]
 
     return tracks_df, metadata_dict
 
