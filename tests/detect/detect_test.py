@@ -428,17 +428,6 @@ class TestDetect:
         deviation = 0.2
         rotated_counts = self._get_detection_counts_for(converted_video, yolov8m)
 
-        # TODO approach 1: we compare the detections against the hard coded values as in
-        #  test_detect_fulfill_minimum_detection_requirements
-        assert rotated_counts[CAR] >= 120 * (1 - deviation)
-        assert rotated_counts[PERSON] >= 120 * (1 - deviation)
-        assert rotated_counts[BICYCLE] >= 60 * (1 - deviation)
-        assert rotated_counts[CAR] <= 120 * (1 + deviation)
-        assert rotated_counts[PERSON] <= 120 * (1 + deviation)
-        assert rotated_counts[BICYCLE] <= 60 * (1 + deviation)
-
-        # TODO approach 2: we compare the detections against the detections of the same
-        #  video but without transformation and rotation via convert
         normal_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
         deviation = 0.05
         for key in [CAR, PERSON, BICYCLE]:
