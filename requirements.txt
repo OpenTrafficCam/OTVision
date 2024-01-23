@@ -11,8 +11,8 @@ pyogrio==0.5.1
 PyYAML==6.0
 seaborn==0.12.2
 # Follow instructions at https://pytorch.org to install torch with CUDA
-torch==1.13.1 #  NOTE: Omit if using torch with CUDA and install manually
-torchvision==0.14.1 # NOTE: Omit if using torch with CUDA and install manually
+torch==2.1.2 #  NOTE: Omit if using torch with CUDA and install manually
+torchvision==0.16.2 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.65.0
 ujson==5.9.0
 ultralytics==8.0.100
