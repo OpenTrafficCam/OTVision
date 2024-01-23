@@ -26,6 +26,7 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
+LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -173,6 +174,7 @@ class TestTrackCLI:
                 *test_data["t_miss_max"]["passed"].split(),
                 *test_data["overwrite"]["passed"].split(),
                 *test_data["config"]["passed"].split(),
+                LOGFILE_OVERWRITE_CMD,
             ]
 
             track_cli(argv=list(filter(None, command)))
@@ -213,7 +215,7 @@ class TestTrackCLI:
 
         with patch("OTVision.track"):
             with pytest.raises(FileNotFoundError):
-                command = [*passed.split()]
+                command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
                 track_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_track_cli(
@@ -227,4 +229,4 @@ class TestTrackCLI:
                 + "No paths have been defined in the user config."
             )
             with pytest.raises(OSError, match=error_msg):
-                track_cli(argv=[])
+                track_cli(argv=[LOGFILE_OVERWRITE_CMD])

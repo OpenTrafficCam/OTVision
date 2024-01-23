@@ -190,7 +190,9 @@ def track_iou(
     #     track["max_class"] = pd.Series(track["class"]).mode().iat[0]
 
     # TODO: #82 Use dict comprehensions in track_iou
-    for frame_det in new_detections.values():
+    for frame_det in tqdm(
+        new_detections.values(), desc="New detection frames", unit="frames"
+    ):
         for vehID, det in frame_det.items():
             det[FINISHED] = vehID in vehIDs_finished
             det[TRACK_ID] = vehID

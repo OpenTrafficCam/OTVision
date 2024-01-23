@@ -14,6 +14,5 @@ seaborn==0.12.2
 torch==2.0.1 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.14.1 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.65.0
-ujson==5.7.0
+ujson==5.9.0
 ultralytics==8.0.100
-yolov5==7.0.11

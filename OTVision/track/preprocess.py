@@ -28,7 +28,7 @@ from OTVision.helpers.date import (
     parse_date_string_to_utc_datime,
     parse_timestamp_string_to_utc_datetime,
 )
-from OTVision.helpers.files import read_json
+from OTVision.helpers.files import get_metadata, read_json
 
 MISSING_START_DATE = datetime(1900, 1, 1)
 
@@ -189,7 +189,8 @@ class Splitter:
                 frame_offset = detection[FRAME] - 1
             detection[FRAME] = detection[FRAME] - frame_offset
             current_group_detections.append(detection)
-        groups[current_input_path] = current_group_detections
+        if current_input_path:
+            groups[current_input_path] = current_group_detections
         return groups
 
     def flatten(self, frames: dict[str, dict]) -> list[dict]:
@@ -308,9 +309,10 @@ class Preprocess:
         all_groups: list[FrameGroup] = []
         metadata: dict[str, dict] = {}
         for file_path, recording in input.items():
-            file_metadata = recording[METADATA]
+            file_metadata = get_metadata(otdict=recording)
             metadata[file_path.as_posix()] = file_metadata
             start_date: datetime = self.extract_start_date_from(recording)
+
             data: dict[int, dict[str, Any]] = recording[DATA]
             frame_group = FrameGroupParser(
                 file_path, recorded_start_date=start_date

@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from OTVision.helpers.log import LOG_LEVEL_INTEGERS, VALID_LOG_LEVELS, log
+from OTVision.helpers.log import (
+    LOG_LEVEL_INTEGERS,
+    VALID_LOG_LEVELS,
+    LogFileAlreadyExists,
+    log,
+)
 from tests.conftest import YieldFixture
 
 from .log_maker import LogMaker
@@ -74,17 +79,29 @@ class TestLog:
         test_data_tmp_dir: Path,
         test_data_dir: Path,
     ) -> None:
-        log_dir = test_data_tmp_dir / "log"
-        log.add_file_handler(level="DEBUG", log_dir=log_dir)
+        log_file = test_data_tmp_dir / "log/_otvision_logs/test.log"
+        log.add_file_handler(level="DEBUG", log_file=log_file)
 
         for level in VALID_LOG_LEVELS:
             self.log_maker.log_message_on_str_level(level=level)
 
-        ref_log_file = test_data_dir / "log" / "_otvision_logs" / "test.log"
+        ref_log_file = test_data_dir / "log/_otvision_logs/test.log"
 
-        test_log_files = list((log_dir / "_otvision_logs").glob("*log"))
-        if len(test_log_files) != 1:
-            raise WrongNumberOfFilesFoundError
-        test_log_file = test_log_files[0]
+        assert log_file.exists()
+        assert cmp(ref_log_file, log_file)
 
-        assert cmp(ref_log_file, test_log_file)
+    def test_write_to_existing_log_file_fails_without_required_flag(
+        self, test_data_tmp_dir: Path
+    ) -> None:
+        log_file = test_data_tmp_dir / "my_log_to_overwrite.log"
+        log_file.touch()
+        with pytest.raises(LogFileAlreadyExists):
+            log.add_file_handler(log_file, overwrite=False)
+
+    def test_overwrite_log_with_with_required_flag(
+        self, test_data_tmp_dir: Path
+    ) -> None:
+        log_file = test_data_tmp_dir / "my_log_to_overwrite.log"
+        log_file.touch()
+        assert log_file.exists()
+        log.add_file_handler(log_file, overwrite=True)

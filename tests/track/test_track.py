@@ -11,12 +11,13 @@ from OTVision.config import CONFIG
 from OTVision.track.track import main as track
 from tests.conftest import YieldFixture
 
+TEST_RUN_ID = "test-run-id"
+
 SIGMA_L = CONFIG["TRACK"]["IOU"]["SIGMA_L"]
 SIGMA_H = CONFIG["TRACK"]["IOU"]["SIGMA_H"]
 SIGMA_IOU = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
 T_MIN = CONFIG["TRACK"]["IOU"]["T_MIN"]
 T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
-
 
 version.otvision_version = Mock(return_value="ignored")
 version.ottrack_version = Mock(return_value="ignored")
@@ -84,6 +85,7 @@ def test_update_test_data(
         sigma_iou=sigma_iou,
         t_min=t_min,
         t_miss_max=t_miss_max,
+        tracking_run_id_generator=lambda: TEST_RUN_ID,
     )
     shutil.copytree(
         test_track_tmp_dir / test_case, test_track_dir / test_case, dirs_exist_ok=True
@@ -130,6 +132,7 @@ def test_track_pass(
         sigma_iou=sigma_iou,
         t_min=t_min,
         t_miss_max=t_miss_max,
+        tracking_run_id_generator=lambda: TEST_RUN_ID,
     )
 
     # Get reference tracks file names
