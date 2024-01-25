@@ -421,7 +421,6 @@ class TestDetect:
 
         converted_video = test_data_tmp_dir / f"{rotated_video.stem}{output_filetype}"
 
-        deviation = 0.2
         rotated_counts = self._get_detection_counts_for(converted_video, yolov8m)
 
         normal_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
