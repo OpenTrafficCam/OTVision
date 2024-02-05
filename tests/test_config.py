@@ -35,4 +35,5 @@ class TestConfig:
         # assert config.CONFIG == self.default_config
         config.parse_user_config(str(user_config))
         default_config["DETECT"]["YOLO"]["WEIGHTS"] = "my_weights"
+        assert default_config == self.default_config
         assert config.CONFIG == self.default_config
