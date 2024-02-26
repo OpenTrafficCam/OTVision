@@ -193,7 +193,9 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
 
 @pytest.fixture(scope="session")
 def yolov8m() -> Yolov8:
-    model_name = "yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
+    model_name = (
+        "tests/data/yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
+    )
     return loadmodel(
         weights=model_name,
         confidence=0.25,
@@ -272,7 +274,7 @@ class TestDetect:
         expected_cyclist_metadata: dict,
         actual_cyclist_metadata: dict,
     ) -> dict:
-        actual_model = actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS].split(".")[0]
+        actual_model = Path(actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS]).stem
         expected_model = expected_cyclist_metadata[DETECTION][MODEL][WEIGHTS]
         assert actual_model == expected_model
         actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS] = expected_model
