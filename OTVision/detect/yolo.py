@@ -27,7 +27,7 @@ from typing import Generator
 import torch
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
-from ultralytics.yolo.engine.results import Boxes, Results
+from ultralytics.engine.results import Boxes, Results
 
 from OTVision.config import (
     CONF,
