@@ -1,6 +1,7 @@
 import bz2
 import copy
 import json
+import platform
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -20,9 +21,11 @@ from OTVision.dataformat import (
     DETECTION,
     DETECTIONS,
     METADATA,
+    MODEL,
     OCCURRENCE,
     OTDET_VERSION,
     OTVISION_VERSION,
+    WEIGHTS,
     H,
     W,
     X,
@@ -190,8 +193,11 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
 
 @pytest.fixture(scope="session")
 def yolov8m() -> Yolov8:
+    model_name = (
+        "tests/data/yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
+    )
     return loadmodel(
-        weights="yolov8m",
+        weights=model_name,
         confidence=0.25,
         iou=0.45,
         img_size=640,
@@ -258,7 +264,21 @@ class TestDetect:
         expected_cyclist_metadata = remove_ignored_metadata(
             read_bz2_otdet(default_cyclist_otdet)[METADATA]
         )
+        result_cyclist_metadata = self.__verify_and_ignore_model_file_name(
+            expected_cyclist_metadata, result_cyclist_metadata
+        )
         assert result_cyclist_metadata == expected_cyclist_metadata
+
+    def __verify_and_ignore_model_file_name(
+        self,
+        expected_cyclist_metadata: dict,
+        actual_cyclist_metadata: dict,
+    ) -> dict:
+        actual_model = Path(actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS]).stem
+        expected_model = expected_cyclist_metadata[DETECTION][MODEL][WEIGHTS]
+        assert actual_model == expected_model
+        actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS] = expected_model
+        return actual_cyclist_metadata
 
     def test_detect_error_raised_on_wrong_filetype(
         self, yolov8m: Yolov8, detect_test_tmp_dir: Path

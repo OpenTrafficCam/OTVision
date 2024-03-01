@@ -1,5 +1,6 @@
 -r requirements.txt
 black==23.10.0
+coremltools==7.1; sys_platform == 'darwin'
 flake8==7.0.0
 interrogate==1.5.0
 isort==5.12.0
