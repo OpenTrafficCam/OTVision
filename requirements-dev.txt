@@ -4,7 +4,7 @@ coremltools==7.1; sys_platform == 'darwin'
 flake8==7.0.0
 interrogate==1.5.0
 isort==5.12.0
-jsonschema==4.20.0
+jsonschema==4.21.1
 mypy==1.6.1
 pre-commit==3.6.0
 pytest==8.0.0
