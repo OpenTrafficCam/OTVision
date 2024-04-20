@@ -1,9 +1,11 @@
 """
 OTVision module to track road users in frames detected by OTVision
 """
+
 # based on IOU Tracker written by Erik Bochinski originally licensed under the
 # MIT License, see
 # https://github.com/bochinski/iou-tracker/blob/master/LICENSE.
+
 
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
@@ -21,6 +23,9 @@ OTVision module to track road users in frames detected by OTVision
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from collections import defaultdict
+from typing import Iterator
+
 from tqdm import tqdm
 
 from OTVision.config import CONFIG
@@ -31,7 +36,6 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DETECTIONS,
-    FINISHED,
     FIRST,
     FRAMES,
     MAX_CLASS,
@@ -76,6 +80,13 @@ def center(obj: dict) -> tuple[float, float]:
     return obj[X], obj[Y]
 
 
+def id_generator() -> Iterator[int]:
+    ID: int = 0
+    while True:
+        yield ID
+        ID += 1
+
+
 def track_iou(
     detections: list,  # TODO: Type hint nested list during refactoring
     sigma_l: float = CONFIG["TRACK"]["IOU"]["SIGMA_L"],
@@ -83,7 +94,9 @@ def track_iou(
     sigma_iou: float = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"],
     t_min: int = CONFIG["TRACK"]["IOU"]["T_MIN"],
     t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
-) -> dict:  # sourcery skip: low-code-quality
+    previous_active_tracks: list = [],
+    vehicle_id_generator: Iterator[int] = id_generator(),
+) -> tuple[dict, list, dict[int, int]]:  # sourcery skip: low-code-quality
     """
     Simple IOU based tracker.
     See "High-Speed Tracking-by-Detection Without Using Image Information
@@ -97,16 +110,18 @@ def track_iou(
         sigma_h (float): high detection threshold.
         sigma_iou (float): IOU threshold.
         t_min (float): minimum track length in frames.
+        #TODO
 
     Returns:
-        list: list of tracks.
+        tuple[dict, list]: new detections and list of active tracks.
     """
 
     _check_types(sigma_l, sigma_h, sigma_iou, t_min, t_miss_max)
 
     tracks_active: list = []
+    tracks_active.extend(previous_active_tracks)
     # tracks_finished = []
-    vehID: int = 0
+
     vehIDs_finished: list = []
     new_detections: dict = {}
 
@@ -156,7 +171,7 @@ def track_iou(
         # create new tracks
         new_tracks = []
         for det in dets:
-            vehID += 1
+            vehID = next(vehicle_id_generator)
             new_tracks.append(
                 {
                     FRAMES: [int(frame_num)],
@@ -190,15 +205,20 @@ def track_iou(
     #     track["max_class"] = pd.Series(track["class"]).mode().iat[0]
 
     # TODO: #82 Use dict comprehensions in track_iou
-    for frame_det in tqdm(
-        new_detections.values(), desc="New detection frames", unit="frames"
+    # save last occurrence frame of tracks
+    last_track_frame: dict[int, int] = defaultdict(lambda: -1)
+
+    for frame_num, frame_det in tqdm(
+        new_detections.items(), desc="New detection frames", unit="frames"
     ):
         for vehID, det in frame_det.items():
-            det[FINISHED] = vehID in vehIDs_finished
+            # det[FINISHED] = vehID in vehIDs_finished
             det[TRACK_ID] = vehID
+            last_track_frame[vehID] = max(frame_num, last_track_frame[vehID])
+
     # return tracks_finished
-    # TODO: #83 Remove unnessecary code (e.g. for tracks_finished) from track_iou
-    return new_detections
+    # TODO: #83 Remove unnecessary code (e.g. for tracks_finished) from track_iou
+    return new_detections, tracks_active, last_track_frame
 
 
 def _check_types(
