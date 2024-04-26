@@ -176,8 +176,10 @@ class Splitter:
                 detection[TRACK_ID],
             )
         )
+        if len(detections) == 0:
+            return {}
         current_group_detections: list[dict] = []
-        current_input_path = ""
+        current_input_path = detections[0][INPUT_FILE_PATH]
         groups: dict[str, list[dict]] = {}
         frame_offset = 0
         for detection in detections:

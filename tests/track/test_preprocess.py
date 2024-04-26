@@ -467,17 +467,36 @@ class TestSplitter:
         input_builder.append_classified_frame()
         input_builder.append_non_classified_frame()
         input_builder.append_classified_frame()
-        input = input_builder.build_as_detections()
-        frames = input.to_dict()
+
+        expected_result, tracked_frames = self.create_test_data(input_builder)
+
+        splitter = Splitter()
+        result = splitter.split(tracked_frames)
+
+        assert result == expected_result
+
+    @staticmethod
+    def create_test_data(input_builder: DataBuilder) -> tuple[dict, dict]:
+        frames = input_builder.build_as_detections().to_dict()
         track_id = "1"
-        tracked_frames: dict[str, dict] = {}
-        tracked_frames["1"] = {
-            key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+        tracked_frames: dict[str, dict] = {
+            "1": {
+                key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+            }
         }
-        expected_result = {}
-        expected_result[str(DEFAULT_INPUT_FILE_PATH)] = [
-            value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
-        ]
+        expected_result = {
+            str(DEFAULT_INPUT_FILE_PATH): [
+                value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+            ]
+        }
+        return expected_result, tracked_frames
+
+    def test_split_with_empty_frames_at_the_beginning(self) -> None:
+        input_builder = DataBuilder()
+        input_builder.next_key()
+        input_builder.append_classified_frame()
+
+        expected_result, tracked_frames = self.create_test_data(input_builder)
 
         splitter = Splitter()
         result = splitter.split(tracked_frames)
