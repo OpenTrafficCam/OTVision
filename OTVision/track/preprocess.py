@@ -341,17 +341,17 @@ class Preprocess:
 
     @staticmethod
     def get_hostname(file_metadata: dict) -> str:
-        """Parse the given filename and retrieve the start date of the video.
+        """Retrieve hostname from the given file metadata.
 
         Args:
-            video_file (Path): path to video file
+            file_metadata (dict): metadata content.
 
         Raises:
             InproperFormattedFilename: if the filename is not formatted as expected, an
-            exception will be raised
+                exception will be raised.
 
         Returns:
-            datetime: start date of the video
+            str: the hostname
         """
         videoname = Path(file_metadata[VIDEO][FILENAME]).name
         match = re.search(
