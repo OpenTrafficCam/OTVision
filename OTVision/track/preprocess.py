@@ -199,6 +199,9 @@ class Splitter:
                     groups[current_input_path] = current_group_detections
                 current_group_detections = []
                 current_input_path = detection[INPUT_FILE_PATH]
+                # Take into account that consecutive tracks over more than one
+                # video must have their frame reset to one when splitting.
+                # This is done by taking the frame_offset into account.
                 frame_offset = detection[FRAME] - 1
             detection[FRAME] = detection[FRAME] - frame_offset
             current_group_detections.append(detection)
