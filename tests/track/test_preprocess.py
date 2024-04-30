@@ -31,6 +31,7 @@ from OTVision.track.preprocess import (
     Splitter,
 )
 
+DEFAULT_HOSTNAME = "hostname"
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
 DEFAULT_INPUT_FILE_PATH = Path("input-file.otdet")
 DEFAULT_LABEL = "car"
@@ -209,7 +210,9 @@ class DataBuilder:
         return self.data.copy()
 
     def build_as_detections(self) -> FrameGroup:
-        parser = FrameGroupParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
+        parser = FrameGroupParser(
+            DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE, DEFAULT_HOSTNAME
+        )
         return parser.convert(self.data.copy())
 
     def build_ot_det(self) -> dict:
@@ -270,8 +273,10 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = Path(f"{order_key}/file-name.otdet")
-        parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
+        path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-00.otdet")
+        parser = FrameGroupParser(
+            path, recorded_start_date=DEFAULT_START_DATE, hostname=DEFAULT_HOSTNAME
+        )
         result: FrameGroup = parser.convert(input)
 
         expected_result = FrameGroup(
@@ -281,14 +286,19 @@ class TestFrameParser:
                 create_frame(3, [create_default_detection()], input_file_path=path),
             ],
             order_key=order_key,
+            hostname=DEFAULT_HOSTNAME,
         )
 
         assert result == expected_result
 
     def test_order_key(self) -> None:
         order_key = "/some/path/to"
-        path = Path(f"{order_key}/file-name.otdet")
-        parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
+        path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-00.otdet")
+        parser = FrameGroupParser(
+            path,
+            recorded_start_date=DEFAULT_START_DATE,
+            hostname=DEFAULT_HOSTNAME,
+        )
 
         calculated_key = parser.order_key()
 
@@ -298,7 +308,7 @@ class TestFrameParser:
 class TestPreprocess:
     def test_preprocess_single_file(self) -> None:
         order_key = "order-key"
-        file_path = Path(f"{order_key}/first-file.otdet")
+        file_path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-01.otdet")
         start_date = datetime(2022, 5, 4, 12, 0, 1)
         builder = DataBuilder(
             input_file_path=file_path,
@@ -323,7 +333,8 @@ class TestPreprocess:
 
     def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
-        first_file_path = Path(f"{order_key}/first-file.otdet")
+        hostname = "first-host"
+        first_file_path = Path(f"{order_key}/{hostname}_2022-05-04_12-00-01.otdet")
         first_start_date = datetime(2022, 5, 4, 12, 0, 1, tzinfo=timezone.utc)
         first_builder = DataBuilder(
             input_file_path=first_file_path,
@@ -332,7 +343,7 @@ class TestPreprocess:
         first_builder.append_classified_frame()
         first_detections = first_builder.build_ot_det()
 
-        second_file_path = Path(f"{order_key}/second-file.otdet")
+        second_file_path = Path(f"{order_key}/{hostname}_2022-05-04_12-00-00.otdet")
         second_start_date = datetime(2022, 5, 4, 12, 0, 0, tzinfo=timezone.utc)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
@@ -341,7 +352,7 @@ class TestPreprocess:
         second_builder.append_classified_frame()
         second_detections = second_builder.build_ot_det()
 
-        third_file_path = Path(f"{order_key}/third-file.otdet")
+        third_file_path = Path(f"{order_key}/{hostname}_2022-05-04_13-00-01.otdet")
         third_start_date = datetime(2022, 5, 4, 13, 0, 1, tzinfo=timezone.utc)
         third_builder = DataBuilder(
             input_file_path=third_file_path,
@@ -376,6 +387,7 @@ class TestPreprocess:
                     ),
                 ],
                 order_key=order_key,
+                hostname=hostname,
             ),
             FrameGroup(
                 [
@@ -387,6 +399,7 @@ class TestPreprocess:
                     )
                 ],
                 order_key=order_key,
+                hostname=hostname,
             ),
         ]
 
@@ -456,8 +469,8 @@ class TestFrameGroup:
             create_frame(1, [], occurrence=start_date, input_file_path=input_file_path),
             create_frame(2, [], occurrence=end_date, input_file_path=input_file_path),
         ]
-        path = f"{order_key}/detection.otdet"
-        group = FrameGroup(frames, order_key=path)
+        path = f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-00.otdet"
+        group = FrameGroup(frames, order_key=path, hostname=DEFAULT_HOSTNAME)
         return group
 
 
