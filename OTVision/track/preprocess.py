@@ -353,15 +353,15 @@ class Preprocess:
         Returns:
             str: the hostname
         """
-        videoname = Path(file_metadata[VIDEO][FILENAME]).name
+        video_name = Path(file_metadata[VIDEO][FILENAME]).name
         match = re.search(
             FULL_FILE_NAME_PATTERN,
-            videoname,
+            video_name,
         )
         if match:
             return match.group(HOSTNAME)
 
-        raise InproperFormattedFilename(f"Could not parse {videoname}.")
+        raise InproperFormattedFilename(f"Could not parse {video_name}.")
 
     def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
         """Merge frame groups whose start and end times are close to each other. Close
