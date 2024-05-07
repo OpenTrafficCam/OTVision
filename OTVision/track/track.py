@@ -47,7 +47,13 @@ from OTVision.config import (
 from OTVision.dataformat import DATA, DETECTIONS, FINISHED, METADATA, TRACK_ID
 from OTVision.helpers.files import denormalize_bbox, get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import Preprocess, PreprocessOld, Splitter
+from OTVision.track.preprocess import (
+    FrameChunk,
+    FrameChunkParser,
+    Preprocess,
+    PreprocessOld,
+    Splitter,
+)
 
 from .iou import id_generator, track_iou
 
@@ -241,7 +247,7 @@ def main(
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
 
     tracking_run_id = tracking_run_id_generator()
-    preprocessor_old = PreprocessOld()
+    # preprocessor_old = PreprocessOld()
 
     preprocessor = Preprocess()
     preprocessed = preprocessor.run(detections_files)
@@ -256,15 +262,9 @@ def main(
         print()
         print(f"Process frame group {frame_group_id}")
 
-        tracker_data: dict = {
-            dataformat.NAME: "IOU",
-            dataformat.SIGMA_L: sigma_l,
-            dataformat.SIGMA_H: sigma_h,
-            dataformat.SIGMA_IOU: sigma_iou,
-            dataformat.T_MIN: t_min,
-            dataformat.T_MISS_MAX: t_miss_max,
-        }
-        frame_range.update_metadata(tracker_data)
+        frame_range.update_metadata(
+            tracker_metadata(sigma_l, sigma_h, sigma_iou, t_min, t_miss_max)
+        )
 
         vehicle_id_generator = id_generator()
 
@@ -275,29 +275,17 @@ def main(
 
         for file_path in frame_range.files:
             print(f"Process file {file_path} in frame group {frame_group_id}")
-            preprocessed_old = preprocessor_old.run([file_path], frame_offset)
-            frame_group = preprocessed_old.frame_groups[0]  # should be exactly one FG
 
-            frame_offset = frame_group.frames[-1].frame + 1
+            chunk = FrameChunkParser.parse(file_path, frame_range, frame_offset)
+            frame_offset = chunk.last_frame_id() + 1
 
-            existing_output_files = frame_group.get_existing_output_files(
-                with_suffix=file_type
-            )
-
-            if not overwrite and (len(existing_output_files) > 0):
-                log.warning(
-                    (
-                        f"{existing_output_files} already exist(s)."
-                        "To overwrite, set overwrite to True"
-                    )
-                )
+            if skip_existing_output_files(chunk, overwrite, file_type):
                 continue
 
-            log.info(f"Track {str(frame_group.order_key)}")
+            log.info(f"Track {str(chunk)}")
 
             metadata = frame_range.metadata_for(file_path)
-
-            detections = frame_group.to_dict()
+            detections = chunk.to_dict()
             detections_denormalized = denormalize_bbox(detections, metadata=metadata)
 
             tracks_px, previous_active_tracks, last_frame_update = track(
@@ -312,7 +300,7 @@ def main(
             )
             print("remaining active tracks", len(previous_active_tracks))
             last_track_frame.update(last_frame_update)
-            log.debug(f"Successfully tracked {frame_group.order_key}")
+            log.debug(f"Successfully tracked {chunk}")
 
             # store results of iou and mark vehIDs yet to be finished
             result_store[file_path] = {
@@ -358,6 +346,36 @@ def main(
     finished_msg = "Finished tracking"
     log.info(finished_msg)
     print(finished_msg)
+
+
+def skip_existing_output_files(
+    chunk: FrameChunk, overwrite: bool, file_type: str
+) -> bool:
+    existing_output_files = chunk.get_existing_output_files(with_suffix=file_type)
+
+    if not overwrite and (len(existing_output_files) > 0):
+        log.warning(
+            (
+                f"{existing_output_files} already exist(s)."
+                "To overwrite, set overwrite to True"
+            )
+        )
+        return True
+
+    return False
+
+
+def tracker_metadata(
+    sigma_l: float, sigma_h: float, sigma_iou: float, t_min: float, t_miss_max: float
+) -> dict:
+    return {
+        dataformat.NAME: "IOU",
+        dataformat.SIGMA_L: sigma_l,
+        dataformat.SIGMA_H: sigma_h,
+        dataformat.SIGMA_IOU: sigma_iou,
+        dataformat.T_MIN: t_min,
+        dataformat.T_MISS_MAX: t_miss_max,
+    }
 
 
 def mark_and_write_results(
