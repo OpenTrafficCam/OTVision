@@ -24,6 +24,7 @@ OTVision module to track road users in frames detected by OTVision
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Iterator
 
 from tqdm import tqdm
@@ -50,6 +51,33 @@ from OTVision.dataformat import (
 )
 
 from .iou_util import iou
+
+
+class TrackedDetections:
+    def __init__(
+        self,
+        detections: dict[str, dict],
+        detected_ids: set[int],
+        active_track_ids: set[int],
+    ) -> None:
+        self._detections = detections
+        self._detected_ids = detected_ids
+        self._active_track_ids = active_track_ids
+
+    def update_active_track_ids(self, new_active_ids: set[int]) -> None:
+        self._active_track_ids = {
+            _id for _id in self._active_track_ids if _id in new_active_ids
+        }
+
+    def is_finished(self) -> bool:
+        return len(self._active_track_ids) == 0
+
+
+@dataclass(frozen=True)
+class TrackingResult:
+    tracked_detections: TrackedDetections
+    active_tracks: list[dict]
+    last_track_frame: dict[int, int]
 
 
 def make_bbox(obj: dict) -> tuple[float, float, float, float]:
@@ -97,7 +125,7 @@ def track_iou(
     t_miss_max: int = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"],
     previous_active_tracks: list = [],
     vehicle_id_generator: Iterator[int] = id_generator(),
-) -> tuple[dict, list, dict[int, int]]:  # sourcery skip: low-code-quality
+) -> TrackingResult:  # sourcery skip: low-code-quality
     """
     Simple IOU based tracker.
     See "High-Speed Tracking-by-Detection Without Using Image Information
@@ -111,10 +139,13 @@ def track_iou(
         sigma_h (float): high detection threshold.
         sigma_iou (float): IOU threshold.
         t_min (float): minimum track length in frames.
-        #TODO
+        previous_active_tracks (list): a list of remaining active tracks
+            from previous iterations.
+        vehicle_id_generator (Iterator[int]): provides ids for new tracks
 
     Returns:
-        tuple[dict, list]: new detections and list of active tracks.
+        TrackingResult: new detections, a list of active tracks
+            and a lookup dic for each tracks last detection frame.
     """
 
     _check_types(sigma_l, sigma_h, sigma_iou, t_min, t_miss_max)
@@ -219,7 +250,19 @@ def track_iou(
 
     # return tracks_finished
     # TODO: #83 Remove unnecessary code (e.g. for tracks_finished) from track_iou
-    return new_detections, tracks_active, last_track_frame
+
+    active_track_ids = {t[TRACK_ID] for t in tracks_active}
+    detected_ids = set(last_track_frame.keys())
+    return TrackingResult(
+        TrackedDetections(
+            detections=new_detections,
+            detected_ids=detected_ids,
+            active_track_ids={_id for _id in detected_ids if _id in active_track_ids},
+        ),
+        active_tracks=tracks_active,
+        last_track_frame=last_track_frame,
+    )
+    # return new_detections, tracks_active, last_track_frame
 
 
 def _check_types(

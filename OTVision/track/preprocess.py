@@ -520,10 +520,10 @@ class Preprocess:
             list[FrameRange]: merged frame groups sorted by start date
         """
 
-        ranges = self.group_files(files)
+        ranges = self.process(files)
         return sorted(ranges, key=lambda r: r.start_date())
 
-    def group_files(self, files: list[Path]) -> list[FrameRange]:
+    def process(self, files: list[Path]) -> list[FrameRange]:
         """Process given otdet files:
         Create FrameRange for each file then merge frame groups belonging together.
 
