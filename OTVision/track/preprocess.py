@@ -247,7 +247,6 @@ class FrameGroupOld:
 class FrameChunk:
     file: Path
     frames: list[Frame]
-    frame_group: FrameRange
 
     def start_date(self) -> datetime:
         return self.frames[0].occurrence
@@ -367,11 +366,17 @@ class FrameChunkParser:
     @staticmethod
     def parse(
         file_path: Path,
-        frame_group: FrameRange,
         frame_offset: int = 0,
     ) -> FrameChunk:
-        input: dict[int, dict[str, Any]] = read_json(file_path)
+        input: dict[int, dict[str, Any]] = read_json(file_path)[DATA]
+        return FrameChunkParser.convert(input, file_path, frame_offset)
 
+    @staticmethod
+    def convert(
+        input: dict[int, dict[str, Any]],
+        file_path: Path,
+        frame_offset: int = 0,
+    ) -> FrameChunk:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
@@ -387,7 +392,7 @@ class FrameChunkParser:
             frames.append(parsed_frame)
 
         frames.sort(key=lambda frame: (frame.occurrence, frame.frame))
-        return FrameChunk(file_path, frames, frame_group)
+        return FrameChunk(file_path, frames)
 
 
 @dataclass(frozen=True)
@@ -520,10 +525,10 @@ class Preprocess:
             list[FrameRange]: merged frame groups sorted by start date
         """
 
-        ranges = self.process(files)
+        ranges = self.process(self._read_input(files))
         return sorted(ranges, key=lambda r: r.start_date())
 
-    def process(self, files: list[Path]) -> list[FrameRange]:
+    def process(self, input: dict[Path, dict]) -> list[FrameRange]:
         """Process given otdet files:
         Create FrameRange for each file then merge frame groups belonging together.
 
@@ -533,25 +538,29 @@ class Preprocess:
         Returns:
             list[FrameRange]: parsed and merged frame groups
         """
-        all_groups = [self._parse_frame_range(path) for path in files]
+        all_groups = [
+            self._parse_frame_range(path, metadata) for path, metadata in input.items()
+        ]
         if len(all_groups) == 0:
             return []
         return self._merge_groups(all_groups)
 
-    def _parse_frame_range(self, file_path: Path) -> FrameRange:
+    def _read_input(self, files: list[Path]) -> dict[Path, dict]:
+        return {path: read_json_bz2_metadata(path) for path in files}
+
+    def _parse_frame_range(self, file_path: Path, metadata: dict) -> FrameRange:
         """Read and parse metadata of the given file to a FrameRange
         covering the recording time interval defined by:
         - the recorded start date and
         - the expected duration given in the metadata
 
         Args:
-            path (Path): read in input (otdet)
-            metadata (Path): read in input (otdet)
+            file_path (Path): path of otdet file
+            metadata (dict): metadata of otdet file
 
         Returns:
-            Tuple[list[FrameGroup], dict[str, dict]]: parsed input and metadata per file
+            list[FrameRange]: parsed input and metadata per file
         """
-        metadata = read_json_bz2_metadata(file_path)
 
         start_date: datetime = self.extract_start_date_from(metadata)
         duration: timedelta = self.extract_expected_duration_from(metadata)
@@ -561,10 +570,19 @@ class Preprocess:
             start_date=start_date, end_date=end_date, file=file_path, metadata=metadata
         )
 
-    def _merge_groups(self, all_ranges: list[FrameRange]) -> list[FrameRange]:
-        assert len(all_ranges) >= 1
+    def _merge_groups(self, all_groups: list[FrameRange]) -> list[FrameRange]:
+        """Merge frame groups whose start and end times are close to each other. Close
+        is defined by `self.time_without_frames`.
 
-        sorted_ranges = sorted(all_ranges, key=lambda r: r.start_date())
+        Args:
+            all_groups (list[FrameRange]): list of frame groups to merge
+
+        Returns:
+            list[FrameRange]: list of merged frame groups
+        """
+        assert len(all_groups) >= 1
+
+        sorted_ranges = sorted(all_groups, key=lambda r: r.start_date())
         merged_ranges = []
 
         last_range = sorted_ranges[0]

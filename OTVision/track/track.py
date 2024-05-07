@@ -50,6 +50,7 @@ from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import (
     FrameChunk,
     FrameChunkParser,
+    FrameRange,
     Preprocess,
     PreprocessOld,
     Splitter,
@@ -60,12 +61,6 @@ from .iou import TrackedDetections, TrackingResult, id_generator, track_iou
 log = logging.getLogger(LOGGER_NAME)
 
 IdGenerator = Callable[[], str]
-
-
-RESULT_DETECTIONS = "Detections"
-RESULT_FRAME_GROUP_ID = "FrameGroupId"
-RESULT_ACTIVE_TRACKS = "ActiveTrackIds"
-RESULT_TRACK_IDS = "TrackIds"
 
 
 class TrackedChunk(TrackedDetections):
@@ -327,16 +322,18 @@ def main(
         for file_path in frame_range.files:
             print(f"Process file {file_path} in frame group {frame_group_id}")
 
-            chunk = FrameChunkParser.parse(file_path, frame_range, frame_offset)
+            chunk = FrameChunkParser.parse(file_path, frame_offset)
             frame_offset = chunk.last_frame_id() + 1
 
             if skip_existing_output_files(chunk, overwrite, file_type):
                 continue
 
             log.info(f"Track {str(chunk)}")
-            metadata = frame_range.metadata_for(file_path)
+            # metadata = frame_range.metadata_for(file_path)
             detections = chunk.to_dict()
-            detections_denormalized = denormalize_bbox(detections, metadata=metadata)
+            detections_denormalized = denormalize_bbox(
+                detections, metadata=frame_range._files_metadata
+            )
 
             tracking_result = track(
                 detections=detections_denormalized,
@@ -352,17 +349,21 @@ def main(
             track_result_store.store_tracking_result(
                 tracking_result,
                 frame_group_id=frame_group_id,
-                metadata=metadata,
+                metadata=frame_range.metadata_for(file_path),
             )
             log.debug(f"Successfully tracked {chunk}")
 
             for finished_chunk in track_result_store.get_finished_results():
-                mark_and_write_results(finished_chunk, track_result_store, overwrite)
+                mark_and_write_results(
+                    finished_chunk, frame_range, track_result_store, overwrite
+                )
 
         # write last files of frame group
         # even though some tracks mights still be active
         for finished_chunk in track_result_store._tracked_chunks:
-            mark_and_write_results(finished_chunk, track_result_store, overwrite)
+            mark_and_write_results(
+                finished_chunk, frame_range, track_result_store, overwrite
+            )
 
         log.info("Successfully tracked and wrote ")  # TODO ord key for frame range
 
@@ -402,7 +403,10 @@ def tracker_metadata(
 
 
 def mark_and_write_results(
-    chunk: TrackedChunk, result_store: TrackingResultStore, overwrite: bool
+    chunk: TrackedChunk,
+    frame_range: FrameRange,
+    result_store: TrackingResultStore,
+    overwrite: bool,
 ) -> None:
     # no active tracks remaining, so last track frame metadata
     # should be correct for all contained tracks,
@@ -412,7 +416,7 @@ def mark_and_write_results(
     # write marked detections to track file and delete the data
     write_track_file(
         tracks_px=chunk._detections,
-        metadata=chunk.metadata,
+        metadata=frame_range._files_metadata,
         tracking_run_id=result_store.tracking_run_id,
         frame_group_id=chunk._frame_group_id,
         overwrite=overwrite,
