@@ -36,6 +36,7 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DETECTIONS,
+    FINISHED,
     FIRST,
     FRAMES,
     MAX_CLASS,
@@ -212,7 +213,7 @@ def track_iou(
         new_detections.items(), desc="New detection frames", unit="frames"
     ):
         for vehID, det in frame_det.items():
-            # det[FINISHED] = vehID in vehIDs_finished
+            det[FINISHED] = False
             det[TRACK_ID] = vehID
             last_track_frame[vehID] = max(frame_num, last_track_frame[vehID])
 

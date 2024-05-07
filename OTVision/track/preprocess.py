@@ -118,15 +118,26 @@ class Frame:
 
 class FrameRange:
     def __init__(
-        self, files: list[Path], start_date: datetime, end_date: datetime
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        file: Path | None,
+        metadata: dict | None,
     ) -> None:
-        self._files = files
+        self._files_metadata: dict[str, dict] = dict()
+        if (file is not None) and (metadata is not None):
+            self._files_metadata[file.as_posix()] = metadata
+
+        # self._files = files
         self._start_date = start_date
         self._end_date = end_date
 
     @property
-    def files(self) -> list[Path]:
-        return self._files
+    def files(self) -> list[str]:
+        return list(self._files_metadata.keys())
+
+    def metadata_for(self, file: str) -> dict:
+        return self._files_metadata[file]
 
     def start_date(self) -> datetime:
         return self._start_date
@@ -141,11 +152,17 @@ class FrameRange:
             return self._merge(other, self)
 
     def _merge(self, first: "FrameRange", second: "FrameRange") -> "FrameRange":
-        return FrameRange(
-            files=first._files + second._files,
+        merged = FrameRange(
             start_date=first._start_date,
             end_date=second._end_date,
+            file=None,
+            metadata=None,
         )
+
+        merged._files_metadata.update(first._files_metadata)
+        merged._files_metadata.update(second._files_metadata)
+
+        return merged
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -153,22 +170,19 @@ class FrameRange:
     def __str__(self) -> str:
         return f"{self._start_date} - {self._end_date}"
 
-    def update_metadata(
-        self, metadata: dict[str, dict], tracker_data: dict[str, dict]
-    ) -> dict[str, dict]:
-        for filepath in metadata.keys():
-            metadata[filepath][OTTRACK_VERSION] = version.ottrack_version()
-            metadata[filepath][dataformat.TRACKING] = {
+    def update_metadata(self, tracker_data: dict[str, dict]) -> None:
+        for filepath in self.files:
+            self._files_metadata[filepath][OTTRACK_VERSION] = version.ottrack_version()
+            self._files_metadata[filepath][dataformat.TRACKING] = {
                 dataformat.OTVISION_VERSION: version.otvision_version(),
                 dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().timestamp(),
                 dataformat.LAST_TRACKED_VIDEO_END: self.end_date().timestamp(),
                 dataformat.TRACKER: tracker_data,
             }
-        return metadata
 
 
 @dataclass(frozen=True)
-class FrameGroup:
+class FrameGroupOld:
     # TODO rename to FrameGroupData
     frames: list[Frame]
     order_key: str
@@ -179,20 +193,22 @@ class FrameGroup:
     def end_date(self) -> datetime:
         return self.frames[-1].occurrence
 
-    def merge(self, other: "FrameGroup") -> "FrameGroup":
+    def merge(self, other: "FrameGroupOld") -> "FrameGroupOld":
         if self.start_date() < other.start_date():
             return self._merge(self, other)
         else:
             return self._merge(other, self)
 
-    def _merge(self, first: "FrameGroup", second: "FrameGroup") -> "FrameGroup":
+    def _merge(
+        self, first: "FrameGroupOld", second: "FrameGroupOld"
+    ) -> "FrameGroupOld":
         all_frames: list[Frame] = []
         all_frames.extend(first.frames)
         last_frame_number = all_frames[-1].frame
         for frame in second.frames:
             last_frame_number = last_frame_number + 1
             all_frames.append(frame.derive_frame_number(last_frame_number))
-        return FrameGroup(all_frames, self.order_key)
+        return FrameGroupOld(all_frames, self.order_key)
 
     def get_existing_output_files(self, with_suffix: str) -> list[Path]:
         output_files = set(
@@ -271,7 +287,7 @@ class DetectionParser:
         return detections
 
 
-class FrameGroupParser:
+class FrameGroupOldParser:
     def __init__(
         self,
         input_file_path: Path,
@@ -284,7 +300,7 @@ class FrameGroupParser:
         self,
         input: dict[int, dict[str, Any]],
         frame_offset: int = 0,
-    ) -> FrameGroup:
+    ) -> FrameGroupOld:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
@@ -300,15 +316,15 @@ class FrameGroupParser:
             frames.append(parsed_frame)
 
         frames.sort(key=lambda frame: (frame.occurrence, frame.frame))
-        return FrameGroup(frames, order_key=self.order_key())
+        return FrameGroupOld(frames, order_key=self.order_key())
 
     def order_key(self) -> str:
         return self.input_file_path.parent.as_posix()
 
 
 @dataclass(frozen=True)
-class PreprocessResult:
-    frame_groups: list[FrameGroup]
+class PreprocessResultOld:
+    frame_groups: list[FrameGroupOld]
     metadata: dict[str, dict]
 
 
@@ -318,19 +334,19 @@ class GroupFrameRangesResult:
     metadata: dict[str, dict]
 
 
-class Preprocess:
+class PreprocessOld:
     """Preprocess otdet files before running track. Input files belonging to the same
     recording will be merged together. The time gap to separate two recordings from
     each other is defined by `self.time_without_frames`.
 
     Returns:
-        Preprocess: preprocessor for tracking
+        PreprocessOld: preprocessor for tracking
     """
 
     def __init__(self, time_without_frames: timedelta = timedelta(minutes=1)) -> None:
         self.time_without_frames = time_without_frames
 
-    def run(self, files: list[Path], frame_offset: int = 0) -> PreprocessResult:
+    def run(self, files: list[Path], frame_offset: int = 0) -> PreprocessResultOld:
         """Read all input files, parse the content and merge the frame groups belonging
         together.
 
@@ -338,18 +354,18 @@ class Preprocess:
             files (list[Path]): list of input files
 
         Returns:
-            PreprocessResult: merged frame groups and metadata per file
+            PreprocessResultOld: merged frame groups and metadata per file
         """
         input_data = {}
         for file in files:
             input = read_json(file)
             input_data[file] = input
         groups, metadata = self.process(input_data, frame_offset)
-        return PreprocessResult(frame_groups=groups, metadata=metadata)
+        return PreprocessResultOld(frame_groups=groups, metadata=metadata)
 
     def process(
         self, input: dict[Path, dict], frame_offset: int = 0
-    ) -> Tuple[list[FrameGroup], dict[str, dict]]:
+    ) -> Tuple[list[FrameGroupOld], dict[str, dict]]:
         """Parse input and merge frame groups belonging together.
 
         Args:
@@ -365,7 +381,7 @@ class Preprocess:
 
     def _parse_frame_groups(
         self, input: dict[Path, dict], frame_offset: int = 0
-    ) -> Tuple[list[FrameGroup], dict[str, dict]]:
+    ) -> Tuple[list[FrameGroupOld], dict[str, dict]]:
         """Parse input to frame groups. Every input file belongs to one frame group.
 
         Args:
@@ -374,7 +390,7 @@ class Preprocess:
         Returns:
             Tuple[list[FrameGroup], dict[str, dict]]: parsed input and metadata per file
         """
-        all_groups: list[FrameGroup] = []
+        all_groups: list[FrameGroupOld] = []
         metadata: dict[str, dict] = {}
         for file_path, recording in input.items():
             file_metadata = get_metadata(otdict=recording)
@@ -382,13 +398,13 @@ class Preprocess:
             start_date: datetime = self.extract_start_date_from(recording)
 
             data: dict[int, dict[str, Any]] = recording[DATA]
-            frame_group = FrameGroupParser(
+            frame_group = FrameGroupOldParser(
                 file_path, recorded_start_date=start_date
             ).convert(data, frame_offset)
             all_groups.append(frame_group)
         return all_groups, metadata
 
-    def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
+    def _merge_groups(self, all_groups: list[FrameGroupOld]) -> list[FrameGroupOld]:
         """Merge frame groups whose start and end times are close to each other. Close
         is defined by `self.time_without_frames`.
 
@@ -418,54 +434,79 @@ class Preprocess:
         return MISSING_START_DATE
 
 
-class GroupFrameRanges:
+class Preprocess:
+    """Preprocess otdet file metadata (recording time interval) before running track.
+    Input files belonging to the same recording will be merged together.
+    The time gap to separate two recordings from each other is defined by
+    `self.time_without_frames`.
+
+    Returns:
+        Preprocess: preprocessor for tracking
+    """
+
     def __init__(self, time_without_frames: timedelta = timedelta(minutes=1)) -> None:
         self.time_without_frames = time_without_frames
 
-    def run(self, files: list[Path]) -> GroupFrameRangesResult:
-        input_data = {}
-        files_metadata: dict[str, dict] = {}
-        for file in files:
-            metadata = read_json_bz2_metadata(file)
-            input_data[file] = metadata
-            files_metadata[file.as_posix()] = metadata
+    def run(self, files: list[Path]) -> list[FrameRange]:
+        """Read metadata of all input files,
+        parse the content and merge the frame groups belonging together.
 
-        ranges = self.group_files(input_data)
-        return GroupFrameRangesResult(
-            frame_ranges=sorted(ranges, key=lambda r: r.start_date()),
-            metadata=files_metadata,
-        )
+        Args:
+            files (list[Path]): list of input files
 
-    def group_files(self, input: dict[Path, dict]) -> list[FrameRange]:
-        all_groups = self._parse_frame_ranges(input)
+        Returns:
+            list[FrameRange]: merged frame groups sorted by start date
+        """
+
+        ranges = self.group_files(files)
+        return sorted(ranges, key=lambda r: r.start_date())
+
+    def group_files(self, files: list[Path]) -> list[FrameRange]:
+        """Process given otdet files:
+        Create FrameRange for each file then merge frame groups belonging together.
+
+        Args:
+            files (list[Path]): list of file paths
+
+        Returns:
+            list[FrameRange]: parsed and merged frame groups
+        """
+        all_groups = [self._parse_frame_range(path) for path in files]
         if len(all_groups) == 0:
             return []
         return self._merge_groups(all_groups)
 
-    def _parse_frame_ranges(self, input: dict[Path, dict]) -> list[FrameRange]:
-        all_ranges: list[FrameRange] = []
-        for file_path, metadata in input.items():
-            start_date: datetime = self.extract_start_date_from(metadata)
-            duration: timedelta = self.extract_expected_duration_from(metadata)
-            end_date: datetime = start_date + duration
+    def _parse_frame_range(self, file_path: Path) -> FrameRange:
+        """Read and parse metadata of the given file to a FrameRange
+        covering the recording time interval defined by:
+        - the recorded start date and
+        - the expected duration given in the metadata
 
-            all_ranges.append(
-                FrameRange(files=[file_path], start_date=start_date, end_date=end_date)
-            )
-        return all_ranges
+        Args:
+            path (Path): read in input (otdet)
+            metadata (Path): read in input (otdet)
+
+        Returns:
+            Tuple[list[FrameGroup], dict[str, dict]]: parsed input and metadata per file
+        """
+        metadata = read_json_bz2_metadata(file_path)
+
+        start_date: datetime = self.extract_start_date_from(metadata)
+        duration: timedelta = self.extract_expected_duration_from(metadata)
+        end_date: datetime = start_date + duration
+
+        return FrameRange(
+            start_date=start_date, end_date=end_date, file=file_path, metadata=metadata
+        )
 
     def _merge_groups(self, all_ranges: list[FrameRange]) -> list[FrameRange]:
         assert len(all_ranges) >= 1
-        print(all_ranges)
 
         sorted_ranges = sorted(all_ranges, key=lambda r: r.start_date())
         merged_ranges = []
-        print(all_ranges)
 
         last_range = sorted_ranges[0]
         for current_range in sorted_ranges[1:]:
-            print("last", last_range)
-            print("current", current_range)
             if (
                 current_range.start_date() - last_range.end_date()
             ) <= self.time_without_frames:
@@ -490,9 +531,9 @@ class GroupFrameRanges:
 
     def create_frame_group_from(
         self, frame_range: FrameRange
-    ) -> Tuple[FrameGroup, dict[str, dict]]:
-        preprocess = Preprocess(time_without_frames=self.time_without_frames)
-        result = preprocess.run(frame_range.files)
+    ) -> Tuple[FrameGroupOld, dict[str, dict]]:
+        preprocess = PreprocessOld(time_without_frames=self.time_without_frames)
+        result = preprocess.run([Path(file) for file in frame_range.files])
 
         assert len(result.frame_groups) == 1
         return result.frame_groups[0], result.metadata

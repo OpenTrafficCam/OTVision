@@ -47,7 +47,7 @@ from OTVision.config import (
 from OTVision.dataformat import DATA, DETECTIONS, FINISHED, METADATA, TRACK_ID
 from OTVision.helpers.files import denormalize_bbox, get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import GroupFrameRanges, Preprocess, Splitter
+from OTVision.track.preprocess import Preprocess, PreprocessOld, Splitter
 
 from .iou import id_generator, track_iou
 
@@ -113,7 +113,7 @@ def main_old(
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
 
     tracking_run_id = tracking_run_id_generator()
-    preprocessor = Preprocess()
+    preprocessor = PreprocessOld()
     preprocessed = preprocessor.run(detections_files)
 
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
@@ -241,15 +241,15 @@ def main(
         raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
 
     tracking_run_id = tracking_run_id_generator()
-    preprocessor = Preprocess()
+    preprocessor_old = PreprocessOld()
 
-    grouper = GroupFrameRanges()
-    grouped = grouper.run(detections_files)
+    preprocessor = Preprocess()
+    preprocessed = preprocessor.run(detections_files)
 
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
 
     for frame_group_id, frame_range in tqdm(
-        enumerate(grouped.frame_ranges),
+        enumerate(preprocessed),
         desc="Tracked frame ranges",
         unit="framerange",
     ):
@@ -264,21 +264,19 @@ def main(
             dataformat.T_MIN: t_min,
             dataformat.T_MISS_MAX: t_miss_max,
         }
-        metadata = grouped.metadata
-        frame_range.update_metadata(metadata, tracker_data)
+        frame_range.update_metadata(tracker_data)
 
         vehicle_id_generator = id_generator()
 
         previous_active_tracks: list = []
-        # previous_frame_group: FrameGroup = None
         last_track_frame: dict[int, int] = {}
         result_store: dict[Path, dict] = {}
         frame_offset = 0
 
         for file_path in frame_range.files:
             print(f"Process file {file_path} in frame group {frame_group_id}")
-            preprocessed = preprocessor.run([file_path], frame_offset)
-            frame_group = preprocessed.frame_groups[0]  # should be exactly one FG
+            preprocessed_old = preprocessor_old.run([file_path], frame_offset)
+            frame_group = preprocessed_old.frame_groups[0]  # should be exactly one FG
 
             frame_offset = frame_group.frames[-1].frame + 1
 
@@ -297,11 +295,9 @@ def main(
 
             log.info(f"Track {str(frame_group.order_key)}")
 
-            # if previous_frame_group:  # Update frame numbers in current frame group
-            #    previous_frame_group.merge(frame_group)
+            metadata = frame_range.metadata_for(file_path)
 
             detections = frame_group.to_dict()
-
             detections_denormalized = denormalize_bbox(detections, metadata=metadata)
 
             tracks_px, previous_active_tracks, last_frame_update = track(

@@ -25,9 +25,9 @@ from OTVision.track.preprocess import (
     Detection,
     DetectionParser,
     Frame,
-    FrameGroup,
-    FrameGroupParser,
-    Preprocess,
+    FrameGroupOld,
+    FrameGroupOldParser,
+    PreprocessOld,
     Splitter,
 )
 
@@ -208,8 +208,8 @@ class DataBuilder:
     def build(self) -> dict[int, dict[str, list]]:
         return self.data.copy()
 
-    def build_as_detections(self) -> FrameGroup:
-        parser = FrameGroupParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
+    def build_as_detections(self) -> FrameGroupOld:
+        parser = FrameGroupOldParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
         return parser.convert(self.data.copy())
 
     def build_ot_det(self) -> dict:
@@ -271,10 +271,10 @@ class TestFrameParser:
 
         order_key = "/some/path/to"
         path = Path(f"{order_key}/file-name.otdet")
-        parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
-        result: FrameGroup = parser.convert(input)
+        parser = FrameGroupOldParser(path, recorded_start_date=DEFAULT_START_DATE)
+        result: FrameGroupOld = parser.convert(input)
 
-        expected_result = FrameGroup(
+        expected_result = FrameGroupOld(
             [
                 create_frame(1, [create_default_detection()], input_file_path=path),
                 create_frame(2, [], input_file_path=path),
@@ -288,7 +288,7 @@ class TestFrameParser:
     def test_order_key(self) -> None:
         order_key = "/some/path/to"
         path = Path(f"{order_key}/file-name.otdet")
-        parser = FrameGroupParser(path, recorded_start_date=DEFAULT_START_DATE)
+        parser = FrameGroupOldParser(path, recorded_start_date=DEFAULT_START_DATE)
 
         calculated_key = parser.order_key()
 
@@ -307,7 +307,7 @@ class TestPreprocess:
         builder.append_classified_frame()
         otdet = builder.build_ot_det()
 
-        preprocessor = Preprocess(time_without_frames=timedelta(minutes=1))
+        preprocessor = PreprocessOld(time_without_frames=timedelta(minutes=1))
         preprocessed_otdet, metadata = preprocessor.process({Path(file_path): otdet})
         serialized_otdet = preprocessed_otdet[0].to_dict()
 
@@ -350,7 +350,7 @@ class TestPreprocess:
         third_builder.append_classified_frame()
         third_detections = third_builder.build_ot_det()
 
-        preprocessor = Preprocess(time_without_frames=timedelta(minutes=1))
+        preprocessor = PreprocessOld(time_without_frames=timedelta(minutes=1))
         merged_groups, metadata = preprocessor.process(
             {
                 first_file_path: first_detections,
@@ -360,7 +360,7 @@ class TestPreprocess:
         )
 
         expected_result = [
-            FrameGroup(
+            FrameGroupOld(
                 [
                     Frame(
                         1,
@@ -377,7 +377,7 @@ class TestPreprocess:
                 ],
                 order_key=order_key,
             ),
-            FrameGroup(
+            FrameGroupOld(
                 [
                     Frame(
                         1,
@@ -438,8 +438,8 @@ class TestFrameGroup:
             start_date=second_end, end_date=second_end
         )
 
-        merge_first_second: FrameGroup = first_group.merge(second_group)
-        merge_second_first: FrameGroup = second_group.merge(first_group)
+        merge_first_second: FrameGroupOld = first_group.merge(second_group)
+        merge_second_first: FrameGroupOld = second_group.merge(first_group)
 
         assert merge_first_second.start_date() == first_start
         assert merge_first_second.end_date() == second_end
@@ -451,13 +451,13 @@ class TestFrameGroup:
         start_date: datetime = DEFAULT_START_DATE,
         end_date: datetime = DEFAULT_START_DATE,
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
-    ) -> FrameGroup:
+    ) -> FrameGroupOld:
         frames: list[Frame] = [
             create_frame(1, [], occurrence=start_date, input_file_path=input_file_path),
             create_frame(2, [], occurrence=end_date, input_file_path=input_file_path),
         ]
         path = f"{order_key}/detection.otdet"
-        group = FrameGroup(frames, order_key=path)
+        group = FrameGroupOld(frames, order_key=path)
         return group
 
 
