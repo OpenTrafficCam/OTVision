@@ -28,9 +28,7 @@ from OTVision.track.preprocess import (
     Frame,
     FrameChunk,
     FrameChunkParser,
-    FrameGroupOld,
-    FrameGroupOldParser,
-    FrameRange,
+    FrameGroup,
     Preprocess,
     Splitter,
 )
@@ -212,9 +210,8 @@ class DataBuilder:
     def build(self) -> dict[int, dict[str, list]]:
         return self.data.copy()
 
-    def build_as_detections(self) -> FrameGroupOld:
-        parser = FrameGroupOldParser(DEFAULT_INPUT_FILE_PATH, DEFAULT_START_DATE)
-        return parser.convert(self.data.copy())
+    def build_as_detections(self) -> FrameChunk:
+        return FrameChunkParser.convert(self.data.copy(), DEFAULT_INPUT_FILE_PATH)
 
     def build_ot_det(self) -> dict:
         return {
@@ -457,8 +454,8 @@ class TestFrameGroup:
             start_date=second_end, end_date=second_end
         )
 
-        merge_first_second: FrameRange = first_group.merge(second_group)
-        merge_second_first: FrameRange = second_group.merge(first_group)
+        merge_first_second: FrameGroup = first_group.merge(second_group)
+        merge_second_first: FrameGroup = second_group.merge(first_group)
 
         assert merge_first_second.start_date() == first_start
         assert merge_first_second.end_date() == second_end
@@ -471,8 +468,8 @@ class TestFrameGroup:
         start_date: datetime = DEFAULT_START_DATE,
         end_date: datetime = DEFAULT_START_DATE,
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
-    ) -> FrameRange:
-        return FrameRange(
+    ) -> FrameGroup:
+        return FrameGroup(
             start_date=start_date,
             end_date=end_date,
             file=input_file_path,
