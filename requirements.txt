@@ -1,4 +1,5 @@
 geopandas==0.14.3
+ijson==3.2.3
 IPython==8.10.0
 matplotlib==3.7.1
 moviepy==1.0.3

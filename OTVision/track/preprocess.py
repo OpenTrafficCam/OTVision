@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any
 
 from OTVision import dataformat, version
 from OTVision.dataformat import (
@@ -11,11 +11,11 @@ from OTVision.dataformat import (
     DATA,
     DATE_FORMAT,
     DETECTIONS,
+    EXPECTED_DURATION,
     FILENAME,
     FRAME,
     INPUT_FILE_PATH,
     INTERPOLATED_DETECTION,
-    METADATA,
     OCCURRENCE,
     OTTRACK_VERSION,
     RECORDED_START_DATE,
@@ -34,11 +34,12 @@ from OTVision.helpers.files import (
     FULL_FILE_NAME_PATTERN,
     HOSTNAME,
     InproperFormattedFilename,
-    get_metadata,
     read_json,
+    read_json_bz2_metadata,
 )
 
 MISSING_START_DATE = datetime(1900, 1, 1)
+MISSING_EXPECTED_DURATION = timedelta(minutes=15)
 
 
 def parse_datetime(date: str | float) -> datetime:
@@ -122,17 +123,40 @@ class Frame:
         return self.input_file_path.with_suffix(with_suffix)
 
 
-@dataclass(frozen=True)
 class FrameGroup:
-    frames: list[Frame]
-    order_key: str
-    hostname: str
+    def __init__(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        hostname: str,
+        file: Path | None,
+        metadata: dict | None,
+    ) -> None:
+        self._files_metadata: dict[str, dict] = dict()
+        self._files: list[Path] = []
+        if (file is not None) and (metadata is not None):
+            self._files_metadata[file.as_posix()] = metadata
+            self._files.append(file)
+
+        self.hostname = hostname
+        self._start_date = start_date
+        self._end_date = end_date
+
+    @property
+    def files(self) -> list[Path]:
+        return self._files
+
+    def metadata_for(self, file: Path | str) -> dict:
+        if isinstance(file, str):
+            return self._files_metadata[file]
+        else:
+            return self._files_metadata[file.as_posix()]
 
     def start_date(self) -> datetime:
-        return self.frames[0].occurrence
+        return self._start_date
 
     def end_date(self) -> datetime:
-        return self.frames[-1].occurrence
+        return self._end_date
 
     def merge(self, other: "FrameGroup") -> "FrameGroup":
         if self.start_date() < other.start_date():
@@ -143,13 +167,52 @@ class FrameGroup:
     def _merge(self, first: "FrameGroup", second: "FrameGroup") -> "FrameGroup":
         if first.hostname != second.hostname:
             raise ValueError("Hostname of FrameGroups does not match")
-        all_frames: list[Frame] = []
-        all_frames.extend(first.frames)
-        last_frame_number = all_frames[-1].frame
-        for frame in second.frames:
-            last_frame_number = last_frame_number + 1
-            all_frames.append(frame.derive_frame_number(last_frame_number))
-        return FrameGroup(all_frames, self.order_key, self.hostname)
+        merged = FrameGroup(
+            start_date=first._start_date,
+            end_date=second._end_date,
+            hostname=self.hostname,
+            file=None,
+            metadata=None,
+        )
+
+        merged._files_metadata.update(first._files_metadata)
+        merged._files_metadata.update(second._files_metadata)
+        merged._files += first.files
+        merged._files += second.files
+
+        return merged
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return f"{self._start_date} - {self._end_date}"
+
+    def update_metadata(self, tracker_data: dict[str, dict]) -> None:
+        for filepath in self.files:
+            metadata = self.metadata_for(filepath)
+            metadata[OTTRACK_VERSION] = version.ottrack_version()
+            metadata[dataformat.TRACKING] = {
+                dataformat.OTVISION_VERSION: version.otvision_version(),
+                dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().timestamp(),
+                dataformat.LAST_TRACKED_VIDEO_END: self.end_date().timestamp(),
+                dataformat.TRACKER: tracker_data,
+            }
+
+
+@dataclass(frozen=True)
+class FrameChunk:
+    file: Path
+    frames: list[Frame]
+
+    def start_date(self) -> datetime:
+        return self.frames[0].occurrence
+
+    def end_date(self) -> datetime:
+        return self.frames[-1].occurrence
+
+    def last_frame_id(self) -> int:
+        return self.frames[-1].frame
 
     def get_existing_output_files(self, with_suffix: str) -> list[Path]:
         output_files = set(
@@ -158,26 +221,20 @@ class FrameGroup:
         existing_files = [file for file in output_files if file.is_file()]
         return existing_files
 
-    def update_metadata(
-        self, metadata: dict[str, dict], tracker_data: dict[str, dict]
-    ) -> dict[str, dict]:
-        for filepath in metadata.keys():
-            metadata[filepath][OTTRACK_VERSION] = version.ottrack_version()
-            metadata[filepath][dataformat.TRACKING] = {
-                dataformat.OTVISION_VERSION: version.otvision_version(),
-                dataformat.FIRST_TRACKED_VIDEO_START: self.start_date().timestamp(),
-                dataformat.LAST_TRACKED_VIDEO_END: self.end_date().timestamp(),
-                dataformat.TRACKER: tracker_data,
-            }
-        return metadata
-
     def to_dict(self) -> dict:
         return {
             DATA: {frame.frame: frame.to_dict() for frame in self.frames},
         }
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return str(self.file)
+
 
 class Splitter:
+    # TODO splitter could be removed later, since files are processed separately now
     def split(self, tracks: dict[str, dict]) -> dict[str, list[dict]]:
         detections = self.flatten(tracks)
         detections.sort(
@@ -233,15 +290,21 @@ class DetectionParser:
         return detections
 
 
-class FrameGroupParser:
-    def __init__(
-        self, input_file_path: Path, recorded_start_date: datetime, hostname: str
-    ) -> None:
-        self.input_file_path = input_file_path
-        self.recorded_start_date = recorded_start_date
-        self.hostname = hostname
+class FrameChunkParser:
+    @staticmethod
+    def parse(
+        file_path: Path,
+        frame_offset: int = 0,
+    ) -> FrameChunk:
+        input: dict[int, dict[str, Any]] = read_json(file_path)[DATA]
+        return FrameChunkParser.convert(input, file_path, frame_offset)
 
-    def convert(self, input: dict[int, dict[str, Any]]) -> FrameGroup:
+    @staticmethod
+    def convert(
+        input: dict[int, dict[str, Any]],
+        file_path: Path,
+        frame_offset: int = 0,
+    ) -> FrameChunk:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
@@ -249,30 +312,22 @@ class FrameGroupParser:
             data_detections = value[DETECTIONS]
             detections = detection_parser.convert(data_detections)
             parsed_frame = Frame(
-                int(key),
+                int(key) + frame_offset,
                 occurrence=occurrence,
-                input_file_path=self.input_file_path,
+                input_file_path=file_path,
                 detections=detections,
             )
             frames.append(parsed_frame)
 
         frames.sort(key=lambda frame: (frame.occurrence, frame.frame))
-        return FrameGroup(frames, order_key=self.order_key(), hostname=self.hostname)
-
-    def order_key(self) -> str:
-        return self.input_file_path.parent.as_posix()
-
-
-@dataclass(frozen=True)
-class PreprocessResult:
-    frame_groups: list[FrameGroup]
-    metadata: dict[str, dict]
+        return FrameChunk(file_path, frames)
 
 
 class Preprocess:
-    """Preprocess otdet files before running track. Input files belonging to the same
-    recording will be merged together. The time gap to separate two recordings from
-    each other is defined by `self.time_without_frames`.
+    """Preprocess otdet file metadata (recording time interval) before running track.
+    Input files belonging to the same recording will be merged together.
+    The time gap to separate two recordings from each other is defined by
+    `self.time_without_frames`.
 
     Returns:
         Preprocess: preprocessor for tracking
@@ -281,66 +336,66 @@ class Preprocess:
     def __init__(self, time_without_frames: timedelta = timedelta(minutes=1)) -> None:
         self.time_without_frames = time_without_frames
 
-    def run(self, files: list[Path]) -> PreprocessResult:
-        """Read all input files, parse the content and merge the frame groups belonging
-        together.
+    def run(self, files: list[Path]) -> list[FrameGroup]:
+        """Read metadata of all input files,
+        parse the content and merge the frame groups belonging together.
 
         Args:
             files (list[Path]): list of input files
 
         Returns:
-            PreprocessResult: merged frame groups and metadata per file
+            list[FrameGroup]: merged frame groups sorted by start date
         """
-        input_data = {}
-        for file in files:
-            input = read_json(file)
-            input_data[file] = input
-        groups, metadata = self.process(input_data)
-        return PreprocessResult(frame_groups=groups, metadata=metadata)
 
-    def process(
-        self, input: dict[Path, dict]
-    ) -> Tuple[list[FrameGroup], dict[str, dict]]:
-        """Parse input and merge frame groups belonging together.
+        groups = self.process(self._read_input(files))
+        return sorted(groups, key=lambda r: r.start_date())
+
+    def process(self, input: dict[Path, dict]) -> list[FrameGroup]:
+        """Process given otdet files:
+        Create FrameGroup for each file then merge frame groups belonging together.
 
         Args:
-            input (dict[Path, dict]): input by input file path
+            files (list[Path]): list of file paths
 
         Returns:
-            Tuple[list[FrameGroup], dict[str, dict]]: parsed and merged frame groups
+            list[FrameGroup]: parsed and merged frame groups
         """
-        all_groups, metadata = self._parse_frame_groups(input)
+        all_groups = [
+            self._parse_frame_group(path, metadata) for path, metadata in input.items()
+        ]
         if len(all_groups) == 0:
-            return [], metadata
-        return self._merge_groups(all_groups), metadata
+            return []
+        return self._merge_groups(all_groups)
 
-    def _parse_frame_groups(
-        self, input: dict[Path, dict]
-    ) -> Tuple[list[FrameGroup], dict[str, dict]]:
-        """Parse input to frame groups. Every input file belongs to one frame group.
+    def _read_input(self, files: list[Path]) -> dict[Path, dict]:
+        return {path: read_json_bz2_metadata(path) for path in files}
+
+    def _parse_frame_group(self, file_path: Path, metadata: dict) -> FrameGroup:
+        """Read and parse metadata of the given file to a FrameGroup
+        covering the recording time interval defined by:
+        - the recorded start date and
+        - the expected duration given in the metadata
 
         Args:
-            input (dict[Path, dict]): read in input (otdet)
+            file_path (Path): path of otdet file
+            metadata (dict): metadata of otdet file
 
         Returns:
-            Tuple[list[FrameGroup], dict[str, dict]]: parsed input and metadata per file
+            list[FrameGroup]: parsed input and metadata per file
         """
-        all_groups: list[FrameGroup] = []
-        metadata: dict[str, dict] = {}
-        for file_path, recording in input.items():
-            file_metadata = get_metadata(otdict=recording)
-            metadata[file_path.as_posix()] = file_metadata
-            hostname = self.get_hostname(file_metadata)
-            start_date: datetime = self.extract_start_date_from(recording)
 
-            data: dict[int, dict[str, Any]] = recording[DATA]
-            frame_group = FrameGroupParser(
-                file_path,
-                recorded_start_date=start_date,
-                hostname=hostname,
-            ).convert(data)
-            all_groups.append(frame_group)
-        return all_groups, metadata
+        start_date: datetime = self.extract_start_date_from(metadata)
+        duration: timedelta = self.extract_expected_duration_from(metadata)
+        end_date: datetime = start_date + duration
+        hostname = self.get_hostname(metadata)
+
+        return FrameGroup(
+            start_date=start_date,
+            end_date=end_date,
+            file=file_path,
+            metadata=metadata,
+            hostname=hostname,
+        )
 
     @staticmethod
     def get_hostname(file_metadata: dict) -> str:
@@ -376,6 +431,8 @@ class Preprocess:
         Returns:
             list[FrameGroup]: list of merged frame groups
         """
+        assert len(all_groups) >= 1
+
         merged_groups = []
         sorted_groups = sorted(all_groups, key=lambda group: group.start_date())
         last_group = sorted_groups[0]
@@ -395,8 +452,14 @@ class Preprocess:
         merged_groups.append(last_group)
         return merged_groups
 
-    def extract_start_date_from(self, recording: dict) -> datetime:
-        if RECORDED_START_DATE in recording[METADATA][VIDEO].keys():
-            recorded_start_date = recording[METADATA][VIDEO][RECORDED_START_DATE]
+    def extract_start_date_from(self, metadata: dict) -> datetime:
+        if RECORDED_START_DATE in metadata[VIDEO].keys():
+            recorded_start_date = metadata[VIDEO][RECORDED_START_DATE]
             return parse_datetime(recorded_start_date)
         return MISSING_START_DATE
+
+    def extract_expected_duration_from(self, metadata: dict) -> timedelta:
+        if EXPECTED_DURATION in metadata[VIDEO].keys():
+            expected_duration = metadata[VIDEO][EXPECTED_DURATION]
+            return timedelta(seconds=int(expected_duration))
+        return MISSING_EXPECTED_DURATION

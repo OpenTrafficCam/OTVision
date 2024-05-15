@@ -1,6 +1,7 @@
 """
 OTVision helpers for filehandling
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -23,13 +24,14 @@ import logging
 import shutil
 import time
 from pathlib import Path
-from typing import Union
+from typing import Iterable, Union
 
+import ijson
 import ujson
 
 from OTVision import dataformat
 from OTVision.config import CONFIG
-from OTVision.dataformat import INPUT_FILE_PATH
+from OTVision.dataformat import INPUT_FILE_PATH, METADATA
 from OTVision.helpers.log import LOGGER_NAME
 
 log = logging.getLogger(LOGGER_NAME)
@@ -169,6 +171,32 @@ def _remove_dir(dir_to_remove: Path) -> None:
         else:
             _remove_dir(path)
     dir_to_remove.rmdir()
+
+
+def read_json_bz2_event_stream(path: Path) -> Iterable[tuple[str, str, str]]:
+    """
+    Provide lazy data stream reading the bzip2 compressed file
+    at the given path and interpreting it as json objects.
+    """
+    # TODO error handling
+    stream = bz2.BZ2File(path)
+    return ijson.parse(stream)
+
+
+def metadata_from_json_events(parse_events: Iterable[tuple[str, str, str]]) -> dict:
+    """
+    Extract the metadata block of the ottrk data format
+    from the given json parser event stream.
+    """
+    result: dict
+    for data in ijson.items(parse_events, METADATA):
+        result = data
+        break
+    return result
+
+
+def read_json_bz2_metadata(path: Path) -> dict:
+    return metadata_from_json_events(read_json_bz2_event_stream(path))
 
 
 def read_json(
