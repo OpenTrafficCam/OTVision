@@ -40,6 +40,14 @@ ENCODING = "UTF-8"
 COMPRESSED_FILETYPE = ".bz2"
 
 
+START_DATE = "start_date"
+FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).*"
+HOSTNAME = "hostname"
+FULL_FILE_NAME_PATTERN = (
+    r"(?P<hostname>.*)_(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).*"
+)
+
+
 def get_files(
     paths: list[Path],
     filetypes: Union[list[str], None] = None,
@@ -520,3 +528,7 @@ def unzip(file: Path) -> Path:
     directory = file.with_suffix("")
     shutil.unpack_archive(file, directory)
     return directory
+
+
+class InproperFormattedFilename(Exception):
+    pass

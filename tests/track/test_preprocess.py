@@ -33,8 +33,9 @@ from OTVision.track.preprocess import (
     Splitter,
 )
 
+DEFAULT_HOSTNAME = "hostname"
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
-DEFAULT_INPUT_FILE_PATH = Path("input-file.otdet")
+DEFAULT_INPUT_FILE_PATH = Path(f"{DEFAULT_HOSTNAME}_input-file.otdet")
 DEFAULT_LABEL = "car"
 DEFAULT_CONFIDENCE = 1.0
 DEFAULT_X = 512.0
@@ -272,7 +273,7 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = Path(f"{order_key}/file-name.otdet")
+        path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-00.otdet")
         result: FrameChunk = FrameChunkParser.convert(input, path)
 
         expected_result = FrameChunk(
@@ -294,7 +295,7 @@ class TestFrameParser:
         input = input_builder.build()
 
         order_key = "/some/path/to"
-        path = Path(f"{order_key}/file-name.otdet")
+        path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-00.otdet")
         result: FrameChunk = FrameChunkParser.convert(input, path, frame_offset=5)
 
         expected_result = FrameChunk(
@@ -332,7 +333,7 @@ class TestFrameParser:
 class TestPreprocess:
     def test_preprocess_single_file(self) -> None:
         order_key = "order-key"
-        file_path = Path(f"{order_key}/first-file.otdet")
+        file_path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-01.otdet")
         start_date = datetime(2022, 5, 4, 12, 0, 1)
         builder = DataBuilder(
             input_file_path=file_path,
@@ -358,7 +359,8 @@ class TestPreprocess:
 
     def test_preprocess_multiple_files(self) -> None:
         order_key = "order-key"
-        first_file_path = Path(f"{order_key}/first-file.otdet")
+        hostname = "first-host"
+        first_file_path = Path(f"{order_key}/{hostname}_2022-05-04_12-00-01.otdet")
         first_start_date = datetime(2022, 5, 4, 12, 0, 1, tzinfo=timezone.utc)
         first_end_date = datetime(2022, 5, 4, 12, 0, 2, tzinfo=timezone.utc)
         first_builder = DataBuilder(
@@ -368,7 +370,7 @@ class TestPreprocess:
         first_builder.append_classified_frame()
         first_detections = first_builder.build_ot_det()
 
-        second_file_path = Path(f"{order_key}/second-file.otdet")
+        second_file_path = Path(f"{order_key}/{hostname}_2022-05-04_12-00-00.otdet")
         second_start_date = datetime(2022, 5, 4, 12, 0, 0, tzinfo=timezone.utc)
         second_builder = DataBuilder(
             input_file_path=second_file_path,
@@ -377,7 +379,7 @@ class TestPreprocess:
         second_builder.append_classified_frame()
         second_detections = second_builder.build_ot_det()
 
-        third_file_path = Path(f"{order_key}/third-file.otdet")
+        third_file_path = Path(f"{order_key}/{hostname}_2022-05-04_13-00-01.otdet")
         third_start_date = datetime(2022, 5, 4, 13, 0, 1, tzinfo=timezone.utc)
         third_end_date = datetime(2022, 5, 4, 13, 0, 2, tzinfo=timezone.utc)
         third_builder = DataBuilder(
@@ -399,8 +401,10 @@ class TestPreprocess:
         assert len(merged_groups) == 2
         assert merged_groups[0].start_date() == second_start_date
         assert merged_groups[0].end_date() == first_end_date
+        assert merged_groups[0].hostname == hostname
         assert merged_groups[1].start_date() == third_start_date
         assert merged_groups[1].end_date() == third_end_date
+        assert merged_groups[1].hostname == hostname
 
         assert merged_groups[0]._files_metadata == {
             first_file_path.as_posix(): {
@@ -459,19 +463,23 @@ class TestFrameGroup:
 
         assert merge_first_second.start_date() == first_start
         assert merge_first_second.end_date() == second_end
+        assert merge_first_second.hostname == DEFAULT_HOSTNAME
         assert merge_first_second.files == merge_second_first.files
         assert merge_first_second.start_date() == merge_second_first.start_date()
         assert merge_first_second.end_date() == merge_second_first.end_date()
+        assert merge_first_second.hostname == merge_second_first.hostname
 
     def _create_frame_group(
         self,
         start_date: datetime = DEFAULT_START_DATE,
         end_date: datetime = DEFAULT_START_DATE,
+        hostname: str = DEFAULT_HOSTNAME,
         input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
     ) -> FrameGroup:
         return FrameGroup(
             start_date=start_date,
             end_date=end_date,
+            hostname=hostname,
             file=input_file_path,
             metadata={
                 VIDEO: {
@@ -489,17 +497,36 @@ class TestSplitter:
         input_builder.append_classified_frame()
         input_builder.append_non_classified_frame()
         input_builder.append_classified_frame()
-        input = input_builder.build_as_detections()
-        frames = input.to_dict()
+
+        expected_result, tracked_frames = self.create_test_data(input_builder)
+
+        splitter = Splitter()
+        result = splitter.split(tracked_frames)
+
+        assert result == expected_result
+
+    @staticmethod
+    def create_test_data(input_builder: DataBuilder) -> tuple[dict, dict]:
+        frames = input_builder.build_as_detections().to_dict()
         track_id = "1"
-        tracked_frames: dict[str, dict] = {}
-        tracked_frames["1"] = {
-            key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+        tracked_frames: dict[str, dict] = {
+            "1": {
+                key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+            }
         }
-        expected_result = {}
-        expected_result[str(DEFAULT_INPUT_FILE_PATH)] = [
-            value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
-        ]
+        expected_result = {
+            str(DEFAULT_INPUT_FILE_PATH): [
+                value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
+            ]
+        }
+        return expected_result, tracked_frames
+
+    def test_split_with_empty_frames_at_the_beginning(self) -> None:
+        input_builder = DataBuilder()
+        input_builder.next_key()
+        input_builder.append_classified_frame()
+
+        expected_result, tracked_frames = self.create_test_data(input_builder)
 
         splitter = Splitter()
         result = splitter.split(tracked_frames)
