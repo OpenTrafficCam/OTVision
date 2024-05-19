@@ -50,7 +50,6 @@ from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import (
     FrameChunk,
     FrameChunkParser,
-    FrameGroup,
     FrameIndexer,
     Preprocess,
 )
@@ -257,16 +256,12 @@ def main(
             frame_offset = chunk.last_frame_id() + 1
 
             for finished_chunk in track_result_store.get_finished_results():
-                mark_and_write_results(
-                    finished_chunk, frame_group, track_result_store, overwrite
-                )
+                mark_and_write_results(finished_chunk, track_result_store, overwrite)
 
         # write last files of frame group
         # even though some tracks mights still be active
         for finished_chunk in track_result_store._tracked_chunks:
-            mark_and_write_results(
-                finished_chunk, frame_group, track_result_store, overwrite
-            )
+            mark_and_write_results(finished_chunk, track_result_store, overwrite)
 
         log.info("Successfully tracked and wrote ")
 
@@ -307,7 +302,6 @@ def tracker_metadata(
 
 def mark_and_write_results(
     chunk: TrackedChunk,
-    frame_group: FrameGroup,
     result_store: TrackingResultStore,
     overwrite: bool,
 ) -> None:
@@ -317,17 +311,15 @@ def mark_and_write_results(
     mark_last_detections_as_finished(chunk, result_store)
 
     # write marked detections to track file and delete the data
-
     file_path = chunk.file_path
 
-    # Split into files of group
+    # reindex frames before writing ottrk file
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
     serializable_detections: list[dict] = FrameIndexer().reindex(
         chunk._detections, frame_offset=chunk.frame_offset
     )
 
     output = build_output(
-        str(file_path),
         serializable_detections,
         chunk.metadata,
         result_store.tracking_run_id,
@@ -419,14 +411,11 @@ def mark_last_detections_as_finished(
 
 
 def build_output(
-    file_path: str,
     detections: list[dict],
-    metadata: dict[str, dict],
+    metadata: dict,
     tracking_run_id: str,
     frame_group_id: int,
 ) -> dict:
-    metadata[file_path][dataformat.TRACKING][
-        dataformat.TRACKING_RUN_ID
-    ] = tracking_run_id
-    metadata[file_path][dataformat.TRACKING][dataformat.FRAME_GROUP] = frame_group_id
-    return {METADATA: metadata[file_path], DATA: {DETECTIONS: detections}}
+    metadata[dataformat.TRACKING][dataformat.TRACKING_RUN_ID] = tracking_run_id
+    metadata[dataformat.TRACKING][dataformat.FRAME_GROUP] = frame_group_id
+    return {METADATA: metadata, DATA: {DETECTIONS: detections}}
