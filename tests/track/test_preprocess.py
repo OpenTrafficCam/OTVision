@@ -29,8 +29,8 @@ from OTVision.track.preprocess import (
     FrameChunk,
     FrameChunkParser,
     FrameGroup,
+    FrameIndexer,
     Preprocess,
-    Splitter,
 )
 
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
@@ -496,13 +496,12 @@ class TestSplitter:
         tracked_frames["1"] = {
             key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
         }
-        expected_result = {}
-        expected_result[str(DEFAULT_INPUT_FILE_PATH)] = [
+        expected_result = [
             value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
         ]
 
-        splitter = Splitter()
-        result = splitter.split(tracked_frames)
+        indexer = FrameIndexer()
+        result = indexer.reindex(tracked_frames, frame_offset=0)
 
         assert result == expected_result
 
@@ -510,7 +509,7 @@ class TestSplitter:
         tracked_frames: dict[str, dict] = {}
         expected_result: dict[str, list[dict]] = {}
 
-        splitter = Splitter()
-        result = splitter.split(tracked_frames)
+        indexer = FrameIndexer()
+        result = indexer.reindex(tracked_frames, frame_offset=0)
 
         assert result == expected_result

@@ -51,8 +51,8 @@ from OTVision.track.preprocess import (
     FrameChunk,
     FrameChunkParser,
     FrameGroup,
+    FrameIndexer,
     Preprocess,
-    Splitter,
 )
 
 from .iou import TrackedDetections, TrackingResult, id_generator, track_iou
@@ -68,7 +68,9 @@ class TrackedChunk(TrackedDetections):
     def __init__(
         self,
         detections: TrackedDetections,
+        file_path: Path,
         frame_group_id: int,
+        frame_offset: int,
         metadata: dict,
     ) -> None:
         super().__init__(
@@ -76,7 +78,8 @@ class TrackedChunk(TrackedDetections):
             detections._detected_ids,
             detections._active_track_ids,
         )
-
+        self.file_path = file_path
+        self.frame_offset = frame_offset
         self._frame_group_id = frame_group_id
         self.metadata = metadata
 
@@ -97,14 +100,18 @@ class TrackingResultStore:
     def store_tracking_result(
         self,
         tracking_result: TrackingResult,
+        file_path: Path,
         frame_group_id: int,
+        frame_offset: int,
         metadata: dict,
     ) -> None:
         # store tracking results
         self._tracked_chunks.append(
             TrackedChunk(
                 detections=tracking_result.tracked_detections,
+                file_path=file_path,
                 frame_group_id=frame_group_id,
+                frame_offset=frame_offset,
                 metadata=metadata,
             )
         )
@@ -217,7 +224,6 @@ def main(
 
             # read detection data
             chunk = FrameChunkParser.parse(file_path, frame_offset)
-            frame_offset = chunk.last_frame_id() + 1
 
             if skip_existing_output_files(chunk, overwrite, file_type):
                 continue
@@ -242,10 +248,13 @@ def main(
 
             track_result_store.store_tracking_result(
                 tracking_result,
+                file_path=file_path,
                 frame_group_id=frame_group_id,
+                frame_offset=frame_offset,
                 metadata=frame_group.metadata_for(file_path),
             )
             log.debug(f"Successfully tracked {chunk}")
+            frame_offset = chunk.last_frame_id() + 1
 
             for finished_chunk in track_result_store.get_finished_results():
                 mark_and_write_results(
@@ -308,45 +317,31 @@ def mark_and_write_results(
     mark_last_detections_as_finished(chunk, result_store)
 
     # write marked detections to track file and delete the data
-    write_track_file(
-        tracks_px=chunk._detections,
-        metadata=frame_group._files_metadata,
-        tracking_run_id=result_store.tracking_run_id,
-        frame_group_id=chunk._frame_group_id,
-        overwrite=overwrite,
-    )
-    del chunk._detections
 
+    file_path = chunk.file_path
 
-def write_track_file(
-    tracks_px: dict,
-    metadata: dict,
-    tracking_run_id: str,
-    frame_group_id: int,
-    overwrite: bool,
-) -> None:
     # Split into files of group
     file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
-    tracks_per_file: dict[str, list[dict]] = Splitter().split(tracks_px)
-    for (
-        file_path,
-        serializable_detections,
-    ) in tracks_per_file.items():  # should be only file!
-        output = build_output(
-            file_path,
-            serializable_detections,
-            metadata,
-            tracking_run_id,
-            frame_group_id,
-        )
-        write_json(
-            dict_to_write=output,
-            file=Path(file_path),
-            filetype=file_type,
-            overwrite=overwrite,
-        )
+    serializable_detections: list[dict] = FrameIndexer().reindex(
+        chunk._detections, frame_offset=chunk.frame_offset
+    )
 
-        log.info(f"Successfully tracked and wrote {file_path}")
+    output = build_output(
+        str(file_path),
+        serializable_detections,
+        chunk.metadata,
+        result_store.tracking_run_id,
+        chunk._frame_group_id,
+    )
+    write_json(
+        dict_to_write=output,
+        file=Path(file_path),
+        filetype=file_type,
+        overwrite=overwrite,
+    )
+
+    log.info(f"Successfully tracked and wrote {file_path}")
+    del chunk._detections
 
 
 def track(

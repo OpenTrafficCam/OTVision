@@ -220,10 +220,55 @@ class FrameChunk:
         return str(self.file)
 
 
-class Splitter:
-    # TODO splitter could be removed later, since files are processed separately now
-    def split(self, tracks: dict[str, dict]) -> dict[str, list[dict]]:
-        detections = self.flatten(tracks)
+# class Splitter:
+#    # TODO splitter could be removed later, since files are processed separately now
+#    def split(self, tracks: dict[str, dict]) -> dict[str, list[dict]]:
+#        detections = self.flatten(tracks)
+#        detections.sort(
+#            key=lambda detection: (
+#                detection[INPUT_FILE_PATH],
+#                detection[FRAME],
+#                detection[TRACK_ID],
+#            )
+#        )
+#        current_group_detections: list[dict] = []
+#        current_input_path = ""
+#        groups: dict[str, list[dict]] = {}
+#        frame_offset = 0
+#        for detection in detections:
+#            if detection[INPUT_FILE_PATH] != current_input_path:
+#                if len(current_group_detections) > 0:
+#                    groups[current_input_path] = current_group_detections
+#                current_group_detections = []
+#                current_input_path = detection[INPUT_FILE_PATH]
+#               frame_offset = detection[FRAME] - 1
+#           detection[FRAME] = detection[FRAME] - frame_offset
+#           current_group_detections.append(detection)
+#       if current_input_path:
+#            groups[current_input_path] = current_group_detections
+#        return groups#
+#
+#    def flatten(self, frames: dict[str, dict]) -> list[dict]:
+#        detections = []
+#        for track in frames.values():
+#            for detection in track.values():
+#                detections.append(detection)
+#        return detections
+
+
+class FrameIndexer:
+    def reindex(self, frames: dict[str, dict], frame_offset: int) -> list[dict]:
+        detections = []
+        for track in frames.values():
+            for detection in track.values():
+                detection[FRAME] = detection[FRAME] - frame_offset
+                detections.append(detection)
+
+        if len(detections) == 0:
+            return []
+
+        assert len({detection[INPUT_FILE_PATH] for detection in detections}) == 1
+
         detections.sort(
             key=lambda detection: (
                 detection[INPUT_FILE_PATH],
@@ -231,28 +276,7 @@ class Splitter:
                 detection[TRACK_ID],
             )
         )
-        current_group_detections: list[dict] = []
-        current_input_path = ""
-        groups: dict[str, list[dict]] = {}
-        frame_offset = 0
-        for detection in detections:
-            if detection[INPUT_FILE_PATH] != current_input_path:
-                if len(current_group_detections) > 0:
-                    groups[current_input_path] = current_group_detections
-                current_group_detections = []
-                current_input_path = detection[INPUT_FILE_PATH]
-                frame_offset = detection[FRAME] - 1
-            detection[FRAME] = detection[FRAME] - frame_offset
-            current_group_detections.append(detection)
-        if current_input_path:
-            groups[current_input_path] = current_group_detections
-        return groups
 
-    def flatten(self, frames: dict[str, dict]) -> list[dict]:
-        detections = []
-        for track in frames.values():
-            for detection in track.values():
-                detections.append(detection)
         return detections
 
 
