@@ -112,8 +112,8 @@ def center(obj: dict) -> tuple[float, float]:
 def id_generator() -> Iterator[int]:
     ID: int = 0
     while True:
-        yield ID
         ID += 1
+        yield ID
 
 
 def track_iou(

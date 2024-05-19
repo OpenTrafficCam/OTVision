@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,6 +12,7 @@ from OTVision.dataformat import (
     DATE_FORMAT,
     DETECTIONS,
     EXPECTED_DURATION,
+    FILENAME,
     FRAME,
     INPUT_FILE_PATH,
     INTERPOLATED_DETECTION,
@@ -28,7 +30,13 @@ from OTVision.helpers.date import (
     parse_date_string_to_utc_datime,
     parse_timestamp_string_to_utc_datetime,
 )
-from OTVision.helpers.files import read_json, read_json_bz2_metadata
+from OTVision.helpers.files import (
+    FULL_FILE_NAME_PATTERN,
+    HOSTNAME,
+    InproperFormattedFilename,
+    read_json,
+    read_json_bz2_metadata,
+)
 
 MISSING_START_DATE = datetime(1900, 1, 1)
 MISSING_EXPECTED_DURATION = timedelta(minutes=15)
@@ -120,6 +128,7 @@ class FrameGroup:
         self,
         start_date: datetime,
         end_date: datetime,
+        hostname: str,
         file: Path | None,
         metadata: dict | None,
     ) -> None:
@@ -129,6 +138,7 @@ class FrameGroup:
             self._files_metadata[file.as_posix()] = metadata
             self._files.append(file)
 
+        self.hostname = hostname
         self._start_date = start_date
         self._end_date = end_date
 
@@ -155,9 +165,12 @@ class FrameGroup:
             return self._merge(other, self)
 
     def _merge(self, first: "FrameGroup", second: "FrameGroup") -> "FrameGroup":
+        if first.hostname != second.hostname:
+            raise ValueError("Hostname of FrameGroups does not match")
         merged = FrameGroup(
             start_date=first._start_date,
             end_date=second._end_date,
+            hostname=self.hostname,
             file=None,
             metadata=None,
         )
@@ -261,6 +274,9 @@ class FrameIndexer:
         detections = []
         for track in frames.values():
             for detection in track.values():
+                # Take into account that consecutive tracks over more than one
+                # video must have their frame reset to one when splitting.
+                # This is done by taking the frame_offset into account.
                 detection[FRAME] = detection[FRAME] - frame_offset
                 detections.append(detection)
 
@@ -393,10 +409,39 @@ class Preprocess:
         start_date: datetime = self.extract_start_date_from(metadata)
         duration: timedelta = self.extract_expected_duration_from(metadata)
         end_date: datetime = start_date + duration
+        hostname = self.get_hostname(metadata)
 
         return FrameGroup(
-            start_date=start_date, end_date=end_date, file=file_path, metadata=metadata
+            start_date=start_date,
+            end_date=end_date,
+            file=file_path,
+            metadata=metadata,
+            hostname=hostname,
         )
+
+    @staticmethod
+    def get_hostname(file_metadata: dict) -> str:
+        """Retrieve hostname from the given file metadata.
+
+        Args:
+            file_metadata (dict): metadata content.
+
+        Raises:
+            InproperFormattedFilename: if the filename is not formatted as expected, an
+                exception will be raised.
+
+        Returns:
+            str: the hostname
+        """
+        video_name = Path(file_metadata[VIDEO][FILENAME]).name
+        match = re.search(
+            FULL_FILE_NAME_PATTERN,
+            video_name,
+        )
+        if match:
+            return match.group(HOSTNAME)
+
+        raise InproperFormattedFilename(f"Could not parse {video_name}.")
 
     def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
         """Merge frame groups whose start and end times are close to each other. Close
@@ -410,14 +455,18 @@ class Preprocess:
         """
         assert len(all_groups) >= 1
 
-        sorted_groups = sorted(all_groups, key=lambda r: r.start_date())
         merged_groups = []
-
+        sorted_groups = sorted(all_groups, key=lambda group: group.start_date())
         last_group = sorted_groups[0]
         for current_group in sorted_groups[1:]:
-            if (
-                current_group.start_date() - last_group.end_date()
-            ) <= self.time_without_frames:
+            if last_group.hostname != current_group.hostname:
+                merged_groups.append(last_group)
+                last_group = current_group
+            elif (
+                timedelta(seconds=0)
+                <= (current_group.start_date() - last_group.end_date())
+                <= self.time_without_frames
+            ):
                 last_group = last_group.merge(current_group)
             else:
                 merged_groups.append(last_group)
