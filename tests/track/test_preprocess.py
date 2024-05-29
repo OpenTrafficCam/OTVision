@@ -29,8 +29,8 @@ from OTVision.track.preprocess import (
     FrameChunk,
     FrameChunkParser,
     FrameGroup,
+    FrameIndexer,
     Preprocess,
-    Splitter,
 )
 
 DEFAULT_HOSTNAME = "hostname"
@@ -500,44 +500,51 @@ class TestSplitter:
 
         expected_result, tracked_frames = self.create_test_data(input_builder)
 
-        splitter = Splitter()
-        result = splitter.split(tracked_frames)
+        indexer = FrameIndexer()
+        result = indexer.reindex(tracked_frames, frame_offset=0)
 
         assert result == expected_result
 
     @staticmethod
-    def create_test_data(input_builder: DataBuilder) -> tuple[dict, dict]:
+    def create_test_data(
+        input_builder: DataBuilder,
+        first_frame: int = 1,
+        offset: int = 0,
+    ) -> tuple[list, dict]:
         frames = input_builder.build_as_detections().to_dict()
         track_id = "1"
         tracked_frames: dict[str, dict] = {
-            "1": {
+            str(first_frame): {
                 key: value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
             }
         }
-        expected_result = {
-            str(DEFAULT_INPUT_FILE_PATH): [
-                value | {TRACK_ID: track_id} for key, value in frames[DATA].items()
-            ]
-        }
+        expected_result = [
+            value | {TRACK_ID: track_id, FRAME: value[FRAME] - offset}
+            for key, value in frames[DATA].items()
+        ]
+
         return expected_result, tracked_frames
 
     def test_split_with_empty_frames_at_the_beginning(self) -> None:
         input_builder = DataBuilder()
         input_builder.next_key()
         input_builder.append_classified_frame()
+        frame_offset = 2
 
-        expected_result, tracked_frames = self.create_test_data(input_builder)
+        expected_result, tracked_frames = self.create_test_data(
+            input_builder, first_frame=3, offset=frame_offset
+        )
 
-        splitter = Splitter()
-        result = splitter.split(tracked_frames)
+        indexer = FrameIndexer()
+        result = indexer.reindex(tracked_frames, frame_offset)
 
         assert result == expected_result
 
     def test_split_empty(self) -> None:
         tracked_frames: dict[str, dict] = {}
-        expected_result: dict[str, list[dict]] = {}
+        expected_result: list[dict] = []
 
-        splitter = Splitter()
-        result = splitter.split(tracked_frames)
+        indexer = FrameIndexer()
+        result = indexer.reindex(tracked_frames, frame_offset=0)
 
         assert result == expected_result

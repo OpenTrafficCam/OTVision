@@ -132,7 +132,7 @@ class Yolov8(ObjectDetection):
         for prediction_result in tqdm(
             self._predict(file),
             desc="Detected frames",
-            unit="frames",
+            unit=" frames",
             total=length,
         ):
             frames.append(self._parse_detections(prediction_result.boxes))
