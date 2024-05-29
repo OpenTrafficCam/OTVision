@@ -74,7 +74,7 @@ def main(
     if not video_files:
         raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
 
-    for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
+    for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
         if not overwrite and detections_file.is_file():

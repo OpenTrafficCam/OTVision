@@ -201,7 +201,7 @@ def main(
     for frame_group_id, frame_group in tqdm(
         enumerate(preprocessed),
         desc="Tracked frame groups",
-        unit="framegroup",
+        unit=" framegroup",
     ):
         print()
         print(f"Process frame group {frame_group_id}")

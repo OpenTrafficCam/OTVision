@@ -157,7 +157,7 @@ def track_iou(
     vehIDs_finished: list = []
     new_detections: dict = {}
 
-    for frame_num in tqdm(detections, desc="Tracked frames", unit="frames"):
+    for frame_num in tqdm(detections, desc="Tracked frames", unit=" frames"):
         detections_frame = detections[frame_num][DETECTIONS]
         # apply low threshold to detections
         dets = [det for det in detections_frame if det[CONFIDENCE] >= sigma_l]
@@ -241,7 +241,7 @@ def track_iou(
     last_track_frame: dict[int, int] = defaultdict(lambda: -1)
 
     for frame_num, frame_det in tqdm(
-        new_detections.items(), desc="New detection frames", unit="frames"
+        new_detections.items(), desc="New detection frames", unit=" frames"
     ):
         for vehID, det in frame_det.items():
             det[FINISHED] = False
