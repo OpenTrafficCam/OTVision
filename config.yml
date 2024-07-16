@@ -28,7 +28,7 @@ configurations:
     suffix: "macos"
     output_file_name: OTVision
     additional_requirements:
-      - ""
+      - "coremltools==7.1; sys_platform == 'darwin'"
   - package_path: OTVision
     files:
       - source: "install.cmd"
@@ -43,3 +43,4 @@ configurations:
     output_file_name: OTVision
     additional_requirements:
       - "--extra-index-url https://download.pytorch.org/whl/cu116"
+      - "tensorrt==8.6.1.post1"
