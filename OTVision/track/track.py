@@ -191,7 +191,8 @@ def main(
     print(start_msg)
 
     if not detections_files:
-        raise FileNotFoundError(f"No files of type '{filetypes}' found to track!")
+        log.warning(f"No files of type '{filetypes}' found to track!")
+        return
 
     tracking_run_id = tracking_run_id_generator()
     preprocessor = Preprocess()
