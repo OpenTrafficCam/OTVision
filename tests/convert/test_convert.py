@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 from typing import Generator, TypeVar
@@ -357,14 +358,7 @@ def test_fail_convert_wrong_parameters(
 def test_convert_emptyDirAsParam(test_convert_tmp_dir: Path) -> None:
     empty_dir = test_convert_tmp_dir / "empty"
     empty_dir.mkdir()
-    with pytest.raises(
-        FileNotFoundError, match=r"No files of type 'h264' found to convert!"
-    ):
-        convert(paths=[empty_dir])
 
+    convert(paths=[empty_dir])
 
-def test_convert_emptyListAsParam() -> None:
-    with pytest.raises(
-        FileNotFoundError, match=r"No files of type 'h264' found to convert!"
-    ):
-        convert(paths=[])
+    assert os.listdir(empty_dir) == []

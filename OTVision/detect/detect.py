@@ -72,7 +72,8 @@ def main(
     print(start_msg)
 
     if not video_files:
-        raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
+        log.warning(f"No videos of type '{filetypes}' found to detect!")
+        return
 
     for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])

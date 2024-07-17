@@ -1,6 +1,7 @@
 import bz2
 import copy
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -227,20 +228,14 @@ class TestDetect:
     ) -> None:
         empty_dir = detect_test_tmp_dir / "empty"
         empty_dir.mkdir()
-        with pytest.raises(
-            FileNotFoundError, match=r"No videos of type .* found to detect!"
-        ):
-            detect(
-                paths=[empty_dir],
-                model=yolov8m,
-                expected_duration=DEFAULT_EXPECTED_DURATION,
-            )
 
-    def test_detect_emptyListAsParam(self, yolov8m: Yolov8) -> None:
-        with pytest.raises(
-            FileNotFoundError, match=r"No videos of type .* found to detect!"
-        ):
-            detect(model=yolov8m, paths=[], expected_duration=DEFAULT_EXPECTED_DURATION)
+        detect(
+            paths=[empty_dir],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+        )
+
+        assert os.listdir(empty_dir) == []
 
     def test_detect_create_otdet(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
@@ -283,16 +278,19 @@ class TestDetect:
     def test_detect_error_raised_on_wrong_filetype(
         self, yolov8m: Yolov8, detect_test_tmp_dir: Path
     ) -> None:
-        video_path = detect_test_tmp_dir / "video.vid"
+        video_file_name = "video.vid"
+        detect_error_wrong_filetype_dir = detect_test_tmp_dir / "wrong_filetype"
+        detect_error_wrong_filetype_dir.mkdir()
+        video_path = detect_error_wrong_filetype_dir / video_file_name
         video_path.touch()
-        with pytest.raises(
-            FileNotFoundError, match=r"No videos of type .* found to detect!"
-        ):
-            detect(
-                paths=[video_path],
-                model=yolov8m,
-                expected_duration=DEFAULT_EXPECTED_DURATION,
-            )
+
+        detect(
+            paths=[video_path],
+            model=yolov8m,
+            expected_duration=DEFAULT_EXPECTED_DURATION,
+        )
+
+        assert os.listdir(detect_error_wrong_filetype_dir) == [video_file_name]
 
     def test_detect_bboxes_normalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
