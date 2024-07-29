@@ -14,7 +14,7 @@ PyYAML==6.0
 seaborn==0.12.2
 setuptools==71.1.0
 # Follow instructions at https://pytorch.org to install torch with CUDA
-torch==2.1.2 #  NOTE: Omit if using torch with CUDA and install manually
+torch==2.4.0 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.16.2 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.65.0
 ujson==5.9.0
