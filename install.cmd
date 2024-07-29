@@ -10,5 +10,6 @@ if "x%PYTHON_VERSION:3.10=%"=="x%PYTHON_VERSION%" (
 python -m venv venv
 call venv\Scripts\activate
 python -m pip install --upgrade pip
+pip install --upgrade pip-tools pip wheel
 pip install -r requirements.txt --no-cache-dir%
 deactivate
