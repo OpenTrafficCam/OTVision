@@ -17,6 +17,7 @@ jobs:
     secrets:
       PLATOMO_BUILDER_ACCESS: ${{ secrets.PLATOMO_BUILDER_ACCESS }}
     with:
+      package-path: OTVision
       package-version: nightly
       draft-release: false
       pre-release: true
