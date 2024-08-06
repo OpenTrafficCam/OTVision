@@ -28,18 +28,19 @@ configurations:
     suffix: "macos"
     output_file_name: OTVision
     additional_requirements:
-      - ""
+      - "coremltools==7.1; sys_platform == 'darwin'"
   - package_path: OTVision
     files:
       - source: "install.cmd"
     suffix: "win-cuda"
     output_file_name: otvision
     additional_requirements:
-      - "https://download.pytorch.org/whl/cu116"
+      - "--extra-index-url https://download.pytorch.org/whl/cu116"
   - package_path: OTVision
     files:
       - source: "install.sh"
     suffix: "linux-cuda"
     output_file_name: OTVision
     additional_requirements:
-      - "https://download.pytorch.org/whl/cu116"
+      - "--extra-index-url https://download.pytorch.org/whl/cu116"
+      - "tensorrt==8.6.1.post1"

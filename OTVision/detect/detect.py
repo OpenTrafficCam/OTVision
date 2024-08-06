@@ -30,15 +30,18 @@ from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VID
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import Yolov8
 from OTVision.helpers.date import parse_date_string_to_utc_datime
-from OTVision.helpers.files import get_files, write_json
+from OTVision.helpers.files import (
+    FILE_NAME_PATTERN,
+    START_DATE,
+    InproperFormattedFilename,
+    get_files,
+    write_json,
+)
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
-
-START_DATE = "start_date"
-FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).*"
 
 
 def main(
@@ -69,9 +72,10 @@ def main(
     print(start_msg)
 
     if not video_files:
-        raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
+        log.warning(f"No videos of type '{filetypes}' found to detect!")
+        return
 
-    for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
+    for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
         if not overwrite and detections_file.is_file():
@@ -131,10 +135,6 @@ def add_timestamps(
     detections: dict, video_file: Path, expected_duration: timedelta
 ) -> dict:
     return Timestamper().stamp(detections, video_file, expected_duration)
-
-
-class InproperFormattedFilename(Exception):
-    pass
 
 
 class Timestamper:

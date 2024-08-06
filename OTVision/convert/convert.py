@@ -83,7 +83,8 @@ def main(
     print(start_msg)
 
     if not h264_files:
-        raise FileNotFoundError("No files of type 'h264' found to convert!")
+        log.warning("No files of type 'h264' found to convert!")
+        return
 
     check_ffmpeg()
 
