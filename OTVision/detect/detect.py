@@ -30,20 +30,24 @@ from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VID
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import Yolov8
 from OTVision.helpers.date import parse_date_string_to_utc_datime
-from OTVision.helpers.files import get_files, write_json
+from OTVision.helpers.files import (
+    FILE_NAME_PATTERN,
+    START_DATE,
+    InproperFormattedFilename,
+    get_files,
+    write_json,
+)
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
 
-START_DATE = "start_date"
-FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\..*"
-
 
 def main(
     model: Yolov8,
     paths: list[Path],
+    expected_duration: timedelta,
     filetypes: list[str] = CONFIG[FILETYPES][VID],
     overwrite: bool = CONFIG[DETECT][OVERWRITE],
 ) -> None:
@@ -53,6 +57,8 @@ def main(
     Args:
         model (Yolov8): YOLOv8 detection model.
         paths (list[Path]): List of paths to video files.
+        expected_duration (timedelta): expected duration of the video. All frames are
+            evenly spread across this duration
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
         overwrite (bool, optional): Whether or not to overwrite
@@ -66,9 +72,10 @@ def main(
     print(start_msg)
 
     if not video_files:
-        raise FileNotFoundError(f"No videos of type '{filetypes}' found to detect!")
+        log.warning(f"No videos of type '{filetypes}' found to detect!")
+        return
 
-    for video_file in tqdm(video_files, desc="Detected video files", unit="files"):
+    for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
         detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
 
         if not overwrite and detections_file.is_file():
@@ -83,14 +90,18 @@ def main(
 
         video_width, video_height = get_video_dimensions(video_file)
         video_fps = get_fps(video_file)
+        actual_frames = len(detections)
+        actual_fps = actual_frames / expected_duration.total_seconds()
         otdet = OtdetBuilder(
             conf=model.confidence,
             iou=model.iou,
             video=video_file,
             video_width=video_width,
             video_height=video_height,
-            fps=video_fps,
-            frames=len(detections),
+            expected_duration=expected_duration,
+            recorded_fps=video_fps,
+            actual_fps=actual_fps,
+            actual_frames=actual_frames,
             detection_img_size=model.img_size,
             normalized=model.normalized,
             detection_model=model.weights,
@@ -99,7 +110,7 @@ def main(
             classifications=model.classifications,
         ).build(detections)
 
-        stamped_detections = add_timestamps(otdet, video_file)
+        stamped_detections = add_timestamps(otdet, video_file, expected_duration)
         write_json(
             stamped_detections,
             file=detections_file,
@@ -120,33 +131,36 @@ class FormatNotSupportedError(Exception):
     pass
 
 
-def add_timestamps(detections: dict, video_file: Path) -> dict:
-    return Timestamper().stamp(detections, video_file)
-
-
-class InproperFormattedFilename(Exception):
-    pass
+def add_timestamps(
+    detections: dict, video_file: Path, expected_duration: timedelta
+) -> dict:
+    return Timestamper().stamp(detections, video_file, expected_duration)
 
 
 class Timestamper:
-    def stamp(self, detections: dict, video_file: Path) -> dict:
+    def stamp(
+        self, detections: dict, video_file: Path, expected_duration: timedelta
+    ) -> dict:
         """This method adds timestamps when the frame occurred in real time to each
         frame.
 
         Args:
             detections (dict): dictionary containing all frames
             video_file (Path): path to video file
+            expected_duration (timedelta): expected duration of the video used to
+                calculate the number of actual frames per second
 
         Returns:
             dict: input dictionary with additional occurrence per frame
         """
         start_time = self._get_start_time_from(video_file)
         duration = get_duration(video_file)
-        time_per_frame = self._get_time_per_frame(detections, duration)
+        time_per_frame = self._get_time_per_frame(detections, expected_duration)
         self._update_metadata(detections, start_time, duration)
         return self._stamp(detections, start_time, time_per_frame)
 
-    def _get_start_time_from(self, video_file: Path) -> datetime:
+    @staticmethod
+    def _get_start_time_from(video_file: Path) -> datetime:
         """Parse the given filename and retrieve the start date of the video.
 
         Args:
@@ -171,7 +185,8 @@ class Timestamper:
 
         raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
-    def _get_time_per_frame(self, detections: dict, duration: timedelta) -> timedelta:
+    @staticmethod
+    def _get_time_per_frame(detections: dict, duration: timedelta) -> timedelta:
         """Calculates the duration for each frame. This is done using the total
         duration of the video and the number of frames.
 
@@ -185,8 +200,9 @@ class Timestamper:
         number_of_frames = len(detections[DATA].keys())
         return duration / number_of_frames
 
+    @staticmethod
     def _update_metadata(
-        self, detections: dict, start_time: datetime, duration: timedelta
+        detections: dict, start_time: datetime, duration: timedelta
     ) -> dict:
         detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.timestamp()
         detections[METADATA][VIDEO][LENGTH] = str(duration)

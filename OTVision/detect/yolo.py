@@ -27,7 +27,7 @@ from typing import Generator
 import torch
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
-from ultralytics.yolo.engine.results import Boxes, Results
+from ultralytics.engine.results import Boxes, Results
 
 from OTVision.config import (
     CONF,
@@ -112,7 +112,11 @@ class Yolov8(ObjectDetection):
         Returns:
             dict[int, str]: the classes
         """
-        return self.model.names
+        return (
+            self.model.names
+            if self.model.names is not None
+            else self.model.predictor.model.names
+        )
 
     def detect(self, file: Path) -> list[list[Detection]]:
         """Run object detection on video and return detection result.
@@ -128,7 +132,7 @@ class Yolov8(ObjectDetection):
         for prediction_result in tqdm(
             self._predict(file),
             desc="Detected frames",
-            unit="frames",
+            unit=" frames",
             total=length,
         ):
             frames.append(self._parse_detections(prediction_result.boxes))
@@ -150,7 +154,7 @@ class Yolov8(ObjectDetection):
             stream=True,
             verbose=False,
             batch=-1,
-            agnostic_nms=True
+            agnostic_nms=True,
         )
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:

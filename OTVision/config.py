@@ -21,6 +21,7 @@ OTVision config module for setting default values
 
 import logging
 from dataclasses import dataclass, field
+from datetime import timedelta
 from pathlib import Path
 
 import yaml
@@ -37,6 +38,7 @@ CONF = "CONF"
 CONVERT = "CONVERT"
 DEFAULT_FILETYPE = "DEFAULT_FILETYPE"
 DELETE_INPUT = "DELETE_INPUT"
+ROTATION = "ROTATION"
 DETECT = "DETECT"
 DETECTIONS = "DETECTIONS"
 FILETYPES = "FILETYPES"
@@ -60,6 +62,7 @@ OUTPUT_FILETYPE = "OUTPUT_FILETYPE"
 OVERWRITE = "OVERWRITE"
 PATHS = "PATHS"
 RUN_CHAINED = "RUN_CHAINED"
+EXPECTED_DURATION = "EXPECTED_DURATION"
 REFPTS = "REFPTS"
 SEARCH_SUBDIRS = "SEARCH_SUBDIRS"
 SIGMA_H = "SIGMA_H"
@@ -72,6 +75,7 @@ TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
 VID = "VID"
+VID_ROTATABLE = "VID_ROTATABLE"
 VIDEOS = "VIDEOS"
 WEIGHTS = "WEIGHTS"
 WINDOW = "WINDOW"
@@ -81,26 +85,26 @@ LOG_LEVEL_CONSOLE = "LOG_LEVEL_CONSOLE"
 LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
 LOG_DIR = "LOG_DIR"
 
+"""Default length of a video is 15 minutes."""
+DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
+
 
 @dataclass(frozen=True)
 class _LogConfig:
     log_level_console: str = "WARNING"
     log_level_file: str = "DEBUG"
-    log_dir: Path = Path.cwd()
 
     @staticmethod
     def from_dict(d: dict) -> "_LogConfig":
         return _LogConfig(
             d.get(LOG_LEVEL_CONSOLE, _LogConfig.log_level_console),
             d.get(LOG_LEVEL_FILE, _LogConfig.log_level_file),
-            d.get(LOG_DIR, _LogConfig.log_dir),
         )
 
     def to_dict(self) -> dict:
         return {
             LOG_LEVEL_CONSOLE: self.log_level_console,
             LOG_LEVEL_FILE: self.log_level_file,
-            LOG_DIR: self.log_dir,
         }
 
 
@@ -147,6 +151,9 @@ class _VideoFiletypes:
             self.mp4,
         ]
 
+    def rotatable_to_list(self) -> list:
+        return [self.mov, self.mp4]
+
 
 @dataclass(frozen=True)
 class _ImageFiletypes:
@@ -170,6 +177,7 @@ class _Filetypes:
     def to_dict(self) -> dict:
         return {
             VID: self.video_filetypes.to_list(),
+            VID_ROTATABLE: self.video_filetypes.rotatable_to_list(),
             IMG: self.image_filetypes.to_list(),
             DETECT: [self.detect],
             TRACK: [self.track],
@@ -205,6 +213,7 @@ class _ConvertConfig:
     output_fps: float = 20.0
     fps_from_filename: bool = True
     delete_input: bool = False
+    rotation: int = 0
     overwrite: bool = True
 
     @staticmethod
@@ -217,6 +226,7 @@ class _ConvertConfig:
             d.get(OUTPUT_FPS, _ConvertConfig.output_fps),
             d.get(FPS_FROM_FILENAME, _ConvertConfig.fps_from_filename),
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
+            d.get(ROTATION, _ConvertConfig.rotation),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
         )
 
@@ -229,6 +239,7 @@ class _ConvertConfig:
             OUTPUT_FPS: self.output_fps,
             FPS_FROM_FILENAME: self.fps_from_filename,
             DELETE_INPUT: self.delete_input,
+            ROTATION: self.rotation,
             OVERWRITE: self.overwrite,
         }
 
@@ -280,6 +291,7 @@ class _DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
+    expected_duration: int | None = None
     overwrite: bool = True
     half_precision: bool = False
 
@@ -292,10 +304,14 @@ class _DetectConfig:
             else _DetectConfig.yolo_config
         )
 
+        # TODO: Future work: Raise error if expected_duration is not passed
+        # Change expected duration's type to be strictly int
+
         return _DetectConfig(
             d.get(PATHS, []),
             d.get(RUN_CHAINED, _DetectConfig.run_chained),
             yolo_config,
+            d.get(EXPECTED_DURATION, None),
             d.get(OVERWRITE, _DetectConfig.overwrite),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
         )
@@ -305,6 +321,7 @@ class _DetectConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             YOLO: self.yolo_config.to_dict(),
+            EXPECTED_DURATION: self.expected_duration,
             OVERWRITE: self.overwrite,
             HALF_PRECISION: self.half_precision,
         }
@@ -596,7 +613,6 @@ CONFIG: dict = {}
 CONFIG[LOG] = {}
 CONFIG[LOG][LOG_LEVEL_CONSOLE] = "WARNING"
 CONFIG[LOG][LOG_LEVEL_FILE] = "DEBUG"
-CONFIG[LOG][LOG_DIR] = Path.cwd()
 
 # FOLDERS
 CONFIG[SEARCH_SUBDIRS] = True
@@ -612,6 +628,10 @@ CONFIG[FILETYPES] = {}
 CONFIG[FILETYPES][VID] = [
     ".avi",
     ".mkv",
+    ".mov",
+    ".mp4",
+]
+CONFIG[FILETYPES][VID_ROTATABLE] = [
     ".mov",
     ".mp4",
 ]
@@ -638,6 +658,7 @@ CONFIG[CONVERT][INPUT_FPS] = 20.0
 CONFIG[CONVERT][OUTPUT_FPS] = 20.0
 CONFIG[CONVERT][FPS_FROM_FILENAME] = True
 CONFIG[CONVERT][DELETE_INPUT] = False
+CONFIG[CONVERT][ROTATION] = 0
 CONFIG[CONVERT][OVERWRITE] = True
 
 # DETECT
@@ -656,6 +677,7 @@ CONFIG[DETECT][YOLO][CONF] = 0.25
 CONFIG[DETECT][YOLO][IOU] = 0.45
 CONFIG[DETECT][YOLO][IMG_SIZE] = 640
 CONFIG[DETECT][YOLO][NORMALIZED] = False
+CONFIG[DETECT][EXPECTED_DURATION] = None
 CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
 
@@ -694,6 +716,5 @@ CONFIG[GUI][WINDOW][LOCATION_Y] = 0
 CONFIG[GUI][FRAME_WIDTH] = 80
 CONFIG[GUI][COL_WIDTH] = 50
 PAD = {"padx": 10, "pady": 10}
-
 
 # TODO: #72 Overwrite default config with user config from user.conf (json file)

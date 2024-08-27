@@ -21,18 +21,17 @@ def default_config() -> dict:
 
 
 class TestConfig:
-    default_config = config.CONFIG.copy()
-
     def test_default_config_from_parser_identical_to_dict(
-        self,
+        self, default_config: dict
     ) -> None:
         result = config.Config().to_dict()
-        assert result == self.default_config
+        assert result == default_config
 
     def test_parse_user_config_overwrite_default(
         self, default_config: dict, user_config: Path
     ) -> None:
-        # assert config.CONFIG == self.default_config
+        assert config.CONFIG == default_config
         config.parse_user_config(str(user_config))
+        assert config.CONFIG != default_config
         default_config["DETECT"]["YOLO"]["WEIGHTS"] = "my_weights"
-        assert config.CONFIG == self.default_config
+        assert config.CONFIG == default_config

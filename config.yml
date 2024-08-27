@@ -1,0 +1,46 @@
+base_files:
+  - "LICENSE"
+  - "README.md"
+  - "requirements.txt"
+  - "user_config.otvision.yaml"
+  - "track.py"
+  - "detect.py"
+  - "convert.py"
+configurations:
+  - package_path: OTVision
+    files:
+      - source: "install.cmd"
+    suffix: "win"
+    output_file_name: otvision
+    additional_requirements:
+      - ""
+  - package_path: OTVision
+    files:
+      - source: "install.sh"
+    suffix: "linux"
+    output_file_name: otvision
+    additional_requirements:
+      - ""
+  - package_path: OTVision
+    files:
+      - source: "install.sh"
+        destination: "install.command"
+    suffix: "macos"
+    output_file_name: OTVision
+    additional_requirements:
+      - "coremltools==7.1; sys_platform == 'darwin'"
+  - package_path: OTVision
+    files:
+      - source: "install.cmd"
+    suffix: "win-cuda"
+    output_file_name: otvision
+    additional_requirements:
+      - "--extra-index-url https://download.pytorch.org/whl/cu116"
+  - package_path: OTVision
+    files:
+      - source: "install.sh"
+    suffix: "linux-cuda"
+    output_file_name: OTVision
+    additional_requirements:
+      - "--extra-index-url https://download.pytorch.org/whl/cu116"
+      - "tensorrt==8.6.1.post1"

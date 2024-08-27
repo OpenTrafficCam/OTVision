@@ -40,8 +40,8 @@ from OTVision.config import (
     TRANSFORM,
 )
 from OTVision.helpers.files import (
-    _check_and_update_metadata_inplace,
     get_files,
+    get_metadata,
     read_json,
     replace_filetype,
     write_json,
@@ -112,7 +112,9 @@ def main(
             f"No files of type '{track_filetype}' found to transform!"
         )
 
-    for tracks_file in tqdm(tracks_files, desc="Transformed track files", unit="files"):
+    for tracks_file in tqdm(
+        tracks_files, desc="Transformed track files", unit=" files"
+    ):
         gpkg_file = tracks_file.with_suffix(".gpkg")
 
         if not overwrite and gpkg_file.is_file():
@@ -205,9 +207,8 @@ def read_tracks(tracks_file: Path) -> tuple[pd.DataFrame, dict]:
 
     # Read dicts and turn tracks into DataFrame
     tracks_dict = read_json(tracks_file, filetype=tracks_file.suffix)
-    _check_and_update_metadata_inplace(tracks_dict)
+    metadata_dict = get_metadata(tracks_dict)
     tracks_df = _ottrk_detections_to_df(tracks_dict["data"]["detections"])
-    metadata_dict = tracks_dict["metadata"]
 
     return tracks_df, metadata_dict
 
