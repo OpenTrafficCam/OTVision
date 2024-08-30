@@ -1,5 +1,5 @@
 dill==0.3.8
-geopandas==0.14.3
+geopandas==1.0.1
 ijson==3.3.0
 IPython==8.26.0
 matplotlib==3.7.1
