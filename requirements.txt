@@ -11,7 +11,7 @@ progressbar==2.5
 psutil==6.0.0
 pyogrio==0.5.1
 PyYAML==6.0
-seaborn==0.12.2
+seaborn==0.13.2
 setuptools==71.1.0
 # Follow instructions at https://pytorch.org to install torch with CUDA
 torch==2.4.0 #  NOTE: Omit if using torch with CUDA and install manually
