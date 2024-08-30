@@ -9,7 +9,7 @@ opencv-python==4.9.0.80
 pandas==2.2.2
 progressbar==2.5
 psutil==6.0.0
-pyogrio==0.5.1
+pyogrio==0.9.0
 PyYAML==6.0.2
 seaborn==0.13.2
 setuptools==74.0.0
