@@ -1,6 +1,6 @@
 dill==0.3.8
 geopandas==0.14.3
-ijson==3.2.3
+ijson==3.3.0
 IPython==8.26.0
 matplotlib==3.7.1
 moviepy==1.0.3
