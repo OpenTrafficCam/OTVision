@@ -1,17 +1,10 @@
-dill==0.3.8
 geopandas==1.0.1
 ijson==3.3.0
-IPython==8.26.0
-matplotlib==3.7.1
 moviepy==1.0.3
 numpy==1.26.4
 opencv-python==4.9.0.80
 pandas==2.2.2
-progressbar==2.5
-psutil==6.0.0
-pyogrio==0.9.0
 PyYAML==6.0.2
-seaborn==0.13.2
 setuptools==74.0.0
 # Follow instructions at https://pytorch.org to install torch with CUDA
 torch==2.4.0 #  NOTE: Omit if using torch with CUDA and install manually
