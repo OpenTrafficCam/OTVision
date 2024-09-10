@@ -154,7 +154,6 @@ class Yolov8(ObjectDetection):
             device=0 if torch.cuda.is_available() else "cpu",
             stream=True,
             verbose=False,
-            batch=-1,
             agnostic_nms=True,
         )
 
