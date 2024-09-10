@@ -1,21 +1,14 @@
-dill==0.3.8
-geopandas==0.14.3
-ijson==3.2.3
-IPython==8.26.0
-matplotlib==3.7.1
+geopandas==1.0.1
+ijson==3.3.0
 moviepy==1.0.3
-numpy==1.24.3
+numpy==1.26.4 # ultralytics requires numpy < 2.0.0
 opencv-python==4.9.0.80
 pandas==2.2.2
-progressbar==2.5
-psutil==6.0.0
-pyogrio==0.5.1
-PyYAML==6.0
-seaborn==0.12.2
-setuptools==71.1.0
+PyYAML==6.0.2
+setuptools==74.0.0
 # Follow instructions at https://pytorch.org to install torch with CUDA
-torch==2.1.2 #  NOTE: Omit if using torch with CUDA and install manually
-torchvision==0.16.2 # NOTE: Omit if using torch with CUDA and install manually
-tqdm==4.66.4
-ujson==5.9.0
-ultralytics==8.1.14
+torch==2.3.1 #  NOTE: Omit if using torch with CUDA and install manually
+torchvision==0.18.1 # NOTE: Omit if using torch with CUDA and install manually
+tqdm==4.66.5
+ujson==5.10.0
+ultralytics==8.2.82
