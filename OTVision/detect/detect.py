@@ -1,6 +1,7 @@
 """
 OTVision main module to detect objects in single or multiple images or videos.
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>

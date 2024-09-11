@@ -1,6 +1,7 @@
 """
 OTVision helpers to change formats and retrieve information
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -93,7 +94,7 @@ def _get_time_from_frame_number(
     fps: int,
     return_yyyymmdd_hhmmss: bool = True,
     return_milliseconds: bool = True,
-) -> pd.Series:
+) -> pd.Series | tuple[pd.Series, pd.Series]:
     """Get datetime series of detections from series of frame numbers of video
     the objects were detected using a start datetime of the video and
     the video frame rate (fps).

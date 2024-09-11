@@ -1,6 +1,7 @@
 """
 OTVision module for calculating a homography from reference points
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -111,15 +112,15 @@ def get_homography(
 
 
 def evaluate_homography(
-    refpts_pixel: dict,
+    refpts_pixel: np.ndarray,
     refpts_world_upshifted_disassembled: np.ndarray,
     homography_matrix: np.ndarray,
 ) -> dict:  # TODO: Type hint nested dict during refactoring
     """Calculates transformation error of homography
 
     Args:
-        refpts_pixel (dict): Reference points in both pixel and utm coordinates
-        refpts_world_upshifted_disassembled (ndarry): Internal variable
+        refpts_pixel (ndarray): Reference points in both pixel and utm coordinates
+        refpts_world_upshifted_disassembled (ndarray): Internal variable
         homography_matrix (ndarray): Homography matrix
 
     Returns:

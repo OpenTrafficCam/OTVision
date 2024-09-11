@@ -1,6 +1,7 @@
 """
 OTVision: Python module to run OTVision from gui
 """
+
 # Copyright (C) 2020 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
