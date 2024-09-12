@@ -196,7 +196,11 @@ def metadata_from_json_events(parse_events: Iterable[tuple[str, str, str]]) -> d
 
 
 def read_json_bz2_metadata(path: Path) -> dict:
-    return metadata_from_json_events(read_json_bz2_event_stream(path))
+    try:
+        return metadata_from_json_events(read_json_bz2_event_stream(path))
+    except EOFError as cause:
+        log.exception(f'Unable to read "{path}" as JSON.', exc_info=cause)
+        raise cause
 
 
 def read_json(
