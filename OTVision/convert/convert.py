@@ -1,6 +1,7 @@
 """
 OTVision main module for converting videos to other formats and frame rates.
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>

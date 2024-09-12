@@ -2,6 +2,7 @@
 OTVision tool to select reference points for transformation
 from pixel to world coordinates
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>

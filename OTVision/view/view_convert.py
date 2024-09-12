@@ -1,6 +1,7 @@
 """
 OTVision gui module for convert.py
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>

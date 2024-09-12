@@ -1,6 +1,7 @@
 """
 OTVision helper gui module
 """
+
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -253,19 +254,19 @@ class FrameFileTree(tk.LabelFrame):
     def update_other_gui_parts(self):
         # Activate/deactivate buttons in FrameTransform
         if self.files_dict:
-            self.master.frame_transform.frame_options.button_choose_refpts[
-                "state"
-            ] = tk.NORMAL
-            self.master.frame_transform.frame_options.button_click_refpts[
-                "state"
-            ] = tk.NORMAL
+            self.master.frame_transform.frame_options.button_choose_refpts["state"] = (
+                tk.NORMAL
+            )
+            self.master.frame_transform.frame_options.button_click_refpts["state"] = (
+                tk.NORMAL
+            )
         else:
-            self.master.frame_transform.frame_options.button_choose_refpts[
-                "state"
-            ] = tk.DISABLED
-            self.master.frame_transform.frame_options.button_click_refpts[
-                "state"
-            ] = tk.DISABLED
+            self.master.frame_transform.frame_options.button_choose_refpts["state"] = (
+                tk.DISABLED
+            )
+            self.master.frame_transform.frame_options.button_click_refpts["state"] = (
+                tk.DISABLED
+            )
 
     def get_tree_files(self):
         return [

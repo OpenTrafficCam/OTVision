@@ -1,45 +1,66 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.6.0
     hooks:
       - id: check-yaml
       - id: check-json
       - id: end-of-file-fixer
-        exclude_types: [json]
+        exclude_types:
+          - json
       - id: trailing-whitespace
       - id: no-commit-to-branch
       - id: debug-statements
       - id: requirements-txt-fixer
       - id: check-executables-have-shebangs
       - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: update-type-stubs
+        name: Check for Type Stubs and Update Config
+        entry: ./update_precommit.py
+        language: system
+        files: ^requirements.*\.txt$
+        stages:
+          - commit
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
+    rev: 7.1.1
     hooks:
       - id: flake8
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
-        args: ["--profile", "black"]
+        args:
+          - --profile
+          - black
   - repo: https://github.com/psf/black
-    rev: 23.10.0
+    rev: 24.8.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.6.1
+    rev: v1.11.1
     hooks:
       - id: mypy
         entry: mypy .
-        additional_dependencies: [types-all, pydantic]
+        additional_dependencies:
+          - types-PyYAML
+          - types-flake8
+          - types-jsonschema
+          - types-psutil
+          - types-seaborn
+          - types-setuptools
+          - types-tqdm
+          - types-ujson
         always_run: true
         pass_filenames: false
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.32.0
+    rev: v1.35.1
     hooks:
       - id: yamllint
-        args: [-c=./.yamllint.yaml]
+        args:
+          - -c=./.yamllint.yaml
   - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.9.0
+    rev: v0.10.0
     hooks:
       - id: shellcheck
