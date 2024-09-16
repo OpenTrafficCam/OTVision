@@ -6,7 +6,7 @@ interrogate==1.5.0
 isort==5.13.2
 jsonschema==4.23.0
 mypy==1.11.1
-pandas-stubs==2.2.2.240807
+pandas-stubs==2.2.2.240909
 pre-commit==3.8.0
 pytest==8.3.2
 pytest-cov==5.0.0
