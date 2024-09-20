@@ -25,6 +25,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Generator
 
+import av
 import torch
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
@@ -145,17 +146,21 @@ class Yolov8(ObjectDetection):
         return model
 
     def _predict(self, video: Path) -> Generator[Results, None, None]:
-        return self.model.predict(
-            source=video,
-            conf=self.confidence,
-            iou=self.iou,
-            half=self.half_precision,
-            imgsz=self.img_size,
-            device=0 if torch.cuda.is_available() else "cpu",
-            stream=True,
-            verbose=False,
-            agnostic_nms=True,
-        )
+        with av.open(str(video.absolute())) as container:
+            for frame in container.decode(video=0):
+                results = self.model.predict(
+                    source=frame.to_ndarray(format="rgb24"),
+                    conf=self.confidence,
+                    iou=self.iou,
+                    half=self.half_precision,
+                    imgsz=self.img_size,
+                    device=0 if torch.cuda.is_available() else "cpu",
+                    stream=False,
+                    verbose=False,
+                    agnostic_nms=True,
+                )
+                for result in results:
+                    yield result
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
         bboxes = detection_result.xywhn if self.normalized else detection_result.xywh
