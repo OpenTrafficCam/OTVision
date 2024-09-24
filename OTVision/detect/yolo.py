@@ -147,6 +147,7 @@ class Yolov8(ObjectDetection):
 
     def _predict(self, video: Path) -> Generator[Results, None, None]:
         with av.open(str(video.absolute())) as container:
+            container.streams.video[0].thread_type = "AUTO"
             for frame in container.decode(video=0):
                 results = self.model.predict(
                     source=frame.to_ndarray(format="rgb24"),
