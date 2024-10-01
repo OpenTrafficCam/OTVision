@@ -91,7 +91,12 @@ def rotate(array: ndarray, side_data: dict) -> ndarray:
 
     """
     if DISPLAYMATRIX in side_data:
-        rotation = side_data[DISPLAYMATRIX] / 90
+        angle = side_data[DISPLAYMATRIX]
+        if angle % 90 != 0:
+            raise ValueError(
+                f"Rotation angle must be multiple of 90 degrees, but is {angle}"
+            )
+        rotation = angle / 90
         rotated_image = numpy.rot90(array, rotation)
         return rotated_image
     return array
