@@ -26,7 +26,9 @@ from time import perf_counter
 from typing import Generator
 
 import av
+import numpy
 import torch
+from numpy import ndarray
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.engine.results import Boxes, Results
@@ -45,6 +47,8 @@ from OTVision.config import (
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Detection
+
+DISPLAYMATRIX = "DISPLAYMATRIX"
 
 log = logging.getLogger(LOGGER_NAME)
 
@@ -73,6 +77,24 @@ class ObjectDetection(ABC):
             second level is detections within frame
         """
         pass
+
+
+def rotate(array: ndarray, side_data: dict) -> ndarray:
+    """
+    Rotate a numpy array using the DISPLAYMATRIX rotation angle defined in side_data.
+
+    Args:
+        array: to rotate
+        side_data: metadata dictionary to read the angle from
+
+    Returns: rotated array
+
+    """
+    if DISPLAYMATRIX in side_data:
+        rotation = side_data[DISPLAYMATRIX] / 90
+        rotated_image = numpy.rot90(array, rotation)
+        return rotated_image
+    return array
 
 
 class Yolov8(ObjectDetection):
@@ -148,9 +170,12 @@ class Yolov8(ObjectDetection):
     def _predict(self, video: Path) -> Generator[Results, None, None]:
         with av.open(str(video.absolute())) as container:
             container.streams.video[0].thread_type = "AUTO"
+            side_data = container.streams.video[0].side_data
             for frame in container.decode(video=0):
+                ndarray = frame.to_ndarray(format="rgb24")
+                rotated_image = rotate(ndarray, side_data)
                 results = self.model.predict(
-                    source=frame.to_ndarray(format="rgb24"),
+                    source=rotated_image,
                     conf=self.confidence,
                     iou=self.iou,
                     half=self.half_precision,
