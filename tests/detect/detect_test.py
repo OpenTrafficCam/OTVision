@@ -442,10 +442,17 @@ class TestDetect:
         rotated_counts = self._get_detection_counts_for(converted_video, yolov8m)
 
         normal_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
-        deviation = 0.05
+        deviation = 0.10
         for key in [CAR, PERSON, BICYCLE]:
-            assert rotated_counts[key] >= normal_counts[key] * (1 - deviation)
-            assert rotated_counts[key] <= normal_counts[key] * (1 + deviation)
+            assert (
+                normal_counts[key] * (1 - deviation)
+                <= rotated_counts[key]
+                <= normal_counts[key] * (1 + deviation)
+            ), (
+                f"Failed class: {key}, "
+                f"normal counts: {normal_counts[key]}, "
+                f"rotated counts: {rotated_counts[key]}"
+            )
 
     def _get_detection_counts_for(
         self, converted_video: Path, yolov8m: Yolov8

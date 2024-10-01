@@ -47,8 +47,6 @@ repos:
           - types-PyYAML
           - types-flake8
           - types-jsonschema
-          - types-psutil
-          - types-seaborn
           - types-setuptools
           - types-tqdm
           - types-ujson
