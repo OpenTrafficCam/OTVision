@@ -20,10 +20,19 @@ class CustomDumper(yaml.SafeDumper):
         return super(CustomDumper, self).increase_indent(flow, False)
 
 
-def check_type_stub_exists(package_name: str) -> bool:
-    """Check if a type stub exists for a given package name."""
+def get_type_stub_package(package_name: str) -> str:
+    """Check if a type stub exists for a given package name and return it."""
     types_package_name = f"types-{package_name}"
-    response = requests.get(f"https://pypi.org/pypi/{types_package_name}/json")
+    if __check_types_for_package_exists(types_package_name):
+        return types_package_name
+    else:
+        # Some packages already provide type stubs with their package
+        # If they don't pre-commit mypy won't fail
+        return package_name
+
+
+def __check_types_for_package_exists(package_name: str) -> bool:
+    response = requests.get(f"https://pypi.org/pypi/{package_name}/json")
     return response.status_code == 200
 
 
@@ -66,8 +75,8 @@ def retrieve_type_stubs(packages: Iterable[str]) -> list[str]:
     """Generate a list of type stubs for the given list of packages."""
     type_stubs = []
     for package in packages:
-        if check_type_stub_exists(package):
-            type_stubs.append(f"types-{package}")
+        if package_name := get_type_stub_package(package):
+            type_stubs.append(package_name)
     return sorted(type_stubs)
 
 
