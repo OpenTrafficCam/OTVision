@@ -44,14 +44,31 @@ repos:
       - id: mypy
         entry: mypy .
         additional_dependencies:
+          - black
+          - coremltools
+          - geopandas
+          - ijson
+          - interrogate
+          - isort
+          - moviepy
+          - mypy
+          - numpy
+          - opencv-python
+          - pandas
+          - pandas-stubs
+          - pre-commit
+          - pytest
+          - pytest-cov
+          - torch
+          - torchvision
           - types-PyYAML
           - types-flake8
           - types-jsonschema
-          - types-psutil
-          - types-seaborn
           - types-setuptools
           - types-tqdm
           - types-ujson
+          - ultralytics
+          - yamllint
         always_run: true
         pass_filenames: false
   - repo: https://github.com/adrienverge/yamllint.git
