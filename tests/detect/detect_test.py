@@ -4,7 +4,6 @@ import json
 import os
 import platform
 import shutil
-import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -14,7 +13,6 @@ from jsonschema import validate
 
 import OTVision.config as config
 from OTVision.config import DEFAULT_EXPECTED_DURATION
-from OTVision.convert.convert import _get_ffmpeg_command, convert
 from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
@@ -171,6 +169,15 @@ def detect_test_tmp_dir(test_data_tmp_dir: Path) -> YieldFixture[Path]:
 @pytest.fixture(scope="module")
 def cyclist_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
     file_name = "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
+    src = detect_test_data_dir / file_name
+    dest = detect_test_tmp_dir / file_name
+    shutil.copy2(src, dest)
+    return dest
+
+
+@pytest.fixture(scope="module")
+def rotated_cyclist_mp4(detect_test_data_dir: Path, detect_test_tmp_dir: Path) -> Path:
+    file_name = "rotated-Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
     src = detect_test_data_dir / file_name
     dest = detect_test_tmp_dir / file_name
     shutil.copy2(src, dest)
@@ -405,44 +412,13 @@ class TestDetect:
         self,
         yolov8m: Yolov8,
         cyclist_mp4: Path,
+        rotated_cyclist_mp4: Path,
         test_data_dir: Path,
         test_data_tmp_dir: Path,
     ) -> None:
-        output_filetype = ".mp4"
-        input_file = (
-            test_data_dir / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.h264"
-        )
-        rotated_video = test_data_tmp_dir / f"rotate-{input_file.name}"
-        filter_cmds = ["-vf", "transpose=1, transpose=1"]
-        ffmpeg_cmd = _get_ffmpeg_command(
-            input_file,
-            20,
-            0,
-            20,
-            rotated_video,
-            filter_cmds=filter_cmds,
-        )
-
-        subprocess.run(
-            ffmpeg_cmd,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-        )
-
-        convert(
-            input_video_file=rotated_video,
-            output_filetype=output_filetype,
-            rotation=180,
-            fps_from_filename=False,
-        )
-
-        converted_video = test_data_tmp_dir / f"{rotated_video.stem}{output_filetype}"
-
-        rotated_counts = self._get_detection_counts_for(converted_video, yolov8m)
-
+        rotated_counts = self._get_detection_counts_for(rotated_cyclist_mp4, yolov8m)
         normal_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
-        deviation = 0.10
+        deviation = 0.05
         for key in [CAR, PERSON, BICYCLE]:
             assert (
                 normal_counts[key] * (1 - deviation)
