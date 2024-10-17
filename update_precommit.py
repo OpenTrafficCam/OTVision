@@ -37,6 +37,11 @@ class Package(ABC):
     def __hash__(self) -> int:
         return hash((self.name, self.version))
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Package):
+            return False
+        return (self.name, self.version) == (other.name, other.version)
+
 
 class TypeStubPackage(Package):
     @property
@@ -115,8 +120,10 @@ def parse_requirement(requirement_line: str) -> Package | None:
     match = pattern.match(requirement_line)
     if not match:
         return None
-    package_name = match.group(CAPTURE_GROUP_PACKAGE)
-    package_version = match.group(CAPTURE_GROUP_VERSION)
+    package_name = match.group(CAPTURE_GROUP_PACKAGE).strip()
+    if package_version := match.group(CAPTURE_GROUP_VERSION):
+        package_version = package_version.strip()
+
     return create_package(name=package_name, version=package_version)
 
 
