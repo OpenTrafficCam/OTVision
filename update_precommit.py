@@ -115,8 +115,8 @@ def parse_requirement(requirement_line: str) -> Package | None:
     match = pattern.match(requirement_line)
     if not match:
         return None
-    package_name = match.group(CAPTURE_GROUP_PACKAGE).strip()
-    package_version = match.group(CAPTURE_GROUP_VERSION).strip()
+    package_name = match.group(CAPTURE_GROUP_PACKAGE)
+    package_version = match.group(CAPTURE_GROUP_VERSION)
     return create_package(name=package_name, version=package_version)
 
 
