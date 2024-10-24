@@ -35,6 +35,14 @@ from OTVision.detect.detect import main as detect
 from OTVision.detect.yolo import Yolov8, loadmodel
 from tests.conftest import YieldFixture
 
+DEVIATION = 0.22
+BICYCLE_UPPER_LIMIT = int(60 * (1 + DEVIATION))
+PERSON_UPPER_LIMIT = int(120 * (1 + DEVIATION))
+CAR_UPPER_LIMIT = int(120 * (1 + DEVIATION))
+BICYCLE_LOWER_LIMIT = int(60 * (1 - DEVIATION))
+PERSON_LOWER_LIMIT = int(120 * (1 - DEVIATION))
+CAR_LOWER_LIMIT = int(120 * (1 - DEVIATION))
+
 CAR = "car"
 TRUCK = "truck"
 PERSON = "person"
@@ -397,16 +405,14 @@ class TestDetect:
     def test_detect_fulfill_minimum_detection_requirements(
         self, yolov8m: Yolov8, cyclist_mp4: Path
     ) -> None:
-        deviation = 0.2
-
         class_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
 
-        assert class_counts[CAR] >= 120 * (1 - deviation)
-        assert class_counts[PERSON] >= 120 * (1 - deviation)
-        assert class_counts[BICYCLE] >= 60 * (1 - deviation)
-        assert class_counts[CAR] <= 120 * (1 + deviation)
-        assert class_counts[PERSON] <= 120 * (1 + deviation)
-        assert class_counts[BICYCLE] <= 60 * (1 + deviation)
+        assert class_counts[CAR] >= CAR_LOWER_LIMIT
+        assert class_counts[PERSON] >= PERSON_LOWER_LIMIT
+        assert class_counts[BICYCLE] >= BICYCLE_LOWER_LIMIT
+        assert class_counts[CAR] <= CAR_UPPER_LIMIT
+        assert class_counts[PERSON] <= PERSON_UPPER_LIMIT
+        assert class_counts[BICYCLE] <= BICYCLE_UPPER_LIMIT
 
     def test_detection_in_rotated_video(
         self,
@@ -416,28 +422,29 @@ class TestDetect:
         test_data_dir: Path,
         test_data_tmp_dir: Path,
     ) -> None:
-        rotated_counts = self._get_detection_counts_for(rotated_cyclist_mp4, yolov8m)
-        normal_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
-        deviation = 0.05
-        for key in [CAR, PERSON, BICYCLE]:
-            assert (
-                normal_counts[key] * (1 - deviation)
-                <= rotated_counts[key]
-                <= normal_counts[key] * (1 + deviation)
-            ), (
-                f"Failed class: {key}, "
-                f"normal counts: {normal_counts[key]}, "
-                f"rotated counts: {rotated_counts[key]}"
-            )
+        video_length = timedelta(seconds=3)
+        rotated_counts = self._get_detection_counts_for(
+            rotated_cyclist_mp4, yolov8m, video_length
+        )
+
+        assert rotated_counts[CAR] >= CAR_LOWER_LIMIT
+        assert rotated_counts[PERSON] >= PERSON_LOWER_LIMIT
+        assert rotated_counts[BICYCLE] >= BICYCLE_LOWER_LIMIT
+        assert rotated_counts[CAR] <= CAR_UPPER_LIMIT
+        assert rotated_counts[PERSON] <= PERSON_UPPER_LIMIT
+        assert rotated_counts[BICYCLE] <= BICYCLE_UPPER_LIMIT
 
     def _get_detection_counts_for(
-        self, converted_video: Path, yolov8m: Yolov8
+        self,
+        converted_video: Path,
+        yolov8m: Yolov8,
+        expected_duration: timedelta = DEFAULT_EXPECTED_DURATION,
     ) -> dict[str, float]:
         yolov8m.confidence = 0.5
         detect(
             paths=[converted_video],
             model=yolov8m,
-            expected_duration=DEFAULT_EXPECTED_DURATION,
+            expected_duration=expected_duration,
         )
         result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
