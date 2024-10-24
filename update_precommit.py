@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import re
+from abc import ABC, abstractmethod
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
@@ -14,30 +16,113 @@ MYPY_REPOSITORY = "https://github.com/pre-commit/mirrors-mypy"
 HOOKS = "hooks"
 ADDITIONAL_DEPENDENCIES = "additional_dependencies"
 
+CAPTURE_GROUP_URL = "url"
+CAPTURE_GROUP_PACKAGE = "package"
+CAPTURE_GROUP_VERSION = "version"
+
+
+class AdditionalMypyDependency(ABC):
+
+    @abstractmethod
+    def __hash__(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def __eq__(self, other: object) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def serialize(self) -> str:
+        raise NotImplementedError
+
+
+class Package(AdditionalMypyDependency):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def version(self) -> str | None:
+        raise NotImplementedError
+
+    def __hash__(self) -> int:
+        return hash((self.name, self.version))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Package):
+            return False
+        return (self.name, self.version) == (other.name, other.version)
+
+
+class TypeStubPackage(Package):
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def version(self) -> str | None:
+        return self._version
+
+    def __init__(self, name: str, version: str | None) -> None:
+        self._name = name
+        self._version = version
+
+    def serialize(self) -> str:
+        return self.name
+
+
+class NormalPackage(Package):
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def version(self) -> str | None:
+        return self._version
+
+    def __init__(self, name: str, version: str | None) -> None:
+        self._name = name
+        self._version = version
+
+    def serialize(self) -> str:
+        if self.version:
+            return self.name + "==" + self.version
+        return self.name
+
+
+@dataclass
+class ExtraIndexUrl(AdditionalMypyDependency):
+    url: str
+
+    def __hash__(self) -> int:
+        return hash(self.url)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ExtraIndexUrl):
+            return False
+        return self.url == other.url
+
+    def serialize(self) -> str:
+        return f"--extra-index-url={self.url}"
+
 
 class CustomDumper(yaml.SafeDumper):
     def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
         return super(CustomDumper, self).increase_indent(flow, False)
 
 
-def check_type_stub_exists(package_name: str) -> bool:
-    """Check if a type stub exists for a given package name."""
-    types_package_name = f"types-{package_name}"
-    response = requests.get(f"https://pypi.org/pypi/{types_package_name}/json")
-    return response.status_code == 200
+def parse_multiple_requirements_file(
+    files: Iterable[Path],
+) -> set[AdditionalMypyDependency]:
+    packages = set()
+    for _file in files:
+        packages.update(parse_requirements_file(_file))
+    return packages
 
 
-def extract_package_name(requirement_line: str) -> str | None:
-    """Extract package name from a requirement line using regex."""
-    # Regex pattern to capture the package name, ignoring version specifiers
-    pattern = re.compile(r"^([a-zA-Z0-9_\-\.]+)(?:[<>=~!]+\S*)?")
-    match = pattern.match(requirement_line)
-    if match:
-        return match.group(1).strip()
-    return None
-
-
-def parse_requirements(requirements_file: Path) -> set[str]:
+def parse_requirements_file(requirements_file: Path) -> set[AdditionalMypyDependency]:
     """Parse requirements.txt and extract package names using regex."""
     with open(requirements_file, "r") as file:
         lines = file.readlines()
@@ -48,27 +133,71 @@ def parse_requirements(requirements_file: Path) -> set[str]:
         if (
             line and not line.startswith("#") and line != "-r requirements.txt"
         ):  # Ignore empty lines, comments '-r requirements.txt'
-            package_name = extract_package_name(line)
+            package_name = parse_requirement(line)
             if package_name:
                 packages.add(package_name)
 
     return packages
 
 
-def parse_multiple_requirements(files: Iterable[Path]) -> set[str]:
-    packages: set[str] = set()
-    for _file in files:
-        packages.update(parse_requirements(_file))
-    return packages
+pattern_package = re.compile(
+    r"^(?!--extra-index-url)(?P<package>[a-zA-Z0-9_\-\.]+)(?:[<>=~!]+(?P<version>\S*))?"
+)
+pattern_extra_index_url = re.compile(r"^--extra-index-url\s+(?P<url>\S+)")
 
 
-def retrieve_type_stubs(packages: Iterable[str]) -> list[str]:
-    """Generate a list of type stubs for the given list of packages."""
-    type_stubs = []
-    for package in packages:
-        if check_type_stub_exists(package):
-            type_stubs.append(f"types-{package}")
-    return sorted(type_stubs)
+def parse_requirement(requirement_line: str) -> AdditionalMypyDependency | None:
+    """Extract package name from a requirement line using regex."""
+    # Regex pattern to capture the package name, ignoring version specifiers
+    if match_extra_index_url := pattern_extra_index_url.match(requirement_line):
+        return create_extra_index_url(
+            match_extra_index_url.group(CAPTURE_GROUP_URL).strip()
+        )
+
+    match = pattern_package.match(requirement_line)
+    if not match:
+        return None
+
+    package_name = match.group(CAPTURE_GROUP_PACKAGE).strip()
+    if package_version := match.group(CAPTURE_GROUP_VERSION):
+        package_version = package_version.strip()
+
+    return create_package(name=package_name, version=package_version)
+
+
+def create_extra_index_url(url: str) -> AdditionalMypyDependency:
+    return ExtraIndexUrl(url)
+
+
+def create_package(name: str, version: str | None) -> AdditionalMypyDependency:
+    """Check if a type stub exists for a given package name and return it."""
+    types_package_name = f"types-{name}"
+    if __check_types_for_package_exists(types_package_name):
+        return create_type_stub_package(name=types_package_name, version=version)
+
+    # Some packages already provide type stubs with their package
+    # If they don't pre-commit mypy won't fail
+    return create_normal_package(name=name, version=version)
+
+
+def __check_types_for_package_exists(package_name: str) -> bool:
+    response = requests.get(f"https://pypi.org/pypi/{package_name}/json")
+    return response.status_code == 200
+
+
+def create_type_stub_package(
+    name: str, version: str | None
+) -> AdditionalMypyDependency:
+    return TypeStubPackage(name=name, version=version)
+
+
+def create_normal_package(name: str, version: str | None) -> AdditionalMypyDependency:
+    return NormalPackage(name=name, version=version)
+
+
+def serialize_packages(packages: Iterable[AdditionalMypyDependency]) -> list[str]:
+    """Converts packages to a serializable format."""
+    return sorted([package.serialize() for package in packages])
 
 
 def read_precommit_file(precommit_file: Path) -> dict:
@@ -116,10 +245,14 @@ def main() -> None:
     requirements_dev_file = Path("requirements-dev.txt")
     precommit_file = Path(".pre-commit-config.yaml")
 
-    packages = parse_multiple_requirements([requirements_file, requirements_dev_file])
-    type_stubs = retrieve_type_stubs(packages)
+    additional_dependencies = parse_multiple_requirements_file(
+        [requirements_file, requirements_dev_file]
+    )
+    serializable_dependencies = serialize_packages(additional_dependencies)
     precommit_config = read_precommit_file(precommit_file)
-    updated_precommit_config = update_precommit_config(precommit_config, type_stubs)
+    updated_precommit_config = update_precommit_config(
+        precommit_config, serializable_dependencies
+    )
     save_precommit_config(updated_precommit_config, precommit_file)
 
 

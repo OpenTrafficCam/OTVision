@@ -44,12 +44,31 @@ repos:
       - id: mypy
         entry: mypy .
         additional_dependencies:
+          - black==24.8.0
+          - coremltools==7.2;
+          - geopandas==1.0.1
+          - ijson==3.3.0
+          - interrogate==1.5.0
+          - isort==5.13.2
+          - moviepy==1.0.3
+          - mypy==1.11.1
+          - numpy==1.26.4
+          - opencv-python==4.9.0.80
+          - pandas-stubs==2.2.2.240807
+          - pandas==2.2.2
+          - pre-commit==3.8.0
+          - pytest-cov==5.0.0
+          - pytest==8.3.2
+          - torch==2.3.1
+          - torchvision==0.18.1
           - types-PyYAML
           - types-flake8
           - types-jsonschema
           - types-setuptools
           - types-tqdm
           - types-ujson
+          - ultralytics==8.2.82
+          - yamllint==1.35.1
         always_run: true
         pass_filenames: false
   - repo: https://github.com/adrienverge/yamllint.git
