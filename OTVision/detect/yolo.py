@@ -25,7 +25,10 @@ from pathlib import Path
 from time import perf_counter
 from typing import Generator
 
+import av
+import numpy
 import torch
+from numpy import ndarray
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.engine.results import Boxes, Results
@@ -44,6 +47,8 @@ from OTVision.config import (
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Detection
+
+DISPLAYMATRIX = "DISPLAYMATRIX"
 
 log = logging.getLogger(LOGGER_NAME)
 
@@ -72,6 +77,29 @@ class ObjectDetection(ABC):
             second level is detections within frame
         """
         pass
+
+
+def rotate(array: ndarray, side_data: dict) -> ndarray:
+    """
+    Rotate a numpy array using the DISPLAYMATRIX rotation angle defined in side_data.
+
+    Args:
+        array: to rotate
+        side_data: metadata dictionary to read the angle from
+
+    Returns: rotated array
+
+    """
+    if DISPLAYMATRIX in side_data:
+        angle = side_data[DISPLAYMATRIX]
+        if angle % 90 != 0:
+            raise ValueError(
+                f"Rotation angle must be multiple of 90 degrees, but is {angle}"
+            )
+        rotation = angle / 90
+        rotated_image = numpy.rot90(array, rotation)
+        return rotated_image
+    return array
 
 
 class Yolov8(ObjectDetection):
@@ -145,17 +173,25 @@ class Yolov8(ObjectDetection):
         return model
 
     def _predict(self, video: Path) -> Generator[Results, None, None]:
-        return self.model.predict(
-            source=video,
-            conf=self.confidence,
-            iou=self.iou,
-            half=self.half_precision,
-            imgsz=self.img_size,
-            device=0 if torch.cuda.is_available() else "cpu",
-            stream=True,
-            verbose=False,
-            agnostic_nms=True,
-        )
+        with av.open(str(video.absolute())) as container:
+            container.streams.video[0].thread_type = "AUTO"
+            side_data = container.streams.video[0].side_data
+            for frame in container.decode(video=0):
+                ndarray = frame.to_ndarray(format="rgb24")
+                rotated_image = rotate(ndarray, side_data)
+                results = self.model.predict(
+                    source=rotated_image,
+                    conf=self.confidence,
+                    iou=self.iou,
+                    half=self.half_precision,
+                    imgsz=self.img_size,
+                    device=0 if torch.cuda.is_available() else "cpu",
+                    stream=False,
+                    verbose=False,
+                    agnostic_nms=True,
+                )
+                for result in results:
+                    yield result
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
         bboxes = detection_result.xywhn if self.normalized else detection_result.xywh
