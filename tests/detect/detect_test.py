@@ -35,6 +35,7 @@ from OTVision.detect.detect import main as detect
 from OTVision.detect.yolo import Yolov8, loadmodel
 from tests.conftest import YieldFixture
 
+CYCLIST_VIDEO_LENGTH = timedelta(seconds=3)
 DEVIATION = 0.22
 BICYCLE_UPPER_LIMIT = int(60 * (1 + DEVIATION))
 PERSON_UPPER_LIMIT = int(120 * (1 + DEVIATION))
@@ -405,7 +406,9 @@ class TestDetect:
     def test_detect_fulfill_minimum_detection_requirements(
         self, yolov8m: Yolov8, cyclist_mp4: Path
     ) -> None:
-        class_counts = self._get_detection_counts_for(cyclist_mp4, yolov8m)
+        class_counts = self._get_detection_counts_for(
+            cyclist_mp4, yolov8m, CYCLIST_VIDEO_LENGTH
+        )
 
         assert class_counts[CAR] >= CAR_LOWER_LIMIT
         assert class_counts[PERSON] >= PERSON_LOWER_LIMIT
@@ -422,9 +425,8 @@ class TestDetect:
         test_data_dir: Path,
         test_data_tmp_dir: Path,
     ) -> None:
-        video_length = timedelta(seconds=3)
         rotated_counts = self._get_detection_counts_for(
-            rotated_cyclist_mp4, yolov8m, video_length
+            rotated_cyclist_mp4, yolov8m, CYCLIST_VIDEO_LENGTH
         )
 
         assert rotated_counts[CAR] >= CAR_LOWER_LIMIT
