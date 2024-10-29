@@ -2,7 +2,7 @@ av==13.0.0
 geopandas==1.0.1
 ijson==3.3.0
 moviepy==1.0.3
-numpy==1.26.4 # ultralytics requires numpy < 2.0.0
+numpy==2.1.2 # ultralytics requires numpy < 2.0.0
 opencv-python==4.9.0.80
 pandas==2.2.2
 PyYAML==6.0.2
