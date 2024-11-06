@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: update-type-stubs
         name: Check for Type Stubs and Update Config
-        entry: ./update_precommit.py
+        entry: python ./update_precommit.py
         language: system
         files: ^requirements.*\.txt$
         stages:
@@ -47,8 +47,6 @@ repos:
           - types-PyYAML
           - types-flake8
           - types-jsonschema
-          - types-psutil
-          - types-seaborn
           - types-setuptools
           - types-tqdm
           - types-ujson
