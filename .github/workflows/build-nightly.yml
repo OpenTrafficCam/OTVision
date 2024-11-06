@@ -11,15 +11,29 @@ on:
 jobs:
   test:
     uses: './.github/workflows/test.yml'
-  create_nightly:
-    needs: test
-    uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
-    secrets:
-      PLATOMO_BUILDER_ACCESS: ${{ secrets.PLATOMO_BUILDER_ACCESS }}
-    with:
-      package-path: OTVision
-      package-version: nightly
-      draft-release: false
-      pre-release: true
-      delete-existing: true
-
+  create_nighty:
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Update Version
+        uses: platomo/update-version-py-action@main
+        with:
+          version: nightly
+          file-path: OTVision
+      - name: Create Release
+        uses: platomo/build-release-asset-action@main
+        with:
+          platomo-token: ${{ secrets.PLATOMO_BUILDER_ACCESS }}
+          package-version: nightly
+          save-artifacts: true
+      - name: Publish Release
+        uses: platomo/publish-release-action@main
+        with:
+          package-version: nightly
+          delete-existing: true
+          pre-release: true
+          py-version: "3.11"
+          draft-release: false
