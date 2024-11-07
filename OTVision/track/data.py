@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, Generic, Iterable, Sequence, TypeVar
+from typing import Callable, Generic, Iterator, Sequence, TypeVar
 
 
 @dataclass(frozen=True, repr=True)
@@ -200,7 +200,7 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
     def _finish(self, container: C, is_last: IsLastFrame) -> F:
         pass
 
-    def track_and_finish(self, containers: Iterable[C]) -> Iterable[F]:
+    def track_and_finish(self, containers: Iterator[C]) -> Iterator[F]:
         for container in containers:
 
             self._merged_last_track_frame.update(self._get_last_track_frames(container))

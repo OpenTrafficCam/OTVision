@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Sequence, cast
+from typing import Iterator, Sequence, cast
 
 from more_itertools import peekable
 
@@ -172,11 +172,11 @@ class ChunkBasedTracker(Tracker[Path]):
         self._chunkParser = chunkParser
         self._tracker = tracker
 
-    def track(self, frames: Iterable[Frame[Path]]) -> Iterable[TrackedFrame[Path]]:
+    def track(self, frames: Iterator[Frame[Path]]) -> Iterator[TrackedFrame[Path]]:
         return self._tracker.track(frames)
 
     def track_chunk(self, chunk: FrameChunk, is_last_chunk: bool) -> TrackedChunk:
-        tracked_frames = self.track(chunk.frames)
+        tracked_frames = self.track(iter(chunk.frames))
         return TrackedChunk(
             file=chunk.file, frames=list(tracked_frames), is_last_chunk=is_last_chunk
         )
@@ -199,7 +199,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
         super().__init__(tracker, chunkParser)
         self._groupParser = frameGroupParser
 
-    def track_group(self, group: FrameGroup) -> Iterable[TrackedChunk]:
+    def track_group(self, group: FrameGroup) -> Iterator[TrackedChunk]:
         # todo id generator per frame group -> pass to tracker
         frame_offset = 0  # frame no starts a 0 for each frame group
         file_stream = peekable(group.files)
@@ -209,7 +209,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
             yield chunk
 
-    def group_and_track_files(self, files: list[Path]) -> Iterable[TrackedChunk]:
+    def group_and_track_files(self, files: list[Path]) -> Iterator[TrackedChunk]:
         processed = self._groupParser.process_all(files)
 
         for group in processed:
@@ -228,11 +228,11 @@ class BufferedFinishedChunksTracker(GroupedFilesTracker):
         self._unfinished_chunks: dict[TrackedChunk, set[TrackId]] = dict()
         self._merged_last_track_frame: dict[TrackId, int] = dict()
 
-    def group_and_track_files(self, files: list[Path]) -> Iterable[FinishedChunk]:
+    def group_and_track_files(self, files: list[Path]) -> Iterator[FinishedChunk]:
         # reuse method but update type hint
-        return cast(list[FinishedChunk], super().group_and_track_files(files))
+        return cast(Iterator[FinishedChunk], super().group_and_track_files(files))
 
-    def track_group(self, group: FrameGroup) -> Iterable[FinishedChunk]:
+    def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
         for chunk in super().track_group(group):
 
             self._merged_last_track_frame.update(chunk.last_track_frame)

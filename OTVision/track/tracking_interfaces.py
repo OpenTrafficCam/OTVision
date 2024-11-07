@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Iterable, TypeVar
+from typing import Generic, Iterator, TypeVar
 
 from OTVision.track.data import FinishedFrame, Frame, IsLastFrame, TrackedFrame, TrackId
 
 S = TypeVar("S")  # Source type (e.g., Path, URL, str, etc.)
 # -> would look nicer in python 3.12
 
+ID_GENERATOR = Iterator[int]
+
 
 class Tracker(ABC, Generic[S]):
 
     @abstractmethod
-    def track(self, frames: Iterable[Frame[S]]) -> Iterable[TrackedFrame[S]]:
+    def track(
+        self,
+        frames: Iterator[Frame[S]],
+    ) -> Iterator[TrackedFrame[S]]:
         """
         Processes a stream of frames to perform object tracking.
 
@@ -32,7 +37,7 @@ class BufferedFinishedFramesTracker(Tracker[S]):
         self._unfinished_frames: dict[TrackedFrame, set[TrackId]] = dict()
         self._merged_last_track_frame: dict[TrackId, int] = dict()
 
-    def track(self, frames: Iterable[Frame[S]]) -> Iterable[FinishedFrame[S]]:
+    def track(self, frames: Iterator[Frame[S]]) -> Iterator[FinishedFrame[S]]:
         for frame in self._tracker.track(frames):
 
             self._merged_last_track_frame.update(
