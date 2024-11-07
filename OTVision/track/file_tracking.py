@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, replace
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Sequence, cast
 
@@ -92,25 +93,75 @@ class FinishedChunk(TrackedChunk):
 class ChunkParser(ABC):
 
     @abstractmethod
-    def parser(self, file: Path) -> FrameChunk:
+    def parse(self, file: Path, frame_offset: int) -> FrameChunk:
         pass
 
 
 @dataclass(frozen=True)
 class FrameGroup:
+    start_date: datetime
+    end_date: datetime
+    hostname: str
     files: list[Path]
-    metadata: dict[Path, dict]
-    # todo merge, update metadata
+    metadata_by_file: dict[Path, dict]  # TODO originally key is posix, why?
+
+    def merge(self, other: "FrameGroup") -> "FrameGroup":
+        if self.start_date < other.start_date:
+            return FrameGroup._merge(self, other)
+        else:
+            return FrameGroup._merge(other, self)
+
+    @staticmethod
+    def _merge(first: "FrameGroup", second: "FrameGroup") -> "FrameGroup":
+        if first.hostname != second.hostname:
+            raise ValueError("Hostname of FrameGroups does not match")
+
+        files = first.files + second.files
+        metadata = dict(first.metadata_by_file)
+        metadata.update(second.metadata_by_file)
+
+        merged = FrameGroup(
+            start_date=first.start_date,
+            end_date=second.end_date,
+            hostname=first.hostname,
+            files=files,
+            metadata_by_file=metadata,
+        )
+
+        return merged
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return f"{self.start_date} - {self.end_date}"
 
 
 class FrameGroupParser(ABC):
+
+    def process_all(self, files: list[Path]) -> list[FrameGroup]:
+        parsed: list[FrameGroup] = [self.parse(file) for file in files]
+        merged: list[FrameGroup] = self.merge(parsed)
+        updated: list[FrameGroup] = [
+            self.updated_metadata_copy(group) for group in merged
+        ]
+
+        return updated
 
     @abstractmethod
     def parse(self, file: Path) -> FrameGroup:
         pass
 
     @abstractmethod
-    def merge(self, frameGroups: list[FrameGroup]) -> list[FrameGroup]:
+    def merge(self, frame_groups: list[FrameGroup]) -> list[FrameGroup]:
+        pass
+
+    def updated_metadata_copy(self, frame_group: FrameGroup) -> FrameGroup:
+        new_metadata = self.update_metadata(frame_group)
+        return replace(frame_group, metadata_by_file=new_metadata)
+
+    @abstractmethod
+    def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         pass
 
 
@@ -130,8 +181,10 @@ class ChunkBasedTracker(Tracker[Path]):
             file=chunk.file, frames=list(tracked_frames), is_last_chunk=is_last_chunk
         )
 
-    def track_file(self, file: Path, is_last_file: bool) -> TrackedChunk:
-        chunk = self._chunkParser.parser(file)
+    def track_file(
+        self, file: Path, is_last_file: bool, frame_offset: int = 0
+    ) -> TrackedChunk:
+        chunk = self._chunkParser.parse(file, frame_offset)
         return self.track_chunk(chunk, is_last_file)
 
 
@@ -147,17 +200,19 @@ class GroupedFilesTracker(ChunkBasedTracker):
         self._groupParser = frameGroupParser
 
     def track_group(self, group: FrameGroup) -> Iterable[TrackedChunk]:
-
+        # todo id generator per frame group -> pass to tracker
+        frame_offset = 0  # frame no starts a 0 for each frame group
         file_stream = peekable(group.files)
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
-            yield self.track_file(file, is_last)
+            chunk = self.track_file(file, is_last, frame_offset)
+            frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
+            yield chunk
 
     def group_and_track_files(self, files: list[Path]) -> Iterable[TrackedChunk]:
-        groups = [self._groupParser.parse(f) for f in files]
-        merged = self._groupParser.merge(groups)
+        processed = self._groupParser.process_all(files)
 
-        for group in merged:
+        for group in processed:
             yield from self.track_group(group)
 
 
