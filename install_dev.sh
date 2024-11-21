@@ -9,5 +9,5 @@ PRE_COMMIT="$VENV"/bin/pre-commit
 
 bash "$WORKING_DIR"/install.sh
 
-$PIP install -r requirements-dev.txt --no-cache-dir
+$PIP install -r requirements-dev.txt
 $PRE_COMMIT install --install-hooks
