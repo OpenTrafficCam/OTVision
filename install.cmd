@@ -11,5 +11,5 @@ python -m venv venv
 call venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install --upgrade pip-tools pip wheel
-pip install -r requirements.txt --no-cache-dir%
+pip install -r requirements.txt%
 deactivate
