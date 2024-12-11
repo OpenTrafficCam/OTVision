@@ -2,12 +2,19 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator, Sequence, cast
+from typing import Callable, Iterator, Sequence, cast
 
 from more_itertools import peekable
 
-from OTVision.track.data import FinishedFrame, Frame, IsLastFrame, TrackedFrame, TrackId
-from OTVision.track.tracking_interfaces import Tracker
+from OTVision.track.data import (
+    FinishedFrame,
+    Frame,
+    IsLastFrame,
+    TrackedFrame,
+    TrackId,
+    UnfinishedTracksBuffer,
+)
+from OTVision.track.tracking_interfaces import ID_GENERATOR, Tracker
 
 
 @dataclass(frozen=True)
@@ -74,10 +81,11 @@ class TrackedChunk(FrameChunk):
         }
         object.__setattr__(self, "last_track_frame", last_track_frame)
 
-    def finish(self, group_last_track_frame: dict[TrackId, int]) -> "FinishedChunk":
-        is_last: IsLastFrame = (
-            lambda frame_no, track_id: frame_no == group_last_track_frame[track_id]
-        )
+    def finish(self, is_last: IsLastFrame) -> "FinishedChunk":
+        # group_last_track_frame: dict[TrackId, int]
+        # is_last: IsLastFrame = (
+        #     lambda frame_no, track_id: frame_no == group_last_track_frame[track_id]
+        # )
         return FinishedChunk(
             file=self.file,
             is_last_chunk=self.is_last_chunk,
@@ -169,23 +177,39 @@ class ChunkBasedTracker(Tracker[Path]):
 
     def __init__(self, tracker: Tracker[Path], chunkParser: ChunkParser) -> None:
         super().__init__()
-        self._chunkParser = chunkParser
+        self._chunk_parser = chunkParser
         self._tracker = tracker
 
-    def track(self, frames: Iterator[Frame[Path]]) -> Iterator[TrackedFrame[Path]]:
-        return self._tracker.track(frames)
+    def track_frame(
+        self,
+        frames: Frame[Path],
+        id_generator: ID_GENERATOR,
+    ) -> TrackedFrame[Path]:
+        return self._tracker.track_frame(frames, id_generator)
 
-    def track_chunk(self, chunk: FrameChunk, is_last_chunk: bool) -> TrackedChunk:
-        tracked_frames = self.track(iter(chunk.frames))
+    def track_chunk(
+        self,
+        chunk: FrameChunk,
+        is_last_chunk: bool,
+        id_generator: ID_GENERATOR,
+    ) -> TrackedChunk:
+        tracked_frames = self.track(iter(chunk.frames), id_generator)
         return TrackedChunk(
             file=chunk.file, frames=list(tracked_frames), is_last_chunk=is_last_chunk
         )
 
     def track_file(
-        self, file: Path, is_last_file: bool, frame_offset: int = 0
+        self,
+        file: Path,
+        is_last_file: bool,
+        id_generator: ID_GENERATOR,
+        frame_offset: int = 0,
     ) -> TrackedChunk:
-        chunk = self._chunkParser.parse(file, frame_offset)
-        return self.track_chunk(chunk, is_last_file)
+        chunk = self._chunk_parser.parse(file, frame_offset)
+        return self.track_chunk(chunk, is_last_file, id_generator)
+
+
+ID_GENERATOR_FACTORY = Callable[[FrameGroup], ID_GENERATOR]
 
 
 class GroupedFilesTracker(ChunkBasedTracker):
@@ -193,38 +217,74 @@ class GroupedFilesTracker(ChunkBasedTracker):
     def __init__(
         self,
         tracker: Tracker[Path],
-        chunkParser: ChunkParser,
-        frameGroupParser: FrameGroupParser,
+        chunk_parser: ChunkParser,
+        frame_group_parser: FrameGroupParser,
+        id_generator_factory: ID_GENERATOR_FACTORY,
     ) -> None:
-        super().__init__(tracker, chunkParser)
-        self._groupParser = frameGroupParser
+        super().__init__(tracker, chunk_parser)
+        self._group_parser = frame_group_parser
+        self._id_generator_of = id_generator_factory
 
     def track_group(self, group: FrameGroup) -> Iterator[TrackedChunk]:
-        # todo id generator per frame group -> pass to tracker
         frame_offset = 0  # frame no starts a 0 for each frame group
+        id_generator = self._id_generator_of(group)  # new id generator per group
         file_stream = peekable(group.files)
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
-            chunk = self.track_file(file, is_last, frame_offset)
+            chunk = self.track_file(file, is_last, id_generator, frame_offset)
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
             yield chunk
 
     def group_and_track_files(self, files: list[Path]) -> Iterator[TrackedChunk]:
-        processed = self._groupParser.process_all(files)
+        processed = self._group_parser.process_all(files)
 
         for group in processed:
             yield from self.track_group(group)
 
 
-class BufferedFinishedChunksTracker(GroupedFilesTracker):
+class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]):
+
+    def __init__(
+        self,
+        tracker: GroupedFilesTracker,
+    ) -> None:
+        super().__init__()
+        self.tracker = tracker
+
+    def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
+        tracked_chunk_stream = self.tracker.track_group(group)
+        return self.track_and_finish(tracked_chunk_stream)
+
+    def _get_last_track_frames(
+        self, container: TrackedChunk
+    ) -> dict[TrackId, int]:  # todo int -> typealias FrameNo
+        return container.last_track_frame
+
+    def _get_unfinished_tracks(self, container: TrackedChunk) -> set[TrackId]:
+        return container.unfinished_tracks
+
+    def _get_observed_tracks(self, container: TrackedChunk) -> set[TrackId]:
+        return container.observed_tracks
+
+    def _get_newly_finished_tracks(self, container: TrackedChunk) -> set[TrackId]:
+        return container.finished_tracks
+
+    def _finish(self, container: TrackedChunk, is_last: IsLastFrame) -> FinishedChunk:
+        return container.finish(is_last)
+
+
+class OldBufferedFinishedChunksTracker(GroupedFilesTracker):
 
     def __init__(
         self,
         tracker: Tracker[Path],
-        chunkParser: ChunkParser,
-        frameGroupParser: FrameGroupParser,
+        chunk_parser: ChunkParser,
+        frame_group_parser: FrameGroupParser,
+        id_generator_factory: ID_GENERATOR_FACTORY,
     ) -> None:
-        super().__init__(tracker, chunkParser, frameGroupParser)
+        super().__init__(
+            tracker, chunk_parser, frame_group_parser, id_generator_factory
+        )
         self._unfinished_chunks: dict[TrackedChunk, set[TrackId]] = dict()
         self._merged_last_track_frame: dict[TrackId, int] = dict()
 
@@ -262,7 +322,11 @@ class BufferedFinishedChunksTracker(GroupedFilesTracker):
 
     def _finish_chunks(self, chunks: list[TrackedChunk]) -> list[FinishedChunk]:
         # TODO sort finished chunks by start date?
-        finished_chunks = [c.finish(self._merged_last_track_frame) for c in chunks]
+        is_last: IsLastFrame = (
+            lambda frame_no, track_id: frame_no
+            == self._merged_last_track_frame[track_id]
+        )
+        finished_chunks = [c.finish(is_last) for c in chunks]
 
         # the last frame of the observed tracks have been marked
         # track ids no longer required in _merged_last_track_frame

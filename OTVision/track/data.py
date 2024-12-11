@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, Generic, Iterator, Sequence, TypeVar
+from typing import Callable, Generic, Iterator, Optional, Sequence, TypeVar
+
+from PIL.Image import Image
+
+TrackId = int
 
 
 @dataclass(frozen=True, repr=True)
@@ -12,6 +16,18 @@ class Detection:
     y: float
     w: float
     h: float
+
+    def of_track(self, id: TrackId, is_first: bool) -> "TrackedDetection":
+        return TrackedDetection(
+            self.label,
+            self.conf,
+            self.x,
+            self.y,
+            self.w,
+            self.h,
+            is_first,
+            id,
+        )
 
 
 S = TypeVar("S")
@@ -28,9 +44,7 @@ class Frame(Generic[S]):
     occurrence: datetime
     source: S
     detections: Sequence[Detection]
-
-
-TrackId = int
+    image: Optional[Image]
 
 
 @dataclass(frozen=True, repr=True)
@@ -91,38 +105,6 @@ class FinishedDetection(TrackedDetection):
         )
 
 
-# TODO only required internally in iou??
-@dataclass(frozen=True, repr=True)
-class Coordinate:
-    x: float
-    y: float
-
-
-# TODO only required internally in iou??
-@dataclass(frozen=True, repr=True)
-class BoundingBox:
-    xmin: float
-    ymin: float
-    xmax: float
-    ymax: float
-
-
-# TODO only required internally in iou??
-@dataclass
-class Track:
-    id: int
-    frame_no: list[int]  #
-    bboxes: list[BoundingBox]
-    center: list[Coordinate]
-    conf: list[float]
-    classes: list[str]
-    max_class: str
-    max_conf: float
-    first_frame: int
-    last_frame: int
-    track_age: int
-
-
 IsLastFrame = Callable[[int, TrackId], bool]
 
 
@@ -160,6 +142,7 @@ class TrackedFrame(Frame[S]):
             detections=[
                 det.finish(is_last(self.no, det.track_id)) for det in self.detections
             ],
+            image=self.image,
         )
 
 

@@ -39,6 +39,7 @@ class JsonChunkParser(ChunkParser):
                 occurrence=occurrence,
                 source=file,
                 detections=detections,
+                image=None,
             )
             frames.append(parsed_frame)
 
