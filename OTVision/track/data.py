@@ -10,6 +10,17 @@ TrackId = int
 
 @dataclass(frozen=True, repr=True)
 class Detection:
+    """Detection data without track context data.
+
+    Attributes:
+        label (str): Assigned label, e.g. vehicle class.
+        conf (float): Confidence of detected class.
+        x (float): X-coordinate of detection center.
+        y (float): Y-coordinate of detection center.
+        w (float): Width of detection.
+        h (float): Height of detection.
+    """
+
     label: str
     conf: float
     x: float
@@ -18,6 +29,15 @@ class Detection:
     h: float
 
     def of_track(self, id: TrackId, is_first: bool) -> "TrackedDetection":
+        """Convert to TrackedDetection by adding track information.
+
+        Args:
+            id (TrackId): id of assigned track.
+            is_first (bool): whether this detection is first of track.
+
+        Returns:
+            TrackedDetection: This detection data with additional track information.
+        """
         return TrackedDetection(
             self.label,
             self.conf,
@@ -35,9 +55,14 @@ S = TypeVar("S")
 
 @dataclass(frozen=True)
 class Frame(Generic[S]):
-    """
-    source is generic, it can be the file path of the detection file
-    or the url of a live data stream
+    """Frame metadata, optional image and respective detections.
+
+    Attributes:
+        no (int): Frame number.
+        occurrence (datetime): Time stamp, at which frame was recorded.
+        source (S): Generic source from where frame was obtained, e.g. video file path.
+        detections (Sequence[Detection]): A sequence of Detections occurring in frame.
+        image (Optional[Image]): Optional image data of frame.
     """
 
     no: int
@@ -49,16 +74,13 @@ class Frame(Generic[S]):
 
 @dataclass(frozen=True, repr=True)
 class TrackedDetection(Detection):
-    """
-    is_first denotes this detection is the first occurrence of the assigned track id
-    (
-        the track id must be provided by the tracking algorithm,
-        the tracking algorithm also knows whether the detection
-        is the first occurrence of a track id,
-        whether a detection is the last occurrence of a track id is
-        not known to a frame based tracking algorithm,
-        this information must be introduced by a some context aware wrapper
-    )
+    """Detection with additional track data.
+    At the time a detection is tracked,
+    it might not be known whether it is the last of a track.
+
+    Attributes:
+        is_first (bool): whether this detection is the first in the track.
+        track_id (TrackId): id of the assigned track.
     """
 
     is_first: bool
@@ -76,13 +98,10 @@ class TrackedDetection(Detection):
 
 @dataclass(frozen=True, repr=True)
 class FinishedDetection(TrackedDetection):
-    """
-    is_last denotes this detection to be the last occurrence of the assigned track_id
-    (
-        whether a detection is the last occurrence of a track id is
-        not known to a frame based tracking algorithm,
-        this information must be introduced by a some context aware wrapper
-    )
+    """Detection data with extended track information including is_finished.
+
+    Attributes:
+        is_last (bool): whether this detection is the last in the track.
     """
 
     is_last: bool
@@ -110,15 +129,19 @@ IsLastFrame = Callable[[int, TrackId], bool]
 
 @dataclass(frozen=True)
 class TrackedFrame(Frame[S]):
-    """
-    definitions
+    """Frame metadata with tracked detections.
+    Also provides additional aggregated information about:
+    observed, finished and unfinished tracks.
 
-    detections - detections occurring in this frame, annotated with a track id
-        (and whether it is the tracks first detection)
-    observed_tracks - track ids that occur in this frame (derived value)
-    finished_tracks - track ids of tracks observed in this or prior to this frame
-        that can now be considered finished
-        (these track ids should no longer be observed/assigned in future frames)
+    Attributes:
+        detections (Sequence[TrackedDetection]): overrides Frame.detections with more
+            specific type of detection.
+        observed_tracks (set[TrackId]): set of tracks of which detection occur in this
+            frame.
+        finished_tracks (set[TrackId]): track ids of tracks observed in this or prior
+            to this frame that can now be considered finished. These track ids should
+            no longer be observed/assigned in future frames.
+        unfinished_tracks (set[TrackId]): ob served tracks that are not yet finished.
     """
 
     detections: Sequence[TrackedDetection]
@@ -127,6 +150,8 @@ class TrackedFrame(Frame[S]):
     unfinished_tracks: set[TrackId] = field(init=False)
 
     def __post_init__(self) -> None:
+        # derive observed and unfinished tracks
+        # from tracked detections and finished track information
         observed = {d.track_id for d in self.detections}
         object.__setattr__(self, "observed_tracks", observed)
 
@@ -134,6 +159,16 @@ class TrackedFrame(Frame[S]):
         object.__setattr__(self, "unfinished_tracks", unfinished)
 
     def finish(self, is_last: IsLastFrame) -> "FinishedFrame":
+        """Turn this TrackedFrame into a finished frame
+        by adding is_finished information to all its detection.
+
+        Args:
+            is_last (IsLastFrame): function to determine whether
+                a track is finished in a certain frame.
+
+        Returns:
+            FinishedFrame: frame with FinishedDetections
+        """
         return FinishedFrame(
             no=self.no,
             occurrence=self.occurrence,
@@ -148,7 +183,12 @@ class TrackedFrame(Frame[S]):
 
 @dataclass(frozen=True)
 class FinishedFrame(TrackedFrame[S]):
-    """all detections are marked with is_last flag"""
+    """TrackedFrame with FinishedDetections.
+
+    Args:
+        detections (Sequence[FinishedDetection]): overrides TrackedFrame.detections
+            with more specific detection type.
+    """
 
     detections: Sequence[FinishedDetection]
 
