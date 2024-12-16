@@ -12,4 +12,4 @@ torch==2.3.1 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.18.1 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.66.5
 ujson==5.10.0
-ultralytics==8.2.82
+ultralytics==8.3.49
