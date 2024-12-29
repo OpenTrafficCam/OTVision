@@ -6,6 +6,7 @@ from typing import Callable, Generic, Iterator, Optional, Sequence, TypeVar
 from PIL.Image import Image
 
 TrackId = int
+FrameNo = int
 
 
 @dataclass(frozen=True, repr=True)
@@ -58,14 +59,14 @@ class Frame(Generic[S]):
     """Frame metadata, optional image and respective detections.
 
     Attributes:
-        no (int): Frame number.
+        no (FrameNo): Frame number.
         occurrence (datetime): Time stamp, at which frame was recorded.
         source (S): Generic source from where frame was obtained, e.g. video file path.
         detections (Sequence[Detection]): A sequence of Detections occurring in frame.
         image (Optional[Image]): Optional image data of frame.
     """
 
-    no: int
+    no: FrameNo
     occurrence: datetime
     source: S
     detections: Sequence[Detection]
@@ -131,7 +132,7 @@ class FinishedDetection(TrackedDetection):
         )
 
 
-IsLastFrame = Callable[[int, TrackId], bool]
+IsLastFrame = Callable[[FrameNo, TrackId], bool]
 
 
 @dataclass(frozen=True)
@@ -257,11 +258,11 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
     def __init__(self, keep_discarded: bool = False) -> None:
         self._keep_discarded = keep_discarded
         self._unfinished_containers: dict[C, set[TrackId]] = dict()
-        self._merged_last_track_frame: dict[TrackId, int] = dict()
+        self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
         self._discarded_tracks: set[TrackId] = set()
 
     @abstractmethod
-    def _get_last_track_frames(self, container: C) -> dict[TrackId, int]:
+    def _get_last_track_frames(self, container: C) -> dict[TrackId, FrameNo]:
         """Mapping from TrackId to frame no of last detection occurrence.
         Mapping for all tracks in newly tracked container.
 

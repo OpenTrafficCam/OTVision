@@ -4,6 +4,7 @@ from typing import Generic, Iterator, TypeVar
 from OTVision.track.data import (
     FinishedFrame,
     Frame,
+    FrameNo,
     IsLastFrame,
     TrackedFrame,
     TrackId,
@@ -109,7 +110,7 @@ class OldBufferedFinishedFramesTracker(Tracker[S]):
         super().__init__()
         self._tracker = tracker
         self._unfinished_frames: dict[TrackedFrame, set[TrackId]] = dict()
-        self._merged_last_track_frame: dict[TrackId, int] = dict()
+        self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
 
     def track(
         self,

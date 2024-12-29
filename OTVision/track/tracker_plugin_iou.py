@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from track.data import Detection, Frame, TrackedDetection, TrackedFrame
-from track.tracking_interfaces import ID_GENERATOR, S, Tracker, TrackId
+from track.tracking_interfaces import ID_GENERATOR, FrameNo, S, Tracker, TrackId
 
 
 @dataclass(frozen=True)
@@ -48,20 +48,19 @@ class BoundingBox:
         return (self.xmin, self.ymin, self.xmax, self.ymax)
 
 
-# TODO only required internally in iou??
 @dataclass
 class ActiveIouTrack:
     # todo check invariant -> at least one element in lists
     id: int
-    frame_no: list[int]
+    frame_no: list[FrameNo]
     bboxes: list[BoundingBox]
     center: list[Coordinate]
     conf: list[float]
     classes: list[str]
     max_class: str
     max_conf: float
-    first_frame: int
-    last_frame: int
+    first_frame: FrameNo
+    last_frame: FrameNo
     track_age: int
 
     def __init__(self, id: TrackId, frame: "Frame", detection: "Detection") -> None:
@@ -73,8 +72,8 @@ class ActiveIouTrack:
         self.classes = [detection.label]
         self.max_class = detection.label
         self.max_conf = detection.conf
-        self.first_frame = frame.frame_no
-        self.last_frame = frame.frame_no
+        self.first_frame = frame.no
+        self.last_frame = frame.no
         self.track_age = 0
 
     def add_detection(self, frame: Frame, detection: Detection) -> None:
@@ -84,7 +83,6 @@ class ActiveIouTrack:
         self.conf.append(detection.conf)
         self.classes.append(detection.label)
         self.max_conf = max(self.max_conf, detection.conf)
-        # in original iou procedure, max class is never overwritten
         self.last_frame = max(self.last_frame, frame.no)
         self.track_age = 0
 
@@ -169,7 +167,7 @@ class IouTracker(Tracker[S]):
         tracked_detections: list[TrackedDetection] = []
 
         finished_track_ids: list[TrackId] = []
-        # discarded_track_ids: list[TrackId] = []
+        discarded_track_ids: list[TrackId] = []
         # it seems iou can drop tracks,
         # since cases in no updated check are not exhaustive
         # tracking framework should be noticed about there dropped frames
@@ -203,7 +201,8 @@ class IouTracker(Tracker[S]):
                     saved_tracks.append(track)
                 elif track.max_conf >= self.sigma_h and track.frame_span >= self.t_min:
                     finished_track_ids.append(track.id)
-                # what about else branch
+                else:
+                    discarded_track_ids.append(track.id)
 
         # start new track for each detection that could not be assigned
         for det in detections:
@@ -220,4 +219,5 @@ class IouTracker(Tracker[S]):
             detections=tracked_detections,
             image=frame.image,
             finished_tracks=finished_track_ids,
+            discarded_tracks=discarded_track_ids,
         )

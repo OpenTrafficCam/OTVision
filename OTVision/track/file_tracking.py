@@ -9,6 +9,7 @@ from more_itertools import peekable
 from OTVision.track.data import (
     FinishedFrame,
     Frame,
+    FrameNo,
     IsLastFrame,
     TrackedFrame,
     TrackId,
@@ -98,7 +99,7 @@ class TrackedChunk(FrameChunk):
         object.__setattr__(self, "unfinished_tracks", unfinished)
 
         # assume frames sorted by occurrence
-        last_track_frame: dict[int, int] = {
+        last_track_frame: dict[TrackId, FrameNo] = {
             detection.track_id: frame.no
             for frame in self.frames
             for detection in frame.detections
@@ -306,9 +307,7 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
         tracked_chunk_stream = self.tracker.track_group(group)
         return self.track_and_finish(tracked_chunk_stream)
 
-    def _get_last_track_frames(
-        self, container: TrackedChunk
-    ) -> dict[TrackId, int]:  # todo int -> typealias FrameNo
+    def _get_last_track_frames(self, container: TrackedChunk) -> dict[TrackId, FrameNo]:
         return container.last_track_frame
 
     def _get_unfinished_tracks(self, container: TrackedChunk) -> set[TrackId]:
@@ -343,7 +342,7 @@ class OldBufferedFinishedChunksTracker(GroupedFilesTracker):
             tracker, chunk_parser, frame_group_parser, id_generator_factory
         )
         self._unfinished_chunks: dict[TrackedChunk, set[TrackId]] = dict()
-        self._merged_last_track_frame: dict[TrackId, int] = dict()
+        self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
 
     def group_and_track_files(self, files: list[Path]) -> Iterator[FinishedChunk]:
         # reuse method but update type hint
