@@ -86,14 +86,18 @@ class TrackedDetection(Detection):
     is_first: bool
     track_id: TrackId
 
-    def finish(self, is_last: bool) -> "FinishedDetection":
-        return FinishedDetection.from_tracked_detection(self, is_last)
+    def finish(self, is_last: bool, is_discarded: bool) -> "FinishedDetection":
+        return FinishedDetection.from_tracked_detection(self, is_last, is_discarded)
 
-    def as_last_detection(self) -> "TrackedDetection":
-        return FinishedDetection.from_tracked_detection(self, is_last=True)
+    def as_last_detection(self, is_discarded: bool) -> "TrackedDetection":
+        return FinishedDetection.from_tracked_detection(
+            self, is_last=True, is_discarded=is_discarded
+        )
 
-    def as_intermediate_detection(self) -> "TrackedDetection":
-        return FinishedDetection.from_tracked_detection(self, is_last=False)
+    def as_intermediate_detection(self, is_discarded: bool) -> "TrackedDetection":
+        return FinishedDetection.from_tracked_detection(
+            self, is_last=False, is_discarded=is_discarded
+        )
 
 
 @dataclass(frozen=True, repr=True)
@@ -102,13 +106,15 @@ class FinishedDetection(TrackedDetection):
 
     Attributes:
         is_last (bool): whether this detection is the last in the track.
+        is_discarded (bool): whether the detections's track was discarded.
     """
 
     is_last: bool
+    is_discarded: bool
 
     @classmethod
     def from_tracked_detection(
-        cls, tracked_detection: TrackedDetection, is_last: bool
+        cls, tracked_detection: TrackedDetection, is_last: bool, is_discarded: bool
     ) -> "FinishedDetection":
         td = tracked_detection
         return cls(
@@ -121,6 +127,7 @@ class FinishedDetection(TrackedDetection):
             is_first=td.is_first,
             track_id=td.track_id,
             is_last=is_last,
+            is_discarded=is_discarded,
         )
 
 
@@ -140,12 +147,18 @@ class TrackedFrame(Frame[S]):
             frame.
         finished_tracks (set[TrackId]): track ids of tracks observed in this or prior
             to this frame that can now be considered finished. These track ids should
-            no longer be observed/assigned in future frames.
-        unfinished_tracks (set[TrackId]): ob served tracks that are not yet finished.
+            no longer be observed/assigned in future frames. (successfully completed)
+        discarded_tracks (set[TrackId]): track ids, that are now considered discarded.
+            The corresponding tracks are no longer pursued, previous TrackedDetections
+            of these tracks are also considered discarded. Discarded tracks may be
+            observed but not finished.(unsuccessful, incomplete)
+        unfinished_tracks (set[TrackId]): observed tracks that are not yet finished
+            and were not discarded.
     """
 
     detections: Sequence[TrackedDetection]
     finished_tracks: set[TrackId]
+    discarded_tracks: set[TrackId]
     observed_tracks: set[TrackId] = field(init=False)
     unfinished_tracks: set[TrackId] = field(init=False)
 
@@ -155,29 +168,55 @@ class TrackedFrame(Frame[S]):
         observed = {d.track_id for d in self.detections}
         object.__setattr__(self, "observed_tracks", observed)
 
-        unfinished = {o for o in self.observed_tracks if o not in self.finished_tracks}
+        unfinished = {
+            o
+            for o in self.observed_tracks
+            if o not in self.finished_tracks and o not in self.discarded_tracks
+        }
         object.__setattr__(self, "unfinished_tracks", unfinished)
 
-    def finish(self, is_last: IsLastFrame) -> "FinishedFrame":
+    def finish(
+        self,
+        is_last: IsLastFrame,
+        discarded_tracks: set[TrackId],
+        keep_discarded: bool = False,
+    ) -> "FinishedFrame":
         """Turn this TrackedFrame into a finished frame
-        by adding is_finished information to all its detection.
+        by adding is_finished information to all its detections.
 
         Args:
             is_last (IsLastFrame): function to determine whether
                 a track is finished in a certain frame.
-
+            discarded_tracks (set[TrackId]): list of tracks considered discarded.
+                Used to mark corresponding tracks.
+            keep_discarded (bool): whether FinishedDetections marked as discarded
+                should be kept in detections list. Defaults to False.
         Returns:
             FinishedFrame: frame with FinishedDetections
         """
+        if keep_discarded:
+            detections = [
+                det.finish(
+                    is_last=is_last(self.no, det.track_id),
+                    is_discarded=(det.track_id in discarded_tracks),
+                )
+                for det in self.detections
+            ]
+        else:
+            detections = [
+                det.finish(is_last=is_last(self.no, det.track_id), is_discarded=False)
+                for det in self.detections
+                if (det.track_id not in discarded_tracks)
+            ]
+
         return FinishedFrame(
             no=self.no,
             occurrence=self.occurrence,
             source=self.source,
             finished_tracks=self.finished_tracks,
-            detections=[
-                det.finish(is_last(self.no, det.track_id)) for det in self.detections
-            ],
+            detections=detections,
             image=self.image,
+            discarded_tracks=discarded_tracks,
         )
 
 
@@ -193,39 +232,122 @@ class FinishedFrame(TrackedFrame[S]):
     detections: Sequence[FinishedDetection]
 
 
-C = TypeVar("C")  # Detection container
-F = TypeVar("F")  # Finished container
+C = TypeVar("C")  # Detection container: e.g. TrackedFrame or TrackedChunk
+F = TypeVar("F")  # Finished container: e.g. FinishedFrame or FinishedChunk
 
 
 class UnfinishedTracksBuffer(ABC, Generic[C, F]):
+    """UnfinishedTracksBuffer provides functionality
+    to add finished information to tracked detections.
 
-    def __init__(self) -> None:
+    It processes containers (C) of TrackedDetections, buffers them
+    and stores track ids that are reported as finished.
+    Only when all tracks of a container (C) were marked as finished,
+    it is converted into a finished container (F) and yielded.
+
+    Args:
+        Generic (C): generic type of TrackedDetection container
+            (e.g. TrackedFrame or TrackedChunk)
+        Generic (F): generic type of FinishedDetection container
+            (e.g. FinishedFrame or FinishedChunk)
+        keep_discarded (bool): whether detections marked as discarded should
+            be kept of filtered when finishing them. Defaults to False.
+    """
+
+    def __init__(self, keep_discarded: bool = False) -> None:
+        self._keep_discarded = keep_discarded
         self._unfinished_containers: dict[C, set[TrackId]] = dict()
         self._merged_last_track_frame: dict[TrackId, int] = dict()
+        self._discarded_tracks: set[TrackId] = set()
 
     @abstractmethod
     def _get_last_track_frames(self, container: C) -> dict[TrackId, int]:
+        """Mapping from TrackId to frame no of last detection occurrence.
+        Mapping for all tracks in newly tracked container.
+
+        Args:
+            container (C): newly tracked TrackedDetection container
+
+        Returns:
+            dict[TrackId, int]: last frame no by TrackId
+        """
         pass
 
     @abstractmethod
     def _get_unfinished_tracks(self, container: C) -> set[TrackId]:
+        """TrackIds of given container, that are marked as unfinished.
+
+        Args:
+            container (C): newly tracked TrackedDetection container
+
+        Returns:
+            set[TrackId]: TrackIds of container marked as unfinished
+        """
         pass
 
     @abstractmethod
     def _get_observed_tracks(self, container: C) -> set[TrackId]:
+        """TrackIds observed given (newly tracked) container.
+
+        Args:
+            container (C): newly tracked TrackedDetection container
+
+        Returns:
+            set[TrackId]: observed TrackIds of container
+        """
         pass
 
     @abstractmethod
     def _get_newly_finished_tracks(self, container: C) -> set[TrackId]:
+        """TrackIds marked as finished in the given (newly tracked) container.
+
+        Args:
+            container (C): newly tracked TrackedDetection container
+
+        Returns:
+            set[TrackId]: finished TrackIds in container
+        """
         pass
 
     @abstractmethod
-    def _finish(self, container: C, is_last: IsLastFrame) -> F:
+    def _get_newly_discarded_tracks(self, container: C) -> set[TrackId]:
+        """TrackIds marked as discarded in the given (newly tracked) container.
+
+        Args:
+            container (C): newly tracked TrackedDetection container
+
+        Returns:
+            set[TrackId]: discarded TrackIds in container
+        """
+        pass
+
+    @abstractmethod
+    def _finish(
+        self,
+        container: C,
+        is_last: IsLastFrame,
+        discarded_tracks: set[TrackId],
+        keep_discarded: bool,
+    ) -> F:
+        """Transform the given container to a finished container
+        by adding is_finished information to all contained TrackedDetections
+        turning them into FinishedDetections.
+
+        Args:
+            container (C): container of TrackedDetections
+            is_last (IsLastFrame): check whether a track ends in a certain frame
+            keep_discarded (bool): whether detections marked as discarded are kept.
+        Returns:
+            F: a finished container with transformed detections of given container
+        """
         pass
 
     def track_and_finish(self, containers: Iterator[C]) -> Iterator[F]:
+        # todo template method to obtain containers?
+
         for container in containers:
 
+            # if track is observed in current iteration, update its last observed frame
             self._merged_last_track_frame.update(self._get_last_track_frames(container))
             self._unfinished_containers[container] = self._get_unfinished_tracks(
                 container
@@ -234,9 +356,13 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             # update unfinished track ids of previously tracked containers
             # if containers have no pending tracks, make ready for finishing
             newly_finished_tracks = self._get_newly_finished_tracks(container)
+            newly_discarded_tracks = self._get_newly_discarded_tracks(container)
+            self._discarded_tracks.update(newly_discarded_tracks)
+
             ready_containers: list[C] = []
             for c, track_ids in self._unfinished_containers.items():
                 track_ids.difference_update(newly_finished_tracks)
+                track_ids.difference_update(newly_discarded_tracks)
 
                 if not track_ids:
                     ready_containers.append(c)
@@ -259,17 +385,25 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             lambda frame_no, track_id: frame_no
             == self._merged_last_track_frame[track_id]
         )
-        finished_containers: list[F] = [self._finish(c, is_last) for c in containers]
+        keep = self._keep_discarded
+        discarded = self._discarded_tracks
+        finished_containers: list[F] = [
+            self._finish(c, is_last, discarded, keep) for c in containers
+        ]
 
         # the last frame of the observed tracks have been marked
         # track ids no longer required in _merged_last_track_frame
-        finished_tracks = set().union(
-            *(self._get_observed_tracks(c) for c in containers)
+        cleanup_track_ids = (
+            set()
+            .union(*(self._get_observed_tracks(c) for c in containers))
+            .union(*(self._get_newly_finished_tracks(c) for c in containers))
+            .union(*(self._get_newly_discarded_tracks(c) for c in containers))
         )
         self._merged_last_track_frame = {
             track_id: frame_no
             for track_id, frame_no in self._merged_last_track_frame.items()
-            if track_id not in finished_tracks
+            if track_id not in cleanup_track_ids
         }
+        self._discarded_tracks.difference_update(cleanup_track_ids)
 
         return finished_containers

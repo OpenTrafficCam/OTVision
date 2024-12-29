@@ -19,16 +19,40 @@ from OTVision.track.tracking_interfaces import ID_GENERATOR, Tracker
 
 @dataclass(frozen=True)
 class FrameChunk:
-    # start/end metadata?
+    """
+    A chunk of Frames obtained from a common file path source.
+
+    Attributes:
+        file (Path): common file path source of Frames.
+        frames (Sequence[Frame[Path]]): a sequence of untracked Frames.
+    """
+
+    # TODO start/end metadata?
     file: Path
     frames: Sequence[Frame[Path]]
 
 
 @dataclass(frozen=True)
 class TrackedChunk(FrameChunk):
-    """
-    is_last denotes this chunk is the last chunk,
-    in that case the last frame is updates
+    """A chunk of TrackedFrames extends FrameChunk.
+    Aggregates observed/finished/unfinished tracking metadata.
+
+    If is_last_chunk is true, all unfinished tracks
+    are marked as finished in last frame.
+
+    Attributes:
+        is_last_chunk (bool): whether this chunk is the last of
+            subsequently (related/connected) chunks.
+        frames (Sequence[TrackedFrame[Path]]): overrides frames
+            with more specific frame type.
+        finished_tracks (set[TrackId]): aggregates finished tracks
+            of given TrackedFrames.
+        observed_tracks (set[TrackId]): aggregates observed tracks
+            of given TrackedFrames.
+        unfinished_tracks (set[TrackId]): aggregates unfinished tracks
+            of given TrackedFrames as observed but not finished tracks in chunk.
+        last_track_frame (dict[TrackId, int]): mapping of track id
+            to frame number in which it last occurs.
     """
 
     is_last_chunk: bool
@@ -48,13 +72,9 @@ class TrackedChunk(FrameChunk):
 
         observed = set().union(*(f.observed_tracks for f in frames))
         finished = set().union(*(f.finished_tracks for f in frames))
-        # TODO assert only observed tracks are finished?
-
-        object.__setattr__(self, "finished_tracks", finished)
-        object.__setattr__(self, "observed_tracks", observed)
-
         unfinished = {o for o in observed if o not in finished}
 
+        # set all unfinished tracks as finished, as this is the last track
         if self.is_last_chunk:
             frames_list = list(frames)
             # assume frames sorted by occurrence
@@ -62,7 +82,7 @@ class TrackedChunk(FrameChunk):
             last_frame = frames_list[-1]
             frames_list[-1] = replace(
                 last_frame,
-                # more trivial implementation: add all observed ids of entire chunk here
+                # more trivial implementation? add all observed ids of entire chunk here
                 # ->  all tracks are observed & finished in last frame or before
                 # -> maybe large set with old ids that have already known to be finished
                 finished_tracks=last_frame.finished_tracks.union(unfinished),
@@ -71,6 +91,10 @@ class TrackedChunk(FrameChunk):
             object.__setattr__(self, "frames", frames_list)
 
             unfinished = set()
+            finished = set().union(*(f.finished_tracks for f in frames_list))
+
+        object.__setattr__(self, "finished_tracks", finished)
+        object.__setattr__(self, "observed_tracks", observed)
         object.__setattr__(self, "unfinished_tracks", unfinished)
 
         # assume frames sorted by occurrence
@@ -81,24 +105,50 @@ class TrackedChunk(FrameChunk):
         }
         object.__setattr__(self, "last_track_frame", last_track_frame)
 
-    def finish(self, is_last: IsLastFrame) -> "FinishedChunk":
-        # group_last_track_frame: dict[TrackId, int]
-        # is_last: IsLastFrame = (
-        #     lambda frame_no, track_id: frame_no == group_last_track_frame[track_id]
-        # )
+    def finish(
+        self,
+        is_last: IsLastFrame,
+        discarded_tracks: set[TrackId],
+        keep_discarded: bool = False,
+    ) -> "FinishedChunk":
+        """Turn this TrackedChunk into a FinishedChunk
+        by adding is_finished information to all its detections.
+
+        Args:
+            is_last (IsLastFrame): function to determine whether
+                a track is finished in a certain frame.
+            discarded_tracks (set[TrackId]): list of tracks considered discarded.
+                Used to mark corresponding tracks.
+            keep_discarded (bool): whether FinishedDetections marked as discarded
+                should be kept in detections list. Defaults to False.
+
+        Returns:
+            FinishedChunk: chunk of FinishedFrames
+        """
         return FinishedChunk(
             file=self.file,
             is_last_chunk=self.is_last_chunk,
-            frames=[frame.finish(is_last) for frame in self.frames],
+            frames=[
+                frame.finish(is_last, discarded_tracks, keep_discarded)
+                for frame in self.frames
+            ],
         )
 
 
 @dataclass(frozen=True)
 class FinishedChunk(TrackedChunk):
+    """A chunk of FinishedFrames.
+
+    Attributes:
+        frames (Sequence[FinishedFrame[Path]]): overrides frames
+            with more specific frame type.
+    """
+
     frames: Sequence[FinishedFrame[Path]]
 
 
 class ChunkParser(ABC):
+    """A parser for file path to FrameChunk."""
 
     @abstractmethod
     def parse(self, file: Path, frame_offset: int) -> FrameChunk:
@@ -247,8 +297,9 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
     def __init__(
         self,
         tracker: GroupedFilesTracker,
+        keep_discarded: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(keep_discarded)
         self.tracker = tracker
 
     def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
@@ -269,8 +320,14 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
     def _get_newly_finished_tracks(self, container: TrackedChunk) -> set[TrackId]:
         return container.finished_tracks
 
-    def _finish(self, container: TrackedChunk, is_last: IsLastFrame) -> FinishedChunk:
-        return container.finish(is_last)
+    def _finish(
+        self,
+        container: TrackedChunk,
+        is_last: IsLastFrame,
+        discarded_tracks: set[TrackId],
+        keep_discarded: bool,
+    ) -> FinishedChunk:
+        return container.finish(is_last, discarded_tracks, keep_discarded)
 
 
 class OldBufferedFinishedChunksTracker(GroupedFilesTracker):
@@ -326,7 +383,7 @@ class OldBufferedFinishedChunksTracker(GroupedFilesTracker):
             lambda frame_no, track_id: frame_no
             == self._merged_last_track_frame[track_id]
         )
-        finished_chunks = [c.finish(is_last) for c in chunks]
+        finished_chunks = [c.finish(is_last, set()) for c in chunks]
 
         # the last frame of the observed tracks have been marked
         # track ids no longer required in _merged_last_track_frame

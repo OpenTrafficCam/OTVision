@@ -17,10 +17,32 @@ ID_GENERATOR = Iterator[TrackId]
 
 
 class Tracker(ABC, Generic[S]):
+    """Tracker interface for processing a stream of Frames
+    to add tracking information, creating a lazy stream (generator)
+    of TrackedFrames.
+
+    Implementing class can specify template method:
+    track_frame for processing a single frame.
+
+    Args:
+        Generic (S): generic type of Frame source (e.g. file path, or stream url)
+    """
 
     def track(
         self, frames: Iterator[Frame[S]], id_generator: ID_GENERATOR
     ) -> Iterator[TrackedFrame[S]]:
+        """Process the given stream of Frames,
+        yielding TrackedFrames one by one as a lazy stream of TrackedFrames.
+
+        Args:
+            frames (Iterator[Frame[S]]): (lazy) stream of Frames
+                with untracked Detections.
+            id_generator (ID_GENERATOR): provider of new (unique) track ids.
+
+        Yields:
+            Iterator[TrackedFrame[S]]: (lazy) stream of TrackedFrames with
+                TrackedDetections
+        """
         for frame in frames:
             yield self.track_frame(frame, id_generator)
 
@@ -30,13 +52,25 @@ class Tracker(ABC, Generic[S]):
         frame: Frame[S],
         id_generator: ID_GENERATOR,
     ) -> TrackedFrame[S]:
+        """Process single Frame with untracked Detections,
+        by adding tracking information,
+        creating a TrackedFrame with TrackedDetections.
+
+        Args:
+            frame (Frame[S]): the Frame (with source S) to be tracked.
+            id_generator (ID_GENERATOR): provider of new (unique) track ids.
+
+        Returns:
+            TrackedFrame[S]: TrackedFrame with TrackedDetections
+        """
         pass
 
 
 class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame[S], FinishedFrame[S]]):
+    """UnfinishedTracksBuffer implementation for Frames as Detection container."""
 
-    def __init__(self, tracker: Tracker[S]):
-        super().__init__()
+    def __init__(self, tracker: Tracker[S], keep_discarded: bool = False):
+        super().__init__(keep_discarded)
         self._tracker = tracker
 
     def track(
@@ -58,9 +92,13 @@ class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame[S], FinishedFra
         return container.finished_tracks
 
     def _finish(
-        self, container: TrackedFrame[S], is_last: IsLastFrame
+        self,
+        container: TrackedFrame[S],
+        is_last: IsLastFrame,
+        discarded_tracks: set[TrackId],
+        keep_discarded: bool,
     ) -> FinishedFrame[S]:
-        return container.finish(is_last)
+        return container.finish(is_last, discarded_tracks, keep_discarded)
 
 
 class OldBufferedFinishedFramesTracker(Tracker[S]):
@@ -113,7 +151,7 @@ class OldBufferedFinishedFramesTracker(Tracker[S]):
             lambda frame_no, track_id: frame_no
             == self._merged_last_track_frame[track_id]
         )
-        finished_frames = [f.finish(is_last) for f in frames]
+        finished_frames = [f.finish(is_last, set()) for f in frames]
 
         # the last frame of the observed tracks have been marked
         # track ids no longer required in _merged_last_track_frame
