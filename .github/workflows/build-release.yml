@@ -13,7 +13,7 @@ permissions: read-all
 jobs:
   test:
     if: endsWith(github.event.base_ref, 'main')
-    uses: './.github/workflows/test.yml'
+    uses: "./.github/workflows/test.yml"
   create_release:
     permissions:
       contents: write

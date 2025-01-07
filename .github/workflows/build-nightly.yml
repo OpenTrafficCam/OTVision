@@ -12,7 +12,7 @@ permissions: read-all
 
 jobs:
   test:
-    uses: './.github/workflows/test.yml'
+    uses: "./.github/workflows/test.yml"
   create_nightly:
     permissions:
       contents: write
