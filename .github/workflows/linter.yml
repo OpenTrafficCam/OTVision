@@ -7,6 +7,8 @@ name: super-linter
 
 on: pull_request
 
+permissions: read-all
+
 jobs:
   lint:
     name: Lint many languages with super-linter
@@ -14,18 +16,23 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
       - name: Lint Code Base
-        uses: github/super-linter/slim@v5
+        uses: github/super-linter/slim@v7
         env:
           VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: master
+          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_GO_RELEASER: false
           VALIDATE_PYTHON_PYLINT: false
           VALIDATE_PYTHON_MYPY: false
           VALIDATE_JSCPD: false
           VALIDATE_PYTHON_BLACK: false
 
           LINTER_RULES_PATH: /
-          PYTHON_FLAKE8_CONFIG_FILE: setup.cfg
+          PYTHON_FLAKE8_CONFIG_FILE: .flake8
           PYTHON_ISORT_CONFIG_FILE: setup.cfg
           YAML_CONFIG_FILE: .yamllint.yaml

@@ -7,6 +7,8 @@ on:
   pull_request:
   workflow_call:
 
+permissions: read-all
+
 jobs:
   test:
     name: Run Python tests on multiple OS and Python versions
@@ -15,9 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         py: ["3.11"]
-    uses: 'platomo/GitHub-workflows/.github/workflows/reusable-python-tests.yml@main'
+    uses: "platomo/GitHub-workflows/.github/workflows/reusable-python-tests.yml@main"
     with:
       os: ${{ matrix.os }}
       py-version: ${{ matrix.py }}
       test_path: OTVision
-      ffmpeg-required: true
+      ffmpeg-required: True

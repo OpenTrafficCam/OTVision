@@ -8,11 +8,15 @@ on:
     tags:
       - "v*.*.*.*"
 
+permissions: read-all
+
 jobs:
   test:
     if: endsWith(github.event.base_ref, 'main')
-    uses: './.github/workflows/test.yml'
+    uses: "./.github/workflows/test.yml"
   create_release:
+    permissions:
+      contents: write
     needs: test
     uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
     secrets:
@@ -23,4 +27,3 @@ jobs:
       draft-release: false
       pre-release: false
       delete-existing: false
-
