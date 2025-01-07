@@ -8,10 +8,14 @@ on:
     branches:
       - main
 
+permissions: read-all
+
 jobs:
   test:
     uses: './.github/workflows/test.yml'
   create_nightly:
+    permissions:
+      contents: write
     needs: test
     uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
     secrets:
@@ -22,4 +26,3 @@ jobs:
       draft-release: false
       pre-release: true
       delete-existing: true
-

@@ -7,6 +7,8 @@ on:
   pull_request:
   workflow_call:
 
+permissions: read-all
+
 jobs:
   test:
     name: Run Python tests on multiple OS and Python versions
