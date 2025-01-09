@@ -8,6 +8,8 @@ on:
     tags:
       - "v*.*.*.*"
 
+permissions: read-all
+
 jobs:
   test:
     if: endsWith(github.event.base_ref, 'main')
