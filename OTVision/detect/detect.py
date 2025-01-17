@@ -51,6 +51,8 @@ def main(
     expected_duration: timedelta,
     filetypes: list[str] = CONFIG[FILETYPES][VID],
     overwrite: bool = CONFIG[DETECT][OVERWRITE],
+    detect_start: int | None = None,
+    detect_end: int | None = None,
 ) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
@@ -62,10 +64,13 @@ def main(
             evenly spread across this duration
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
-        overwrite (bool, optional): Whether or not to overwrite
+        overwrite (bool, optional): Whether to overwrite
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
+        detect_start (int | None, optional): Start of the detection range.
+            Defaults to None.
+        detect_end (int | None, optional): End of the detection range.
+            Defaults to None.
     """
-
     video_files = get_files(paths=paths, filetypes=filetypes)
 
     start_msg = f"Start detection of {len(video_files)} video files"
@@ -87,10 +92,16 @@ def main(
 
         log.info(f"Detect {video_file}")
 
-        detections = model.detect(file=video_file)
+        video_fps = get_fps(video_file)
+        detect_start_in_frames = convert_seconds_to_frames(detect_start, video_fps)
+        detect_end_in_frames = convert_seconds_to_frames(detect_end, video_fps)
+        detections = model.detect(
+            file=video_file,
+            detect_start=detect_start_in_frames,
+            detect_end=detect_end_in_frames,
+        )
 
         video_width, video_height = get_video_dimensions(video_file)
-        video_fps = get_fps(video_file)
         actual_frames = len(detections)
         actual_fps = actual_frames / expected_duration.total_seconds()
         otdet = OtdetBuilder(
@@ -126,6 +137,13 @@ def main(
     print(finished_msg)
 
     return None
+
+
+def convert_seconds_to_frames(seconds: int | None, fps: float) -> int | None:
+    # Is it okay to assume fps is an integer? Do we need to round result?
+    if seconds is None:
+        return None
+    return round(seconds * fps)
 
 
 class FormatNotSupportedError(Exception):

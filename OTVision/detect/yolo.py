@@ -31,7 +31,7 @@ import torch
 from numpy import ndarray
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
-from ultralytics.engine.results import Boxes, Results
+from ultralytics.engine.results import Boxes
 
 from OTVision.config import (
     CONF,
@@ -67,10 +67,19 @@ class YOLOv5ModelNotFoundError(Exception):
 
 class ObjectDetection(ABC):
     @abstractmethod
-    def detect(self, video: Path) -> list[list[Detection]]:
+    def detect(
+        self,
+        video: Path,
+        detect_start: int | None = None,
+        detect_end: int | None = None,
+    ) -> list[list[Detection]]:
         """Runs object detection on a video.
         Args:
             video (Path): the path to the video.
+            detect_start (int | None, optional): Start of the detection range
+                expressed in frames.
+            detect_end (int | None, optional): End of the detection range
+                expressed in frames. Defaults to None.
 
         Returns:
             list[list[Detection]]: nested list of detections. First level is frames,
@@ -147,11 +156,17 @@ class Yolov8(ObjectDetection):
             else self.model.predictor.model.names
         )
 
-    def detect(self, file: Path) -> list[list[Detection]]:
+    def detect(
+        self, file: Path, detect_start: int | None = None, detect_end: int | None = None
+    ) -> list[list[Detection]]:
         """Run object detection on video and return detection result.
 
         Args:
-            video (Path): the video to run object detection on
+            file (Path): the video to run object detection on.
+            detect_start (int | None, optional): Start of the detection range in frames.
+                Defaults to None.
+            detect_end (int | None, optional): End of the detection range in frames.
+                Defaults to None.
 
         Returns:
             list[list[Detection]]: the detections for each frame in the video
@@ -159,12 +174,12 @@ class Yolov8(ObjectDetection):
         frames: list[list[Detection]] = []
         length = video.get_number_of_frames(file)
         for prediction_result in tqdm(
-            self._predict(file),
+            self._predict(file, detect_start, detect_end),
             desc="Detected frames",
             unit=" frames",
             total=length,
         ):
-            frames.append(self._parse_detections(prediction_result.boxes))
+            frames.append(prediction_result)
 
         return frames
 
@@ -172,26 +187,37 @@ class Yolov8(ObjectDetection):
         model = YOLOv8(model=self.weights, task="detect")
         return model
 
-    def _predict(self, video: Path) -> Generator[Results, None, None]:
+    def _predict(
+        self, video: Path, detect_start: int | None, detect_end: int | None
+    ) -> Generator[list[Detection], None, None]:
+        start = 0
+        if detect_start is not None:
+            start = detect_start
+
         with av.open(str(video.absolute())) as container:
             container.streams.video[0].thread_type = "AUTO"
             side_data = container.streams.video[0].side_data
-            for frame in container.decode(video=0):
-                ndarray = frame.to_ndarray(format="rgb24")
-                rotated_image = rotate(ndarray, side_data)
-                results = self.model.predict(
-                    source=rotated_image,
-                    conf=self.confidence,
-                    iou=self.iou,
-                    half=self.half_precision,
-                    imgsz=self.img_size,
-                    device=0 if torch.cuda.is_available() else "cpu",
-                    stream=False,
-                    verbose=False,
-                    agnostic_nms=True,
-                )
-                for result in results:
-                    yield result
+            for frame_number, frame in enumerate(container.decode(video=0), start=1):
+                if start <= frame_number and (
+                    detect_end is None or frame_number < detect_end
+                ):
+                    array = frame.to_ndarray(format="rgb24")
+                    rotated_image = rotate(array, side_data)
+                    results = self.model.predict(
+                        source=rotated_image,
+                        conf=self.confidence,
+                        iou=self.iou,
+                        half=self.half_precision,
+                        imgsz=self.img_size,
+                        device=0 if torch.cuda.is_available() else "cpu",
+                        stream=False,
+                        verbose=False,
+                        agnostic_nms=True,
+                    )
+                    for result in results:
+                        yield self._parse_detections(result.boxes)
+                else:
+                    yield []
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
         bboxes = detection_result.xywhn if self.normalized else detection_result.xywh
