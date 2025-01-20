@@ -53,6 +53,8 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     },
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "config": {PASSED: ""},
+    "detect_start": {PASSED: "--detect_start 300", EXPECTED: 300},
+    "detect_end": {PASSED: "--detect_end 600", EXPECTED: 600},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
@@ -73,6 +75,8 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "detect_start": {PASSED: "--detect_start 300", EXPECTED: 300},
+    "detect_end": {PASSED: "--detect_end 600", EXPECTED: 600},
     "config": {PASSED: ""},
 }
 
@@ -91,6 +95,8 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
+    "detect_start": {PASSED: "", EXPECTED: None},
+    "detect_end": {PASSED: "", EXPECTED: None},
     "config": {PASSED: ""},
 }
 
@@ -116,6 +122,8 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     },
     "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
+    "detect_start": {PASSED: "", EXPECTED: None},
+    "detect_end": {PASSED: "", EXPECTED: None},
 }
 
 required_arguments = (
@@ -231,6 +239,8 @@ class TestDetectCLI:
                     *test_data["expected_duration"][PASSED].split(),
                     *test_data["overwrite"][PASSED].split(),
                     *test_data["config"][PASSED].split(),
+                    *test_data["detect_start"][PASSED].split(),
+                    *test_data["detect_end"][PASSED].split(),
                     LOGFILE_OVERWRITE_CMD,
                 ]
 
@@ -252,6 +262,8 @@ class TestDetectCLI:
                         paths=test_data["paths"][EXPECTED],
                         expected_duration=(test_data["expected_duration"][EXPECTED]),
                         overwrite=test_data["overwrite"][EXPECTED],
+                        detect_start=test_data["detect_start"][EXPECTED],
+                        detect_end=test_data["detect_end"][EXPECTED],
                     )
                 ]
 
