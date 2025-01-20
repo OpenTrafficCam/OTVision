@@ -23,7 +23,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from time import perf_counter
-from typing import Generator
+from typing import Callable, Generator
 
 import av
 import torch
@@ -111,6 +111,7 @@ class Yolov8(ObjectDetection):
         half_precision: bool,
         normalized: bool,
         frame_rotator: AvVideoFrameRotator,
+        get_number_of_frames: Callable[[Path], int] = video.get_number_of_frames,
     ) -> None:
         self.weights = weights
         self.model = model
@@ -120,6 +121,7 @@ class Yolov8(ObjectDetection):
         self.half_precision = half_precision
         self.normalized = normalized
         self._frame_rotator = frame_rotator
+        self._get_number_of_frames = get_number_of_frames
 
     @property
     def classifications(self) -> dict[int, str]:
@@ -150,7 +152,7 @@ class Yolov8(ObjectDetection):
             list[list[Detection]]: the detections for each frame in the video
         """
         frames: list[list[Detection]] = []
-        length = video.get_number_of_frames(file)
+        length = self._get_number_of_frames(file)
         for prediction_result in tqdm(
             self._predict(file, detect_start, detect_end),
             desc="Detected frames",
