@@ -26,9 +26,7 @@ from time import perf_counter
 from typing import Generator
 
 import av
-import numpy
 import torch
-from numpy import ndarray
 from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.engine.results import Boxes
@@ -44,6 +42,7 @@ from OTVision.config import (
     WEIGHTS,
     YOLO,
 )
+from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.preprocess import Detection
@@ -88,29 +87,6 @@ class ObjectDetection(ABC):
         pass
 
 
-def rotate(array: ndarray, side_data: dict) -> ndarray:
-    """
-    Rotate a numpy array using the DISPLAYMATRIX rotation angle defined in side_data.
-
-    Args:
-        array: to rotate
-        side_data: metadata dictionary to read the angle from
-
-    Returns: rotated array
-
-    """
-    if DISPLAYMATRIX in side_data:
-        angle = side_data[DISPLAYMATRIX]
-        if angle % 90 != 0:
-            raise ValueError(
-                f"Rotation angle must be multiple of 90 degrees, but is {angle}"
-            )
-        rotation = angle / 90
-        rotated_image = numpy.rot90(array, rotation)
-        return rotated_image
-    return array
-
-
 class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
@@ -134,6 +110,7 @@ class Yolov8(ObjectDetection):
         img_size: int,
         half_precision: bool,
         normalized: bool,
+        frame_rotator: AvVideoFrameRotator,
     ) -> None:
         self.weights = weights
         self.model = model
@@ -142,6 +119,7 @@ class Yolov8(ObjectDetection):
         self.img_size = img_size
         self.half_precision = half_precision
         self.normalized = normalized
+        self._frame_rotator = frame_rotator
 
     @property
     def classifications(self) -> dict[int, str]:
@@ -197,8 +175,7 @@ class Yolov8(ObjectDetection):
                 if start <= frame_number and (
                     detect_end is None or frame_number < detect_end
                 ):
-                    array = frame.to_ndarray(format="rgb24")
-                    rotated_image = rotate(array, side_data)
+                    rotated_image = self._frame_rotator.rotate(frame, side_data)
                     results = self.model.predict(
                         source=rotated_image,
                         conf=self.confidence,
@@ -276,6 +253,7 @@ def create_model(
         img_size=img_size,
         half_precision=half_precision,
         normalized=normalized,
+        frame_rotator=AvVideoFrameRotator(),
     )
     t2 = perf_counter()
 

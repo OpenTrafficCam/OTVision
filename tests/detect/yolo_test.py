@@ -1,39 +1,12 @@
 from pathlib import Path
 from unittest.mock import Mock
 
-import numpy
 import pytest
 from cv2 import VideoCapture
-from numpy.testing import assert_array_equal
 from torch import Tensor
 
-from OTVision.detect.yolo import DISPLAYMATRIX, Yolov8, rotate
+from OTVision.detect.yolo import Yolov8
 from OTVision.track.preprocess import Detection
-
-
-@pytest.mark.parametrize(
-    "angle, expected",
-    [
-        (90, [[2, 4], [1, 3]]),
-        (-90, [[3, 1], [4, 2]]),
-        (-180, [[4, 3], [2, 1]]),
-        (180, [[4, 3], [2, 1]]),
-    ],
-)
-def test_rotate(angle: int, expected: list[list[int]]) -> None:
-    actual_array = numpy.array([[1, 2], [3, 4]], int)
-    expected_array = numpy.array(expected, int)
-
-    result = rotate(actual_array, {DISPLAYMATRIX: angle})
-
-    assert_array_equal(result, expected_array)
-
-
-def test_rotate_by_non_90_degree() -> None:
-    actual_array = numpy.array([[1, 2], [3, 4]], int)
-
-    with pytest.raises(ValueError):
-        rotate(actual_array, {DISPLAYMATRIX: 20})
 
 
 @pytest.fixture
@@ -78,13 +51,14 @@ class TestConvertDetections:
         mock_yolo.names = names
 
         model = Yolov8(
-            Mock(),
-            mock_yolo,
+            weights=Mock(),
+            model=mock_yolo,
             confidence=0.25,
             iou=0.25,
             img_size=640,
             half_precision=False,
             normalized=False,
+            frame_rotator=Mock(),
         )
 
         result = model._parse_detection(
