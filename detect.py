@@ -28,7 +28,7 @@ from pathlib import Path
 
 import OTVision
 import OTVision.config as config
-from OTVision.detect.yolo import loadmodel
+from OTVision.detect.yolo import create_model
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 
@@ -291,7 +291,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info("Call detect from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    model = loadmodel(
+    model = create_model(
         weights=cli_args.weights,
         confidence=cli_args.conf,
         iou=cli_args.iou,

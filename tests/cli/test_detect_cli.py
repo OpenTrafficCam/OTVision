@@ -181,30 +181,6 @@ def detect_cli() -> Callable:
     return detect_cli
 
 
-@pytest.fixture
-def detect() -> Callable:
-    """Imports and returns the main from OTVision.detect.detect.py
-
-    Returns:
-        Callable: main from OTVision.detect.detect.py
-    """
-    from OTVision import detect
-
-    return detect
-
-
-@pytest.fixture
-def loadmodel() -> Callable:
-    """Imports and returns the main from OTVision.detect.detect.py
-
-    Returns:
-        Callable: loadmodel from OTVision.detect.yolo.py
-    """
-    from OTVision.detect.yolo import loadmodel
-
-    return loadmodel
-
-
 class TestDetectCLI:
     @pytest.mark.parametrize(
         argnames="test_data",
@@ -219,16 +195,11 @@ class TestDetectCLI:
         self,
         test_data: dict,
         detect_cli: Callable,
-        detect: Callable,
-        loadmodel: Callable,
     ) -> None:
-        detect = mock.create_autospec(detect)
-        loadmodel = mock.create_autospec(loadmodel)
         mock_model = Mock()
-
         with patch("OTVision.detect") as mock_detect:
-            with patch("detect.loadmodel") as mock_loadmodel:
-                mock_loadmodel.return_value = mock_model
+            with patch("detect.create_model") as mock_create_model:
+                mock_create_model.return_value = mock_model
                 command = [
                     *test_data["paths"][PASSED].split(),
                     *test_data["weights"][PASSED].split(),
@@ -246,7 +217,7 @@ class TestDetectCLI:
 
                 detect_cli(argv=list(filter(None, command)))
 
-                mock_loadmodel.assert_called_once_with(
+                mock_create_model.assert_called_once_with(
                     weights=test_data["weights"][EXPECTED],
                     confidence=test_data["conf"][EXPECTED],
                     iou=test_data["iou"][EXPECTED],
@@ -254,7 +225,7 @@ class TestDetectCLI:
                     half_precision=test_data["half_precision"][EXPECTED],
                     normalized=False,
                 )
-                assert mock_loadmodel.call_count == 1
+                assert mock_create_model.call_count == 1
 
                 assert mock_detect.call_args_list == [
                     mock.call(
@@ -271,11 +242,9 @@ class TestDetectCLI:
     def test_fail_wrong_types_passed_to_detect_cli(
         self,
         detect_cli: Callable,
-        detect: Callable,
         capsys: pytest.CaptureFixture,
         test_fail_data: dict,
     ) -> None:
-        detect = mock.create_autospec(detect)
 
         with patch("OTVision.detect"):
             with pytest.raises(SystemExit) as e:
@@ -287,20 +256,14 @@ class TestDetectCLI:
 
     @pytest.mark.parametrize(PASSED, argvalues=["--config foo", "--paths foo"])
     def test_fail_not_existing_path_passed_to_detect_cli(
-        self, detect: Callable, detect_cli: Callable, passed: str
+        self, detect_cli: Callable, passed: str
     ) -> None:
-        detect = mock.create_autospec(detect)
-
         with patch("OTVision.detect"):
             with pytest.raises(FileNotFoundError):
                 command = required_arguments.split() + [*passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
-    def test_fail_no_paths_passed_to_detect_cli(
-        self, detect: Callable, detect_cli: Callable
-    ) -> None:
-        detect = mock.create_autospec(detect)
-
+    def test_fail_no_paths_passed_to_detect_cli(self, detect_cli: Callable) -> None:
         with patch("OTVision.detect"):
             error_msg = (
                 "No paths have been passed as command line args."

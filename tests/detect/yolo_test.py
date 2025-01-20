@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy
 import pytest
@@ -62,8 +62,7 @@ def num_frames(video_path: str) -> int:
 
 
 class TestConvertDetections:
-    @patch.object(Yolov8, "_load_model")
-    def test_convert_x_y_coordinates(self, mock_load_model: Mock) -> None:
+    def test_convert_x_y_coordinates(self) -> None:
         classification: int = 1
         name: str = "name"
         names = {classification: name}
@@ -77,10 +76,10 @@ class TestConvertDetections:
 
         mock_yolo = Mock().return_value
         mock_yolo.names = names
-        mock_load_model.return_value = mock_yolo
 
         model = Yolov8(
             Mock(),
+            mock_yolo,
             confidence=0.25,
             iou=0.25,
             img_size=640,
@@ -93,3 +92,9 @@ class TestConvertDetections:
         )
 
         assert result == Detection(name, confidence, x_output, y_output, width, height)
+
+
+class TestObjectDetection:
+    def test_detection_start_and_end_are_considered(self) -> None:
+
+        pass

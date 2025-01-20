@@ -115,7 +115,7 @@ class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
-        weights (str | Path): Either path to custom model weights or pretrained model
+        weights (YOLOv8): Either path to custom model weights or pretrained model
             name, i.e. 'yolov8s', 'yolov8m'.
         confidence (float): the confidence threshold
         iou (float): the IOU threshold
@@ -128,6 +128,7 @@ class Yolov8(ObjectDetection):
     def __init__(
         self,
         weights: str | Path,
+        model: YOLOv8,
         confidence: float,
         iou: float,
         img_size: int,
@@ -135,13 +136,12 @@ class Yolov8(ObjectDetection):
         normalized: bool,
     ) -> None:
         self.weights = weights
+        self.model = model
         self.confidence = confidence
         self.iou = iou
         self.img_size = img_size
         self.half_precision = half_precision
         self.normalized = normalized
-
-        self.model: YOLOv8 = self._load_model()
 
     @property
     def classifications(self) -> dict[int, str]:
@@ -182,10 +182,6 @@ class Yolov8(ObjectDetection):
             frames.append(prediction_result)
 
         return frames
-
-    def _load_model(self) -> YOLOv8:
-        model = YOLOv8(model=self.weights, task="detect")
-        return model
 
     def _predict(
         self, video: Path, detect_start: int | None, detect_end: int | None
@@ -246,7 +242,7 @@ class Yolov8(ObjectDetection):
         )
 
 
-def loadmodel(
+def create_model(
     weights: str | Path = CONFIG[DETECT][YOLO][WEIGHTS],
     confidence: float = CONFIG[DETECT][YOLO][CONF],
     iou: float = CONFIG[DETECT][YOLO][IOU],
@@ -261,7 +257,7 @@ def loadmodel(
             name, i.e. 'yolov8s', 'yolov8m'.
         confidence (float): the confidence threshold.
         iou (float): the IOU threshold
-        image_size (int): the YOLOv8 image size
+        img_size (int): the YOLOv8 image size
         half_precision (bool): Whether to use half precision (FP16) for inference speed
             up.
         normalized (bool): Whether the bounding boxes are to be returned normalized
@@ -274,6 +270,7 @@ def loadmodel(
     is_custom = Path(weights).is_file()
     model = Yolov8(
         weights=weights,
+        model=_load_model(weights),
         confidence=confidence,
         iou=iou,
         img_size=img_size,
@@ -287,8 +284,22 @@ def loadmodel(
     runtime = round(t2 - t1)
     log.info(f"{model_source} {model_type} model loaded in {runtime} sec")
 
-    model_succes_msg = f"Model {model.weights} prepared"
-    log.info(model_succes_msg)
-    print(model_succes_msg)
+    model_success_msg = f"Model {weights} prepared"
+    log.info(model_success_msg)
 
+    return model
+
+
+def _load_model(weights: str | Path) -> YOLOv8:
+    """Load a custom trained or a pretrained YOLOv8 model.
+
+    Args:
+        weights (str | Path): Either path to custom model weights or pretrained model
+            name, i.e. 'yolov8s', 'yolov8m'.
+
+    Returns:
+        YOLOv8: the YOLOv8 model.
+
+    """
+    model = YOLOv8(model=weights, task="detect")
     return model

@@ -32,7 +32,7 @@ from OTVision.dataformat import (
 )
 from OTVision.detect.detect import Timestamper
 from OTVision.detect.detect import main as detect
-from OTVision.detect.yolo import Yolov8, loadmodel
+from OTVision.detect.yolo import Yolov8, create_model
 from tests.conftest import YieldFixture
 
 CYCLIST_VIDEO_LENGTH = timedelta(seconds=3)
@@ -213,7 +213,7 @@ def yolov8m() -> Yolov8:
     model_name = (
         "tests/data/yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
     )
-    return loadmodel(
+    return create_model(
         weights=model_name,
         confidence=0.25,
         iou=0.45,
