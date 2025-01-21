@@ -91,8 +91,7 @@ class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
-        weights (YOLOv8): Either path to custom model weights or pretrained model
-            name, i.e. 'yolov8s', 'yolov8m'.
+        weights (YOLOv8): Custom model weights for prediction
         confidence (float): the confidence threshold
         iou (float): the IOU threshold
         img_size (int): the YOLOv8 img size
