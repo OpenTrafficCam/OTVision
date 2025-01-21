@@ -37,6 +37,7 @@ from OTVision.config import (
     OUTPUT_FILETYPE,
     OVERWRITE,
     ROTATION,
+    VID,
     VID_ROTATABLE,
 )
 from OTVision.helpers.files import get_files
@@ -46,6 +47,9 @@ from OTVision.helpers.log import LOGGER_NAME
 log = logging.getLogger(LOGGER_NAME)
 
 OUTPUT_FPS: Optional[float] = None
+CONVERTABLE_FILETYPES = list(
+    set(CONFIG[FILETYPES][VID]).union([".h264"]).difference([".mp4"])
+)
 
 
 def main(
@@ -76,23 +80,22 @@ def main(
         delete_input (bool, optional): Whether to delete the input h264.
             Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
     """
+    files = get_files(paths, CONVERTABLE_FILETYPES)
 
-    h264_files = get_files(paths, [".h264"])
-
-    start_msg = f"Start conversion of {len(h264_files)} .h264 files"
+    start_msg = f"Start conversion of {len(files)} files"
     log.info(start_msg)
     print(start_msg)
 
-    if not h264_files:
-        log.warning("No files of type 'h264' found to convert!")
+    if not files:
+        log.warning("No files found to convert!")
         return
 
     check_ffmpeg()
 
-    for h264_file in tqdm(h264_files, desc="Converted .h264 files", unit="files"):
-        log.info(f"Convert {h264_file} to {output_filetype}")
+    for _file in tqdm(files, desc="Converted files", unit="files"):
+        log.info(f"Convert {_file} to {output_filetype}")
         convert(
-            h264_file,
+            _file,
             output_filetype,
             input_fps,
             fps_from_filename,
@@ -100,7 +103,7 @@ def main(
             overwrite,
             delete_input,
         )
-        log.info(f"Successfully converted {h264_file} to {output_filetype}")
+        log.info(f"Successfully converted {_file} to {output_filetype}")
 
     finished_msg = "Finished conversion"
     log.info(finished_msg)
@@ -172,7 +175,7 @@ def convert(
         return None
     vid_filetypes = CONFIG["FILETYPES"]["VID"]
 
-    if input_filetype == ".h264" and output_filetype in vid_filetypes:
+    if input_filetype in CONVERTABLE_FILETYPES and output_filetype in vid_filetypes:
         if fps_from_filename:
             input_fps = _get_fps_from_filename(input_filename)
 
@@ -190,10 +193,6 @@ def convert(
 
         if delete_input:
             _delete_input_video_file(input_video_file, output_video_file)
-
-    elif input_filetype != ".h264":
-        raise TypeError("Input video filetype has to be .h264")
-
     else:
         raise TypeError(f"Output video filetype {output_filetype} is not supported")
 
@@ -259,6 +258,7 @@ def _get_ffmpeg_command(
         + output_file_cmds
     )
     log.debug(f"ffmpeg command: {ffmpeg_cmd}")
+    print(ffmpeg_cmd)
     return ffmpeg_cmd
 
 
