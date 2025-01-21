@@ -91,13 +91,17 @@ class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
-        weights (YOLOv8): Custom model weights for prediction
-        confidence (float): the confidence threshold
-        iou (float): the IOU threshold
-        img_size (int): the YOLOv8 img size
+        weights (YOLOv8): Custom model weights for prediction.
+        model: (YOLOv8):  the YOLOv8 model to use for prediction.
+        confidence (float): the confidence threshold.
+        iou (float): the IOU threshold.
+        img_size (int): the YOLOv8 img size.
         half_precision (bool): Whether to use half precision (FP16) for inference speed
             up.
-        normalized (bool): Whether the bounding boxes are to be returned normalized
+        normalized (bool): Whether the bounding boxes are to be returned normalized.
+        frame_rotator: (AvVideoFrameRotator): use case to use rotate video frames.
+        get_number_of_frames: (Callable[[Path], int]): function to get the total number
+            of frames of a video.
     """
 
     def __init__(
