@@ -140,7 +140,6 @@ def main(
 
 
 def convert_seconds_to_frames(seconds: int | None, fps: float) -> int | None:
-    # Is it okay to assume fps is an integer? Do we need to round result?
     if seconds is None:
         return None
     return round(seconds * fps)
