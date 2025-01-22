@@ -22,12 +22,13 @@ OTVision script to call the detect main with arguments parsed from command line
 
 import argparse
 import logging
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 
 import OTVision
 import OTVision.config as config
-from OTVision.detect.yolo import loadmodel
+from OTVision.detect.yolo import create_model
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 
@@ -122,6 +123,20 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         help="Overwrite log file if it already exists.",
         required=False,
     )
+    parser.add_argument(
+        "--detect_start",
+        default=None,
+        type=int,
+        help="Specify start of detection in seconds.",
+        required=False,
+    )
+    parser.add_argument(
+        "--detect_end",
+        default=None,
+        type=int,
+        help="Specify end of detection in seconds.",
+        required=False,
+    )
     return parser.parse_args(argv)
 
 
@@ -135,9 +150,21 @@ def _process_config(args: argparse.Namespace) -> None:
             config.parse_user_config(str(user_config_cwd))
 
 
-def _process_parameters(
-    args: argparse.Namespace, log: logging.Logger
-) -> tuple[list[Path], str, float, float, int, timedelta, bool, bool]:
+@dataclass
+class CliArgs:
+    paths: list[Path]
+    weights: str
+    conf: float
+    iou: float
+    imagesize: int
+    expected_duration: timedelta
+    half: bool
+    overwrite: bool
+    detect_start: int | None
+    detect_end: int | None
+
+
+def _process_parameters(args: argparse.Namespace, log: logging.Logger) -> CliArgs:
     try:
         paths = _extract_paths(args)
     except IOError:
@@ -196,15 +223,24 @@ def _process_parameters(
         overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
     else:
         overwrite = args.overwrite
-    return (
-        paths,
-        weights,
-        conf,
-        iou,
-        imagesize,
-        expected_duration,
-        half,
-        overwrite,
+
+    if (detect_start := args.detect_start) is not None:
+        detect_start = int(detect_start)
+
+    if (detect_end := args.detect_end) is not None:
+        detect_end = int(detect_end)
+
+    return CliArgs(
+        paths=paths,
+        weights=weights,
+        conf=conf,
+        iou=iou,
+        imagesize=imagesize,
+        expected_duration=expected_duration,
+        half=half,
+        overwrite=overwrite,
+        detect_start=detect_start,
+        detect_end=detect_end,
     )
 
 
@@ -250,39 +286,31 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     _process_config(args)
 
     log = _configure_logger(args)
-
-    (
-        paths,
-        weights,
-        conf,
-        iou,
-        imagesize,
-        expected_duration,
-        half,
-        overwrite,
-    ) = _process_parameters(args, log)
+    cli_args = _process_parameters(args, log)
 
     log.info("Call detect from command line")
     log.info(f"Arguments: {vars(args)}")
 
-    model = loadmodel(
-        weights=weights,
-        confidence=conf,
-        iou=iou,
-        img_size=imagesize,
-        half_precision=half,
+    model = create_model(
+        weights=cli_args.weights,
+        confidence=cli_args.conf,
+        iou=cli_args.iou,
+        img_size=cli_args.imagesize,
+        half_precision=cli_args.half,
         normalized=config.CONFIG[config.DETECT][config.YOLO][config.NORMALIZED],
     )
 
     try:
         OTVision.detect(
             model=model,
-            paths=paths,
-            expected_duration=expected_duration,
-            overwrite=overwrite,
+            paths=cli_args.paths,
+            expected_duration=cli_args.expected_duration,
+            overwrite=cli_args.overwrite,
+            detect_start=cli_args.detect_start,
+            detect_end=cli_args.detect_end,
         )
     except FileNotFoundError:
-        log.exception(f"One of the following files cannot be found: {paths}")
+        log.exception(f"One of the following files cannot be found: {cli_args.paths}")
         raise
     except Exception:
         log.exception("")

@@ -6,6 +6,8 @@ CONVERT:
   INPUT_FPS: 20.0
   ROTATION: 0
   OVERWRITE: true
+  DETECT_START: null
+  DETECT_END: null
 
 DETECT:
   PATHS: []

@@ -51,6 +51,8 @@ def main(
     expected_duration: timedelta,
     filetypes: list[str] = CONFIG[FILETYPES][VID],
     overwrite: bool = CONFIG[DETECT][OVERWRITE],
+    detect_start: int | None = None,
+    detect_end: int | None = None,
 ) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
@@ -62,10 +64,13 @@ def main(
             evenly spread across this duration
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
-        overwrite (bool, optional): Whether or not to overwrite
+        overwrite (bool, optional): Whether to overwrite
             existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
+        detect_start (int | None, optional): Start of the detection range.
+            Defaults to None.
+        detect_end (int | None, optional): End of the detection range.
+            Defaults to None.
     """
-
     video_files = get_files(paths=paths, filetypes=filetypes)
 
     start_msg = f"Start detection of {len(video_files)} video files"
@@ -77,7 +82,7 @@ def main(
         return
 
     for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-        detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
+        detections_file = derive_filename(video_file, detect_start, detect_end)
 
         if not overwrite and detections_file.is_file():
             log.warning(
@@ -87,10 +92,16 @@ def main(
 
         log.info(f"Detect {video_file}")
 
-        detections = model.detect(file=video_file)
+        video_fps = get_fps(video_file)
+        detect_start_in_frames = convert_seconds_to_frames(detect_start, video_fps)
+        detect_end_in_frames = convert_seconds_to_frames(detect_end, video_fps)
+        detections = model.detect(
+            file=video_file,
+            detect_start=detect_start_in_frames,
+            detect_end=detect_end_in_frames,
+        )
 
         video_width, video_height = get_video_dimensions(video_file)
-        video_fps = get_fps(video_file)
         actual_frames = len(detections)
         actual_fps = actual_frames / expected_duration.total_seconds()
         otdet = OtdetBuilder(
@@ -126,6 +137,42 @@ def main(
     print(finished_msg)
 
     return None
+
+
+def derive_filename(
+    video_file: Path,
+    detect_start: int | None = None,
+    detect_end: int | None = None,
+    detect_suffix: str = CONFIG[DEFAULT_FILETYPE][DETECT],
+) -> Path:
+    """
+    Generates a filename for detection files by appending specified start and end
+    markers and a suffix to the stem of the input video file.
+
+    Args:
+        video_file (Path): The input video file whose filename is to be modified.
+        detect_start (int | None): The starting marker to append to the filename.
+            If None, no starting marker will be appended.
+        detect_end (int | None): The ending marker to append to the filename. If None,
+            no ending marker will be appended.
+        detect_suffix (str): The file suffix to apply to the derived filename.
+
+    Returns:
+        Path: The modified video file path with the updated stem and suffix applied.
+    """
+    cutout = ""
+    if detect_start is not None:
+        cutout += f"_start_{detect_start}"
+    if detect_end is not None:
+        cutout += f"_end_{detect_end}"
+    new_stem = f"{video_file.stem}{cutout}"
+    return video_file.with_stem(new_stem).with_suffix(detect_suffix)
+
+
+def convert_seconds_to_frames(seconds: int | None, fps: float) -> int | None:
+    if seconds is None:
+        return None
+    return round(seconds * fps)
 
 
 class FormatNotSupportedError(Exception):
