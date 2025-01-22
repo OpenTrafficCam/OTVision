@@ -1,39 +1,12 @@
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
-import numpy
 import pytest
 from cv2 import VideoCapture
-from numpy.testing import assert_array_equal
 from torch import Tensor
 
-from OTVision.detect.yolo import DISPLAYMATRIX, Yolov8, rotate
+from OTVision.detect.yolo import Yolov8
 from OTVision.track.preprocess import Detection
-
-
-@pytest.mark.parametrize(
-    "angle, expected",
-    [
-        (90, [[2, 4], [1, 3]]),
-        (-90, [[3, 1], [4, 2]]),
-        (-180, [[4, 3], [2, 1]]),
-        (180, [[4, 3], [2, 1]]),
-    ],
-)
-def test_rotate(angle: int, expected: list[list[int]]) -> None:
-    actual_array = numpy.array([[1, 2], [3, 4]], int)
-    expected_array = numpy.array(expected, int)
-
-    result = rotate(actual_array, {DISPLAYMATRIX: angle})
-
-    assert_array_equal(result, expected_array)
-
-
-def test_rotate_by_non_90_degree() -> None:
-    actual_array = numpy.array([[1, 2], [3, 4]], int)
-
-    with pytest.raises(ValueError):
-        rotate(actual_array, {DISPLAYMATRIX: 20})
 
 
 @pytest.fixture
@@ -62,8 +35,7 @@ def num_frames(video_path: str) -> int:
 
 
 class TestConvertDetections:
-    @patch.object(Yolov8, "_load_model")
-    def test_convert_x_y_coordinates(self, mock_load_model: Mock) -> None:
+    def test_convert_x_y_coordinates(self) -> None:
         classification: int = 1
         name: str = "name"
         names = {classification: name}
@@ -77,15 +49,16 @@ class TestConvertDetections:
 
         mock_yolo = Mock().return_value
         mock_yolo.names = names
-        mock_load_model.return_value = mock_yolo
 
         model = Yolov8(
-            Mock(),
+            weights=Mock(),
+            model=mock_yolo,
             confidence=0.25,
             iou=0.25,
             img_size=640,
             half_precision=False,
             normalized=False,
+            frame_rotator=Mock(),
         )
 
         result = model._parse_detection(
@@ -93,3 +66,70 @@ class TestConvertDetections:
         )
 
         assert result == Detection(name, confidence, x_output, y_output, width, height)
+
+
+class TestObjectDetection:
+    @patch("OTVision.detect.yolo.Yolov8._parse_detections")
+    @patch("OTVision.detect.yolo.av")
+    def test_detection_start_and_end_are_considered(
+        self, mock_av: Mock, mock_parse_detections: Mock
+    ) -> None:
+        detect_start = 300
+        detect_end = 600
+        total_frames = 900
+        file = Path("path/to/video.mp4")
+        frame_rotator = Mock()
+        yolo_model = Mock()
+        container = MagicMock()
+        context_manager_container = MagicMock()
+        video_frames = self._create_mock_frames(total_frames)
+        rotated_frame = Mock()
+        predicted_frame = Mock()
+        parsed_detection = Mock()
+
+        mock_av.open.return_value = container
+        container.__enter__.return_value = context_manager_container
+        context_manager_container.decode.return_value = video_frames
+        frame_rotator.rotate.return_value = rotated_frame
+        yolo_model.predict.return_value = [predicted_frame]
+        mock_parse_detections.return_value = parsed_detection
+        get_number_of_frames = Mock(return_value=total_frames)
+
+        target = Yolov8(
+            weights=Mock(),
+            model=yolo_model,
+            confidence=0.25,
+            iou=0.25,
+            img_size=640,
+            half_precision=False,
+            normalized=False,
+            frame_rotator=frame_rotator,
+            get_number_of_frames=get_number_of_frames,
+        )
+        actual = target.detect(file, detect_start, detect_end)
+
+        mock_av.open.assert_called_once_with(str(file.absolute()))
+        context_manager_container.decode.assert_called_once_with(video=0)
+        self.assert_detections_are_correct(
+            actual, parsed_detection, detect_start, detect_end
+        )
+        assert frame_rotator.rotate.call_count == 300
+        assert yolo_model.predict.call_count == 300
+        assert mock_parse_detections.call_count == 300
+
+    def assert_detections_are_correct(
+        self,
+        detections: list[list],
+        expected: Mock,
+        detect_start: int,
+        detect_end: int,
+    ) -> None:
+        for i, actual in enumerate(detections, start=1):
+            if detect_start <= i < detect_end:
+                assert actual == expected
+            else:
+                assert actual == []
+
+    def _create_mock_frames(self, total_frames: int) -> list[Mock]:
+        image = Mock()
+        return [image for _ in range(total_frames)]

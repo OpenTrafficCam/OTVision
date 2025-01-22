@@ -1,4 +1,8 @@
 ---
+CONVERT:
+  DETECT_START: null
+  DETECT_END: null
+
 DETECT:
   YOLO:
     WEIGHTS: my_weights

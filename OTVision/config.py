@@ -85,6 +85,8 @@ LOG = "LOG"
 LOG_LEVEL_CONSOLE = "LOG_LEVEL_CONSOLE"
 LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
 LOG_DIR = "LOG_DIR"
+DETECT_END = "DETECT_END"
+DETECT_START = "DETECT_START"
 
 """Default length of a video is 15 minutes."""
 DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
@@ -216,6 +218,8 @@ class _ConvertConfig:
     delete_input: bool = False
     rotation: int = 0
     overwrite: bool = True
+    detect_start: int | None = None
+    detect_end: int | None = None
 
     @staticmethod
     def from_dict(d: dict) -> "_ConvertConfig":
@@ -229,6 +233,8 @@ class _ConvertConfig:
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
             d.get(ROTATION, _ConvertConfig.rotation),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
+            d.get(DETECT_START, _ConvertConfig.detect_start),
+            d.get(DETECT_END, _ConvertConfig.detect_end),
         )
 
     def to_dict(self) -> dict:
@@ -242,6 +248,8 @@ class _ConvertConfig:
             DELETE_INPUT: self.delete_input,
             ROTATION: self.rotation,
             OVERWRITE: self.overwrite,
+            DETECT_START: self.detect_start,
+            DETECT_END: self.detect_end,
         }
 
 
@@ -661,6 +669,8 @@ CONFIG[CONVERT][FPS_FROM_FILENAME] = True
 CONFIG[CONVERT][DELETE_INPUT] = False
 CONFIG[CONVERT][ROTATION] = 0
 CONFIG[CONVERT][OVERWRITE] = True
+CONFIG[CONVERT][DETECT_START] = None
+CONFIG[CONVERT][DETECT_END] = None
 
 # DETECT
 CONFIG[DETECT] = {}
