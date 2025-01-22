@@ -60,31 +60,43 @@ def convert_rotate_tmp_dir(
     shutil.rmtree(test_convert_tmp_dir)
 
 
+@pytest.fixture
+def reference_mp4_files(test_convert_dir: Path) -> list[Path]:
+    cyclist_mp4 = (
+        test_convert_dir
+        / "output_filetype_mp4/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
+    )
+    truck_mp4 = (
+        test_convert_dir
+        / "output_filetype_mp4/Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
+    )
+    return [cyclist_mp4, truck_mp4]
+
+
 def test_check_ffmpeg() -> None:
     """Tests if ffmpeg can be called as a subprocess"""
     check_ffmpeg()
 
 
 @pytest.mark.parametrize(
-    "test_case, output_filetype, input_fps, fps_from_filename",
+    "test_case,  input_fps, fps_from_filename",
     [
-        ("default", OUTPUT_FILETYPE, INPUT_FPS, FPS_FROM_FILENAME),
-        ("fps_from_filename", OUTPUT_FILETYPE, 180, True),
-        ("input_fps_20", OUTPUT_FILETYPE, 20.0, False),
-        ("input_fps_40", OUTPUT_FILETYPE, 40.0, False),
-        ("output_filetype_avi", ".avi", INPUT_FPS, FPS_FROM_FILENAME),
-        ("output_filetype_mkv", ".mkv", INPUT_FPS, FPS_FROM_FILENAME),
-        ("output_filetype_mov", ".mov", INPUT_FPS, FPS_FROM_FILENAME),
-        ("output_filetype_mp4", ".mp4", INPUT_FPS, FPS_FROM_FILENAME),
+        ("default", INPUT_FPS, FPS_FROM_FILENAME),
+        ("fps_from_filename", 180, True),
+        ("input_fps_20", 20.0, False),
+        ("input_fps_40", 40.0, False),
+        ("output_filetype_avi", INPUT_FPS, FPS_FROM_FILENAME),
+        ("output_filetype_mkv", INPUT_FPS, FPS_FROM_FILENAME),
+        ("output_filetype_mov", INPUT_FPS, FPS_FROM_FILENAME),
+        ("output_filetype_mp4", INPUT_FPS, FPS_FROM_FILENAME),
     ],
 )
 def test_pass_convert(
-    test_convert_dir: Path,
     test_convert_tmp_dir: Path,
     test_case: str,
-    output_filetype: str,
     input_fps: float,
     fps_from_filename: bool,
+    reference_mp4_files: list[Path],
 ) -> None:
     """Tests the main function of OTVision/convert/convert.py
     transforming short test videos from h264 to mp4 based on
@@ -92,24 +104,18 @@ def test_pass_convert(
     """
 
     # Build test dir paths
-    test_case_dir = test_convert_dir / test_case
     test_case_tmp_dir = test_convert_tmp_dir / test_case
 
     # Convert test h264 files
     convert(
         paths=[test_case_tmp_dir],
-        output_filetype=output_filetype,
+        output_filetype=OUTPUT_FILETYPE,
         input_fps=input_fps,
         fps_from_filename=fps_from_filename,
     )
 
     # Get reference video files
-    ref_video_files = list(test_case_dir.glob(f"*{output_filetype}"))
-
-    if not ref_video_files:
-        raise FileNotFoundError(f"No reference video files found in {test_case_dir}")
-
-    for ref_video_file in ref_video_files:
+    for ref_video_file in reference_mp4_files:
         test_video_file = test_case_tmp_dir / ref_video_file.name
         assert_videos_are_equal(actual=test_video_file, expected=ref_video_file)
 
