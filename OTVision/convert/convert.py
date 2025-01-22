@@ -258,7 +258,6 @@ def _get_ffmpeg_command(
         + output_file_cmds
     )
     log.debug(f"ffmpeg command: {ffmpeg_cmd}")
-    print(ffmpeg_cmd)
     return ffmpeg_cmd
 
 
