@@ -30,7 +30,7 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.detect.detect import Timestamper
+from OTVision.detect.detect import Timestamper, derive_filename
 from OTVision.detect.detect import main as detect
 from OTVision.detect.yolo import Yolov8, create_model
 from tests.conftest import YieldFixture
@@ -221,6 +221,26 @@ def yolov8m() -> Yolov8:
         half_precision=False,
         normalized=False,
     )
+
+
+@pytest.mark.parametrize(
+    "video_file, detection_file, detect_start, detect_end",
+    [
+        ("video.mp4", "video.otdet", None, None),
+        ("video.mp4", "video_end_20.otdet", None, 20),
+        ("video.mp4", "video_start_10.otdet", 10, None),
+        ("video.mp4", "video_start_10_end_20.otdet", 10, 20),
+    ],
+)
+def test_derive_filename(
+    video_file: str,
+    detection_file: str,
+    detect_start: int | None,
+    detect_end: int | None,
+) -> None:
+    actual = derive_filename(Path(video_file), detect_start, detect_end)
+
+    assert actual == Path(detection_file)
 
 
 class TestDetect:

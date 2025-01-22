@@ -82,7 +82,7 @@ def main(
         return
 
     for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-        detections_file = video_file.with_suffix(CONFIG[DEFAULT_FILETYPE][DETECT])
+        detections_file = derive_filename(video_file, detect_start, detect_end)
 
         if not overwrite and detections_file.is_file():
             log.warning(
@@ -137,6 +137,36 @@ def main(
     print(finished_msg)
 
     return None
+
+
+def derive_filename(
+    video_file: Path,
+    detect_start: int | None = None,
+    detect_end: int | None = None,
+    detect_suffix: str = CONFIG[DEFAULT_FILETYPE][DETECT],
+) -> Path:
+    """
+    Generates a filename for detection files by appending specified start and end
+    markers and a suffix to the stem of the input video file.
+
+    Args:
+        video_file (Path): The input video file whose filename is to be modified.
+        detect_start (int | None): The starting marker to append to the filename.
+            If None, no starting marker will be appended.
+        detect_end (int | None): The ending marker to append to the filename. If None,
+            no ending marker will be appended.
+        detect_suffix (str): The file suffix to apply to the derived filename.
+
+    Returns:
+        Path: The modified video file path with the updated stem and suffix applied.
+    """
+    cutout = ""
+    if detect_start is not None:
+        cutout += f"_start_{detect_start}"
+    if detect_end is not None:
+        cutout += f"_end_{detect_end}"
+    new_stem = f"{video_file.stem}{cutout}"
+    return video_file.with_stem(new_stem).with_suffix(detect_suffix)
 
 
 def convert_seconds_to_frames(seconds: int | None, fps: float) -> int | None:
