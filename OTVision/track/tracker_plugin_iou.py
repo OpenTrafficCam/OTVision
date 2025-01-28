@@ -50,7 +50,7 @@ class BoundingBox:
 
 @dataclass
 class ActiveIouTrack:
-    # todo check invariant -> at least one element in lists
+    # TODO check invariant -> at least one element in lists
     id: int
     frame_no: list[FrameNo]
     bboxes: list[BoundingBox]
@@ -168,10 +168,6 @@ class IouTracker(Tracker[S]):
 
         finished_track_ids: list[TrackId] = []
         discarded_track_ids: list[TrackId] = []
-        # it seems iou can drop tracks,
-        # since cases in no updated check are not exhaustive
-        # tracking framework should be noticed about there dropped frames
-        # to avoid memory leak e.g. in track buffer
 
         saved_tracks: list[ActiveIouTrack] = []
         updated_tracks: list[ActiveIouTrack] = []

@@ -1,11 +1,15 @@
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Iterator, Sequence, cast
+from typing import Callable, Iterator, Sequence
 
 from more_itertools import peekable
 
+from OTVision.config import CONFIG, DEFAULT_FILETYPE, OVERWRITE, TRACK
+from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
+from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.data import (
     FinishedFrame,
     Frame,
@@ -13,9 +17,18 @@ from OTVision.track.data import (
     IsLastFrame,
     TrackedFrame,
     TrackId,
+)
+from OTVision.track.tracking_interfaces import (
+    ID_GENERATOR,
+    Tracker,
     UnfinishedTracksBuffer,
 )
-from OTVision.track.tracking_interfaces import ID_GENERATOR, Tracker
+
+log = logging.getLogger(LOGGER_NAME)
+
+
+def get_output_file(file: Path, with_suffix: str) -> Path:
+    return file.with_suffix(with_suffix)
 
 
 @dataclass(frozen=True)
@@ -25,12 +38,16 @@ class FrameChunk:
 
     Attributes:
         file (Path): common file path source of Frames.
+        metadata (dict): otdet metadata.
         frames (Sequence[Frame[Path]]): a sequence of untracked Frames.
     """
 
-    # TODO start/end metadata?
     file: Path
+    metadata: dict
     frames: Sequence[Frame[Path]]
+
+    def check_output_file_exists(self, with_suffix: str) -> bool:
+        return get_output_file(self.file, with_suffix).is_file()
 
 
 @dataclass(frozen=True)
@@ -128,6 +145,7 @@ class TrackedChunk(FrameChunk):
         """
         return FinishedChunk(
             file=self.file,
+            metadata=self.metadata,
             is_last_chunk=self.is_last_chunk,
             frames=[
                 frame.finish(is_last, discarded_tracks, keep_discarded)
@@ -147,6 +165,23 @@ class FinishedChunk(TrackedChunk):
 
     frames: Sequence[FinishedFrame[Path]]
 
+    def to_detection_dicts(self) -> list[dict]:
+        chunk_metadata = {INPUT_FILE_PATH: self.file}
+
+        detection_dict_list = [
+            {**det_dict, **chunk_metadata}
+            for frame in self.frames
+            for det_dict in frame.to_detection_dicts()
+        ]
+
+        detection_dict_list.sort(
+            key=lambda detection: (
+                detection[FRAME],
+                detection[TRACK_ID],
+            )
+        )
+        return detection_dict_list
+
 
 class ChunkParser(ABC):
     """A parser for file path to FrameChunk."""
@@ -158,6 +193,7 @@ class ChunkParser(ABC):
 
 @dataclass(frozen=True)
 class FrameGroup:
+    id: int
     start_date: datetime
     end_date: datetime
     hostname: str
@@ -180,6 +216,7 @@ class FrameGroup:
         metadata.update(second.metadata_by_file)
 
         merged = FrameGroup(
+            id=first.id,
             start_date=first.start_date,
             end_date=second.end_date,
             hostname=first.hostname,
@@ -188,6 +225,18 @@ class FrameGroup:
         )
 
         return merged
+
+    def check_any_output_file_exists(self, with_suffix: str) -> bool:
+        return len(self.get_existing_output_files(with_suffix)) > 0
+
+    def get_existing_output_files(self, with_suffix: str) -> list[Path]:
+        return [file for file in self.get_output_files(with_suffix) if file.is_file()]
+
+    def get_output_files(self, with_suffix: str) -> list[Path]:
+        return [get_output_file(file, with_suffix) for file in self.files]
+
+    def with_id(self, new_id: int) -> "FrameGroup":
+        return replace(self, id=new_id)
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -202,7 +251,8 @@ class FrameGroupParser(ABC):
         parsed: list[FrameGroup] = [self.parse(file) for file in files]
         merged: list[FrameGroup] = self.merge(parsed)
         updated: list[FrameGroup] = [
-            self.updated_metadata_copy(group) for group in merged
+            self.updated_metadata_copy(group).with_id(i)
+            for i, group in enumerate(merged)
         ]
 
         return updated
@@ -271,26 +321,51 @@ class GroupedFilesTracker(ChunkBasedTracker):
         chunk_parser: ChunkParser,
         frame_group_parser: FrameGroupParser,
         id_generator_factory: ID_GENERATOR_FACTORY,
+        overwrite: bool = CONFIG[TRACK][OVERWRITE],
+        file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK],
     ) -> None:
         super().__init__(tracker, chunk_parser)
         self._group_parser = frame_group_parser
         self._id_generator_of = id_generator_factory
+        self._overwrite = overwrite
+        self._file_type = file_type
 
     def track_group(self, group: FrameGroup) -> Iterator[TrackedChunk]:
+        if self.check_skip_due_to_existing_output_files(group):
+            yield from []  # TODO how to create empty generator stream?
+
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group
         file_stream = peekable(group.files)
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
-            chunk = self.track_file(file, is_last, id_generator, frame_offset)
+
+            chunk = self._chunk_parser.parse(file, frame_offset)
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
-            yield chunk
+
+            tracked_chunk = self.track_chunk(chunk, is_last, id_generator)
+            yield tracked_chunk
 
     def group_and_track_files(self, files: list[Path]) -> Iterator[TrackedChunk]:
         processed = self._group_parser.process_all(files)
 
         for group in processed:
             yield from self.track_group(group)
+
+    def check_skip_due_to_existing_output_files(self, group: FrameGroup) -> bool:
+        if not self._overwrite and group.check_any_output_file_exists(self._file_type):
+            existing_files = group.get_existing_output_files(
+                with_suffix=self._file_type
+            )
+            log.warning(
+                (
+                    f"{existing_files} already exist(s)."
+                    "To overwrite, set overwrite to True"
+                )
+            )
+            return True
+
+        return False
 
 
 class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]):
@@ -327,70 +402,3 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
         keep_discarded: bool,
     ) -> FinishedChunk:
         return container.finish(is_last, discarded_tracks, keep_discarded)
-
-
-class OldBufferedFinishedChunksTracker(GroupedFilesTracker):
-
-    def __init__(
-        self,
-        tracker: Tracker[Path],
-        chunk_parser: ChunkParser,
-        frame_group_parser: FrameGroupParser,
-        id_generator_factory: ID_GENERATOR_FACTORY,
-    ) -> None:
-        super().__init__(
-            tracker, chunk_parser, frame_group_parser, id_generator_factory
-        )
-        self._unfinished_chunks: dict[TrackedChunk, set[TrackId]] = dict()
-        self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
-
-    def group_and_track_files(self, files: list[Path]) -> Iterator[FinishedChunk]:
-        # reuse method but update type hint
-        return cast(Iterator[FinishedChunk], super().group_and_track_files(files))
-
-    def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
-        for chunk in super().track_group(group):
-
-            self._merged_last_track_frame.update(chunk.last_track_frame)
-            self._unfinished_chunks[chunk] = chunk.unfinished_tracks
-
-            # update unfinished track ids of previously tracked chunks
-            # if chunks have no pending tracks, make ready for finishing
-            newly_finished_tracks = chunk.finished_tracks
-            ready_chunks: list[TrackedChunk] = []
-            for chunk, track_ids in self._unfinished_chunks.items():
-                track_ids.difference_update(newly_finished_tracks)
-
-                if len(track_ids) == 0:
-                    ready_chunks.append(chunk)
-                    del self._unfinished_chunks[chunk]
-
-            finished_chunks = self._finish_chunks(ready_chunks)
-            yield from finished_chunks
-
-        # finish remaining chunks with pending tracks
-        remaining_chunks = list(self._unfinished_chunks.keys())
-        self._unfinished_chunks = dict()
-
-        finished_chunks = self._finish_chunks(remaining_chunks)
-        self._merged_last_track_frame = dict()
-        yield from finished_chunks
-
-    def _finish_chunks(self, chunks: list[TrackedChunk]) -> list[FinishedChunk]:
-        # TODO sort finished chunks by start date?
-        is_last: IsLastFrame = (
-            lambda frame_no, track_id: frame_no
-            == self._merged_last_track_frame[track_id]
-        )
-        finished_chunks = [c.finish(is_last, set()) for c in chunks]
-
-        # the last frame of the observed tracks have been marked
-        # track ids no longer required in _merged_last_track_frame
-        finished_tracks = set().union(*(c.observed_tracks for c in chunks))
-        self._merged_last_track_frame = {
-            track_id: frame_no
-            for track_id, frame_no in self._merged_last_track_frame.items()
-            if track_id not in finished_tracks
-        }
-
-        return finished_chunks

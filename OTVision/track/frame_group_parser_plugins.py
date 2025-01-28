@@ -35,6 +35,11 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
     ):
         self._time_without_frames = time_without_frames
         self._tracker_data: dict = tracker_data
+        self._id_count = 0
+
+    def new_id(self) -> int:
+        self._id_count += 1
+        return self._id_count
 
     def parse(self, file: Path) -> FrameGroup:
         metadata = read_json_bz2_metadata(file)
@@ -45,6 +50,7 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
         hostname = self.get_hostname(metadata)
 
         return FrameGroup(
+            id=self.new_id(),
             start_date=start_date,
             end_date=end_date,
             files=[file],
