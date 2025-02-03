@@ -218,8 +218,6 @@ class _ConvertConfig:
     delete_input: bool = False
     rotation: int = 0
     overwrite: bool = True
-    detect_start: int | None = None
-    detect_end: int | None = None
 
     @staticmethod
     def from_dict(d: dict) -> "_ConvertConfig":
@@ -233,8 +231,6 @@ class _ConvertConfig:
             d.get(DELETE_INPUT, _ConvertConfig.delete_input),
             d.get(ROTATION, _ConvertConfig.rotation),
             d.get(OVERWRITE, _ConvertConfig.overwrite),
-            d.get(DETECT_START, _ConvertConfig.detect_start),
-            d.get(DETECT_END, _ConvertConfig.detect_end),
         )
 
     def to_dict(self) -> dict:
@@ -248,8 +244,6 @@ class _ConvertConfig:
             DELETE_INPUT: self.delete_input,
             ROTATION: self.rotation,
             OVERWRITE: self.overwrite,
-            DETECT_START: self.detect_start,
-            DETECT_END: self.detect_end,
         }
 
 
@@ -303,6 +297,8 @@ class _DetectConfig:
     expected_duration: int | None = None
     overwrite: bool = True
     half_precision: bool = False
+    detect_start: int | None = None
+    detect_end: int | None = None
 
     @staticmethod
     def from_dict(d: dict) -> "_DetectConfig":
@@ -323,6 +319,8 @@ class _DetectConfig:
             d.get(EXPECTED_DURATION, None),
             d.get(OVERWRITE, _DetectConfig.overwrite),
             d.get(HALF_PRECISION, _DetectConfig.half_precision),
+            d.get(DETECT_START, _DetectConfig.detect_start),
+            d.get(DETECT_END, _DetectConfig.detect_end),
         )
 
     def to_dict(self) -> dict:
@@ -669,8 +667,6 @@ CONFIG[CONVERT][FPS_FROM_FILENAME] = True
 CONFIG[CONVERT][DELETE_INPUT] = False
 CONFIG[CONVERT][ROTATION] = 0
 CONFIG[CONVERT][OVERWRITE] = True
-CONFIG[CONVERT][DETECT_START] = None
-CONFIG[CONVERT][DETECT_END] = None
 
 # DETECT
 CONFIG[DETECT] = {}
@@ -691,6 +687,8 @@ CONFIG[DETECT][YOLO][NORMALIZED] = False
 CONFIG[DETECT][EXPECTED_DURATION] = None
 CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
+CONFIG[DETECT][DETECT_START] = None
+CONFIG[DETECT][DETECT_END] = None
 
 # TRACK
 CONFIG[TRACK] = {}
