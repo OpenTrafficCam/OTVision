@@ -208,7 +208,7 @@ class _LastPaths:
 
 
 @dataclass(frozen=True)
-class _ConvertConfig:
+class ConvertConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     output_filetype: str = _VideoFiletypes.mp4
@@ -220,17 +220,17 @@ class _ConvertConfig:
     overwrite: bool = True
 
     @staticmethod
-    def from_dict(d: dict) -> "_ConvertConfig":
-        return _ConvertConfig(
+    def from_dict(d: dict) -> "ConvertConfig":
+        return ConvertConfig(
             d.get(PATHS, []),
-            d.get(RUN_CHAINED, _ConvertConfig.run_chained),
-            d.get(OUTPUT_FILETYPE, _ConvertConfig.output_filetype),
-            d.get(INPUT_FPS, _ConvertConfig.input_fps),
-            d.get(OUTPUT_FPS, _ConvertConfig.output_fps),
-            d.get(FPS_FROM_FILENAME, _ConvertConfig.fps_from_filename),
-            d.get(DELETE_INPUT, _ConvertConfig.delete_input),
-            d.get(ROTATION, _ConvertConfig.rotation),
-            d.get(OVERWRITE, _ConvertConfig.overwrite),
+            d.get(RUN_CHAINED, ConvertConfig.run_chained),
+            d.get(OUTPUT_FILETYPE, ConvertConfig.output_filetype),
+            d.get(INPUT_FPS, ConvertConfig.input_fps),
+            d.get(OUTPUT_FPS, ConvertConfig.output_fps),
+            d.get(FPS_FROM_FILENAME, ConvertConfig.fps_from_filename),
+            d.get(DELETE_INPUT, ConvertConfig.delete_input),
+            d.get(ROTATION, ConvertConfig.rotation),
+            d.get(OVERWRITE, ConvertConfig.overwrite),
         )
 
     def to_dict(self) -> dict:
@@ -290,7 +290,7 @@ class _YoloConfig:
 
 
 @dataclass(frozen=True)
-class _DetectConfig:
+class DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: _YoloConfig = _YoloConfig()
@@ -301,26 +301,26 @@ class _DetectConfig:
     detect_end: int | None = None
 
     @staticmethod
-    def from_dict(d: dict) -> "_DetectConfig":
+    def from_dict(d: dict) -> "DetectConfig":
         yolo_config_dict = d.get(YOLO)
         yolo_config = (
             _YoloConfig.from_dict(yolo_config_dict)
             if yolo_config_dict
-            else _DetectConfig.yolo_config
+            else DetectConfig.yolo_config
         )
 
         # TODO: Future work: Raise error if expected_duration is not passed
         # Change expected duration's type to be strictly int
 
-        return _DetectConfig(
+        return DetectConfig(
             d.get(PATHS, []),
-            d.get(RUN_CHAINED, _DetectConfig.run_chained),
+            d.get(RUN_CHAINED, DetectConfig.run_chained),
             yolo_config,
             d.get(EXPECTED_DURATION, None),
-            d.get(OVERWRITE, _DetectConfig.overwrite),
-            d.get(HALF_PRECISION, _DetectConfig.half_precision),
-            d.get(DETECT_START, _DetectConfig.detect_start),
-            d.get(DETECT_END, _DetectConfig.detect_end),
+            d.get(OVERWRITE, DetectConfig.overwrite),
+            d.get(HALF_PRECISION, DetectConfig.half_precision),
+            d.get(DETECT_START, DetectConfig.detect_start),
+            d.get(DETECT_END, DetectConfig.detect_end),
         )
 
     def to_dict(self) -> dict:
@@ -363,26 +363,26 @@ class _TrackIouConfig:
 
 
 @dataclass(frozen=True)
-class _TrackConfig:
+class TrackConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
 
     @staticmethod
-    def from_dict(d: dict) -> "_TrackConfig":
+    def from_dict(d: dict) -> "TrackConfig":
         iou_config_dict = d.get(IOU)
         iou_config = (
             _TrackIouConfig.from_dict(iou_config_dict)
             if iou_config_dict
-            else _TrackConfig.iou
+            else TrackConfig.iou
         )
 
-        return _TrackConfig(
+        return TrackConfig(
             d.get(PATHS, []),
-            d.get(RUN_CHAINED, _TrackConfig.run_chained),
+            d.get(RUN_CHAINED, TrackConfig.run_chained),
             iou_config,
-            d.get(OVERWRITE, _TrackConfig.overwrite),
+            d.get(OVERWRITE, TrackConfig.overwrite),
         )
 
     def to_dict(self) -> dict:
@@ -496,9 +496,9 @@ class Config:
     default_filetype: _DefaultFiletype = _DefaultFiletype()
     filetypes: _Filetypes = _Filetypes()
     last_paths: _LastPaths = _LastPaths()
-    convert: _ConvertConfig = _ConvertConfig()
-    detect: _DetectConfig = _DetectConfig()
-    track: _TrackConfig = _TrackConfig()
+    convert: ConvertConfig = ConvertConfig()
+    detect: DetectConfig = DetectConfig()
+    track: TrackConfig = TrackConfig()
     undistort: _UndistortConfig = _UndistortConfig()
     transform: _TransformConfig = _TransformConfig()
     gui: _GuiConfig = _GuiConfig()
@@ -529,14 +529,12 @@ class Config:
             else Config.default_filetype
         )
         convert_config = (
-            _ConvertConfig.from_dict(convert_dict) if convert_dict else Config.convert
+            ConvertConfig.from_dict(convert_dict) if convert_dict else Config.convert
         )
         detect_config = (
-            _DetectConfig.from_dict(detect_dict) if detect_dict else Config.detect
+            DetectConfig.from_dict(detect_dict) if detect_dict else Config.detect
         )
-        track_config = (
-            _TrackConfig.from_dict(track_dict) if track_dict else Config.track
-        )
+        track_config = TrackConfig.from_dict(track_dict) if track_dict else Config.track
         undistort_config = (
             _UndistortConfig.from_dict(undistort_dict)
             if undistort_dict
