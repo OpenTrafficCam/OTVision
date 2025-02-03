@@ -259,7 +259,7 @@ class _YoloWeights:
 
 
 @dataclass(frozen=True)
-class _YoloConfig:
+class YoloConfig:
     weights: str = _YoloWeights.yolov8s
     available_weights: _YoloWeights = _YoloWeights()
     conf: float = 0.25
@@ -269,13 +269,13 @@ class _YoloConfig:
     normalized: bool = False
 
     @staticmethod
-    def from_dict(d: dict) -> "_YoloConfig":
-        return _YoloConfig(
-            weights=d.get(WEIGHTS, _YoloConfig.weights),
-            conf=d.get(CONF, _YoloConfig.conf),
-            iou=d.get(IOU, _YoloConfig.iou),
-            img_size=d.get(IMG_SIZE, _YoloConfig.img_size),
-            normalized=d.get(NORMALIZED, _YoloConfig.normalized),
+    def from_dict(d: dict) -> "YoloConfig":
+        return YoloConfig(
+            weights=d.get(WEIGHTS, YoloConfig.weights),
+            conf=d.get(CONF, YoloConfig.conf),
+            iou=d.get(IOU, YoloConfig.iou),
+            img_size=d.get(IMG_SIZE, YoloConfig.img_size),
+            normalized=d.get(NORMALIZED, YoloConfig.normalized),
         )
 
     def to_dict(self) -> dict:
@@ -293,7 +293,7 @@ class _YoloConfig:
 class DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
-    yolo_config: _YoloConfig = _YoloConfig()
+    yolo_config: YoloConfig = YoloConfig()
     expected_duration: int | None = None
     overwrite: bool = True
     half_precision: bool = False
@@ -304,7 +304,7 @@ class DetectConfig:
     def from_dict(d: dict) -> "DetectConfig":
         yolo_config_dict = d.get(YOLO)
         yolo_config = (
-            _YoloConfig.from_dict(yolo_config_dict)
+            YoloConfig.from_dict(yolo_config_dict)
             if yolo_config_dict
             else DetectConfig.yolo_config
         )
