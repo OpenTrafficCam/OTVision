@@ -600,15 +600,35 @@ class Config:
         return config.to_dict()
 
 
-def parse_user_config(yaml_file: str) -> None:
+class ConfigParser:
+    def parse(self, config_file: Path) -> Config:
+        """Parse OTVision yaml configuration file.
+
+        Args:
+            config_file (Path): The yaml config file.
+
+        Returns:
+            Config: The parsed config file.
+        """
+        with open(config_file, "r") as file:
+            try:
+                yaml_config = yaml.safe_load(file)
+            except yaml.YAMLError:
+                log.exception("Unable to parse user config. Using default config.")
+                raise
+        return Config.from_dict(yaml_config)
+
+
+def parse_user_config(yaml_file: Path | str) -> Config:
     """Parses a custom OTVision user config yaml file.
 
     Args:
-        yaml_file (str): The absolute Path to the config file.
+        yaml_file (Path |str): The absolute Path to the config file.
     """
     user_config_file = Path(yaml_file)
-    user_config = Config.from_yaml(user_config_file)
-    CONFIG.update(user_config)
+    user_config = ConfigParser().parse(user_config_file)
+    CONFIG.update(user_config.to_dict())
+    return user_config
 
 
 # sourcery skip: merge-dict-assign
