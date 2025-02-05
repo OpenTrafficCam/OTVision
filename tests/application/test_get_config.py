@@ -9,6 +9,9 @@ config_file_path = Path("path/to/my.otvision.config.yaml")
 
 class TestGetConfig:
     def test_get_with_custom_user_config_file(self) -> None:
+        """
+        #Requirement https://openproject.platomo.de/projects/001-opentrafficcam-live/work_packages/7184
+        """  # noqa
         expected_config = Mock()
         given_parser = create_config_file_parser(expected_config)
         given_cli_args = create_cli_args(has_config=True)
@@ -20,6 +23,9 @@ class TestGetConfig:
         given_cli_args.get_config_file.assert_called_once()
 
     def test_get_with_default_user_config_in_cwd(self) -> None:
+        """
+        #Requirement https://openproject.platomo.de/projects/001-opentrafficcam-live/work_packages/7184
+        """  # noqa
         expected_config = Mock()
         given_parser = create_config_file_parser(expected_config)
         given_cli_args = create_cli_args(has_config=False)
@@ -32,6 +38,9 @@ class TestGetConfig:
 
     @patch("OTVision.application.get_config.Path.cwd")
     def test_get_with_no_config_supplied(self, mock_cwd: Mock) -> None:
+        """
+        #Requirement https://openproject.platomo.de/projects/001-opentrafficcam-live/work_packages/7184
+        """  # noqa
         not_existing_config_path = Path("path/does/not/exist.yaml")
         mock_cwd.return_value = not_existing_config_path
         given_parser = create_config_file_parser(Mock())
