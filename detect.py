@@ -20,294 +20,46 @@ OTVision script to call the detect main with arguments parsed from command line
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import argparse
-import logging
-from dataclasses import dataclass
-from datetime import timedelta
 from pathlib import Path
 
 import OTVision
-import OTVision.config as config
+from OTVision.config import Config
+from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.yolo import create_model
 from OTVision.helpers.files import check_if_all_paths_exist
-from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
-
-
-class ParseError(Exception):
-    pass
-
-
-def parse(argv: list[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Detect objects in videos or images")
-    parser.add_argument(
-        "-p",
-        "--paths",
-        nargs="+",
-        type=str,
-        help="Path/list of paths to image or video or folder containing videos/images",
-        required=False,
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        help="Path to custom user configuration yaml file.",
-        required=False,
-    )
-    parser.add_argument(
-        "-w",
-        "--weights",
-        type=str,
-        help="Name of weights from PyTorch hub or Path to weights file",
-        required=False,
-    )
-    parser.add_argument(
-        "--conf",
-        type=float,
-        help="The YOLOv5 models confidence threshold.",
-        required=False,
-    )
-    parser.add_argument(
-        "--iou",
-        type=float,
-        help="The YOLOv5 models IOU threshold.",
-        required=False,
-    )
-    parser.add_argument(
-        "--imagesize",
-        type=int,
-        help="YOLOv5 image size.",
-        required=False,
-    )
-    parser.add_argument(
-        "--half",
-        action=argparse.BooleanOptionalAction,
-        help="Use half precision for detection.",
-    )
-    parser.add_argument(
-        "--expected_duration",
-        type=int,
-        help="Expected duration of a single video in seconds.",
-        required=False,
-    )
-    parser.add_argument(
-        "-o",
-        "--overwrite",
-        action=argparse.BooleanOptionalAction,
-        help="Overwrite existing output files",
-    )
-    parser.add_argument(
-        "--log_level_console",
-        type=str,
-        choices=VALID_LOG_LEVELS,
-        help="Log level for logging to the console",
-        required=False,
-    )
-    parser.add_argument(
-        "--log_level_file",
-        type=str,
-        choices=VALID_LOG_LEVELS,
-        help="Log level for logging to a log file",
-        required=False,
-    )
-    parser.add_argument(
-        "--logfile",
-        default=str(DEFAULT_LOG_FILE),
-        type=str,
-        help="Specify log file directory.",
-        required=False,
-    )
-    parser.add_argument(
-        "--logfile_overwrite",
-        action="store_true",
-        help="Overwrite log file if it already exists.",
-        required=False,
-    )
-    parser.add_argument(
-        "--detect_start",
-        default=None,
-        type=int,
-        help="Specify start of detection in seconds.",
-        required=False,
-    )
-    parser.add_argument(
-        "--detect_end",
-        default=None,
-        type=int,
-        help="Specify end of detection in seconds.",
-        required=False,
-    )
-    return parser.parse_args(argv)
-
-
-def _process_config(args: argparse.Namespace) -> None:
-    if args.config:
-        config.parse_user_config(args.config)
-    else:
-        user_config_cwd = Path(__file__).parent / "user_config.otvision.yaml"
-
-        if user_config_cwd.exists():
-            config.parse_user_config(str(user_config_cwd))
-
-
-@dataclass
-class CliArgs:
-    paths: list[Path]
-    weights: str
-    conf: float
-    iou: float
-    imagesize: int
-    expected_duration: timedelta
-    half: bool
-    overwrite: bool
-    detect_start: int | None
-    detect_end: int | None
-
-
-def _process_parameters(args: argparse.Namespace, log: logging.Logger) -> CliArgs:
-    try:
-        paths = _extract_paths(args)
-    except IOError:
-        log.exception("Unable to extract paths from command line or config.yaml")
-        raise
-    except Exception:
-        log.exception("")
-        raise
-
-    if args.weights is None:
-        weights = config.CONFIG[config.DETECT][config.YOLO][config.WEIGHTS]
-    else:
-        weights = args.weights
-
-    if args.conf is None:
-        conf = config.CONFIG[config.DETECT][config.YOLO][config.CONF]
-    else:
-        conf = args.conf
-
-    if args.iou is None:
-        iou = config.CONFIG[config.DETECT][config.YOLO][config.IOU]
-    else:
-        iou = args.iou
-
-    if args.imagesize is None:
-        imagesize = config.CONFIG[config.DETECT][config.YOLO][config.IMG_SIZE]
-    else:
-        imagesize = args.imagesize
-
-    # TODO: Future Work: instead of checking each CLI option for existence and
-    # returning them, overwrite all passed CLI options in the config object.
-    # Get rid of the config.CONFIG dictionary entirely and pass the updated
-    # Config object to the detect function. Required options should then be
-    # declared in the Config class itself. Their absence must raise a ParseException.
-    if args.expected_duration is None:
-        config_expected_duration: int | None = config.CONFIG[config.DETECT][
-            config.EXPECTED_DURATION
-        ]
-        if config_expected_duration is None:
-            raise ParseError(
-                "Required option 'expected duration' is missing! "
-                "It must be specified in the config yaml file under "
-                "key 'EXPECTED_DURATION' "
-                "or passed as CLI option 'expected_duration'."
-            )
-        expected_duration = timedelta(seconds=config_expected_duration)
-    else:
-        expected_duration = timedelta(seconds=args.expected_duration)
-
-    if args.half is None:
-        half = config.CONFIG[config.DETECT][config.HALF_PRECISION]
-    else:
-        half = args.half
-
-    if args.overwrite is None:
-        overwrite = config.CONFIG[config.DETECT][config.OVERWRITE]
-    else:
-        overwrite = args.overwrite
-
-    if (detect_start := args.detect_start) is not None:
-        detect_start = int(detect_start)
-
-    if (detect_end := args.detect_end) is not None:
-        detect_end = int(detect_end)
-
-    return CliArgs(
-        paths=paths,
-        weights=weights,
-        conf=conf,
-        iou=iou,
-        imagesize=imagesize,
-        expected_duration=expected_duration,
-        half=half,
-        overwrite=overwrite,
-        detect_start=detect_start,
-        detect_end=detect_end,
-    )
-
-
-def _extract_paths(args: argparse.Namespace) -> list[Path]:
-    if args.paths is None:
-        str_paths = config.CONFIG[config.DETECT][config.PATHS]
-    else:
-        str_paths = args.paths
-    if len(str_paths) == 0:
-        raise IOError(
-            "No paths have been passed as command line args."
-            "No paths have been defined in the user config."
-        )
-    paths = [Path(str_path).expanduser() for str_path in str_paths]
-    check_if_all_paths_exist(paths)
-
-    return paths
-
-
-def _configure_logger(args: argparse.Namespace) -> logging.Logger:
-    if args.log_level_console is None:
-        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
-    else:
-        log_level_console = args.log_level_console
-
-    if args.log_level_file is None:
-        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
-    else:
-        log_level_file = args.log_level_file
-
-    log.add_console_handler(level=log_level_console)
-    log.add_file_handler(
-        Path(args.logfile).expanduser(),
-        log_level_file,
-        args.logfile_overwrite,
-    )
-    return logging.getLogger(LOGGER_NAME)
 
 
 def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
-    args = parse(argv)
-
-    _process_config(args)
-
-    log = _configure_logger(args)
-    cli_args = _process_parameters(args, log)
+    builder = DetectBuilder(argv=argv)
+    cli_args = builder.detect_cli_parser.parse()
+    config = builder.update_detect_config_with_ci_args.update(
+        config=builder.get_config.get(cli_args)
+    )
+    log = builder.configure_logger.configure(
+        config,
+        log_file=cli_args.logfile,
+        logfile_overwrite=cli_args.logfile_overwrite,
+    )
 
     log.info("Call detect from command line")
-    log.info(f"Arguments: {vars(args)}")
-
+    log.info(f"Arguments: {vars(cli_args)}")
     model = create_model(
-        weights=cli_args.weights,
-        confidence=cli_args.conf,
-        iou=cli_args.iou,
-        img_size=cli_args.imagesize,
-        half_precision=cli_args.half,
-        normalized=config.CONFIG[config.DETECT][config.YOLO][config.NORMALIZED],
+        weights=config.detect.yolo_config.weights,
+        confidence=config.detect.yolo_config.conf,
+        iou=config.detect.yolo_config.iou,
+        img_size=config.detect.yolo_config.img_size,
+        half_precision=config.detect.half_precision,
+        normalized=config.detect.yolo_config.normalized,
     )
 
     try:
         OTVision.detect(
             model=model,
-            paths=cli_args.paths,
-            expected_duration=cli_args.expected_duration,
-            overwrite=cli_args.overwrite,
-            detect_start=cli_args.detect_start,
-            detect_end=cli_args.detect_end,
+            paths=_extract_paths(config),
+            expected_duration=config.detect.expected_duration,
+            overwrite=config.detect.overwrite,
+            detect_start=config.detect.detect_start,
+            detect_end=config.detect.detect_end,
         )
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")
@@ -315,6 +67,18 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     except Exception:
         log.exception("")
         raise
+
+
+def _extract_paths(config: Config) -> list[Path]:
+    if paths := config.detect.paths:
+        converted = [Path(path) for path in paths]
+        check_if_all_paths_exist(converted)
+        return converted
+
+    raise IOError(
+        "No paths have been passed as command line args."
+        "No paths have been defined in the user config."
+    )
 
 
 if __name__ == "__main__":

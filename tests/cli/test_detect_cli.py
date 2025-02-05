@@ -18,6 +18,7 @@ from OTVision.config import (
     WEIGHTS,
     YOLO,
 )
+from OTVision.domain.cli import CliParseError
 
 EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
 INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())
@@ -269,5 +270,5 @@ class TestDetectCLI:
                 "No paths have been passed as command line args."
                 + "No paths have been defined in the user config."
             )
-            with pytest.raises(OSError, match=error_msg):
+            with pytest.raises(CliParseError, match=error_msg):
                 detect_cli(argv=required_arguments.split())
