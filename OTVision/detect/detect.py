@@ -48,7 +48,7 @@ log = logging.getLogger(LOGGER_NAME)
 def main(
     model: Yolov8,
     paths: list[Path],
-    expected_duration: timedelta,
+    expected_duration: timedelta | None = None,
     filetypes: list[str] = CONFIG[FILETYPES][VID],
     overwrite: bool = CONFIG[DETECT][OVERWRITE],
     detect_start: int | None = None,
@@ -60,8 +60,8 @@ def main(
     Args:
         model (Yolov8): YOLOv8 detection model.
         paths (list[Path]): List of paths to video files.
-        expected_duration (timedelta): expected duration of the video. All frames are
-            evenly spread across this duration
+        expected_duration (timedelta | None, optional): expected duration of the video.
+            All frames are evenly spread across this duration.
         filetypes (list[str], optional): Types of video/image files to be detected.
             Defaults to CONFIG["FILETYPES"]["VID"].
         overwrite (bool, optional): Whether to overwrite
@@ -102,8 +102,12 @@ def main(
         )
 
         video_width, video_height = get_video_dimensions(video_file)
+        actual_duration = get_duration(video_file)
         actual_frames = len(detections)
-        actual_fps = actual_frames / expected_duration.total_seconds()
+        if expected_duration is None:
+            actual_fps = actual_frames / actual_duration.total_seconds()
+        else:
+            actual_fps = actual_frames / expected_duration.total_seconds()
         otdet = OtdetBuilder(
             conf=model.confidence,
             iou=model.iou,
@@ -180,14 +184,14 @@ class FormatNotSupportedError(Exception):
 
 
 def add_timestamps(
-    detections: dict, video_file: Path, expected_duration: timedelta
+    detections: dict, video_file: Path, expected_duration: timedelta | None
 ) -> dict:
     return Timestamper().stamp(detections, video_file, expected_duration)
 
 
 class Timestamper:
     def stamp(
-        self, detections: dict, video_file: Path, expected_duration: timedelta
+        self, detections: dict, video_file: Path, expected_duration: timedelta | None
     ) -> dict:
         """This method adds timestamps when the frame occurred in real time to each
         frame.
@@ -195,16 +199,19 @@ class Timestamper:
         Args:
             detections (dict): dictionary containing all frames
             video_file (Path): path to video file
-            expected_duration (timedelta): expected duration of the video used to
+            expected_duration (timedelta | None): expected duration of the video used to
                 calculate the number of actual frames per second
 
         Returns:
             dict: input dictionary with additional occurrence per frame
         """
         start_time = self._get_start_time_from(video_file)
-        duration = get_duration(video_file)
-        time_per_frame = self._get_time_per_frame(detections, expected_duration)
-        self._update_metadata(detections, start_time, duration)
+        actual_duration = get_duration(video_file)
+        if expected_duration:
+            time_per_frame = self._get_time_per_frame(detections, expected_duration)
+        else:
+            time_per_frame = self._get_time_per_frame(detections, actual_duration)
+        self._update_metadata(detections, start_time, actual_duration)
         return self._stamp(detections, start_time, time_per_frame)
 
     @staticmethod

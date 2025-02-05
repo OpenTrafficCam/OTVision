@@ -13,7 +13,7 @@ class OtdetBuilder:
         video: Path,
         video_width: int,
         video_height: int,
-        expected_duration: timedelta,
+        expected_duration: timedelta | None,
         recorded_fps: float,
         actual_fps: float,
         actual_frames: int,
@@ -61,16 +61,20 @@ class OtdetBuilder:
         return data
 
     def _build_video_config(self) -> dict:
-        return {
+        video_config = {
             dataformat.FILENAME: str(self._video.stem),
             dataformat.FILETYPE: str(self._video.suffix),
             dataformat.WIDTH: self._video_width,
             dataformat.HEIGHT: self._video_height,
-            dataformat.EXPECTED_DURATION: int(self._expected_duration.total_seconds()),
             dataformat.RECORDED_FPS: self._recorded_fps,
             dataformat.ACTUAL_FPS: self._actual_fps,
             dataformat.NUMBER_OF_FRAMES: self._actual_frames,
         }
+        if self._expected_duration is not None:
+            video_config[dataformat.EXPECTED_DURATION] = int(
+                self._expected_duration.total_seconds()
+            )
+        return video_config
 
     def _build_detection_config(self) -> dict:
         return {

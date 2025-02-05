@@ -294,7 +294,7 @@ class DetectConfig:
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: YoloConfig = YoloConfig()
-    expected_duration: int | None = None
+    expected_duration: timedelta | None = None
     overwrite: bool = True
     half_precision: bool = False
     detect_start: int | None = None
