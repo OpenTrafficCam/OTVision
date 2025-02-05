@@ -91,7 +91,7 @@ class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
-        weights (YOLOv8): Custom model weights for prediction.
+        weights (str | Path): Custom model weights for prediction.
         model: (YOLOv8):  the YOLOv8 model to use for prediction.
         confidence (float): the confidence threshold.
         iou (float): the IOU threshold.
