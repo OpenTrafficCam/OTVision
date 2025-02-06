@@ -309,15 +309,16 @@ class DetectConfig:
             else DetectConfig.yolo_config
         )
 
-        # TODO: Future work: Raise error if expected_duration is not passed
-        # Change expected duration's type to be strictly int
         files = [Path(file).expanduser() for file in d.get(PATHS, [])]
+        expected_duration = d.get(EXPECTED_DURATION, None)
+        if expected_duration is not None:
+            expected_duration = timedelta(seconds=int(expected_duration))
 
         return DetectConfig(
             files,
             d.get(RUN_CHAINED, DetectConfig.run_chained),
             yolo_config,
-            d.get(EXPECTED_DURATION, None),
+            expected_duration,
             d.get(OVERWRITE, DetectConfig.overwrite),
             d.get(HALF_PRECISION, DetectConfig.half_precision),
             d.get(DETECT_START, DetectConfig.detect_start),
@@ -325,11 +326,16 @@ class DetectConfig:
         )
 
     def to_dict(self) -> dict:
+        expected_duration = (
+            int(self.expected_duration.total_seconds())
+            if self.expected_duration is not None
+            else None
+        )
         return {
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             YOLO: self.yolo_config.to_dict(),
-            EXPECTED_DURATION: self.expected_duration,
+            EXPECTED_DURATION: expected_duration,
             OVERWRITE: self.overwrite,
             HALF_PRECISION: self.half_precision,
         }
