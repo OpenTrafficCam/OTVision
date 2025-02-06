@@ -311,9 +311,10 @@ class DetectConfig:
 
         # TODO: Future work: Raise error if expected_duration is not passed
         # Change expected duration's type to be strictly int
+        files = [Path(file).expanduser() for file in d.get(PATHS, [])]
 
         return DetectConfig(
-            d.get(PATHS, []),
+            files,
             d.get(RUN_CHAINED, DetectConfig.run_chained),
             yolo_config,
             d.get(EXPECTED_DURATION, None),
