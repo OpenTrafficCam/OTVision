@@ -31,17 +31,6 @@ from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.engine.results import Boxes
 
-from OTVision.config import (
-    CONF,
-    CONFIG,
-    DETECT,
-    HALF_PRECISION,
-    IMG_SIZE,
-    IOU,
-    NORMALIZED,
-    WEIGHTS,
-    YOLO,
-)
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
@@ -225,12 +214,12 @@ class Yolov8(ObjectDetection):
 
 
 def create_model(
-    weights: str | Path = CONFIG[DETECT][YOLO][WEIGHTS],
-    confidence: float = CONFIG[DETECT][YOLO][CONF],
-    iou: float = CONFIG[DETECT][YOLO][IOU],
-    img_size: int = CONFIG[DETECT][YOLO][IMG_SIZE],
-    half_precision: bool = CONFIG[DETECT][HALF_PRECISION],
-    normalized: bool = CONFIG[DETECT][YOLO][NORMALIZED],
+    weights: str | Path,
+    confidence: float,
+    iou: float,
+    img_size: int,
+    half_precision: bool,
+    normalized: bool,
 ) -> Yolov8:
     """Loads a custom trained or a pretrained YOLOv8 mode.
 
