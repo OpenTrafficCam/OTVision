@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -203,29 +203,26 @@ class TestDetectCLI:
         test_data: dict,
         detect_cli: Callable,
     ) -> None:
-        mock_model = Mock()
         with patch("OTVision.detect") as mock_detect:
-            with patch("detect.create_model") as mock_create_model:
-                mock_create_model.return_value = mock_model
-                command = [
-                    *test_data["paths"][PASSED].split(),
-                    *test_data["weights"][PASSED].split(),
-                    *test_data["conf"][PASSED].split(),
-                    *test_data["iou"][PASSED].split(),
-                    *test_data["imagesize"][PASSED].split(),
-                    *test_data["half_precision"][PASSED].split(),
-                    *test_data["expected_duration"][PASSED].split(),
-                    *test_data["overwrite"][PASSED].split(),
-                    *test_data["config"][PASSED].split(),
-                    *test_data["detect_start"][PASSED].split(),
-                    *test_data["detect_end"][PASSED].split(),
-                    LOGFILE_OVERWRITE_CMD,
-                ]
+            command = [
+                *test_data["paths"][PASSED].split(),
+                *test_data["weights"][PASSED].split(),
+                *test_data["conf"][PASSED].split(),
+                *test_data["iou"][PASSED].split(),
+                *test_data["imagesize"][PASSED].split(),
+                *test_data["half_precision"][PASSED].split(),
+                *test_data["expected_duration"][PASSED].split(),
+                *test_data["overwrite"][PASSED].split(),
+                *test_data["config"][PASSED].split(),
+                *test_data["detect_start"][PASSED].split(),
+                *test_data["detect_end"][PASSED].split(),
+                LOGFILE_OVERWRITE_CMD,
+            ]
 
-                detect_cli(argv=list(filter(None, command)))
-                expected_config = create_expected_config_from_test_data(test_data)
+            detect_cli(argv=list(filter(None, command)))
+            expected_config = create_expected_config_from_test_data(test_data)
 
-                mock_detect.assert_called_once_with(expected_config)
+            mock_detect.assert_called_once_with(expected_config)
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
