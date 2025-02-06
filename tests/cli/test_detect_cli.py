@@ -1,4 +1,3 @@
-import unittest.mock as mock
 from pathlib import Path
 from typing import Callable
 from unittest.mock import Mock, patch
@@ -17,19 +16,26 @@ from OTVision.config import (
     PATHS,
     WEIGHTS,
     YOLO,
+    Config,
+    DetectConfig,
+    YoloConfig,
 )
 from OTVision.domain.cli import CliParseError
+
+
+def read_yaml(yaml_file: str) -> dict:
+    with open(yaml_file, "r") as stream:
+        return yaml.safe_load(stream)
+
 
 EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
 INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())
 
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
-with open(CUSTOM_CONFIG_FILE, "r") as file:
-    custom_config = yaml.safe_load(file)
+custom_config = read_yaml(CUSTOM_CONFIG_FILE)
 
 CWD_CONFIG_FILE = r"user_config.otvision.yaml"
-with open(CWD_CONFIG_FILE, "r") as file:
-    cwd_config = yaml.safe_load(file)
+cwd_config = read_yaml(CWD_CONFIG_FILE)
 
 LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
 PASSED: str = "passed"
@@ -217,27 +223,9 @@ class TestDetectCLI:
                 ]
 
                 detect_cli(argv=list(filter(None, command)))
+                expected_config = create_expected_config_from_test_data(test_data)
 
-                mock_create_model.assert_called_once_with(
-                    weights=test_data["weights"][EXPECTED],
-                    confidence=test_data["conf"][EXPECTED],
-                    iou=test_data["iou"][EXPECTED],
-                    img_size=test_data["imagesize"][EXPECTED],
-                    half_precision=test_data["half_precision"][EXPECTED],
-                    normalized=False,
-                )
-                assert mock_create_model.call_count == 1
-
-                assert mock_detect.call_args_list == [
-                    mock.call(
-                        model=mock_model,
-                        paths=test_data["paths"][EXPECTED],
-                        expected_duration=(test_data["expected_duration"][EXPECTED]),
-                        overwrite=test_data["overwrite"][EXPECTED],
-                        detect_start=test_data["detect_start"][EXPECTED],
-                        detect_end=test_data["detect_end"][EXPECTED],
-                    )
-                ]
+                mock_detect.assert_called_once_with(expected_config)
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
@@ -272,3 +260,80 @@ class TestDetectCLI:
             )
             with pytest.raises(CliParseError, match=error_msg):
                 detect_cli(argv=required_arguments.split())
+
+
+def create_expected_config_from_test_data(test_data: dict) -> Config:
+    """
+    Create a Config object from the EXPECTED values of the provided test data
+    dictionary.
+
+    Args:
+        test_data (dict): The dictionary containing EXPECTED values for configuration.
+
+    Returns:
+        Config: A Config object populated with the relevant configuration values.
+    """
+
+    if config_file_arg := test_data["config"].get(PASSED):
+        default_config = Config.from_dict(read_yaml(config_file_arg.split()[1]))
+    else:
+        default_config = Config()
+
+    # Map EXPECTED values to DetectConfig's relevant fields
+    paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
+    weights = test_data["weights"].get(
+        EXPECTED, default_config.detect.yolo_config.weights
+    )
+    conf = test_data["conf"].get(EXPECTED, default_config.detect.yolo_config.conf)
+    iou = test_data["iou"].get(EXPECTED, default_config.detect.yolo_config.iou)
+    img_size = test_data["imagesize"].get(
+        EXPECTED, default_config.detect.yolo_config.img_size
+    )
+    half_precision = test_data["half_precision"].get(
+        EXPECTED, default_config.detect.half_precision
+    )
+    expected_duration = test_data["expected_duration"].get(
+        EXPECTED, default_config.detect.expected_duration
+    )
+    overwrite = test_data["overwrite"].get(EXPECTED, default_config.detect.overwrite)
+    detect_start = test_data["detect_start"].get(
+        EXPECTED, default_config.detect.detect_start
+    )
+    detect_end = test_data["detect_end"].get(EXPECTED, default_config.detect.detect_end)
+
+    # Ensure paths are converted to Path objects if necessary
+    paths = [Path(p).expanduser() for p in paths]
+
+    # Create YoloConfig using the extracted values
+    yolo_config = YoloConfig(
+        weights=weights,
+        conf=conf,
+        iou=iou,
+        img_size=img_size,
+        normalized=default_config.detect.yolo_config.normalized,
+    )
+
+    detect_config = DetectConfig(
+        paths=paths,
+        run_chained=default_config.detect.run_chained,
+        yolo_config=yolo_config,
+        expected_duration=expected_duration,
+        overwrite=overwrite,
+        half_precision=half_precision,
+        detect_start=detect_start,
+        detect_end=detect_end,
+    )
+
+    return Config(
+        log=default_config.log,
+        search_subdirs=default_config.search_subdirs,
+        default_filetype=default_config.default_filetype,
+        filetypes=default_config.filetypes,
+        last_paths=default_config.last_paths,
+        convert=default_config.convert,
+        detect=detect_config,
+        track=default_config.track,
+        undistort=default_config.undistort,
+        transform=default_config.transform,
+        gui=default_config.gui,
+    )

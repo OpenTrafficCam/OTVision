@@ -25,7 +25,6 @@ from pathlib import Path
 import OTVision
 from OTVision.config import Config
 from OTVision.detect.builder import DetectBuilder
-from OTVision.detect.yolo import create_model
 from OTVision.helpers.files import check_if_all_paths_exist
 
 
@@ -43,24 +42,9 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
 
     log.info("Call detect from command line")
     log.info(f"Arguments: {vars(cli_args)}")
-    model = create_model(
-        weights=config.detect.yolo_config.weights,
-        confidence=config.detect.yolo_config.conf,
-        iou=config.detect.yolo_config.iou,
-        img_size=config.detect.yolo_config.img_size,
-        half_precision=config.detect.half_precision,
-        normalized=config.detect.yolo_config.normalized,
-    )
 
     try:
-        OTVision.detect(
-            model=model,
-            paths=_extract_paths(config),
-            expected_duration=config.detect.expected_duration,
-            overwrite=config.detect.overwrite,
-            detect_start=config.detect.detect_start,
-            detect_end=config.detect.detect_end,
-        )
+        OTVision.detect(config)
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")
         raise
