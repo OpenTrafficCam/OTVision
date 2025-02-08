@@ -30,7 +30,6 @@ class ExportFormat(StrEnum):
 
 
 class Quantization(StrEnum):
-    DEFAULT = "default"
     INT8 = "int8"
     FP16 = "fp16"
 
@@ -397,18 +396,68 @@ class YoloModelExporter:
 def main(
     formats: list[str] | str | None = None,
     model: str | None = None,
-    quantization: Literal["int8", "fp16", "default"] | None = None,
+    quantization: Literal["int8", "fp16"] | None = None,
     config: str | None = None,
 ) -> None:
-    """Export YOLO models to 'onnx', 'engine' or 'mlpackage' format.
+    """CLI Tool for Exporting YOLO Models.
+
+    Usage:
+        python export_models.py [OPTIONS]
+
+    Options:
+        --formats (Required if --config is not provided):
+            Export format(s) for the model. Supported values:
+            - onnx (ONNX format)
+            - engine (TensorRT Engine format)
+            - coreml (CoreML format)
+            Multiple formats can be provided as: "[onnx,engine,coreml]"
+
+        --model (Required if --config is not provided):
+            Path to the YOLO model file (e.g., model.pt).
+
+        --quantization (Optional):
+            Apply quantization to optimize the model.
+            Supported values: int8, fp16.
+
+        --config (Optional):
+            Path to a YAML configuration file for batch export of multiple models
+            with specific formats and settings.
+
+    Examples:
+    1. Export a model to ONNX:
+        python export_models.py --model path/to/model.pt --formats onnx
+
+    2. Export to multiple formats:
+        python export_models.py --model path/to/model.pt --formats "[onnx,engine]"
+
+    3. Export with FP16 quantization:
+        python export_models.py --model path/to/model.pt --formats engine --quantization
+        fp16
+
+    4. Export using a config file:
+        python export_models.py --config config.yaml
+
+    YAML Config Example:
+    specifications:
+      - model: models/model1.pt
+        formats: [onnx,engine]
+        quantization: int8
+      - model: models/model2.pt
+        formats: [engine,coreml]
+        quantization: fp16
+
+    Notes:
+    - Use [] for multiple formats with `--formats`.
+    - Temporary files are cleaned after export.
+    - Supported formats: onnx, engine, coreml.
 
     Args:
-        model (str): the path to the model weights.
-        formats (list[str]): The export formats.
-            Possible values are "onnx", "engine" or "mlpackage".
-        quantization (Literal["int8","fp16"] | None): enable INT-8 or FP-16
-            quantization. Possible values are "int8" or "fp16".
-        config (str | None): the path to the export configuration file.
+        model (str, optional): the path to the model weights.
+        formats (list[str] | str, optional ): The export formats.
+            Supported values: onnx, engine, coreml.
+        quantization (Literal["int8","fp16"], optional): enable INT-8 or FP-16
+            quantization. Supported values: int8, fp16.
+        config (str, optional): the path to the export configuration file.
 
     """
     model_export_spec_parser = ModelExportSpecificationParser()
