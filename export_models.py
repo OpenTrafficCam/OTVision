@@ -258,7 +258,7 @@ class PostExportAction:
                     f"'{original_spec.model_path}'"
                 )
                 dst = exported_model.rename(
-                    f"{original_spec.generate_file_stem()}{exported_model.suffix}"
+                    Path(f"{original_spec.generate_file_stem()}{exported_model.suffix}")
                 )
                 print(f"Model '{spec.model_path}' exported to '{dst}'")
 
