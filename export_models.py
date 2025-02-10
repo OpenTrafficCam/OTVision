@@ -7,6 +7,7 @@ from pathlib import Path
 from shutil import copy2, rmtree
 from typing import Any, Literal
 
+import torch
 import yaml
 from fire import Fire
 from ultralytics import YOLO
@@ -245,7 +246,7 @@ class PostExportAction:
                     # directories. In our case .mlpackage is a directory.
                     shutil.rmtree(dst)
 
-                dst = exported_model.replace(dst)
+                shutil.move(src=exported_model, dst=dst)
                 print(f"Model '{spec.model_path}' exported to '{dst}'")
 
     def __remove_temp_folder(self, temp_folder: Path) -> None:
@@ -446,6 +447,7 @@ def main(
         config (str, optional): the path to the export configuration file.
 
     """
+    print(f"CUDA is available: {torch.cuda.is_available()}")
     model_export_spec_parser = ModelExportSpecificationParser()
     exporter = YoloModelExporter(PreExportAction(), PostExportAction())
     if config is not None:
