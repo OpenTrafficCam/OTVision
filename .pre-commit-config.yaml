@@ -46,7 +46,7 @@ repos:
         additional_dependencies:
           - av==13.0.0
           - black==24.8.0
-          - coremltools==7.2;
+          - coremltools==8.2;
           - fire==0.7.0
           - ijson==3.3.0
           - interrogate==1.5.0
