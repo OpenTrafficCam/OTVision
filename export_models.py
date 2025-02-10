@@ -258,7 +258,7 @@ class PostExportAction:
         return self.__is_temp_folder(file.parent)
 
     def __is_temp_folder(self, temp_folder: Path) -> bool:
-        return temp_folder.name == TEMP_FOLDER
+        return temp_folder == TEMP_FOLDER
 
     def __is_model(self, model_path: Path) -> bool:
         return model_path.suffix in AVAILABLE_EXPORT_TYPES
