@@ -42,5 +42,5 @@ configurations:
     suffix: "linux-cuda"
     output_file_name: OTVision
     additional_requirements:
-      - "--extra-index-url https://download.pytorch.org/whl/cu124"
-      - "tensorrt==10.3.0"
+      - "--extra-index-url https://download.pytorch.org/whl/cu126"
+      - "tensorrt==10.8.0"
