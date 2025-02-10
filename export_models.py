@@ -15,7 +15,7 @@ PATTERN_MODEL_NAME = (
 )
 GROUP_CORE = "core"
 GROUP_DIGITS = "digits"
-TEMP_CACHE_NAME = ".yolo_exporter_temp"
+TEMP_FOLDER_NAME = ".yolo_exporter_temp"
 AVAILABLE_EXPORT_TYPES = {".engine", ".onnx", ".mlpackage"}
 
 
@@ -154,18 +154,18 @@ class ModelExportSpecificationParser:
 
 
 class PreExportAction:
-    """Performs pre-export actions such as creating a temporary cache for the model.
+    """Performs pre-export actions such as creating a temporary folder for the model.
 
-    1. Creates a temporary cache where all model exports are located.
-    2. Copies the model to be exported to the temporary cache.
+    1. Creates a temporary folder where all model exports are located.
+    2. Copies the model to be exported to the temporary folder.
     3. Returns an updated specification with the new model location.
     """
 
     def execute(self, spec: ModelExportSpecification) -> ModelExportSpecification:
         """Executes pre-export actions to prepare the model for export.
 
-        1. Creates a temporary cache where all model exports are located.
-        2. Copies the model to be exported to the temporary cache.
+        1. Creates a temporary folder where all model exports are located.
+        2. Copies the model to be exported to the temporary folder.
         3. Returns an updated specification with the new model location.
 
         Args:
@@ -175,29 +175,29 @@ class PreExportAction:
             ModelExportSpecification: Updated specification with a new model location.
         """
 
-        temp_cache = self.__create_temp_cache(model_path=spec.model_path)
-        new_model_location = temp_cache / spec.model_path.name
+        temp_folder = self.__create_temp_folder(model_path=spec.model_path)
+        new_model_location = temp_folder / spec.model_path.name
 
-        self.__copy_model_to_temp_cache(
-            temp_cache=temp_cache, model_path=spec.model_path
+        self.__copy_model_to_temp_folder(
+            temp_folder=temp_folder, model_path=spec.model_path
         )
         return create_spec_with_new_model_location(
             spec=spec, new_model_location=new_model_location
         )
 
-    def __create_temp_cache(self, model_path: Path) -> Path:
-        cache = model_path.parent / TEMP_CACHE_NAME
+    def __create_temp_folder(self, model_path: Path) -> Path:
+        temp_folder = model_path.parent / TEMP_FOLDER_NAME
         try:
-            cache.mkdir(exist_ok=False)
+            temp_folder.mkdir(exist_ok=False)
         except FileExistsError:
-            print("Temporary cache {temp_cache} already exists. Clearing it.")
-            rmtree(cache)
-            cache.mkdir(exist_ok=False)
+            print(f"Temporary folder {temp_folder} already exists. Clearing it.")
+            rmtree(temp_folder)
+            temp_folder.mkdir(exist_ok=False)
 
-        return cache
+        return temp_folder
 
-    def __copy_model_to_temp_cache(self, temp_cache: Path, model_path: Path) -> None:
-        new_model_location = temp_cache / model_path.name
+    def __copy_model_to_temp_folder(self, temp_folder: Path, model_path: Path) -> None:
+        new_model_location = temp_folder / model_path.name
         copy2(src=model_path, dst=new_model_location)
 
 
@@ -218,7 +218,7 @@ class PostExportAction:
 
     1. Moves exported models to their original location, that is, the parent folder of
         original weights pt file.
-    2. Removes the temporary cache.
+    2. Removes the temporary folder.
     """
 
     def execute(self, spec: ModelExportSpecification) -> None:
@@ -226,32 +226,32 @@ class PostExportAction:
 
         1. Moves exported models to their original location, that is,
             the parent folder of original weights pt file.
-        2. Removes the temporary cache.
+        2. Removes the temporary folder.
 
         Args:
             spec (ModelExportSpecification): The model export specification.
         """
 
-        self.__remove_pt_model_from_cache(pt_model=spec.model_path)
+        self.__remove_pt_model_from_temp_folder(pt_model=spec.model_path)
         self.__move_exported_models_to_original_location(spec=spec)
-        self.__remove_temp_cache(temp_cache=spec.model_path.parent)
+        self.__remove_temp_folder(temp_folder=spec.model_path.parent)
 
-    def __remove_pt_model_from_cache(self, pt_model: Path) -> None:
-        if self.__is_in_temp_cache(file=pt_model):
+    def __remove_pt_model_from_temp_folder(self, pt_model: Path) -> None:
+        if self.__is_in_temp_folder(file=pt_model):
             pt_model.unlink()
             return
-        print(f"File '{pt_model}' is not in temp cache. Skipping removal.")
+        print(f"File '{pt_model}' is not in temp folder. Skipping removal.")
 
     def __move_exported_models_to_original_location(
         self, spec: ModelExportSpecification
     ) -> None:
-        temp_cache = spec.model_path.parent
+        temp_folder = spec.model_path.parent
         original_spec = create_spec_with_new_model_location(
             spec=spec,
             new_model_location=spec.model_path.parent.parent / spec.model_path.name,
         )
 
-        for exported_model in temp_cache.iterdir():
+        for exported_model in temp_folder.iterdir():
             if self.__is_model(exported_model):
                 print(
                     f"Move exported model '{exported_model}' to "
@@ -262,17 +262,17 @@ class PostExportAction:
                 )
                 print(f"Model '{spec.model_path}' exported to '{dst}'")
 
-    def __remove_temp_cache(self, temp_cache: Path) -> None:
-        if self.__is_temp_cache(temp_cache):
-            rmtree(temp_cache)
+    def __remove_temp_folder(self, temp_folder: Path) -> None:
+        if self.__is_temp_folder(temp_folder):
+            rmtree(temp_folder)
             return
-        print(f"Folder '{temp_cache}' is not a temp cache. Skipping removal.")
+        print(f"Folder '{temp_folder}' is not a temp folder. Skipping removal.")
 
-    def __is_in_temp_cache(self, file: Path) -> bool:
-        return self.__is_temp_cache(file.parent)
+    def __is_in_temp_folder(self, file: Path) -> bool:
+        return self.__is_temp_folder(file.parent)
 
-    def __is_temp_cache(self, temp_cache: Path) -> bool:
-        return temp_cache.name == TEMP_CACHE_NAME
+    def __is_temp_folder(self, temp_folder: Path) -> bool:
+        return temp_folder.name == TEMP_FOLDER_NAME
 
     def __is_model(self, model_path: Path) -> bool:
         return model_path.suffix in AVAILABLE_EXPORT_TYPES
@@ -329,7 +329,7 @@ class YoloModelExporter:
         """Executes the complete export process for a YOLO model.
 
         The process involves:
-        1. Performing pre-export actions (e.g., creating a temporary cache).
+        1. Performing pre-export actions (e.g., creating a temporary folder).
         2. Exporting the model to the desired format.
         3. Performing post-export actions (e.g., cleaning up temporary files).
 
