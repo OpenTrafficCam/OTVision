@@ -43,4 +43,4 @@ configurations:
     output_file_name: OTVision
     additional_requirements:
       - "--extra-index-url https://download.pytorch.org/whl/cu126"
-      - "tensorrt==10.8.0"
+      - "tensorrt==10.8.0.43"
