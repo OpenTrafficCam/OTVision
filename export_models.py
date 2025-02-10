@@ -269,7 +269,7 @@ class PostExportAction:
         print(f"Folder '{temp_cache}' is not a temp cache. Skipping removal.")
 
     def __is_in_temp_cache(self, file: Path) -> bool:
-        return file.parent.name == TEMP_CACHE_NAME
+        return self.__is_temp_cache(file.parent)
 
     def __is_temp_cache(self, temp_cache: Path) -> bool:
         return temp_cache.name == TEMP_CACHE_NAME
