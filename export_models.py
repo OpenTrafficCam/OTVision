@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import re
+import shutil
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -253,13 +254,15 @@ class PostExportAction:
 
         for exported_model in temp_folder.iterdir():
             if self.__is_model(exported_model):
-                print(
-                    f"Move exported model '{exported_model}' to "
-                    f"'{original_spec.model_path}'"
+                dst = Path(
+                    f"{original_spec.generate_file_stem()}{exported_model.suffix}"
                 )
-                dst = exported_model.rename(
-                    Path(f"{original_spec.generate_file_stem()}{exported_model.suffix}")
-                )
+                if dst.is_dir():
+                    # Replace does not work on existing destinations that are
+                    # directories. In our case .mlpackage is a directory.
+                    shutil.rmtree(dst)
+
+                dst = exported_model.replace(dst)
                 print(f"Model '{spec.model_path}' exported to '{dst}'")
 
     def __remove_temp_folder(self, temp_folder: Path) -> None:
