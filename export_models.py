@@ -16,7 +16,7 @@ PATTERN_MODEL_NAME = (
 )
 GROUP_CORE = "core"
 GROUP_DIGITS = "digits"
-TEMP_FOLDER_NAME = ".yolo_exporter_temp"
+TEMP_FOLDER = Path.home() / ".yolo_exporter_temp"
 AVAILABLE_EXPORT_TYPES = {".engine", ".onnx", ".mlpackage"}
 
 
@@ -40,13 +40,15 @@ class ModelInfo:
     """Provides information to the model to be exported.
 
     Attributes:
-        path(Path): the path to the model weights pt file.
+        original_path(Path): the path to the model weights pt file.
+        temp_path (Path): the path to the temporary weights pt file.
         core (str): the model core name without the image size quantization suffix.
         imagesize (int | None): the image size. None if no image size is specified in
             model name.
     """
 
-    path: Path
+    original_path: Path
+    temp_path: Path
     core: str
     imagesize: int | None
 
@@ -85,7 +87,7 @@ class ModelExportSpecification:
             Path: The path to the model's weights file.
         """
 
-        return self.model_info.path
+        return self.model_info.original_path
 
     def generate_file_stem(self) -> Path:
         """Generates a new file stem for the exported model
@@ -99,7 +101,7 @@ class ModelExportSpecification:
             f"{self.model_info.core}{self.__image_size_suffix()}"
             f"{self.__quantization_suffix()}"
         )
-        return self.model_info.path.parent / new_name
+        return self.model_info.original_path.parent / new_name
 
     def __image_size_suffix(self) -> str:
         if self.imagesize is not None:
@@ -150,7 +152,15 @@ class ModelExportSpecificationParser:
                 imagesize = int(raw_imagesize)
             else:
                 imagesize = None
-            return ModelInfo(path=Path(pt_model_path), core=core, imagesize=imagesize)
+
+            original_path = Path(pt_model_path)
+            temp_path = TEMP_FOLDER / original_path.name
+            return ModelInfo(
+                original_path=original_path,
+                temp_path=temp_path,
+                core=core,
+                imagesize=imagesize,
+            )
         raise ParseError(f"Unable to parse model name '{pt_model_path.name}'.")
 
 
@@ -162,7 +172,7 @@ class PreExportAction:
     3. Returns an updated specification with the new model location.
     """
 
-    def execute(self, spec: ModelExportSpecification) -> ModelExportSpecification:
+    def execute(self, spec: ModelExportSpecification) -> None:
         """Executes pre-export actions to prepare the model for export.
 
         1. Creates a temporary folder where all model exports are located.
@@ -176,18 +186,12 @@ class PreExportAction:
             ModelExportSpecification: Updated specification with a new model location.
         """
 
-        temp_folder = self.__create_temp_folder(model_path=spec.model_path)
-        new_model_location = temp_folder / spec.model_path.name
-
+        self.__create_temp_folder(TEMP_FOLDER)
         self.__copy_model_to_temp_folder(
-            temp_folder=temp_folder, model_path=spec.model_path
-        )
-        return create_spec_with_new_model_location(
-            spec=spec, new_model_location=new_model_location
+            src=spec.model_info.original_path, dst=spec.model_info.temp_path
         )
 
-    def __create_temp_folder(self, model_path: Path) -> Path:
-        temp_folder = model_path.parent / TEMP_FOLDER_NAME
+    def __create_temp_folder(self, temp_folder: Path) -> Path:
         try:
             temp_folder.mkdir(exist_ok=False)
         except FileExistsError:
@@ -197,21 +201,8 @@ class PreExportAction:
 
         return temp_folder
 
-    def __copy_model_to_temp_folder(self, temp_folder: Path, model_path: Path) -> None:
-        new_model_location = temp_folder / model_path.name
-        copy2(src=model_path, dst=new_model_location)
-
-
-def create_spec_with_new_model_location(
-    spec: ModelExportSpecification, new_model_location: Path
-) -> ModelExportSpecification:
-    model_info = ModelInfo(
-        path=new_model_location, core=spec.model_info.core, imagesize=spec.imagesize
-    )
-
-    return ModelExportSpecification(
-        model_info=model_info, formats=spec.formats, quantization=spec.quantization
-    )
+    def __copy_model_to_temp_folder(self, src: Path, dst: Path) -> None:
+        copy2(src=src, dst=dst)
 
 
 class PostExportAction:
@@ -233,9 +224,9 @@ class PostExportAction:
             spec (ModelExportSpecification): The model export specification.
         """
 
-        self.__remove_pt_model_from_temp_folder(pt_model=spec.model_path)
+        self.__remove_pt_model_from_temp_folder(pt_model=spec.model_info.temp_path)
         self.__move_exported_models_to_original_location(spec=spec)
-        self.__remove_temp_folder(temp_folder=spec.model_path.parent)
+        self.__remove_temp_folder(temp_folder=TEMP_FOLDER)
 
     def __remove_pt_model_from_temp_folder(self, pt_model: Path) -> None:
         if self.__is_in_temp_folder(file=pt_model):
@@ -246,17 +237,9 @@ class PostExportAction:
     def __move_exported_models_to_original_location(
         self, spec: ModelExportSpecification
     ) -> None:
-        temp_folder = spec.model_path.parent
-        original_spec = create_spec_with_new_model_location(
-            spec=spec,
-            new_model_location=spec.model_path.parent.parent / spec.model_path.name,
-        )
-
-        for exported_model in temp_folder.iterdir():
+        for exported_model in TEMP_FOLDER.iterdir():
             if self.__is_model(exported_model):
-                dst = Path(
-                    f"{original_spec.generate_file_stem()}{exported_model.suffix}"
-                )
+                dst = Path(f"{spec.generate_file_stem()}{exported_model.suffix}")
                 if dst.is_dir():
                     # Replace does not work on existing destinations that are
                     # directories. In our case .mlpackage is a directory.
@@ -275,7 +258,7 @@ class PostExportAction:
         return self.__is_temp_folder(file.parent)
 
     def __is_temp_folder(self, temp_folder: Path) -> bool:
-        return temp_folder.name == TEMP_FOLDER_NAME
+        return temp_folder.name == TEMP_FOLDER
 
     def __is_model(self, model_path: Path) -> bool:
         return model_path.suffix in AVAILABLE_EXPORT_TYPES
@@ -343,7 +326,7 @@ class YoloModelExporter:
             self.__export_specification(spec=spec)
 
     def __export_specification(self, spec: ModelExportSpecification) -> None:
-        spec = self._pre_export_action.execute(spec=spec)
+        self._pre_export_action.execute(spec=spec)
         self.__export_model(spec=spec)
         self._post_export_action.execute(spec=spec)
 
@@ -354,7 +337,7 @@ class YoloModelExporter:
     def __export_model_for(
         self, spec: ModelExportSpecification, export_format: ExportFormat
     ) -> None:
-        model = YOLO(model=spec.model_path)
+        model = YOLO(model=spec.model_info.temp_path)
         kwargs = self.__create_kwargs_from(
             export_format=export_format,
             imagesize=spec.imagesize,
