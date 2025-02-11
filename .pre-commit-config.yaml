@@ -83,3 +83,10 @@ repos:
     rev: v0.10.0
     hooks:
       - id: shellcheck
+  - repo: https://github.com/pecigonzalo/pre-commit-shfmt
+    rev: v2.2.0
+    hooks:
+      - id: shell-fmt-docker
+        args:
+          - -i
+          - "2"
