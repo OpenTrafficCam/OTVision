@@ -61,8 +61,8 @@ class OTVisionDetect:
 
     def start(self) -> None:
         """Starts the detection of objects in multiple videos and/or images.
-        j
-                Writes detections to one file per video/object.
+
+        Writes detections to one file per video/object.
 
         """
         filetypes = self.config.filetypes.video_filetypes.to_list()
