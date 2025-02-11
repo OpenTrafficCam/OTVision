@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import re
-import shutil
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from shutil import copy2, rmtree
+from shutil import copy2, move, rmtree
 from typing import Any, Literal
 
 import torch
@@ -244,9 +243,9 @@ class PostExportAction:
                 if dst.is_dir():
                     # Replace does not work on existing destinations that are
                     # directories. In our case .mlpackage is a directory.
-                    shutil.rmtree(dst)
+                    rmtree(dst)
 
-                shutil.move(src=exported_model, dst=dst)
+                move(src=exported_model, dst=dst)
                 print(f"Model '{spec.model_path}' exported to '{dst}'")
 
     def __remove_temp_folder(self, temp_folder: Path) -> None:
