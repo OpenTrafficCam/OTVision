@@ -30,10 +30,11 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.detect.detect import Timestamper, derive_filename
-from OTVision.detect.detect import main as detect
+from OTVision.detect.detect import OTVisionDetect, Timestamper, derive_filename
 from OTVision.detect.yolo import Yolov8, create_model
 from tests.conftest import YieldFixture
+
+detect = OTVisionDetect().main
 
 CYCLIST_VIDEO_LENGTH = timedelta(seconds=3)
 DEVIATION = 0.22
