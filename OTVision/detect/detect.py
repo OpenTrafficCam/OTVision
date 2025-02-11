@@ -46,18 +46,19 @@ log = logging.getLogger(LOGGER_NAME)
 
 
 class OTVisionDetect:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, config: Config) -> None:
+        self._config = config
 
-    def main(self, config: Config) -> None:
+    def update_config(self, config: Config) -> None:
+        self._config = config
+
+    def main(self) -> None:
         """Detects objects in multiple videos and/or images.
         Writes detections to one file per video/object.
 
-        Args:
-            config (Config): the OTVision configuration.
         """
-        filetypes = config.filetypes.video_filetypes.to_list()
-        video_files = get_files(paths=config.detect.paths, filetypes=filetypes)
+        filetypes = self._config.filetypes.video_filetypes.to_list()
+        video_files = get_files(paths=self._config.detect.paths, filetypes=filetypes)
 
         start_msg = f"Start detection of {len(video_files)} video files"
         log.info(start_msg)
@@ -68,22 +69,22 @@ class OTVisionDetect:
             return
 
         model = create_model(
-            weights=config.detect.yolo_config.weights,
-            confidence=config.detect.yolo_config.conf,
-            iou=config.detect.yolo_config.iou,
-            img_size=config.detect.yolo_config.img_size,
-            half_precision=config.detect.half_precision,
-            normalized=config.detect.yolo_config.normalized,
+            weights=self._config.detect.yolo_config.weights,
+            confidence=self._config.detect.yolo_config.conf,
+            iou=self._config.detect.yolo_config.iou,
+            img_size=self._config.detect.yolo_config.img_size,
+            half_precision=self._config.detect.half_precision,
+            normalized=self._config.detect.yolo_config.normalized,
         )
         for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
             detections_file = derive_filename(
                 video_file=video_file,
-                detect_start=config.detect.detect_start,
-                detect_end=config.detect.detect_end,
-                detect_suffix=config.filetypes.detect,
+                detect_start=self._config.detect.detect_start,
+                detect_end=self._config.detect.detect_end,
+                detect_suffix=self._config.filetypes.detect,
             )
 
-            if not config.detect.overwrite and detections_file.is_file():
+            if not self._config.detect.overwrite and detections_file.is_file():
                 log.warning(
                     f"{detections_file} already exists. To overwrite, set overwrite "
                     "to True"
@@ -94,10 +95,10 @@ class OTVisionDetect:
 
             video_fps = get_fps(video_file)
             detect_start_in_frames = convert_seconds_to_frames(
-                config.detect.detect_start, video_fps
+                self._config.detect.detect_start, video_fps
             )
             detect_end_in_frames = convert_seconds_to_frames(
-                config.detect.detect_end, video_fps
+                self._config.detect.detect_end, video_fps
             )
             detections = model.detect(
                 file=video_file,
@@ -108,7 +109,7 @@ class OTVisionDetect:
             video_width, video_height = get_video_dimensions(video_file)
             actual_duration = get_duration(video_file)
             actual_frames = len(detections)
-            if (expected_duration := config.detect.expected_duration) is not None:
+            if (expected_duration := self._config.detect.expected_duration) is not None:
                 actual_fps = actual_frames / expected_duration.total_seconds()
             else:
                 actual_fps = actual_frames / actual_duration.total_seconds()
@@ -134,8 +135,8 @@ class OTVisionDetect:
             write_json(
                 stamped_detections,
                 file=detections_file,
-                filetype=config.filetypes.detect,
-                overwrite=config.detect.overwrite,
+                filetype=self._config.filetypes.detect,
+                overwrite=self._config.detect.overwrite,
             )
 
             log.info(f"Successfully detected and wrote {detections_file}")
