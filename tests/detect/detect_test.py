@@ -265,7 +265,7 @@ class TestDetect:
                 weights=MODEL_WEIGHTS,
                 expected_duration=DEFAULT_EXPECTED_DURATION,
             )
-        ).main()
+        ).start()
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
@@ -279,7 +279,7 @@ class TestDetect:
                 weights=MODEL_WEIGHTS,
                 expected_duration=DEFAULT_EXPECTED_DURATION,
             )
-        ).main()
+        ).start()
 
         assert os.listdir(empty_dir) == []
 
@@ -335,7 +335,7 @@ class TestDetect:
             expected_duration=DEFAULT_EXPECTED_DURATION,
         )
 
-        OTVisionDetect(_config).main
+        OTVisionDetect(_config).start
 
         assert os.listdir(detect_error_wrong_filetype_dir) == [video_file_name]
 
@@ -349,7 +349,7 @@ class TestDetect:
             normalized=True,
             expected_duration=DEFAULT_EXPECTED_DURATION,
         )
-        OTVisionDetect(_config).main()
+        OTVisionDetect(_config).start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -370,7 +370,7 @@ class TestDetect:
             expected_duration=DEFAULT_EXPECTED_DURATION,
             normalized=False,
         )
-        OTVisionDetect(_config).main()
+        OTVisionDetect(_config).start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         frames = [
@@ -398,7 +398,7 @@ class TestDetect:
             expected_duration=DEFAULT_EXPECTED_DURATION,
             confidence=conf,
         )
-        OTVisionDetect(_config).main()
+        OTVisionDetect(_config).start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -423,7 +423,7 @@ class TestDetect:
                 expected_duration=DEFAULT_EXPECTED_DURATION,
                 overwrite=True,
             )
-        ).main()
+        ).start()
 
         first_mtime = otdet_file.stat().st_mtime_ns
         OTVisionDetect(
@@ -433,7 +433,7 @@ class TestDetect:
                 expected_duration=DEFAULT_EXPECTED_DURATION,
                 overwrite=overwrite,
             )
-        ).main()
+        ).start()
         second_mtime = otdet_file.stat().st_mtime_ns
 
         if overwrite:
@@ -485,7 +485,7 @@ class TestDetect:
                 expected_duration=expected_duration,
                 confidence=0.5,
             )
-        ).main()
+        ).start()
         result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
         frames = [

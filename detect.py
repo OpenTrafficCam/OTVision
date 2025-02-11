@@ -44,7 +44,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(cli_args)}")
 
     try:
-        OTVisionDetect(config).main()
+        OTVisionDetect(config).start()
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")
         raise

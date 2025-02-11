@@ -52,9 +52,10 @@ class OTVisionDetect:
     def update_config(self, config: Config) -> None:
         self._config = config
 
-    def main(self) -> None:
-        """Detects objects in multiple videos and/or images.
-        Writes detections to one file per video/object.
+    def start(self) -> None:
+        """Starts the detection of objects in multiple videos and/or images.
+        j
+                Writes detections to one file per video/object.
 
         """
         filetypes = self._config.filetypes.video_filetypes.to_list()
