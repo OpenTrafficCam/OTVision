@@ -155,8 +155,6 @@ class OTVisionDetect:
         log.info(finished_msg)
         print(finished_msg)
 
-        return None
-
 
 def derive_filename(
     video_file: Path,
