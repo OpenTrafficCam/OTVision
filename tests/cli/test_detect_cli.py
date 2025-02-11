@@ -198,11 +198,7 @@ class TestDetectCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
-    def test_pass_detect_cli(
-        self,
-        test_data: dict,
-        detect_cli: Callable,
-    ) -> None:
+    def test_pass_detect_cli(self, test_data: dict, detect_cli: Callable) -> None:
         with patch("detect.OTVisionDetect") as mock_detect:
             mock_detect_instance = Mock()
             mock_detect.return_value = mock_detect_instance
@@ -224,7 +220,7 @@ class TestDetectCLI:
             detect_cli(argv=list(filter(None, command)))
             expected_config = create_expected_config_from_test_data(test_data)
 
-            mock_detect.assert_called_once_with(expected_config)
+            mock_detect_instance.update_config.assert_called_once_with(expected_config)
             mock_detect_instance.start.assert_called_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)

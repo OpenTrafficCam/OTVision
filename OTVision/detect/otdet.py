@@ -1,50 +1,60 @@
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
+from typing import Self
 
 from OTVision import dataformat, version
 from OTVision.track.preprocess import Detection
 
 
+@dataclass
+class OtdetBuilderConfig:
+    conf: float
+    iou: float
+    video: Path
+    video_width: int
+    video_height: int
+    expected_duration: timedelta | None
+    recorded_fps: float
+    actual_fps: float
+    actual_frames: int
+    detection_img_size: int
+    normalized: bool
+    detection_model: str | Path
+    half_precision: bool
+    chunksize: int
+    classifications: dict[int, str]
+
+
+class OtdetBuilderError(Exception):
+    pass
+
+
 class OtdetBuilder:
-    def __init__(
-        self,
-        conf: float,
-        iou: float,
-        video: Path,
-        video_width: int,
-        video_height: int,
-        expected_duration: timedelta | None,
-        recorded_fps: float,
-        actual_fps: float,
-        actual_frames: int,
-        detection_img_size: int,
-        normalized: bool,
-        detection_model: str | Path,
-        half_precision: bool,
-        chunksize: int,
-        classifications: dict[int, str],
-    ) -> None:
-        self._conf = conf
-        self._iou = iou
-        self._video = video
-        self._video_width = video_width
-        self._video_height = video_height
-        self._expected_duration = expected_duration
-        self._recorded_fps = recorded_fps
-        self._actual_fps = actual_fps
-        self._actual_frames = actual_frames
-        self._detection_img_size = detection_img_size
-        self._normalized = normalized
-        self._detection_model = detection_model
-        self._half_precision = half_precision
-        self._chunksize = chunksize
-        self._classifications = classifications
+    @property
+    def config(self) -> OtdetBuilderConfig:
+        if self._config is None:
+            raise OtdetBuilderError("Otdet builder config is not set")
+        return self._config
+
+    def __init__(self) -> None:
+        self._config: OtdetBuilderConfig | None = None
+
+    def add_config(self, config: OtdetBuilderConfig) -> Self:
+        self._config = config
+        return self
+
+    def reset(self) -> Self:
+        self._config = None
+        return self
 
     def build(self, detections: list[list[Detection]]) -> dict:
-        return {
+        result = {
             dataformat.METADATA: self._build_metadata(),
             dataformat.DATA: self._build_data(detections),
         }
+        self.reset()
+        return result
 
     def _build_metadata(self) -> dict:
         return {
@@ -62,17 +72,17 @@ class OtdetBuilder:
 
     def _build_video_config(self) -> dict:
         video_config = {
-            dataformat.FILENAME: str(self._video.stem),
-            dataformat.FILETYPE: str(self._video.suffix),
-            dataformat.WIDTH: self._video_width,
-            dataformat.HEIGHT: self._video_height,
-            dataformat.RECORDED_FPS: self._recorded_fps,
-            dataformat.ACTUAL_FPS: self._actual_fps,
-            dataformat.NUMBER_OF_FRAMES: self._actual_frames,
+            dataformat.FILENAME: str(self.config.video.stem),
+            dataformat.FILETYPE: str(self.config.video.suffix),
+            dataformat.WIDTH: self.config.video_width,
+            dataformat.HEIGHT: self.config.video_height,
+            dataformat.RECORDED_FPS: self.config.recorded_fps,
+            dataformat.ACTUAL_FPS: self.config.actual_fps,
+            dataformat.NUMBER_OF_FRAMES: self.config.actual_frames,
         }
-        if self._expected_duration is not None:
+        if self.config.expected_duration is not None:
             video_config[dataformat.EXPECTED_DURATION] = int(
-                self._expected_duration.total_seconds()
+                self.config.expected_duration.total_seconds()
             )
         return video_config
 
@@ -81,13 +91,13 @@ class OtdetBuilder:
             dataformat.OTVISION_VERSION: version.otvision_version(),
             dataformat.MODEL: {
                 dataformat.NAME: "YOLOv8",
-                dataformat.WEIGHTS: str(self._detection_model),
-                dataformat.IOU_THRESHOLD: self._iou,
-                dataformat.IMAGE_SIZE: self._detection_img_size,
-                dataformat.MAX_CONFIDENCE: self._conf,
-                dataformat.HALF_PRECISION: self._half_precision,
-                dataformat.CLASSES: self._classifications,
+                dataformat.WEIGHTS: str(self.config.detection_model),
+                dataformat.IOU_THRESHOLD: self.config.iou,
+                dataformat.IMAGE_SIZE: self.config.detection_img_size,
+                dataformat.MAX_CONFIDENCE: self.config.conf,
+                dataformat.HALF_PRECISION: self.config.half_precision,
+                dataformat.CLASSES: self.config.classifications,
             },
-            dataformat.CHUNKSIZE: self._chunksize,
-            dataformat.NORMALIZED_BBOX: self._normalized,
+            dataformat.CHUNKSIZE: self.config.chunksize,
+            dataformat.NORMALIZED_BBOX: self.config.normalized,
         }

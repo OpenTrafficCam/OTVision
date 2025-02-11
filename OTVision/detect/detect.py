@@ -28,7 +28,7 @@ from tqdm import tqdm
 
 from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
-from OTVision.detect.otdet import OtdetBuilder
+from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
 from OTVision.detect.yolo import create_model
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
@@ -46,8 +46,15 @@ log = logging.getLogger(LOGGER_NAME)
 
 
 class OTVisionDetect:
-    def __init__(self, config: Config) -> None:
-        self._config = config
+    @property
+    def config(self) -> Config:
+        if self._config is None:
+            raise ValueError("Config is missing!")
+        return self._config
+
+    def __init__(self, otdet_builder: OtdetBuilder) -> None:
+        self._config: Config | None = None
+        self._otdet_builder = otdet_builder
 
     def update_config(self, config: Config) -> None:
         self._config = config
@@ -58,8 +65,8 @@ class OTVisionDetect:
                 Writes detections to one file per video/object.
 
         """
-        filetypes = self._config.filetypes.video_filetypes.to_list()
-        video_files = get_files(paths=self._config.detect.paths, filetypes=filetypes)
+        filetypes = self.config.filetypes.video_filetypes.to_list()
+        video_files = get_files(paths=self.config.detect.paths, filetypes=filetypes)
 
         start_msg = f"Start detection of {len(video_files)} video files"
         log.info(start_msg)
@@ -70,22 +77,22 @@ class OTVisionDetect:
             return
 
         model = create_model(
-            weights=self._config.detect.yolo_config.weights,
-            confidence=self._config.detect.yolo_config.conf,
-            iou=self._config.detect.yolo_config.iou,
-            img_size=self._config.detect.yolo_config.img_size,
-            half_precision=self._config.detect.half_precision,
-            normalized=self._config.detect.yolo_config.normalized,
+            weights=self.config.detect.yolo_config.weights,
+            confidence=self.config.detect.yolo_config.conf,
+            iou=self.config.detect.yolo_config.iou,
+            img_size=self.config.detect.yolo_config.img_size,
+            half_precision=self.config.detect.half_precision,
+            normalized=self.config.detect.yolo_config.normalized,
         )
         for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
             detections_file = derive_filename(
                 video_file=video_file,
-                detect_start=self._config.detect.detect_start,
-                detect_end=self._config.detect.detect_end,
-                detect_suffix=self._config.filetypes.detect,
+                detect_start=self.config.detect.detect_start,
+                detect_end=self.config.detect.detect_end,
+                detect_suffix=self.config.filetypes.detect,
             )
 
-            if not self._config.detect.overwrite and detections_file.is_file():
+            if not self.config.detect.overwrite and detections_file.is_file():
                 log.warning(
                     f"{detections_file} already exists. To overwrite, set overwrite "
                     "to True"
@@ -96,10 +103,10 @@ class OTVisionDetect:
 
             video_fps = get_fps(video_file)
             detect_start_in_frames = convert_seconds_to_frames(
-                self._config.detect.detect_start, video_fps
+                self.config.detect.detect_start, video_fps
             )
             detect_end_in_frames = convert_seconds_to_frames(
-                self._config.detect.detect_end, video_fps
+                self.config.detect.detect_end, video_fps
             )
             detections = model.detect(
                 file=video_file,
@@ -110,34 +117,36 @@ class OTVisionDetect:
             video_width, video_height = get_video_dimensions(video_file)
             actual_duration = get_duration(video_file)
             actual_frames = len(detections)
-            if (expected_duration := self._config.detect.expected_duration) is not None:
+            if (expected_duration := self.config.detect.expected_duration) is not None:
                 actual_fps = actual_frames / expected_duration.total_seconds()
             else:
                 actual_fps = actual_frames / actual_duration.total_seconds()
-            otdet = OtdetBuilder(
-                conf=model.confidence,
-                iou=model.iou,
-                video=video_file,
-                video_width=video_width,
-                video_height=video_height,
-                expected_duration=expected_duration,
-                recorded_fps=video_fps,
-                actual_fps=actual_fps,
-                actual_frames=actual_frames,
-                detection_img_size=model.img_size,
-                normalized=model.normalized,
-                detection_model=model.weights,
-                half_precision=model.half_precision,
-                chunksize=1,
-                classifications=model.classifications,
+            otdet = self._otdet_builder.add_config(
+                OtdetBuilderConfig(
+                    conf=model.confidence,
+                    iou=model.iou,
+                    video=video_file,
+                    video_width=video_width,
+                    video_height=video_height,
+                    expected_duration=expected_duration,
+                    recorded_fps=video_fps,
+                    actual_fps=actual_fps,
+                    actual_frames=actual_frames,
+                    detection_img_size=model.img_size,
+                    normalized=model.normalized,
+                    detection_model=model.weights,
+                    half_precision=model.half_precision,
+                    chunksize=1,
+                    classifications=model.classifications,
+                )
             ).build(detections)
 
             stamped_detections = add_timestamps(otdet, video_file, expected_duration)
             write_json(
                 stamped_detections,
                 file=detections_file,
-                filetype=self._config.filetypes.detect,
-                overwrite=self._config.detect.overwrite,
+                filetype=self.config.filetypes.detect,
+                overwrite=self.config.detect.overwrite,
             )
 
             log.info(f"Successfully detected and wrote {detections_file}")
