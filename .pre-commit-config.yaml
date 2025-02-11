@@ -44,9 +44,10 @@ repos:
       - id: mypy
         entry: mypy .
         additional_dependencies:
+          - av==13.0.0
           - black==24.8.0
           - coremltools==7.2;
-          - geopandas==1.0.1
+          - fire==0.7.0
           - ijson==3.3.0
           - interrogate==1.5.0
           - isort==5.13.2
@@ -58,11 +59,12 @@ repos:
           - pandas==2.2.2
           - pre-commit==3.8.0
           - pytest-cov==5.0.0
-          - pytest==8.3.2
+          - pytest==8.3.3
           - torch==2.3.1
           - torchvision==0.18.1
           - types-PyYAML
           - types-flake8
+          - types-geopandas
           - types-jsonschema
           - types-setuptools
           - types-tqdm

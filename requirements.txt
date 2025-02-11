@@ -1,4 +1,5 @@
 av==13.0.0
+fire==0.7.0
 geopandas==1.0.1
 ijson==3.3.0
 moviepy==1.0.3
