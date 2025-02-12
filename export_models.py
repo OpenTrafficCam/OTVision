@@ -387,6 +387,10 @@ def main(
 ) -> None:
     """CLI Tool for Exporting YOLO Models.
 
+    IMPORTANT: If exporting to a .engine model fails due to a missing tensorrt-bindings
+    module, clear the cache (pip cache purge), delete the virtual environment, and
+    rerun install.sh.
+
     Usage:
         python export_models.py [OPTIONS]
 
