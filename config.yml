@@ -35,7 +35,7 @@ configurations:
     suffix: "win-cuda"
     output_file_name: otvision
     additional_requirements:
-      - "--extra-index-url https://download.pytorch.org/whl/cu124"
+      - "--extra-index-url https://download.pytorch.org/whl/cu126"
   - package_path: OTVision
     files:
       - source: "install.sh"
