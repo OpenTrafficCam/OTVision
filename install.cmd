@@ -3,8 +3,8 @@ echo Install OTVision.
 FOR /F "tokens=* USEBACKQ" %%F IN (`python --version`) DO SET PYTHON_VERSION=%%F
 
 echo %PYTHON_VERSION%
-if "x%PYTHON_VERSION:3.11=%"=="x%PYTHON_VERSION%" (
-    echo "Python Version 3.11 is not installed in environment." & cmd /K & exit
+if "x%PYTHON_VERSION:3.12=%"=="x%PYTHON_VERSION%" (
+    echo "Python Version 3.12 is not installed in environment." & cmd /K & exit
 )
 
 python -m venv venv
