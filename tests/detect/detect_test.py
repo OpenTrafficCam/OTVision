@@ -43,6 +43,10 @@ CAR_UPPER_LIMIT = int(120 * (1 + DEVIATION))
 BICYCLE_LOWER_LIMIT = int(60 * (1 - DEVIATION))
 PERSON_LOWER_LIMIT = int(120 * (1 - DEVIATION))
 CAR_LOWER_LIMIT = int(120 * (1 - DEVIATION))
+MODEL_WEIGHTS = (
+    "tests/data/yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
+)
+
 
 CAR = "car"
 TRUCK = "truck"
@@ -238,7 +242,12 @@ def test_derive_filename(
     detect_start: int | None,
     detect_end: int | None,
 ) -> None:
-    actual = derive_filename(Path(video_file), detect_start, detect_end)
+    actual = derive_filename(
+        video_file=Path(video_file),
+        detect_start=detect_start,
+        detect_end=detect_end,
+        detect_suffix=".otdet",
+    )
 
     assert actual == Path(detection_file)
 
@@ -252,23 +261,25 @@ class TestDetect:
         self, yolov8m: Yolov8, cyclist_mp4: Path, detect_test_tmp_dir: Path
     ) -> Path:
         detect(
-            paths=[cyclist_mp4],
-            model=yolov8m,
-            expected_duration=DEFAULT_EXPECTED_DURATION,
+            create_config_from(
+                paths=[cyclist_mp4],
+                weights=MODEL_WEIGHTS,
+                expected_duration=DEFAULT_EXPECTED_DURATION,
+            )
         )
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
-    def test_detect_emptyDirAsParam(
-        self, yolov8m: Yolov8, detect_test_tmp_dir: Path
-    ) -> None:
+    def test_detect_emptyDirAsParam(self, detect_test_tmp_dir: Path) -> None:
         empty_dir = detect_test_tmp_dir / "empty"
         empty_dir.mkdir()
 
         detect(
-            paths=[empty_dir],
-            model=yolov8m,
-            expected_duration=DEFAULT_EXPECTED_DURATION,
+            create_config_from(
+                paths=[empty_dir],
+                weights=MODEL_WEIGHTS,
+                expected_duration=DEFAULT_EXPECTED_DURATION,
+            )
         )
 
         assert os.listdir(empty_dir) == []
@@ -312,32 +323,34 @@ class TestDetect:
         return actual_cyclist_metadata
 
     def test_detect_error_raised_on_wrong_filetype(
-        self, yolov8m: Yolov8, detect_test_tmp_dir: Path
+        self, detect_test_tmp_dir: Path
     ) -> None:
         video_file_name = "video.vid"
         detect_error_wrong_filetype_dir = detect_test_tmp_dir / "wrong_filetype"
         detect_error_wrong_filetype_dir.mkdir()
         video_path = detect_error_wrong_filetype_dir / video_file_name
         video_path.touch()
-
-        detect(
+        _config = create_config_from(
             paths=[video_path],
-            model=yolov8m,
+            weights=MODEL_WEIGHTS,
             expected_duration=DEFAULT_EXPECTED_DURATION,
         )
+
+        detect(_config)
 
         assert os.listdir(detect_error_wrong_filetype_dir) == [video_file_name]
 
-    def test_detect_bboxes_normalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
+    def test_detect_bboxes_normalized(self, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        yolov8m.confidence = 0.25
-        yolov8m.normalized = True
-        detect(
+        _config = create_config_from(
             paths=[truck_mp4],
-            model=yolov8m,
+            weights=MODEL_WEIGHTS,
+            confidence=0.25,
+            normalized=True,
             expected_duration=DEFAULT_EXPECTED_DURATION,
         )
+        detect(_config)
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -349,15 +362,16 @@ class TestDetect:
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
 
-    def test_detect_bboxes_denormalized(self, yolov8m: Yolov8, truck_mp4: Path) -> None:
+    def test_detect_bboxes_denormalized(self, truck_mp4: Path) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        yolov8m.normalized = False
-        detect(
-            model=yolov8m,
+        _config = create_config_from(
             paths=[truck_mp4],
+            weights=MODEL_WEIGHTS,
             expected_duration=DEFAULT_EXPECTED_DURATION,
+            normalized=False,
         )
+        detect(_config)
         otdet_dict = read_bz2_otdet(otdet_file)
 
         frames = [
@@ -379,12 +393,13 @@ class TestDetect:
     ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        yolov8m.confidence = conf
-        detect(
+        _config = create_config_from(
             paths=[truck_mp4],
-            model=yolov8m,
+            weights=MODEL_WEIGHTS,
             expected_duration=DEFAULT_EXPECTED_DURATION,
+            confidence=conf,
         )
+        detect(_config)
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -401,19 +416,24 @@ class TestDetect:
     ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
+
         detect(
-            paths=[truck_mp4],
-            model=yolov8m,
-            expected_duration=DEFAULT_EXPECTED_DURATION,
-            overwrite=True,
+            create_config_from(
+                paths=[truck_mp4],
+                weights=MODEL_WEIGHTS,
+                expected_duration=DEFAULT_EXPECTED_DURATION,
+                overwrite=True,
+            )
         )
 
         first_mtime = otdet_file.stat().st_mtime_ns
         detect(
-            paths=[truck_mp4],
-            model=yolov8m,
-            expected_duration=DEFAULT_EXPECTED_DURATION,
-            overwrite=overwrite,
+            create_config_from(
+                paths=[truck_mp4],
+                weights=MODEL_WEIGHTS,
+                expected_duration=DEFAULT_EXPECTED_DURATION,
+                overwrite=overwrite,
+            )
         )
         second_mtime = otdet_file.stat().st_mtime_ns
 
@@ -426,9 +446,7 @@ class TestDetect:
     def test_detect_fulfill_minimum_detection_requirements(
         self, yolov8m: Yolov8, cyclist_mp4: Path
     ) -> None:
-        class_counts = self._get_detection_counts_for(
-            cyclist_mp4, yolov8m, CYCLIST_VIDEO_LENGTH
-        )
+        class_counts = self._get_detection_counts_for(cyclist_mp4, CYCLIST_VIDEO_LENGTH)
 
         assert class_counts[CAR] >= CAR_LOWER_LIMIT
         assert class_counts[PERSON] >= PERSON_LOWER_LIMIT
@@ -446,7 +464,7 @@ class TestDetect:
         test_data_tmp_dir: Path,
     ) -> None:
         rotated_counts = self._get_detection_counts_for(
-            rotated_cyclist_mp4, yolov8m, CYCLIST_VIDEO_LENGTH
+            rotated_cyclist_mp4, CYCLIST_VIDEO_LENGTH
         )
 
         assert rotated_counts[CAR] >= CAR_LOWER_LIMIT
@@ -459,14 +477,15 @@ class TestDetect:
     def _get_detection_counts_for(
         self,
         converted_video: Path,
-        yolov8m: Yolov8,
         expected_duration: timedelta = DEFAULT_EXPECTED_DURATION,
     ) -> dict[str, float]:
-        yolov8m.confidence = 0.5
         detect(
-            paths=[converted_video],
-            model=yolov8m,
-            expected_duration=expected_duration,
+            create_config_from(
+                paths=[converted_video],
+                weights=MODEL_WEIGHTS,
+                expected_duration=expected_duration,
+                confidence=0.5,
+            )
         )
         result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
@@ -538,3 +557,27 @@ class TestTimestamper:
 @pytest.fixture
 def paths_with_illegal_fileformats() -> list[Path]:
     return [Path("err_a.video"), Path("err_b.image")]
+
+
+def create_config_from(
+    paths: list[Path],
+    weights: str,
+    expected_duration: timedelta,
+    confidence: float | None = None,
+    normalized: bool | None = None,
+    overwrite: bool | None = None,
+) -> config.Config:
+    temp_config = config.Config().to_dict()
+    temp_config[config.DETECT][config.PATHS] = [str(path) for path in paths]
+    temp_config[config.DETECT][config.YOLO][config.WEIGHTS] = weights
+    temp_config[config.DETECT][config.EXPECTED_DURATION] = int(
+        expected_duration.total_seconds()
+    )
+    if confidence is not None:
+        temp_config[config.DETECT][config.YOLO][config.CONF] = confidence
+    if normalized is not None:
+        temp_config[config.DETECT][config.YOLO][config.NORMALIZED] = normalized
+    if overwrite is not None:
+        temp_config[config.DETECT][config.OVERWRITE] = overwrite
+
+    return config.Config.from_dict(temp_config)

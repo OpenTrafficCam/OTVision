@@ -26,10 +26,10 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from OTVision.config import CONFIG, DEFAULT_FILETYPE, DETECT, FILETYPES, OVERWRITE, VID
+from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder
-from OTVision.detect.yolo import Yolov8
+from OTVision.detect.yolo import create_model
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
     FILE_NAME_PATTERN,
@@ -45,33 +45,15 @@ from OTVision.track.preprocess import OCCURRENCE
 log = logging.getLogger(LOGGER_NAME)
 
 
-def main(
-    model: Yolov8,
-    paths: list[Path],
-    expected_duration: timedelta,
-    filetypes: list[str] = CONFIG[FILETYPES][VID],
-    overwrite: bool = CONFIG[DETECT][OVERWRITE],
-    detect_start: int | None = None,
-    detect_end: int | None = None,
-) -> None:
+def main(config: Config) -> None:
     """Detects objects in multiple videos and/or images.
     Writes detections to one file per video/object.
 
     Args:
-        model (Yolov8): YOLOv8 detection model.
-        paths (list[Path]): List of paths to video files.
-        expected_duration (timedelta): expected duration of the video. All frames are
-            evenly spread across this duration
-        filetypes (list[str], optional): Types of video/image files to be detected.
-            Defaults to CONFIG["FILETYPES"]["VID"].
-        overwrite (bool, optional): Whether to overwrite
-            existing detections files. Defaults to CONFIG["DETECT"]["OVERWRITE"].
-        detect_start (int | None, optional): Start of the detection range.
-            Defaults to None.
-        detect_end (int | None, optional): End of the detection range.
-            Defaults to None.
+        config (Config): the OTVision configuration.
     """
-    video_files = get_files(paths=paths, filetypes=filetypes)
+    filetypes = config.filetypes.video_filetypes.to_list()
+    video_files = get_files(paths=config.detect.paths, filetypes=filetypes)
 
     start_msg = f"Start detection of {len(video_files)} video files"
     log.info(start_msg)
@@ -81,10 +63,23 @@ def main(
         log.warning(f"No videos of type '{filetypes}' found to detect!")
         return
 
+    model = create_model(
+        weights=config.detect.yolo_config.weights,
+        confidence=config.detect.yolo_config.conf,
+        iou=config.detect.yolo_config.iou,
+        img_size=config.detect.yolo_config.img_size,
+        half_precision=config.detect.half_precision,
+        normalized=config.detect.yolo_config.normalized,
+    )
     for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-        detections_file = derive_filename(video_file, detect_start, detect_end)
+        detections_file = derive_filename(
+            video_file=video_file,
+            detect_start=config.detect.detect_start,
+            detect_end=config.detect.detect_end,
+            detect_suffix=config.filetypes.detect,
+        )
 
-        if not overwrite and detections_file.is_file():
+        if not config.detect.overwrite and detections_file.is_file():
             log.warning(
                 f"{detections_file} already exists. To overwrite, set overwrite to True"
             )
@@ -93,8 +88,12 @@ def main(
         log.info(f"Detect {video_file}")
 
         video_fps = get_fps(video_file)
-        detect_start_in_frames = convert_seconds_to_frames(detect_start, video_fps)
-        detect_end_in_frames = convert_seconds_to_frames(detect_end, video_fps)
+        detect_start_in_frames = convert_seconds_to_frames(
+            config.detect.detect_start, video_fps
+        )
+        detect_end_in_frames = convert_seconds_to_frames(
+            config.detect.detect_end, video_fps
+        )
         detections = model.detect(
             file=video_file,
             detect_start=detect_start_in_frames,
@@ -102,8 +101,12 @@ def main(
         )
 
         video_width, video_height = get_video_dimensions(video_file)
+        actual_duration = get_duration(video_file)
         actual_frames = len(detections)
-        actual_fps = actual_frames / expected_duration.total_seconds()
+        if (expected_duration := config.detect.expected_duration) is not None:
+            actual_fps = actual_frames / expected_duration.total_seconds()
+        else:
+            actual_fps = actual_frames / actual_duration.total_seconds()
         otdet = OtdetBuilder(
             conf=model.confidence,
             iou=model.iou,
@@ -126,8 +129,8 @@ def main(
         write_json(
             stamped_detections,
             file=detections_file,
-            filetype=CONFIG[DEFAULT_FILETYPE][DETECT],
-            overwrite=overwrite,
+            filetype=config.filetypes.detect,
+            overwrite=config.detect.overwrite,
         )
 
         log.info(f"Successfully detected and wrote {detections_file}")
@@ -141,9 +144,9 @@ def main(
 
 def derive_filename(
     video_file: Path,
+    detect_suffix: str,
     detect_start: int | None = None,
     detect_end: int | None = None,
-    detect_suffix: str = CONFIG[DEFAULT_FILETYPE][DETECT],
 ) -> Path:
     """
     Generates a filename for detection files by appending specified start and end
@@ -180,14 +183,14 @@ class FormatNotSupportedError(Exception):
 
 
 def add_timestamps(
-    detections: dict, video_file: Path, expected_duration: timedelta
+    detections: dict, video_file: Path, expected_duration: timedelta | None
 ) -> dict:
     return Timestamper().stamp(detections, video_file, expected_duration)
 
 
 class Timestamper:
     def stamp(
-        self, detections: dict, video_file: Path, expected_duration: timedelta
+        self, detections: dict, video_file: Path, expected_duration: timedelta | None
     ) -> dict:
         """This method adds timestamps when the frame occurred in real time to each
         frame.
@@ -195,16 +198,19 @@ class Timestamper:
         Args:
             detections (dict): dictionary containing all frames
             video_file (Path): path to video file
-            expected_duration (timedelta): expected duration of the video used to
+            expected_duration (timedelta | None): expected duration of the video used to
                 calculate the number of actual frames per second
 
         Returns:
             dict: input dictionary with additional occurrence per frame
         """
         start_time = self._get_start_time_from(video_file)
-        duration = get_duration(video_file)
-        time_per_frame = self._get_time_per_frame(detections, expected_duration)
-        self._update_metadata(detections, start_time, duration)
+        actual_duration = get_duration(video_file)
+        if expected_duration:
+            time_per_frame = self._get_time_per_frame(detections, expected_duration)
+        else:
+            time_per_frame = self._get_time_per_frame(detections, actual_duration)
+        self._update_metadata(detections, start_time, actual_duration)
         return self._stamp(detections, start_time, time_per_frame)
 
     @staticmethod
