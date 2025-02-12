@@ -79,18 +79,25 @@ class TrackedChunk(FrameChunk):
     finished_tracks: set[TrackId] = field(init=False)
     observed_tracks: set[TrackId] = field(init=False)
     unfinished_tracks: set[TrackId] = field(init=False)
+    discarded_tracks: set[TrackId] = field(init=False)
     last_track_frame: dict[TrackId, int] = field(init=False)
 
     def __init__(
-        self, file: Path, is_last_chunk: bool, frames: Sequence[TrackedFrame[Path]]
+        self,
+        file: Path,
+        metadata: dict,
+        is_last_chunk: bool,
+        frames: Sequence[TrackedFrame[Path]],
     ) -> None:
 
         object.__setattr__(self, "file", file)
+        object.__setattr__(self, "metadata", metadata)
         object.__setattr__(self, "is_last_chunk", is_last_chunk)
 
         observed = set().union(*(f.observed_tracks for f in frames))
         finished = set().union(*(f.finished_tracks for f in frames))
-        unfinished = {o for o in observed if o not in finished}
+        discarded = set().union(*(f.discarded_tracks for f in frames))
+        unfinished = {o for o in observed if o not in finished and o not in discarded}
 
         # set all unfinished tracks as finished, as this is the last track
         if self.is_last_chunk:
@@ -100,20 +107,20 @@ class TrackedChunk(FrameChunk):
             last_frame = frames_list[-1]
             frames_list[-1] = replace(
                 last_frame,
-                # more trivial implementation? add all observed ids of entire chunk here
-                # ->  all tracks are observed & finished in last frame or before
-                # -> maybe large set with old ids that have already known to be finished
                 finished_tracks=last_frame.finished_tracks.union(unfinished),
-                unfinished_tracks=set(),
             )
-            object.__setattr__(self, "frames", frames_list)
 
             unfinished = set()
             finished = set().union(*(f.finished_tracks for f in frames_list))
+        else:
+            frames_list = list(frames)
+
+        object.__setattr__(self, "frames", frames_list)
 
         object.__setattr__(self, "finished_tracks", finished)
         object.__setattr__(self, "observed_tracks", observed)
         object.__setattr__(self, "unfinished_tracks", unfinished)
+        object.__setattr__(self, "discarded_tracks", discarded)
 
         # assume frames sorted by occurrence
         last_track_frame: dict[TrackId, FrameNo] = {
@@ -166,7 +173,7 @@ class FinishedChunk(TrackedChunk):
     frames: Sequence[FinishedFrame[Path]]
 
     def to_detection_dicts(self) -> list[dict]:
-        chunk_metadata = {INPUT_FILE_PATH: self.file}
+        chunk_metadata = {INPUT_FILE_PATH: self.file.as_posix()}  # TODO posix here?
 
         detection_dict_list = [
             {**det_dict, **chunk_metadata}
@@ -242,7 +249,7 @@ class FrameGroup:
         return self.__str__()
 
     def __str__(self) -> str:
-        return f"{self.start_date} - {self.end_date}"
+        return f"FrameGroup[{self.id}] = [{self.start_date} - {self.end_date}]"
 
 
 class FrameGroupParser(ABC):
@@ -296,7 +303,10 @@ class ChunkBasedTracker(Tracker[Path]):
     ) -> TrackedChunk:
         tracked_frames = self.track(iter(chunk.frames), id_generator)
         return TrackedChunk(
-            file=chunk.file, frames=list(tracked_frames), is_last_chunk=is_last_chunk
+            file=chunk.file,
+            frames=list(tracked_frames),
+            metadata=chunk.metadata,
+            is_last_chunk=is_last_chunk,
         )
 
     def track_file(

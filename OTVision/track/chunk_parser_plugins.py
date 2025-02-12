@@ -35,6 +35,14 @@ class JsonChunkParser(ChunkParser):
         input: dict[int, dict[str, Any]] = denormalized[DATA]
         # TODO metadata = denormalized[METADATA] should not be necessary
 
+        frames = self.convert(file, frame_offset, input)
+
+        frames.sort(key=lambda frame: (frame.occurrence, frame.no))
+        return FrameChunk(file, metadata, frames)
+
+    def convert(
+        self, file: Path, frame_offset: int, input: dict[int, dict[str, Any]]
+    ) -> list[Frame[Path]]:
         detection_parser = DetectionParser()
         frames = []
         for key, value in input.items():
@@ -49,9 +57,7 @@ class JsonChunkParser(ChunkParser):
                 image=None,
             )
             frames.append(parsed_frame)
-
-        frames.sort(key=lambda frame: (frame.occurrence, frame.no))
-        return FrameChunk(file, metadata, frames)
+        return frames
 
 
 class DetectionParser:

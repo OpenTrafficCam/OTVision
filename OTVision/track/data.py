@@ -104,12 +104,12 @@ class TrackedDetection(Detection):
     def finish(self, is_last: bool, is_discarded: bool) -> "FinishedDetection":
         return FinishedDetection.from_tracked_detection(self, is_last, is_discarded)
 
-    def as_last_detection(self, is_discarded: bool) -> "TrackedDetection":
+    def as_last_detection(self, is_discarded: bool) -> "FinishedDetection":
         return FinishedDetection.from_tracked_detection(
             self, is_last=True, is_discarded=is_discarded
         )
 
-    def as_intermediate_detection(self, is_discarded: bool) -> "TrackedDetection":
+    def as_intermediate_detection(self, is_discarded: bool) -> "FinishedDetection":
         return FinishedDetection.from_tracked_detection(
             self, is_last=False, is_discarded=is_discarded
         )

@@ -43,7 +43,9 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def parse(self, file: Path) -> FrameGroup:
         metadata = read_json_bz2_metadata(file)
+        return self.convert(file, metadata)
 
+    def convert(self, file: Path, metadata: dict) -> FrameGroup:
         start_date: datetime = self.extract_start_date_from(metadata)
         duration: timedelta = self.extract_expected_duration_from(metadata)
         end_date: datetime = start_date + duration
