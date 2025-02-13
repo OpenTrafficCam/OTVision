@@ -14,12 +14,13 @@ echo "Install OTVision."
 echo "$DIR"
 cd "$DIR" || exit
 WORKING_DIR=$(pwd)
-VENV="$WORKING_DIR"/venv
+VENV="$WORKING_DIR"/.venv
 PYTHON="$VENV"/bin/python
 PIP="$VENV"/bin/pip
+UV="$VENV"/bin/uv
 
 python3.12 -m venv "$VENV"
 
 $PYTHON -m pip install --upgrade pip
 $PIP install uv
-uv pip install -r requirements.txt
+$UV pip install -r requirements.txt
