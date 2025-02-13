@@ -42,7 +42,7 @@ jobs:
 
       - name: Build a binary wheel and a source tarball
         shell: bash
-        run: python -m build --sdist --wheel --outdir ${{ env.out_dir }}
+        run: python -m build --outdir ${{ env.out_dir }}
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
