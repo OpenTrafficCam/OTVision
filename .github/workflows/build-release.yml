@@ -6,7 +6,7 @@ on:
   # Needs: secrets.PLATOMO_BUILDER_ACCESS
   push:
     tags:
-      - "v*.*.*.*"
+      - "v*.*.*"
 
 permissions: read-all
 

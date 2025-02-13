@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "OTVision"
+dynamic = ["dependencies", "version"]
+authors = [
+  { name="OpenTrafficCam contributors", email="team@opentrafficcam.org" },
+  { name="platomo GmbH", email="info@platomo.de" },
+]
+description = "OTVision is a core module of the OpenTrafficCam framework to perform object detection and tracking."
+
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+keywords = ["OpenTrafficCam", "Traffic Analysis", "Traffic Counting", "Trajectories"]
+
+[project.urls]
+Homepage = "https://opentrafficcam.org/"
+Documentation = "https://opentrafficcam.org/overview/"
+Repository = "https://github.com/OpenTrafficCam/OTVision"
+Issues = "https://github.com/OpenTrafficCam/OTVision/issues"
+Changelog = "https://github.com/OpenTrafficCam/OTVision/releases"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.hatch.version]
+path = "OTVision/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["OTVision"]
+
+[tool.hatch.build]
+directory = "dist"
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+ignore_missing_imports_per_module = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "OTVision.view.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "OTVision.transform.*"
+ignore_errors = true
