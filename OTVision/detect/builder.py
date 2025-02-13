@@ -9,6 +9,7 @@ from OTVision.application.detect.update_detect_config_with_cli_args import (
 from OTVision.application.get_config import GetConfig
 from OTVision.config import ConfigParser
 from OTVision.detect.cli import ArgparseDetectCliParser
+from OTVision.detect.otdet import OtdetBuilder
 from OTVision.domain.cli import DetectCliParser
 
 
@@ -38,6 +39,10 @@ class DetectBuilder:
     @cached_property
     def configure_logger(self) -> ConfigureLogger:
         return ConfigureLogger()
+
+    @cached_property
+    def otdet_builder(self) -> OtdetBuilder:
+        return OtdetBuilder()
 
     def __init__(self, argv: list[str] | None = None) -> None:
         self.argv = argv
