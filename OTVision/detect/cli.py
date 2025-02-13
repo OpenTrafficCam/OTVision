@@ -156,13 +156,6 @@ class ArgparseDetectCliParser(DetectCliParser):
                     "No paths have been defined in the user config."
                 )
             )
-        if args.expected_duration is None:
-            raise CliParseError(
-                "Required option 'expected duration' is missing! "
-                "It must be specified in the config yaml file under "
-                "key 'EXPECTED_DURATION' "
-                "or passed as CLI option 'expected_duration'."
-            )
 
     def _parse_files(self, files: list[str] | None) -> list[Path] | None:
         if files is None:
