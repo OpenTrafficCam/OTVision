@@ -48,6 +48,7 @@ repos:
           - black==24.8.0
           - coremltools==8.2;
           - fire==0.7.0
+          - hatch-requirements-txt==0.4.1
           - ijson==3.3.0
           - interrogate==1.5.0
           - isort==5.13.2
@@ -62,6 +63,7 @@ repos:
           - pytest==8.3.3
           - torch==2.3.1
           - torchvision==0.18.1
+          - twine==6.1.0
           - types-PyYAML
           - types-flake8
           - types-geopandas
@@ -89,4 +91,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
