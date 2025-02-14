@@ -28,7 +28,7 @@ from tqdm import tqdm
 
 from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
-from OTVision.detect.otdet import OtdetBuilder
+from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
 from OTVision.detect.yolo import create_model
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
@@ -45,101 +45,115 @@ from OTVision.track.preprocess import OCCURRENCE
 log = logging.getLogger(LOGGER_NAME)
 
 
-def main(config: Config) -> None:
-    """Detects objects in multiple videos and/or images.
-    Writes detections to one file per video/object.
+class OTVisionDetect:
+    @property
+    def config(self) -> Config:
+        if self._config is None:
+            raise ValueError("Config is missing!")
+        return self._config
 
-    Args:
-        config (Config): the OTVision configuration.
-    """
-    filetypes = config.filetypes.video_filetypes.to_list()
-    video_files = get_files(paths=config.detect.paths, filetypes=filetypes)
+    def __init__(self, otdet_builder: OtdetBuilder) -> None:
+        self._config: Config | None = None
+        self._otdet_builder = otdet_builder
 
-    start_msg = f"Start detection of {len(video_files)} video files"
-    log.info(start_msg)
-    print(start_msg)
+    def update_config(self, config: Config) -> None:
+        self._config = config
 
-    if not video_files:
-        log.warning(f"No videos of type '{filetypes}' found to detect!")
-        return
+    def start(self) -> None:
+        """Starts the detection of objects in multiple videos and/or images.
 
-    model = create_model(
-        weights=config.detect.yolo_config.weights,
-        confidence=config.detect.yolo_config.conf,
-        iou=config.detect.yolo_config.iou,
-        img_size=config.detect.yolo_config.img_size,
-        half_precision=config.detect.half_precision,
-        normalized=config.detect.yolo_config.normalized,
-    )
-    for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-        detections_file = derive_filename(
-            video_file=video_file,
-            detect_start=config.detect.detect_start,
-            detect_end=config.detect.detect_end,
-            detect_suffix=config.filetypes.detect,
+        Writes detections to one file per video/object.
+
+        """
+        filetypes = self.config.filetypes.video_filetypes.to_list()
+        video_files = get_files(paths=self.config.detect.paths, filetypes=filetypes)
+
+        start_msg = f"Start detection of {len(video_files)} video files"
+        log.info(start_msg)
+        print(start_msg)
+
+        if not video_files:
+            log.warning(f"No videos of type '{filetypes}' found to detect!")
+            return
+
+        model = create_model(
+            weights=self.config.detect.yolo_config.weights,
+            confidence=self.config.detect.yolo_config.conf,
+            iou=self.config.detect.yolo_config.iou,
+            img_size=self.config.detect.yolo_config.img_size,
+            half_precision=self.config.detect.half_precision,
+            normalized=self.config.detect.yolo_config.normalized,
         )
-
-        if not config.detect.overwrite and detections_file.is_file():
-            log.warning(
-                f"{detections_file} already exists. To overwrite, set overwrite to True"
+        for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
+            detections_file = derive_filename(
+                video_file=video_file,
+                detect_start=self.config.detect.detect_start,
+                detect_end=self.config.detect.detect_end,
+                detect_suffix=self.config.filetypes.detect,
             )
-            continue
 
-        log.info(f"Detect {video_file}")
+            if not self.config.detect.overwrite and detections_file.is_file():
+                log.warning(
+                    f"{detections_file} already exists. To overwrite, set overwrite "
+                    "to True"
+                )
+                continue
 
-        video_fps = get_fps(video_file)
-        detect_start_in_frames = convert_seconds_to_frames(
-            config.detect.detect_start, video_fps
-        )
-        detect_end_in_frames = convert_seconds_to_frames(
-            config.detect.detect_end, video_fps
-        )
-        detections = model.detect(
-            file=video_file,
-            detect_start=detect_start_in_frames,
-            detect_end=detect_end_in_frames,
-        )
+            log.info(f"Detect {video_file}")
 
-        video_width, video_height = get_video_dimensions(video_file)
-        actual_duration = get_duration(video_file)
-        actual_frames = len(detections)
-        if (expected_duration := config.detect.expected_duration) is not None:
-            actual_fps = actual_frames / expected_duration.total_seconds()
-        else:
-            actual_fps = actual_frames / actual_duration.total_seconds()
-        otdet = OtdetBuilder(
-            conf=model.confidence,
-            iou=model.iou,
-            video=video_file,
-            video_width=video_width,
-            video_height=video_height,
-            expected_duration=expected_duration,
-            recorded_fps=video_fps,
-            actual_fps=actual_fps,
-            actual_frames=actual_frames,
-            detection_img_size=model.img_size,
-            normalized=model.normalized,
-            detection_model=model.weights,
-            half_precision=model.half_precision,
-            chunksize=1,
-            classifications=model.classifications,
-        ).build(detections)
+            video_fps = get_fps(video_file)
+            detect_start_in_frames = convert_seconds_to_frames(
+                self.config.detect.detect_start, video_fps
+            )
+            detect_end_in_frames = convert_seconds_to_frames(
+                self.config.detect.detect_end, video_fps
+            )
+            detections = model.detect(
+                file=video_file,
+                detect_start=detect_start_in_frames,
+                detect_end=detect_end_in_frames,
+            )
 
-        stamped_detections = add_timestamps(otdet, video_file, expected_duration)
-        write_json(
-            stamped_detections,
-            file=detections_file,
-            filetype=config.filetypes.detect,
-            overwrite=config.detect.overwrite,
-        )
+            video_width, video_height = get_video_dimensions(video_file)
+            actual_duration = get_duration(video_file)
+            actual_frames = len(detections)
+            if (expected_duration := self.config.detect.expected_duration) is not None:
+                actual_fps = actual_frames / expected_duration.total_seconds()
+            else:
+                actual_fps = actual_frames / actual_duration.total_seconds()
+            otdet = self._otdet_builder.add_config(
+                OtdetBuilderConfig(
+                    conf=model.confidence,
+                    iou=model.iou,
+                    video=video_file,
+                    video_width=video_width,
+                    video_height=video_height,
+                    expected_duration=expected_duration,
+                    recorded_fps=video_fps,
+                    actual_fps=actual_fps,
+                    actual_frames=actual_frames,
+                    detection_img_size=model.img_size,
+                    normalized=model.normalized,
+                    detection_model=model.weights,
+                    half_precision=model.half_precision,
+                    chunksize=1,
+                    classifications=model.classifications,
+                )
+            ).build(detections)
 
-        log.info(f"Successfully detected and wrote {detections_file}")
+            stamped_detections = add_timestamps(otdet, video_file, expected_duration)
+            write_json(
+                stamped_detections,
+                file=detections_file,
+                filetype=self.config.filetypes.detect,
+                overwrite=self.config.detect.overwrite,
+            )
 
-    finished_msg = "Finished detection"
-    log.info(finished_msg)
-    print(finished_msg)
+            log.info(f"Successfully detected and wrote {detections_file}")
 
-    return None
+        finished_msg = "Finished detection"
+        log.info(finished_msg)
+        print(finished_msg)
 
 
 def derive_filename(

@@ -7,7 +7,11 @@ name: super-linter
 
 on: pull_request
 
-permissions: read-all
+permissions:
+  contents: read
+  packages: read
+  # To report GitHub Actions status checks
+  statuses: write
 
 jobs:
   lint:
@@ -35,5 +39,5 @@ jobs:
 
           LINTER_RULES_PATH: /
           PYTHON_FLAKE8_CONFIG_FILE: .flake8
-          PYTHON_ISORT_CONFIG_FILE: setup.cfg
+          PYTHON_ISORT_CONFIG_FILE: pyproject.toml
           YAML_CONFIG_FILE: .yamllint.yaml

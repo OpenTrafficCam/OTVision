@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
@@ -198,12 +198,10 @@ class TestDetectCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
-    def test_pass_detect_cli(
-        self,
-        test_data: dict,
-        detect_cli: Callable,
-    ) -> None:
-        with patch("OTVision.detect") as mock_detect:
+    def test_pass_detect_cli(self, test_data: dict, detect_cli: Callable) -> None:
+        with patch("detect.OTVisionDetect") as mock_detect:
+            mock_detect_instance = Mock()
+            mock_detect.return_value = mock_detect_instance
             command = [
                 *test_data["paths"][PASSED].split(),
                 *test_data["weights"][PASSED].split(),
@@ -222,7 +220,8 @@ class TestDetectCLI:
             detect_cli(argv=list(filter(None, command)))
             expected_config = create_expected_config_from_test_data(test_data)
 
-            mock_detect.assert_called_once_with(expected_config)
+            mock_detect_instance.update_config.assert_called_once_with(expected_config)
+            mock_detect_instance.start.assert_called_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
@@ -232,7 +231,7 @@ class TestDetectCLI:
         test_fail_data: dict,
     ) -> None:
 
-        with patch("OTVision.detect"):
+        with patch("detect.OTVisionDetect"):
             with pytest.raises(SystemExit) as e:
                 command = [*test_fail_data[PASSED].split()]
                 detect_cli(argv=list(filter(None, command)))
@@ -244,13 +243,13 @@ class TestDetectCLI:
     def test_fail_not_existing_path_passed_to_detect_cli(
         self, detect_cli: Callable, passed: str
     ) -> None:
-        with patch("OTVision.detect"):
+        with patch("detect.OTVisionDetect"):
             with pytest.raises(FileNotFoundError):
                 command = required_arguments.split() + [*passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_detect_cli(self, detect_cli: Callable) -> None:
-        with patch("OTVision.detect"):
+        with patch("detect.OTVisionDetect"):
             error_msg = (
                 "No paths have been passed as command line args."
                 + "No paths have been defined in the user config."

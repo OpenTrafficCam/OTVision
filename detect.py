@@ -22,9 +22,9 @@ OTVision script to call the detect main with arguments parsed from command line
 
 from pathlib import Path
 
-import OTVision
 from OTVision.config import Config
 from OTVision.detect.builder import DetectBuilder
+from OTVision.detect.detect import OTVisionDetect
 from OTVision.helpers.files import check_if_all_paths_exist
 
 
@@ -44,7 +44,10 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(cli_args)}")
 
     try:
-        OTVision.detect(config)
+        detect = OTVisionDetect(otdet_builder=builder.otdet_builder)
+        detect.update_config(config)
+        detect.start()
+
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")
         raise
