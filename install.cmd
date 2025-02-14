@@ -11,5 +11,6 @@ python -m venv .venv
 call .venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install uv
+uv pip install --upgrade pip-tools pip wheel
 uv pip install -r requirements.txt%
 deactivate
