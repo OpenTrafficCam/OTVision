@@ -3,11 +3,11 @@ set -e
 echo "Install OTVision development environment."
 
 WORKING_DIR=$(pwd)
-VENV="$WORKING_DIR"/venv
-PIP="$VENV"/bin/pip
+VENV="$WORKING_DIR"/.venv
 PRE_COMMIT="$VENV"/bin/pre-commit
+UV="$VENV"/bin/uv
 
 bash "$WORKING_DIR"/install.sh
 
-$PIP install -r requirements-dev.txt
+$UV pip install -r requirements-dev.txt
 $PRE_COMMIT install --install-hooks

@@ -7,9 +7,10 @@ if "x%PYTHON_VERSION:3.12=%"=="x%PYTHON_VERSION%" (
     echo "Python Version 3.12 is not installed in environment." & cmd /K & exit
 )
 
-python -m venv venv
-call venv\Scripts\activate
+python -m venv .venv
+call .venv\Scripts\activate
 python -m pip install --upgrade pip
-pip install --upgrade pip-tools pip wheel
-pip install -r requirements.txt%
+pip install uv
+uv pip install --upgrade pip-tools pip wheel
+uv pip install -r requirements.txt%
 deactivate
