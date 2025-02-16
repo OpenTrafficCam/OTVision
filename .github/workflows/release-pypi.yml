@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Update Python Package Version
-        uses: platomo/update-version-py-action@v1.0.0
+        uses: platomo/update-version-py-action@v1.0.1
         with:
           version: ${{ github.ref_name }}
           file-path: "OTVision"
