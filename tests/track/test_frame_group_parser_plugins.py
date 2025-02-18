@@ -19,12 +19,12 @@ from OTVision.dataformat import (
     VIDEO,
 )
 from OTVision.helpers.files import InproperFormattedFilename
-from OTVision.track.frame_group_parser_plugins import (
+from OTVision.track.model.filebased.frame_group import FrameGroup
+from OTVision.track.parser.frame_group_parser_plugins import (
     MISSING_EXPECTED_DURATION,
     MISSING_START_DATE,
     TimeThresholdFrameGroupParser,
 )
-from OTVision.track.model.filebased.frame_group import FrameGroup
 from tests.track.test_data_builder import (
     DEFAULT_HOSTNAME,
     DEFAULT_START_DATE,

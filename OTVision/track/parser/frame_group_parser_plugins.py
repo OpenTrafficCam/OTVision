@@ -21,8 +21,8 @@ from OTVision.helpers.files import (
     InproperFormattedFilename,
     read_json_bz2_metadata,
 )
-from OTVision.track.chunk_parser_plugins import parse_datetime
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
+from OTVision.track.parser.chunk_parser_plugins import parse_datetime
 
 MISSING_START_DATE = datetime(1900, 1, 1)
 MISSING_EXPECTED_DURATION = timedelta(minutes=15)

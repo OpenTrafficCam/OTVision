@@ -21,9 +21,9 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.track.chunk_parser_plugins import JsonChunkParser
 from OTVision.track.model.detection import Detection
 from OTVision.track.model.frame import Frame
+from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 
 DEFAULT_HOSTNAME = "hostname"
 DEFAULT_START_DATE = datetime(year=2022, month=5, day=4, tzinfo=timezone.utc)
