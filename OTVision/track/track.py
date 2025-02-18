@@ -288,7 +288,7 @@ def skip_existing_output_files(
     return False
 
 
-def tracker_metadata(
+def tracker_metadata(  # TODO: per frameGroup in refactored tracker
     sigma_l: float, sigma_h: float, sigma_iou: float, t_min: float, t_miss_max: float
 ) -> dict:
     return {
@@ -406,6 +406,7 @@ def mark_last_detections_as_finished(
         frame_ending_tracks[last_track_frame[vehID]].add(vehID)
 
     for frame_num, frame_det in chunk._detections.items():
+        # dict[FRAME_NO, dict[TRACK_ID, ATTS]]
         for ending_track in frame_ending_tracks[int(frame_num)]:
             frame_det[ending_track][FINISHED] = True
             del last_track_frame[ending_track]

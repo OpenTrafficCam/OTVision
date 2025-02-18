@@ -25,6 +25,9 @@ F = TypeVar("F")  # Finished container: e.g. FinishedFrame or FinishedChunk
 
 class FinishedTracksExporter(ABC, Generic[F]):
 
+    def __init__(self, file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK]):
+        self.file_type = file_type
+
     @abstractmethod
     def get_detection_dicts(self, container: F) -> list[dict]:
         pass
@@ -51,7 +54,6 @@ class FinishedTracksExporter(ABC, Generic[F]):
         self, container: F, tracking_run_id: str, overwrite: bool
     ) -> None:
         file_path = self.get_result_path(container)
-        file_type = CONFIG[DEFAULT_FILETYPE][TRACK]
 
         det_dicts = self.reindex(self.get_detection_dicts(container))
 
@@ -65,13 +67,14 @@ class FinishedTracksExporter(ABC, Generic[F]):
         write_json(
             dict_to_write=output,
             file=Path(file_path),
-            filetype=file_type,
+            filetype=self.file_type,
             overwrite=overwrite,
         )
 
         log.info(f"Successfully tracked and wrote {file_path}")
 
-    def reindex(self, det_dicts: list[dict]) -> list[dict]:
+    @staticmethod
+    def reindex(det_dicts: list[dict]) -> list[dict]:
         min_frame_no = min(det[FRAME] for det in det_dicts)
         reindexed_dets = [
             {**det, **{FRAME: det[FRAME] - min_frame_no}}
@@ -93,8 +96,8 @@ class FinishedTracksExporter(ABC, Generic[F]):
 
         return reindexed_dets
 
+    @staticmethod
     def build_output(
-        self,
         detections: list[dict],
         metadata: dict,
         tracking_run_id: str,
