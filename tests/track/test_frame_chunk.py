@@ -28,7 +28,10 @@ class TestFrameChunk:
         mock_get_output_files.return_value = mock_file
 
         instance = FrameChunk(
-            file=Path("/mock/path"), metadata={"test": 42}, frames=tuple()
+            file=Path("/mock/path"),
+            metadata={"test": 42},
+            frames=tuple(),
+            frame_group_id=1,
         )
 
         result = instance.check_output_file_exists(".exmpl")
@@ -42,7 +45,10 @@ class TestFrameChunk:
         print(mock_get_output_files())
 
         instance = FrameChunk(
-            file=Path("/mock/path"), metadata={"test": 42}, frames=tuple()
+            file=Path("/mock/path"),
+            metadata={"test": 42},
+            frames=tuple(),
+            frame_group_id=1,
         )
 
         result = instance.check_output_file_exists(".exmpl")
@@ -112,6 +118,7 @@ class TestTrackedChunk(unittest.TestCase):
             metadata=metadata,
             is_last_chunk=True,
             frames=self.frames,
+            frame_group_id=1,
         )
 
         assert chunk.file == self.mock_file
@@ -135,6 +142,7 @@ class TestTrackedChunk(unittest.TestCase):
             metadata=metadata,
             is_last_chunk=False,
             frames=self.frames,
+            frame_group_id=1,
         )
 
         assert chunk.file == self.mock_file
@@ -153,6 +161,7 @@ class TestTrackedChunk(unittest.TestCase):
             metadata=metadata,
             is_last_chunk=True,
             frames=self.frames,
+            frame_group_id=1,
         )
 
         finished = chunk.finish(
@@ -176,6 +185,7 @@ class TestTrackedChunk(unittest.TestCase):
             metadata=metadata,
             is_last_chunk=True,
             frames=self.frames,
+            frame_group_id=1,
         )
 
         finished = chunk.finish(
@@ -201,6 +211,7 @@ class TestFinishedChunk(TestTrackedChunk):
             metadata={"test": 42},
             is_last_chunk=is_last_chunk,
             frames=self.frames,
+            frame_group_id=1,
         )
 
     def _finished_chunk(

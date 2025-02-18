@@ -27,7 +27,9 @@ from OTVision.track.model.frame import Frame
 
 class JsonChunkParser(ChunkParser):
 
-    def parse(self, file: Path, frame_offset: int = 0) -> FrameChunk:
+    def parse(
+        self, file: Path, frame_group_id: int, frame_offset: int = 0
+    ) -> FrameChunk:
         json = read_json(file)
         metadata: dict = json[METADATA]
         denormalized = denormalize_bbox(
@@ -39,7 +41,7 @@ class JsonChunkParser(ChunkParser):
         frames = self.convert(file, frame_offset, input)
 
         frames.sort(key=lambda frame: (frame.occurrence, frame.no))
-        return FrameChunk(file, metadata, frames)
+        return FrameChunk(file, metadata, frames, frame_group_id)
 
     def convert(
         self, file: Path, frame_offset: int, input: dict[int, dict[str, Any]]

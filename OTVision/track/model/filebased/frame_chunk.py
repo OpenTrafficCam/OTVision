@@ -24,11 +24,13 @@ class FrameChunk:
         file (Path): common file path source of Frames.
         metadata (dict): otdet metadata.
         frames (Sequence[Frame[Path]]): a sequence of untracked Frames.
+        frame_group_id (int): id of FrameGroup this FrameCHunk is part of.
     """
 
     file: Path
     metadata: dict
     frames: Sequence[Frame[Path]]
+    frame_group_id: int
 
     def check_output_file_exists(self, with_suffix: str) -> bool:
         return get_output_file(self.file, with_suffix).is_file()
@@ -72,11 +74,13 @@ class TrackedChunk(FrameChunk):
         metadata: dict,
         is_last_chunk: bool,
         frames: Sequence[TrackedFrame[Path]],
+        frame_group_id: int,
     ) -> None:
 
         object.__setattr__(self, "file", file)
         object.__setattr__(self, "metadata", metadata)
         object.__setattr__(self, "is_last_chunk", is_last_chunk)
+        object.__setattr__(self, "frame_group_id", frame_group_id)
 
         observed = set().union(*(f.observed_tracks for f in frames))
         finished = set().union(*(f.finished_tracks for f in frames))
@@ -142,6 +146,7 @@ class TrackedChunk(FrameChunk):
                 frame.finish(is_last, discarded_tracks, keep_discarded)
                 for frame in self.frames
             ],
+            frame_group_id=self.frame_group_id,
         )
 
 
@@ -178,5 +183,5 @@ class ChunkParser(ABC):
     """A parser for file path to FrameChunk."""
 
     @abstractmethod
-    def parse(self, file: Path, frame_offset: int) -> FrameChunk:
+    def parse(self, file: Path, frame_group_id: int, frame_offset: int) -> FrameChunk:
         pass
