@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
-from OTVision.track.data import Detection, Frame, TrackedDetection, TrackedFrame
-from OTVision.track.tracking_interfaces import (
+from OTVision.track.model.detection import Detection, TrackedDetection
+from OTVision.track.model.frame import Frame, TrackedFrame
+from OTVision.track.model.tracking_interfaces import (
     ID_GENERATOR,
     FrameNo,
     S,

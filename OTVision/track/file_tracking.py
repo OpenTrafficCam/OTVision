@@ -6,15 +6,21 @@ from more_itertools import peekable
 
 from OTVision.config import CONFIG, DEFAULT_FILETYPE, OVERWRITE, TRACK
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.data import Frame, FrameNo, IsLastFrame, TrackedFrame, TrackId
-from OTVision.track.frame_chunk import (
+from OTVision.track.model.filebased.frame_chunk import (
     ChunkParser,
     FinishedChunk,
     FrameChunk,
     TrackedChunk,
 )
-from OTVision.track.frame_group import FrameGroup, FrameGroupParser
-from OTVision.track.tracking_interfaces import (
+from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
+from OTVision.track.model.frame import (
+    Frame,
+    FrameNo,
+    IsLastFrame,
+    TrackedFrame,
+    TrackId,
+)
+from OTVision.track.model.tracking_interfaces import (
     ID_GENERATOR,
     Tracker,
     UnfinishedTracksBuffer,

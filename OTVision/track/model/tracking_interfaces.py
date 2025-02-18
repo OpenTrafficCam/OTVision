@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic, Iterator, TypeVar
 
-from OTVision.track.data import (
+from OTVision.track.model.frame import (
     FinishedFrame,
     Frame,
     FrameNo,

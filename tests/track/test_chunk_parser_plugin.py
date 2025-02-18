@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from OTVision.dataformat import DETECTIONS
 from OTVision.track.chunk_parser_plugins import DetectionParser, JsonChunkParser
-from OTVision.track.data import Detection
+from OTVision.track.Detection import Detection
 from tests.track.test_data_builder import (
     DEFAULT_INPUT_FILE_PATH,
     DEFAULT_START_DATE,

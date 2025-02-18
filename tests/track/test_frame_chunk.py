@@ -5,8 +5,13 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, OCCURRENCE
-from OTVision.track.data import FinishedDetection, TrackedDetection, TrackedFrame
-from OTVision.track.frame_chunk import FinishedChunk, FrameChunk, TrackedChunk
+from OTVision.track.model.detection import FinishedDetection, TrackedDetection
+from OTVision.track.model.filebased.frame_chunk import (
+    FinishedChunk,
+    FrameChunk,
+    TrackedChunk,
+)
+from OTVision.track.model.frame import TrackedFrame
 from tests.track.test_data_builder import DEFAULT_START_DATE
 
 

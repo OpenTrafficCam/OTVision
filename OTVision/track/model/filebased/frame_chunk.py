@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Sequence
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
-from OTVision.track.data import (
+from OTVision.track.model.filebased.frame_group import get_output_file
+from OTVision.track.model.frame import (
     FinishedFrame,
     Frame,
     FrameNo,
@@ -12,7 +13,6 @@ from OTVision.track.data import (
     TrackedFrame,
     TrackId,
 )
-from OTVision.track.frame_group import get_output_file
 
 
 @dataclass(frozen=True)

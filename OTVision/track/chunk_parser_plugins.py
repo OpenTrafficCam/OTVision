@@ -20,8 +20,9 @@ from OTVision.helpers.date import (
     parse_timestamp_string_to_utc_datetime,
 )
 from OTVision.helpers.files import denormalize_bbox, read_json
-from OTVision.track.data import Detection, Frame
-from OTVision.track.frame_chunk import ChunkParser, FrameChunk
+from OTVision.track.model.detection import Detection
+from OTVision.track.model.filebased.frame_chunk import ChunkParser, FrameChunk
+from OTVision.track.model.frame import Frame
 
 
 class JsonChunkParser(ChunkParser):
