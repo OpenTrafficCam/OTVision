@@ -21,7 +21,7 @@ from OTVision.helpers.date import (
 )
 from OTVision.helpers.files import denormalize_bbox, read_json
 from OTVision.track.data import Detection, Frame
-from OTVision.track.file_tracking import ChunkParser, FrameChunk
+from OTVision.track.frame_chunk import ChunkParser, FrameChunk
 
 
 class JsonChunkParser(ChunkParser):

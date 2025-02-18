@@ -1,7 +1,13 @@
 from dataclasses import dataclass
 
-from track.data import Detection, Frame, TrackedDetection, TrackedFrame
-from track.tracking_interfaces import ID_GENERATOR, FrameNo, S, Tracker, TrackId
+from OTVision.track.data import Detection, Frame, TrackedDetection, TrackedFrame
+from OTVision.track.tracking_interfaces import (
+    ID_GENERATOR,
+    FrameNo,
+    S,
+    Tracker,
+    TrackId,
+)
 
 
 @dataclass(frozen=True)
@@ -18,6 +24,7 @@ class Coordinate:
     x: float
     y: float
 
+    @staticmethod
     def center_of(detection: Detection) -> "Coordinate":
         return Coordinate(detection.x, detection.y)
 
@@ -29,6 +36,7 @@ class BoundingBox:
     xmax: float
     ymax: float
 
+    @staticmethod
     def from_xywh(detection: Detection) -> "BoundingBox":
         """Calculates xyxy coordinates from Detection with xywh data:
             pixel values for xcenter, ycenter, width and height.
@@ -214,6 +222,6 @@ class IouTracker(Tracker[S]):
             source=frame.source,
             detections=tracked_detections,
             image=frame.image,
-            finished_tracks=finished_track_ids,
-            discarded_tracks=discarded_track_ids,
+            finished_tracks=set(finished_track_ids),
+            discarded_tracks=set(discarded_track_ids),
         )

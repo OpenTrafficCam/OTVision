@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, OCCURRENCE
 from OTVision.track.data import FinishedDetection, TrackedDetection, TrackedFrame
-from OTVision.track.file_tracking import FinishedChunk, FrameChunk, TrackedChunk
+from OTVision.track.frame_chunk import FinishedChunk, FrameChunk, TrackedChunk
 from tests.track.test_data_builder import DEFAULT_START_DATE
 
 
@@ -17,7 +17,7 @@ class TestFrameChunk:
         mock_file.is_file.return_value = is_file
         return mock_file
 
-    @patch("OTVision.track.file_tracking.get_output_file")
+    @patch("OTVision.track.frame_group.get_output_file")
     def test_check_output_file_exists(self, mock_get_output_files: Any) -> None:
         mock_file = self._mock_file(True)
         mock_get_output_files.return_value = mock_file
@@ -29,7 +29,7 @@ class TestFrameChunk:
         result = instance.check_output_file_exists(".exmpl")
         assert result
 
-    @patch("OTVision.track.file_tracking.get_output_file")
+    @patch("OTVision.track.frame_group.get_output_file")
     def test_check_output_file_exists_false(self, mock_get_output_files: Any) -> None:
         mock_file = self._mock_file(False)
         mock_get_output_files.return_value = mock_file

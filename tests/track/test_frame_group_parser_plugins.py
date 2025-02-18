@@ -19,7 +19,7 @@ from OTVision.dataformat import (
     VIDEO,
 )
 from OTVision.helpers.files import InproperFormattedFilename
-from OTVision.track.file_tracking import FrameGroup
+from OTVision.track.frame_group import FrameGroup
 from OTVision.track.frame_group_parser_plugins import (
     MISSING_EXPECTED_DURATION,
     MISSING_START_DATE,
