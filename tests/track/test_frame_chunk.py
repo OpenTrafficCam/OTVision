@@ -17,7 +17,7 @@ class TestFrameChunk:
         mock_file.is_file.return_value = is_file
         return mock_file
 
-    @patch("OTVision.track.frame_group.get_output_file")
+    @patch("OTVision.track.frame_chunk.get_output_file")
     def test_check_output_file_exists(self, mock_get_output_files: Any) -> None:
         mock_file = self._mock_file(True)
         mock_get_output_files.return_value = mock_file
@@ -29,10 +29,12 @@ class TestFrameChunk:
         result = instance.check_output_file_exists(".exmpl")
         assert result
 
-    @patch("OTVision.track.frame_group.get_output_file")
+    @patch("OTVision.track.frame_chunk.get_output_file")
     def test_check_output_file_exists_false(self, mock_get_output_files: Any) -> None:
         mock_file = self._mock_file(False)
         mock_get_output_files.return_value = mock_file
+
+        print(mock_get_output_files())
 
         instance = FrameChunk(
             file=Path("/mock/path"), metadata={"test": 42}, frames=tuple()

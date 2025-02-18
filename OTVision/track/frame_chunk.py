@@ -3,8 +3,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Sequence
 
-from dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
-
+from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
 from OTVision.track.data import (
     FinishedFrame,
     Frame,
