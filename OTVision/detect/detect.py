@@ -43,6 +43,7 @@ from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
+DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
 
 class OTVisionDetect:
@@ -91,6 +92,15 @@ class OTVisionDetect:
                 detect_end=self.config.detect.detect_end,
                 detect_suffix=self.config.filetypes.detect,
             )
+
+            try:
+                parse_start_time_from(video_file)
+            except InproperFormattedFilename:
+                log.warning(
+                    f"Video file name of '{video_file}' must include date "
+                    f"and time in format: {DATETIME_FORMAT}"
+                )
+                continue
 
             if not self.config.detect.overwrite and detections_file.is_file():
                 log.warning(
@@ -218,7 +228,7 @@ class Timestamper:
         Returns:
             dict: input dictionary with additional occurrence per frame
         """
-        start_time = self._get_start_time_from(video_file)
+        start_time = parse_start_time_from(video_file)
         actual_duration = get_duration(video_file)
         if expected_duration:
             time_per_frame = self._get_time_per_frame(detections, expected_duration)
@@ -226,32 +236,6 @@ class Timestamper:
             time_per_frame = self._get_time_per_frame(detections, actual_duration)
         self._update_metadata(detections, start_time, actual_duration)
         return self._stamp(detections, start_time, time_per_frame)
-
-    @staticmethod
-    def _get_start_time_from(video_file: Path) -> datetime:
-        """Parse the given filename and retrieve the start date of the video.
-
-        Args:
-            video_file (Path): path to video file
-
-        Raises:
-            InproperFormattedFilename: if the filename is not formatted as expected, an
-            exception will be raised
-
-        Returns:
-            datetime: start date of the video
-        """
-        match = re.search(
-            FILE_NAME_PATTERN,
-            video_file.name,
-        )
-        if match:
-            start_date: str = match.group(START_DATE)
-            return parse_date_string_to_utc_datime(
-                start_date, "%Y-%m-%d_%H-%M-%S"
-            ).replace(tzinfo=timezone.utc)
-
-        raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
 
     @staticmethod
     def _get_time_per_frame(detections: dict, duration: timedelta) -> timedelta:
@@ -294,3 +278,29 @@ class Timestamper:
             occurrence = start_date + (int(key) - 1) * time_per_frame
             value[OCCURRENCE] = occurrence.timestamp()
         return detections
+
+
+def parse_start_time_from(video_file: Path) -> datetime:
+    """Parse the given filename and retrieve the start date of the video.
+
+    Args:
+        video_file (Path): path to video file
+
+    Raises:
+        InproperFormattedFilename: if the filename is not formatted as expected, an
+        exception will be raised
+
+    Returns:
+        datetime: start date of the video
+    """
+    match = re.search(
+        FILE_NAME_PATTERN,
+        video_file.name,
+    )
+    if match:
+        start_date: str = match.group(START_DATE)
+        return parse_date_string_to_utc_datime(start_date, "%Y-%m-%d_%H-%M-%S").replace(
+            tzinfo=timezone.utc
+        )
+
+    raise InproperFormattedFilename(f"Could not parse {video_file.name}.")

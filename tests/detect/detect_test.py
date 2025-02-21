@@ -7,6 +7,7 @@ import shutil
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 from jsonschema import validate
@@ -29,7 +30,13 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.detect.detect import OTVisionDetect, Timestamper, derive_filename
+from OTVision.detect.detect import (
+    DATETIME_FORMAT,
+    OTVisionDetect,
+    Timestamper,
+    derive_filename,
+    parse_start_time_from,
+)
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import Yolov8, create_model
 from tests.conftest import YieldFixture
@@ -503,6 +510,40 @@ class TestDetect:
         class_counts = count_classes(frames)
         return class_counts
 
+    @patch("OTVision.detect.detect.log")
+    @patch("OTVision.detect.detect.create_model")
+    def test_detect_(
+        self, mock_create_model: Mock, mock_log: Mock, test_data_tmp_dir: Path
+    ) -> None:
+        model = Mock()
+        mock_create_model.return_value = model
+
+        video_file_without_date = test_data_tmp_dir / "video_without_date.mp4"
+        video_file_without_date.touch()
+
+        target = create_otvision_detect(
+            create_config_from(
+                paths=[video_file_without_date],
+                weights=MODEL_WEIGHTS,
+                expected_duration=timedelta(seconds=3),
+            )
+        )
+        target.start()
+        detect_config = target.config.detect
+        mock_create_model.assert_called_once_with(
+            weights=MODEL_WEIGHTS,
+            confidence=detect_config.yolo_config.conf,
+            iou=detect_config.yolo_config.iou,
+            img_size=detect_config.yolo_config.img_size,
+            half_precision=detect_config.half_precision,
+            normalized=detect_config.yolo_config.normalized,
+        )
+        model.detect.assert_not_called()
+        mock_log.warning.assert_called_once_with(
+            f"Video file name of '{video_file_without_date}' "
+            f"must include date and time in format: {DATETIME_FORMAT}"
+        )
+
 
 class TestTimestamper:
     @pytest.mark.parametrize(
@@ -535,7 +576,7 @@ class TestTimestamper:
         ],
     )
     def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
-        parsed_date = Timestamper()._get_start_time_from(Path(file_name))
+        parsed_date = parse_start_time_from(Path(file_name))
 
         assert parsed_date == start_date
 
