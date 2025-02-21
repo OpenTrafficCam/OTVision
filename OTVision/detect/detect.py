@@ -238,32 +238,6 @@ class Timestamper:
         return self._stamp(detections, start_time, time_per_frame)
 
     @staticmethod
-    def _get_start_time_from(video_file: Path) -> datetime:
-        """Parse the given filename and retrieve the start date of the video.
-
-        Args:
-            video_file (Path): path to video file
-
-        Raises:
-            InproperFormattedFilename: if the filename is not formatted as expected, an
-            exception will be raised
-
-        Returns:
-            datetime: start date of the video
-        """
-        match = re.search(
-            FILE_NAME_PATTERN,
-            video_file.name,
-        )
-        if match:
-            start_date: str = match.group(START_DATE)
-            return parse_date_string_to_utc_datime(
-                start_date, "%Y-%m-%d_%H-%M-%S"
-            ).replace(tzinfo=timezone.utc)
-
-        raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
-
-    @staticmethod
     def _get_time_per_frame(detections: dict, duration: timedelta) -> timedelta:
         """Calculates the duration for each frame. This is done using the total
         duration of the video and the number of frames.
