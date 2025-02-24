@@ -24,6 +24,8 @@ class OtdetBuilderConfig:
     half_precision: bool
     chunksize: int
     classifications: dict[int, str]
+    detect_start: int | None
+    detect_end: int | None
 
 
 class OtdetBuilderError(Exception):
@@ -100,4 +102,6 @@ class OtdetBuilder:
             },
             dataformat.CHUNKSIZE: self.config.chunksize,
             dataformat.NORMALIZED_BBOX: self.config.normalized,
+            dataformat.DETECT_START: self.config.detect_start,
+            dataformat.DETECT_END: self.config.detect_end,
         }

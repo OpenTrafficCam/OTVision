@@ -148,6 +148,8 @@ class OTVisionDetect:
                     half_precision=model.half_precision,
                     chunksize=1,
                     classifications=model.classifications,
+                    detect_start=self.config.detect.detect_start,
+                    detect_end=self.config.detect.detect_end,
                 )
             ).build(detections)
 
