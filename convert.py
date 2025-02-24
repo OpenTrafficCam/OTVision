@@ -48,7 +48,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--delete_input",
+        "--delete-input",
         action=argparse.BooleanOptionalAction,
         help="Delete input files after convert",
     )
@@ -59,7 +59,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         help="Overwrite existing output files",
     )
     parser.add_argument(
-        "--input_fps",
+        "--input-fps",
         type=float,
         help="Frame rate of input h264.",
         required=False,
@@ -72,19 +72,19 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--fps_from_filename",
+        "--fps-from-filename",
         action=argparse.BooleanOptionalAction,
         help="Whether or not to parse frame rate from file name.",
     )
     parser.add_argument(
-        "--log_level_console",
+        "--log-level-console",
         type=str,
         choices=VALID_LOG_LEVELS,
         help="Log level for logging to the console",
         required=False,
     )
     parser.add_argument(
-        "--log_level_file",
+        "--log-level-file",
         type=str,
         choices=VALID_LOG_LEVELS,
         help="Log level for logging to a log file",
@@ -98,7 +98,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--logfile_overwrite",
+        "--logfile-overwrite",
         action="store_true",
         help="Overwrite log file if it already exists.",
         required=False,
