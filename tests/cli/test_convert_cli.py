@@ -23,7 +23,7 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
-LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
+LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -35,10 +35,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "input_fps": {PASSED: "--input_fps 30", EXPECTED: 30},
-    "fps_from_filename": {PASSED: "--fps_from_filename", EXPECTED: True},
+    "input_fps": {PASSED: "--input-fps 30", EXPECTED: 30},
+    "fps_from_filename": {PASSED: "--fps-from-filename", EXPECTED: True},
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
-    "delete_input": {PASSED: "--no-delete_input", EXPECTED: False},
+    "delete_input": {PASSED: "--no-delete-input", EXPECTED: False},
     "config": {PASSED: ""},
     "rotation": {PASSED: "--rotation 2", EXPECTED: 2},
 }
@@ -51,10 +51,10 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "input_fps": {PASSED: "--input_fps 25", EXPECTED: 25},
-    "fps_from_filename": {PASSED: "--no-fps_from_filename", EXPECTED: False},
+    "input_fps": {PASSED: "--input-fps 25", EXPECTED: 25},
+    "fps_from_filename": {PASSED: "--no-fps-from-filename", EXPECTED: False},
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
-    "delete_input": {PASSED: "--delete_input", EXPECTED: True},
+    "delete_input": {PASSED: "--delete-input", EXPECTED: True},
     "config": {PASSED: ""},
     "rotation": {PASSED: "--rotation 3", EXPECTED: 3},
 }
@@ -95,13 +95,13 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
 }
 
 TEST_FAIL_DATA = [
-    {PASSED: "--input_fps foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--fps_from_filename 20", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--input-fps foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--fps-from-filename 20", "error_msg_part": "unrecognized arguments"},
     {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
-    {PASSED: "--delete_input foo", "error_msg_part": "unrecognized arguments"},
+    {PASSED: "--delete-input foo", "error_msg_part": "unrecognized arguments"},
     {
-        PASSED: "--no-input_fps",
-        "error_msg_part": "unrecognized arguments: --no-input_fps",
+        PASSED: "--no-input-fps",
+        "error_msg_part": "unrecognized arguments: --no-input-fps",
     },
 ]
 

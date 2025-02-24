@@ -67,7 +67,7 @@ class ArgparseDetectCliParser(DetectCliParser):
             help="Use half precision for detection.",
         )
         self._parser.add_argument(
-            "--expected_duration",
+            "--expected-duration",
             type=int,
             help="Expected duration of a single video in seconds.",
             required=False,
@@ -79,14 +79,14 @@ class ArgparseDetectCliParser(DetectCliParser):
             help="Overwrite existing output files",
         )
         self._parser.add_argument(
-            "--log_level_console",
+            "--log-level-console",
             type=str,
             choices=VALID_LOG_LEVELS,
             help="Log level for logging to the console",
             required=False,
         )
         self._parser.add_argument(
-            "--log_level_file",
+            "--log-level-file",
             type=str,
             choices=VALID_LOG_LEVELS,
             help="Log level for logging to a log file",
@@ -100,20 +100,20 @@ class ArgparseDetectCliParser(DetectCliParser):
             required=False,
         )
         self._parser.add_argument(
-            "--logfile_overwrite",
+            "--logfile-overwrite",
             action="store_true",
             help="Overwrite log file if it already exists.",
             required=False,
         )
         self._parser.add_argument(
-            "--detect_start",
+            "--detect-start",
             default=None,
             type=int,
             help="Specify start of detection in seconds.",
             required=False,
         )
         self._parser.add_argument(
-            "--detect_end",
+            "--detect-end",
             default=None,
             type=int,
             help="Specify end of detection in seconds.",
