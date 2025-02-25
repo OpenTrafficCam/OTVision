@@ -31,6 +31,7 @@ from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.engine.results import Boxes
 
+from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
@@ -54,6 +55,37 @@ class YOLOv5ModelNotFoundError(Exception):
 
 
 class ObjectDetection(ABC):
+
+    @property
+    @abstractmethod
+    def classifications(self) -> dict[int, str]:
+        """The model's classes that it is able to predict.
+
+        Returns:
+            dict[int, str]: the classes
+        """
+        raise NotImplementedError
+
+    @property
+    def confidence(self) -> float:
+        raise NotImplementedError
+
+    @property
+    def iou(self) -> float:
+        raise NotImplementedError
+
+    @property
+    def img_size(self) -> int:
+        raise NotImplementedError
+
+    @property
+    def half_precision(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def normalized(self) -> bool:
+        raise NotImplementedError
+
     @abstractmethod
     def detect(
         self,
@@ -73,14 +105,21 @@ class ObjectDetection(ABC):
             list[list[Detection]]: nested list of detections. First level is frames,
             second level is detections within frame
         """
-        pass
+        raise NotImplementedError
+
+    @abstractmethod
+    def configure_with(self, config: DetectConfig) -> None:
+        raise NotImplementedError
+
+    @property
+    def weights(self) -> str:
+        raise NotImplementedError
 
 
 class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
-        weights (str | Path): Custom model weights for prediction.
         model: (YOLOv8):  the YOLOv8 model to use for prediction.
         confidence (float): the confidence threshold.
         iou (float): the IOU threshold.
@@ -93,9 +132,32 @@ class Yolov8(ObjectDetection):
             of frames of a video.
     """
 
+    @property
+    def confidence(self) -> float:
+        return self._confidence
+
+    @property
+    def iou(self) -> float:
+        return self._iou
+
+    @property
+    def img_size(self) -> int:
+        return self._img_size
+
+    @property
+    def half_precision(self) -> bool:
+        return self._half_precision
+
+    @property
+    def normalized(self) -> bool:
+        return self._normalized
+
+    @property
+    def weights(self) -> str:
+        return self._model.model_name
+
     def __init__(
         self,
-        weights: str | Path,
         model: YOLOv8,
         confidence: float,
         iou: float,
@@ -105,15 +167,21 @@ class Yolov8(ObjectDetection):
         frame_rotator: AvVideoFrameRotator,
         get_number_of_frames: Callable[[Path], int] = video.get_number_of_frames,
     ) -> None:
-        self.weights = weights
-        self.model = model
-        self.confidence = confidence
-        self.iou = iou
-        self.img_size = img_size
-        self.half_precision = half_precision
-        self.normalized = normalized
+        self._model = model
+        self._confidence = confidence
+        self._iou = iou
+        self._img_size = img_size
+        self._half_precision = half_precision
+        self._normalized = normalized
         self._frame_rotator = frame_rotator
         self._get_number_of_frames = get_number_of_frames
+
+    def configure_with(self, config: DetectConfig) -> None:
+        self._confidence = config.yolo_config.conf
+        self._iou = config.yolo_config.iou
+        self._img_size = config.yolo_config.img_size
+        self._half_precision = config.half_precision
+        self._normalized = config.yolo_config.normalized
 
     @property
     def classifications(self) -> dict[int, str]:
@@ -123,9 +191,9 @@ class Yolov8(ObjectDetection):
             dict[int, str]: the classes
         """
         return (
-            self.model.names
-            if self.model.names is not None
-            else self.model.predictor.model.names
+            self._model.names
+            if self._model.names is not None
+            else self._model.predictor.model.names
         )
 
     def detect(
@@ -170,7 +238,7 @@ class Yolov8(ObjectDetection):
                     detect_end is None or frame_number < detect_end
                 ):
                     rotated_image = self._frame_rotator.rotate(frame, side_data)
-                    results = self.model.predict(
+                    results = self._model.predict(
                         source=rotated_image,
                         conf=self.confidence,
                         iou=self.iou,
@@ -240,7 +308,6 @@ def create_model(
     t1 = perf_counter()
     is_custom = Path(weights).is_file()
     model = Yolov8(
-        weights=weights,
         model=_load_model(weights),
         confidence=confidence,
         iou=iou,

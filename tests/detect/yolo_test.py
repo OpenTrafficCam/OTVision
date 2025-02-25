@@ -51,7 +51,6 @@ class TestConvertDetections:
         mock_yolo.names = names
 
         model = Yolov8(
-            weights=Mock(),
             model=mock_yolo,
             confidence=0.25,
             iou=0.25,
@@ -96,7 +95,6 @@ class TestObjectDetection:
         get_number_of_frames = Mock(return_value=total_frames)
 
         target = Yolov8(
-            weights=Mock(),
             model=yolo_model,
             confidence=0.25,
             iou=0.25,
