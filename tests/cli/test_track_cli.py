@@ -26,7 +26,7 @@ CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 with open(CWD_CONFIG_FILE, "r") as file:
     cwd_config = yaml.safe_load(file)
 
-LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
+LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -38,11 +38,11 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "sigma_h": {PASSED: "--sigma_h 0.37", EXPECTED: 0.37},
-    "sigma_l": {PASSED: "--sigma_l 0.29", EXPECTED: 0.29},
-    "sigma_iou": {PASSED: "--sigma_iou 0.36", EXPECTED: 0.36},
-    "t_min": {PASSED: "--t_min 5", EXPECTED: 5},
-    "t_miss_max": {PASSED: "--t_miss_max 38", EXPECTED: 38},
+    "sigma_h": {PASSED: "--sigma-h 0.37", EXPECTED: 0.37},
+    "sigma_l": {PASSED: "--sigma-l 0.29", EXPECTED: 0.29},
+    "sigma_iou": {PASSED: "--sigma-iou 0.36", EXPECTED: 0.36},
+    "t_min": {PASSED: "--t-min 5", EXPECTED: 5},
+    "t_miss_max": {PASSED: "--t-miss-max 38", EXPECTED: 38},
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "config": {PASSED: ""},
 }
@@ -55,11 +55,11 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
             Path(f"./{CUSTOM_CONFIG_FILE}"),
         ],
     },
-    "sigma_h": {PASSED: "--sigma_h 0.42", EXPECTED: 0.42},
-    "sigma_l": {PASSED: "--sigma_l 0.34", EXPECTED: 0.34},
-    "sigma_iou": {PASSED: "--sigma_iou 0.41", EXPECTED: 0.41},
-    "t_min": {PASSED: "--t_min 7", EXPECTED: 7},
-    "t_miss_max": {PASSED: "--t_miss_max 43", EXPECTED: 43},
+    "sigma_h": {PASSED: "--sigma-h 0.42", EXPECTED: 0.42},
+    "sigma_l": {PASSED: "--sigma-l 0.34", EXPECTED: 0.34},
+    "sigma_iou": {PASSED: "--sigma-iou 0.41", EXPECTED: 0.41},
+    "t_min": {PASSED: "--t-min 7", EXPECTED: 7},
+    "t_miss_max": {PASSED: "--t-miss-max 43", EXPECTED: 43},
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
     "config": {PASSED: ""},
 }
@@ -96,31 +96,31 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
 }
 
 TEST_FAIL_DATA = [
-    {PASSED: "--sigma_h foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--sigma_l foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--sigma_iou foo", "error_msg_part": "invalid float value: 'foo'"},
-    {PASSED: "--t_min 2.2", "error_msg_part": "invalid int value: '2.2'"},
-    {PASSED: "--t_miss_max 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {PASSED: "--sigma-h foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--sigma-l foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--sigma-iou foo", "error_msg_part": "invalid float value: 'foo'"},
+    {PASSED: "--t-min 2.2", "error_msg_part": "invalid int value: '2.2'"},
+    {PASSED: "--t-miss-max 2.2", "error_msg_part": "invalid int value: '2.2'"},
     {PASSED: "--overwrite foo", "error_msg_part": "unrecognized arguments"},
     {
-        PASSED: "--no-sigma_h",
-        "error_msg_part": "unrecognized arguments: --no-sigma_h",
+        PASSED: "--no-sigma-h",
+        "error_msg_part": "unrecognized arguments: --no-sigma-h",
     },
     {
-        PASSED: "--no-sigma_l",
-        "error_msg_part": "unrecognized arguments: --no-sigma_l",
+        PASSED: "--no-sigma-l",
+        "error_msg_part": "unrecognized arguments: --no-sigma-l",
     },
     {
-        PASSED: "--no-sigma_iou",
-        "error_msg_part": "unrecognized arguments: --no-sigma_iou",
+        PASSED: "--no-sigma-iou",
+        "error_msg_part": "unrecognized arguments: --no-sigma-iou",
     },
     {
-        PASSED: "--no-t_min",
-        "error_msg_part": "unrecognized arguments: --no-t_min",
+        PASSED: "--no-t-min",
+        "error_msg_part": "unrecognized arguments: --no-t-min",
     },
     {
-        PASSED: "--no-t_miss_max",
-        "error_msg_part": "unrecognized arguments: --no-t_miss_max",
+        PASSED: "--no-t-miss-max",
+        "error_msg_part": "unrecognized arguments: --no-t-miss-max",
     },
 ]
 

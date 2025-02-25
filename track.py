@@ -54,39 +54,39 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         help="Overwrite existing output files",
     )
     parser.add_argument(
-        "--sigma_l",
+        "--sigma-l",
         type=float,
-        help="Set sigma_l paramter for tracking",
+        help="Set sigma_l parameter for tracking",
     )
     parser.add_argument(
-        "--sigma_h",
+        "--sigma-h",
         type=float,
-        help="Set sigma_h paramter for tracking",
+        help="Set sigma_h parameter for tracking",
     )
     parser.add_argument(
-        "--sigma_iou",
+        "--sigma-iou",
         type=float,
-        help="Set sigma_iou paramter for tracking",
+        help="Set sigma_iou parameter for tracking",
     )
     parser.add_argument(
-        "--t_min",
+        "--t-min",
         type=int,
-        help="Set t_min paramter for tracking",
+        help="Set t_min parameter for tracking",
     )
     parser.add_argument(
-        "--t_miss_max",
+        "--t-miss-max",
         type=int,
-        help="Set t_miss_max paramter for tracking",
+        help="Set t_miss_max parameter for tracking",
     )
     parser.add_argument(
-        "--log_level_console",
+        "--log-level-console",
         type=str,
         choices=VALID_LOG_LEVELS,
         help="Log level for logging to the console",
         required=False,
     )
     parser.add_argument(
-        "--log_level_file",
+        "--log-level-file",
         type=str,
         choices=VALID_LOG_LEVELS,
         help="Log level for logging to a log file",
@@ -100,7 +100,7 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--logfile_overwrite",
+        "--logfile-overwrite",
         action="store_true",
         help="Overwrite log file if it already exists.",
         required=False,

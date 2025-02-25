@@ -37,7 +37,7 @@ custom_config = read_yaml(CUSTOM_CONFIG_FILE)
 CWD_CONFIG_FILE = r"user_config.otvision.yaml"
 cwd_config = read_yaml(CWD_CONFIG_FILE)
 
-LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
+LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -55,13 +55,13 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "imagesize": {PASSED: "--imagesize 1240", EXPECTED: 1240},
     "half_precision": {PASSED: "--half", EXPECTED: True},
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "config": {PASSED: ""},
-    "detect_start": {PASSED: "--detect_start 300", EXPECTED: 300},
-    "detect_end": {PASSED: "--detect_end 600", EXPECTED: 600},
+    "detect_start": {PASSED: "--detect-start 300", EXPECTED: 300},
+    "detect_end": {PASSED: "--detect-end 600", EXPECTED: 600},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
@@ -78,12 +78,12 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "imagesize": {PASSED: "--imagesize 320", EXPECTED: 320},
     "half_precision": {PASSED: "--no-half", EXPECTED: False},
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
-    "detect_start": {PASSED: "--detect_start 300", EXPECTED: 300},
-    "detect_end": {PASSED: "--detect_end 600", EXPECTED: 600},
+    "detect_start": {PASSED: "--detect-start 300", EXPECTED: 300},
+    "detect_end": {PASSED: "--detect-end 600", EXPECTED: 600},
     "config": {PASSED: ""},
 }
 
@@ -98,7 +98,7 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
         EXPECTED: cwd_config[DETECT][HALF_PRECISION],
     },
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
@@ -124,7 +124,7 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
         EXPECTED: custom_config[DETECT][HALF_PRECISION],
     },
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
@@ -134,7 +134,7 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
 }
 
 required_arguments = (
-    f"--expected_duration {INPUT_EXPECTED_DURATION} {LOGFILE_OVERWRITE_CMD}"
+    f"--expected-duration {INPUT_EXPECTED_DURATION} {LOGFILE_OVERWRITE_CMD}"
 )
 TEST_FAIL_DATA = [
     {
