@@ -8,7 +8,6 @@ from OTVision.dataformat import (
     DATA,
     DATE_FORMAT,
     DETECTIONS,
-    METADATA,
     OCCURRENCE,
     H,
     W,
@@ -22,18 +21,20 @@ from OTVision.helpers.date import (
 from OTVision.helpers.files import denormalize_bbox, read_json
 from OTVision.track.model.detection import Detection
 from OTVision.track.model.filebased.frame_chunk import ChunkParser, FrameChunk
+from OTVision.track.model.filebased.frame_group import FrameGroup
 from OTVision.track.model.frame import Frame
 
 
 class JsonChunkParser(ChunkParser):
 
     def parse(
-        self, file: Path, frame_group_id: int, frame_offset: int = 0
+        self, file: Path, frame_group: FrameGroup, frame_offset: int = 0
     ) -> FrameChunk:
         json = read_json(file)
-        metadata: dict = json[METADATA]
+        metadata: dict = frame_group.metadata_by_file[file]
+
         denormalized = denormalize_bbox(
-            json, metadata={file.as_posix(): metadata}
+            json, file, metadata={file.as_posix(): metadata}
         )  # TODO check as posix is correct here
         input: dict[int, dict[str, Any]] = denormalized[DATA]
         # TODO metadata = denormalized[METADATA] should not be necessary
@@ -41,7 +42,7 @@ class JsonChunkParser(ChunkParser):
         frames = self.convert(file, frame_offset, input)
 
         frames.sort(key=lambda frame: (frame.occurrence, frame.no))
-        return FrameChunk(file, metadata, frames, frame_group_id)
+        return FrameChunk(file, metadata, frames, frame_group.id)
 
     def convert(
         self, file: Path, frame_offset: int, input: dict[int, dict[str, Any]]

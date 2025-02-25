@@ -62,12 +62,12 @@ class ChunkBasedTracker(Tracker[Path]):
     def track_file(
         self,
         file: Path,
-        frame_group_id: int,
+        frame_group: FrameGroup,
         is_last_file: bool,
         id_generator: ID_GENERATOR,
         frame_offset: int = 0,
     ) -> TrackedChunk:
-        chunk = self._chunk_parser.parse(file, frame_group_id, frame_offset)
+        chunk = self._chunk_parser.parse(file, frame_group, frame_offset)
         return self.track_chunk(chunk, is_last_file, id_generator)
 
 
@@ -102,7 +102,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
 
-            chunk = self._chunk_parser.parse(file, group.id, frame_offset)
+            chunk = self._chunk_parser.parse(file, group, frame_offset)
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
 
             tracked_chunk = self.track_chunk(chunk, is_last, id_generator)

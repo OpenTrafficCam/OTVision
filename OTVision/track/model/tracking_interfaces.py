@@ -90,7 +90,7 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
 
     def __init__(self, keep_discarded: bool = False) -> None:
         self._keep_discarded = keep_discarded
-        self._unfinished_containers: dict[C, set[TrackId]] = dict()
+        self._unfinished_containers: list[tuple[C, set[TrackId]]] = list()
         self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
         self._discarded_tracks: set[TrackId] = set()
 
@@ -183,8 +183,8 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
 
             # if track is observed in current iteration, update its last observed frame
             self._merged_last_track_frame.update(self._get_last_track_frames(container))
-            self._unfinished_containers[container] = self._get_unfinished_tracks(
-                container
+            self._unfinished_containers.append(
+                (container, self._get_unfinished_tracks(container))
             )
 
             # update unfinished track ids of previously tracked containers
@@ -194,20 +194,24 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             self._discarded_tracks.update(newly_discarded_tracks)
 
             ready_containers: list[C] = []
-            for c, track_ids in self._unfinished_containers.items():
+            for c, track_ids in self._unfinished_containers:
                 track_ids.difference_update(newly_finished_tracks)
                 track_ids.difference_update(newly_discarded_tracks)
 
                 if not track_ids:
                     ready_containers.append(c)
-                    del self._unfinished_containers[c]
 
+            self._unfinished_containers = [
+                (c, u)
+                for c, u in self._unfinished_containers
+                if c not in ready_containers
+            ]
             finished_containers: list[F] = self._finish_containers(ready_containers)
             yield from finished_containers
 
         # finish remaining containers with pending tracks
-        remaining_containers = list(self._unfinished_containers.keys())
-        self._unfinished_containers = dict()
+        remaining_containers = [c for c, _ in self._unfinished_containers]
+        self._unfinished_containers = list()
 
         finished_containers = self._finish_containers(remaining_containers)
         self._merged_last_track_frame = dict()

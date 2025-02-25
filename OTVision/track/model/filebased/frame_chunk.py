@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Sequence
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
-from OTVision.track.model.filebased.frame_group import get_output_file
+from OTVision.track.model.filebased.frame_group import FrameGroup, get_output_file
 from OTVision.track.model.frame import (
     FinishedFrame,
     Frame,
@@ -183,5 +183,7 @@ class ChunkParser(ABC):
     """A parser for file path to FrameChunk."""
 
     @abstractmethod
-    def parse(self, file: Path, frame_group_id: int, frame_offset: int) -> FrameChunk:
+    def parse(
+        self, file: Path, frame_group: FrameGroup, frame_offset: int
+    ) -> FrameChunk:
         pass

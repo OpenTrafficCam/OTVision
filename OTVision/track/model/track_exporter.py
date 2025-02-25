@@ -103,7 +103,6 @@ class FinishedTracksExporter(ABC, Generic[F]):
         tracking_run_id: str,
         frame_group_id: int,
     ) -> dict:
-        metadata = metadata
         metadata[TRACKING][TRACKING_RUN_ID] = tracking_run_id
         metadata[TRACKING][FRAME_GROUP] = frame_group_id
         return {METADATA: metadata, DATA: {DETECTIONS: detections}}
