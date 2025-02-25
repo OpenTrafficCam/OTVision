@@ -9,12 +9,10 @@ from OTVision.track.model.detection import (
     Detection,
     FinishedDetection,
     TrackedDetection,
+    TrackId,
 )
 
-TrackId = int
 FrameNo = int
-
-
 S = TypeVar("S")
 
 

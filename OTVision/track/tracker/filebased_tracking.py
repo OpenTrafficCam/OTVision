@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable, Iterator
 
 from more_itertools import peekable
+from tqdm import tqdm
 
 from OTVision.config import CONFIG, DEFAULT_FILETYPE, OVERWRITE, TRACK
 from OTVision.helpers.log import LOGGER_NAME
@@ -92,11 +93,12 @@ class GroupedFilesTracker(ChunkBasedTracker):
 
     def track_group(self, group: FrameGroup) -> Iterator[TrackedChunk]:
         if self.check_skip_due_to_existing_output_files(group):
+            log.warning(f"Skip FrameGroup {group.id}")
             yield from []  # TODO how to create empty generator stream?
 
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group
-        file_stream = peekable(group.files)
+        file_stream = peekable(tqdm(group.files))
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
 
@@ -138,6 +140,10 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
         super().__init__(keep_discarded)
         self.tracker = tracker
 
+    def group_and_track(self, files: list[Path]) -> Iterator[FinishedChunk]:
+        tracked_chunk_stream = self.tracker.group_and_track_files(files)
+        return self.track_and_finish(tracked_chunk_stream)
+
     def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
         tracked_chunk_stream = self.tracker.track_group(group)
         return self.track_and_finish(tracked_chunk_stream)
@@ -153,6 +159,9 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
 
     def _get_newly_finished_tracks(self, container: TrackedChunk) -> set[TrackId]:
         return container.finished_tracks
+
+    def _get_newly_discarded_tracks(self, container: TrackedChunk) -> set[TrackId]:
+        return container.discarded_tracks
 
     def _finish(
         self,

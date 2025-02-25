@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dataformat import (
+from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     FINISHED,
@@ -13,7 +13,7 @@ from dataformat import (
     Y,
 )
 
-from OTVision.track.model.frame import TrackId
+TrackId = int
 
 
 @dataclass(frozen=True, repr=True)

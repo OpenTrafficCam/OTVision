@@ -268,6 +268,9 @@ class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame[S], FinishedFra
     def _get_newly_finished_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
         return container.finished_tracks
 
+    def _get_newly_discarded_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
+        return container.discarded_tracks
+
     def _finish(
         self,
         container: TrackedFrame[S],
