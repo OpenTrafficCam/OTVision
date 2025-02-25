@@ -52,6 +52,7 @@ CAR_LOWER_LIMIT = int(120 * (1 - DEVIATION))
 MODEL_WEIGHTS = (
     "tests/data/yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
 )
+EXPECTED_DURATION = timedelta(seconds=3)
 
 
 CAR = "car"
@@ -270,7 +271,7 @@ class TestDetect:
             create_config_from(
                 paths=[cyclist_mp4],
                 weights=MODEL_WEIGHTS,
-                expected_duration=config.DEFAULT_EXPECTED_DURATION,
+                expected_duration=EXPECTED_DURATION,
             )
         )
         target.start()
@@ -285,7 +286,7 @@ class TestDetect:
             create_config_from(
                 paths=[empty_dir],
                 weights=MODEL_WEIGHTS,
-                expected_duration=config.DEFAULT_EXPECTED_DURATION,
+                expected_duration=EXPECTED_DURATION,
             )
         )
         target.start()
@@ -341,7 +342,7 @@ class TestDetect:
         _config = create_config_from(
             paths=[video_path],
             weights=MODEL_WEIGHTS,
-            expected_duration=config.DEFAULT_EXPECTED_DURATION,
+            expected_duration=EXPECTED_DURATION,
         )
         target = create_otvision_detect(_config)
         target.start()
@@ -356,7 +357,7 @@ class TestDetect:
             weights=MODEL_WEIGHTS,
             confidence=0.25,
             normalized=True,
-            expected_duration=config.DEFAULT_EXPECTED_DURATION,
+            expected_duration=EXPECTED_DURATION,
         )
         target = create_otvision_detect(_config)
         target.start()
@@ -378,7 +379,7 @@ class TestDetect:
         _config = create_config_from(
             paths=[truck_mp4],
             weights=MODEL_WEIGHTS,
-            expected_duration=config.DEFAULT_EXPECTED_DURATION,
+            expected_duration=EXPECTED_DURATION,
             normalized=False,
         )
         target = create_otvision_detect(_config)
@@ -407,7 +408,7 @@ class TestDetect:
         _config = create_config_from(
             paths=[truck_mp4],
             weights=MODEL_WEIGHTS,
-            expected_duration=config.DEFAULT_EXPECTED_DURATION,
+            expected_duration=EXPECTED_DURATION,
             confidence=conf,
         )
         target = create_otvision_detect(_config)
@@ -433,7 +434,7 @@ class TestDetect:
             create_config_from(
                 paths=[truck_mp4],
                 weights=MODEL_WEIGHTS,
-                expected_duration=config.DEFAULT_EXPECTED_DURATION,
+                expected_duration=EXPECTED_DURATION,
                 overwrite=True,
             )
         )
@@ -444,7 +445,7 @@ class TestDetect:
             create_config_from(
                 paths=[truck_mp4],
                 weights=MODEL_WEIGHTS,
-                expected_duration=config.DEFAULT_EXPECTED_DURATION,
+                expected_duration=EXPECTED_DURATION,
                 overwrite=overwrite,
             )
         )
@@ -491,7 +492,7 @@ class TestDetect:
     def _get_detection_counts_for(
         self,
         converted_video: Path,
-        expected_duration: timedelta = config.DEFAULT_EXPECTED_DURATION,
+        expected_duration: timedelta = EXPECTED_DURATION,
     ) -> dict[str, float]:
         target = create_otvision_detect(
             create_config_from(

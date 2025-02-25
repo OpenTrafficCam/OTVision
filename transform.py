@@ -49,7 +49,7 @@ def parse() -> argparse.Namespace:
     )
     parser.add_argument(
         "-r",
-        "--refpts_file",
+        "--refpts-file",
         type=str,
         help="Path to refpts file. If not given, each tracks file should have one",
     )
@@ -60,14 +60,14 @@ def parse() -> argparse.Namespace:
         help="Overwrite existing output files",
     )
     parser.add_argument(
-        "--log_level_console",
+        "--log-level-console",
         type=str,
         choices=VALID_LOG_LEVELS,
         help="Log level for logging to the console",
         required=False,
     )
     parser.add_argument(
-        "--log_level_file",
+        "--log-level-file",
         type=str,
         choices=VALID_LOG_LEVELS,
         help="Log level for logging to a log file",
@@ -81,7 +81,7 @@ def parse() -> argparse.Namespace:
         required=False,
     )
     parser.add_argument(
-        "--logfile_overwrite",
+        "--logfile-overwrite",
         action="store_true",
         help="Overwrite log file if it already exists.",
         required=False,

@@ -2,7 +2,7 @@ __version__ = "0.0"
 
 
 def otdet_version() -> str:
-    return "1.3"
+    return "1.4"
 
 
 def ottrack_version() -> str:

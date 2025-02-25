@@ -42,6 +42,8 @@ def create_expected_detection_metadata(config: OtdetBuilderConfig) -> dict:
         },
         dataformat.CHUNKSIZE: config.chunksize,
         dataformat.NORMALIZED_BBOX: config.normalized,
+        dataformat.DETECT_START: config.detect_start,
+        dataformat.DETECT_END: config.detect_end,
     }
 
 
@@ -91,6 +93,8 @@ class TestOtdetBuilder:
             half_precision=False,
             chunksize=32,
             classifications={0: "person", 1: "car"},
+            detect_start=300,
+            detect_end=600,
         )
 
     @pytest.fixture
