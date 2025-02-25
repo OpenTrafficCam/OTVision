@@ -38,6 +38,9 @@ INTERPOLATED_DETECTION: str = "interpolated-detection"
 MODEL: str = "model"
 CHUNKSIZE: str = "chunksize"
 NORMALIZED_BBOX: str = "normalized_bbox"
+DETECT_START = "detect_start"
+DETECT_END = "detect_end"
+
 # Detektor model config
 NAME: str = "name"
 WEIGHTS: str = "weights"
