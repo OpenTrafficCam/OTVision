@@ -89,13 +89,13 @@ class ObjectDetection(ABC):
     @abstractmethod
     def detect(
         self,
-        video: Path,
+        file: Path,
         detect_start: int | None = None,
         detect_end: int | None = None,
     ) -> list[list[Detection]]:
         """Runs object detection on a video.
         Args:
-            video (Path): the path to the video.
+            file (Path): the path to the video.
             detect_start (int | None, optional): Start of the detection range
                 expressed in frames.
             detect_end (int | None, optional): End of the detection range
