@@ -30,7 +30,7 @@ from tqdm import tqdm
 from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
-from OTVision.detect.yolo import create_model
+from OTVision.detect.yolo import ObjectDetection, ObjectDetectionFactory
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
     FILE_NAME_PATTERN,
@@ -54,9 +54,12 @@ class OTVisionDetect:
             raise ValueError("Config is missing!")
         return self._config
 
-    def __init__(self, otdet_builder: OtdetBuilder) -> None:
-        self._config: Config | None = None
+    def __init__(
+        self, factory: ObjectDetectionFactory, otdet_builder: OtdetBuilder
+    ) -> None:
+        self._factory = factory
         self._otdet_builder = otdet_builder
+        self._config: Config | None = None
 
     def update_config(self, config: Config) -> Self:
         self._config = config
@@ -79,14 +82,6 @@ class OTVisionDetect:
             log.warning(f"No videos of type '{filetypes}' found to detect!")
             return
 
-        model = create_model(
-            weights=self.config.detect.yolo_config.weights,
-            confidence=self.config.detect.yolo_config.conf,
-            iou=self.config.detect.yolo_config.iou,
-            img_size=self.config.detect.yolo_config.img_size,
-            half_precision=self.config.detect.half_precision,
-            normalized=self.config.detect.yolo_config.normalized,
-        )
         for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
             detections_file = derive_filename(
                 video_file=video_file,
@@ -120,6 +115,7 @@ class OTVisionDetect:
             detect_end_in_frames = convert_seconds_to_frames(
                 self.config.detect.detect_end, video_fps
             )
+            model = self._get_model()
             detections = model.detect(
                 file=video_file,
                 detect_start=detect_start_in_frames,
@@ -168,6 +164,11 @@ class OTVisionDetect:
         finished_msg = "Finished detection"
         log.info(finished_msg)
         print(finished_msg)
+
+    def _get_model(self) -> ObjectDetection:
+        return self._factory.create(self.config.detect).configure_with(
+            self.config.detect
+        )
 
 
 def derive_filename(

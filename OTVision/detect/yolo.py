@@ -282,64 +282,93 @@ class Yolov8(ObjectDetection):
         )
 
 
-def create_model(
-    weights: str | Path,
-    confidence: float,
-    iou: float,
-    img_size: int,
-    half_precision: bool,
-    normalized: bool,
-) -> Yolov8:
-    """Loads a custom trained or a pretrained YOLOv8 mode.
-
-    Args:
-        weights (str | Path): Either path to custom model weights or pretrained model
-            name, i.e. 'yolov8s', 'yolov8m'.
-        confidence (float): the confidence threshold.
-        iou (float): the IOU threshold
-        img_size (int): the YOLOv8 image size
-        half_precision (bool): Whether to use half precision (FP16) for inference speed
-            up.
-        normalized (bool): Whether the bounding boxes are to be returned normalized
-
-    Returns:
-        Yolov8: the YOLOv8 model
-    """
-    log.info(f"Try loading model {weights}")
-    t1 = perf_counter()
-    is_custom = Path(weights).is_file()
-    model = Yolov8(
-        model=_load_model(weights),
-        confidence=confidence,
-        iou=iou,
-        img_size=img_size,
-        half_precision=half_precision,
-        normalized=normalized,
-        frame_rotator=AvVideoFrameRotator(),
-    )
-    t2 = perf_counter()
-
-    model_source = "Custom" if is_custom else "Pretrained"
-    model_type = "CUDA" if torch.cuda.is_available() else "CPU"
-    runtime = round(t2 - t1)
-    log.info(f"{model_source} {model_type} model loaded in {runtime} sec")
-
-    model_success_msg = f"Model {weights} prepared"
-    log.info(model_success_msg)
-
-    return model
+class ObjectDetectionFactory:
+    @abstractmethod
+    def create(self, config: DetectConfig) -> ObjectDetection:
+        raise NotImplementedError
 
 
-def _load_model(weights: str | Path) -> YOLOv8:
-    """Load a custom trained or a pretrained YOLOv8 model.
+class ObjectDetectionCachedFactory(ObjectDetectionFactory):
 
-    Args:
-        weights (str | Path): Either path to custom model weights or pretrained model
-            name, i.e. 'yolov8s', 'yolov8m'.
+    def __init__(self, other: ObjectDetectionFactory) -> None:
+        self._other = other
+        self.__cache: dict[str, ObjectDetection] = {}
 
-    Returns:
-        YOLOv8: the YOLOv8 model.
+    def create(self, config: DetectConfig) -> ObjectDetection:
+        if cached_model := self.__cache.get(config.yolo_config.weights):
+            return cached_model
+        model = self._other.create(config)
+        self.__add_to_cache(model)
+        return model
 
-    """
-    model = YOLOv8(model=weights, task="detect")
-    return model
+    def __add_to_cache(self, model: ObjectDetection) -> None:
+        if not self.__cache.get(model.weights):
+            self.__cache[model.weights] = model
+
+    def __remove_from_cache(self, weights: str) -> None:
+        if self.__cache.get(weights):
+            del self.__cache[weights]
+
+
+class YoloFactory(ObjectDetectionFactory):
+
+    def create(self, config: DetectConfig) -> ObjectDetection:
+        """
+        Creates an object detection model using YOLO with the specified configuration.
+
+        This method initializes a YOLOv8 model using the parameters provided in the
+        DetectConfig instance. It determines whether the provided weights reference
+        a custom file or a pretrained model. The method configures the model with
+        confidence threshold, intersection over union (IoU) threshold, image size,
+        and other properties as defined in the input configuration. Additionally,
+        it logs the loading time and specifies whether the model is utilizing CUDA
+        or operating in CPU mode. After successful initialization, the method
+        returns the prepared object detection model.
+
+        Args:
+            config (DetectConfig): A configuration instance containing YOLO
+                model parameters including weights path, thresholds, image size,
+                and other initialization settings.
+
+        Returns:
+            ObjectDetection: An initialized YOLO object detection model ready
+                for inference.
+        """
+        weights = config.yolo_config.weights
+        log.info(f"Try loading model {weights}")
+        t1 = perf_counter()
+        is_custom = Path(weights).is_file()
+        model = Yolov8(
+            model=self._load_model(weights),
+            confidence=config.yolo_config.conf,
+            iou=config.yolo_config.iou,
+            img_size=config.yolo_config.img_size,
+            half_precision=config.half_precision,
+            normalized=config.yolo_config.normalized,
+            frame_rotator=AvVideoFrameRotator(),
+        )
+        t2 = perf_counter()
+
+        model_source = "Custom" if is_custom else "Pretrained"
+        model_type = "CUDA" if torch.cuda.is_available() else "CPU"
+        runtime = round(t2 - t1)
+        log.info(f"{model_source} {model_type} model loaded in {runtime} sec")
+
+        model_success_msg = f"Model {weights} prepared"
+        log.info(model_success_msg)
+
+        return model
+
+    def _load_model(self, weights: str | Path) -> YOLOv8:
+        """Load a custom trained or a pretrained YOLOv8 model.
+
+        Args:
+            weights (str | Path): Either path to custom model weights or pretrained
+                model.
+
+        Returns:
+            YOLOv8: the YOLOv8 model.
+
+        """
+        model = YOLOv8(model=weights, task="detect")
+        return model
