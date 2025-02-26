@@ -23,7 +23,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from time import perf_counter
-from typing import Callable, Generator
+from typing import Callable, Generator, Self
 
 import av
 import torch
@@ -108,7 +108,7 @@ class ObjectDetection(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def configure_with(self, config: DetectConfig) -> None:
+    def configure_with(self, config: DetectConfig) -> Self:
         raise NotImplementedError
 
     @property
@@ -176,12 +176,13 @@ class Yolov8(ObjectDetection):
         self._frame_rotator = frame_rotator
         self._get_number_of_frames = get_number_of_frames
 
-    def configure_with(self, config: DetectConfig) -> None:
+    def configure_with(self, config: DetectConfig) -> Self:
         self._confidence = config.yolo_config.conf
         self._iou = config.yolo_config.iou
         self._img_size = config.yolo_config.img_size
         self._half_precision = config.half_precision
         self._normalized = config.yolo_config.normalized
+        return self
 
     @property
     def classifications(self) -> dict[int, str]:
