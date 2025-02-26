@@ -23,6 +23,7 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Self
 
 from tqdm import tqdm
 
@@ -57,8 +58,9 @@ class OTVisionDetect:
         self._config: Config | None = None
         self._otdet_builder = otdet_builder
 
-    def update_config(self, config: Config) -> None:
+    def update_config(self, config: Config) -> Self:
         self._config = config
+        return self
 
     def start(self) -> None:
         """Starts the detection of objects in multiple videos and/or images.
