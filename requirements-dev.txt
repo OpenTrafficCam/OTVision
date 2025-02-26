@@ -1,5 +1,5 @@
 -r requirements.txt
-black==24.8.0
+black==25.1.0
 coremltools==8.2; sys_platform == 'darwin'
 flake8==7.1.1
 hatch-requirements-txt==0.4.1
