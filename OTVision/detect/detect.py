@@ -40,7 +40,12 @@ from OTVision.helpers.files import (
     write_json,
 )
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
+from OTVision.helpers.video import (
+    convert_seconds_to_frames,
+    get_duration,
+    get_fps,
+    get_video_dimensions,
+)
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
@@ -201,12 +206,6 @@ def derive_filename(
         cutout += f"_end_{detect_end}"
     new_stem = f"{video_file.stem}{cutout}"
     return video_file.with_stem(new_stem).with_suffix(detect_suffix)
-
-
-def convert_seconds_to_frames(seconds: int | None, fps: float) -> int | None:
-    if seconds is None:
-        return None
-    return round(seconds * fps)
 
 
 class FormatNotSupportedError(Exception):
