@@ -47,14 +47,18 @@ from OTVision.config import (
 from OTVision.dataformat import DATA, DETECTIONS, FINISHED, METADATA, TRACK_ID
 from OTVision.helpers.files import denormalize_bbox, get_files, write_json
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import (
+from OTVision.track.legacy.iou import (
+    TrackedDetections,
+    TrackingResult,
+    id_generator,
+    track_iou,
+)
+from OTVision.track.legacy.preprocess import (
     FrameChunk,
     FrameChunkParser,
     FrameIndexer,
     Preprocess,
 )
-
-from .iou import TrackedDetections, TrackingResult, id_generator, track_iou
 
 log = logging.getLogger(LOGGER_NAME)
 

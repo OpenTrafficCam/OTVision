@@ -49,8 +49,7 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-
-from .iou_util import iou
+from OTVision.track.legacy.iou_util import iou
 
 
 class TrackedDetections:
