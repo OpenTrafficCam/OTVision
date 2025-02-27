@@ -57,6 +57,16 @@ class Detection:
             id,
         )
 
+    def to_otdet(self) -> dict:
+        return {
+            CLASS: self.label,
+            CONFIDENCE: self.conf,
+            X: self.x,
+            Y: self.y,
+            W: self.w,
+            H: self.h,
+        }
+
 
 @dataclass(frozen=True, repr=True)
 class TrackedDetection(Detection):

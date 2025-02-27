@@ -2,7 +2,9 @@ from datetime import timedelta
 from pathlib import Path
 
 from OTVision import dataformat, version
-from OTVision.track.preprocess import Detection
+from OTVision.track.model.detection import Detection
+
+# from OTVision.track.legacy.preprocess import Detection
 
 
 class OtdetBuilder:

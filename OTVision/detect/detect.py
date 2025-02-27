@@ -27,7 +27,14 @@ from pathlib import Path
 from tqdm import tqdm
 
 from OTVision.config import CONFIG, DEFAULT_FILETYPE, DETECT, FILETYPES, OVERWRITE, VID
-from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
+from OTVision.dataformat import (
+    DATA,
+    LENGTH,
+    METADATA,
+    OCCURRENCE,
+    RECORDED_START_DATE,
+    VIDEO,
+)
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import Yolov8
 from OTVision.helpers.date import parse_date_string_to_utc_datime
@@ -40,7 +47,6 @@ from OTVision.helpers.files import (
 )
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
-from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
 
