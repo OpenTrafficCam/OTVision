@@ -40,12 +40,7 @@ from OTVision.helpers.files import (
     write_json,
 )
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.helpers.video import (
-    convert_seconds_to_frames,
-    get_duration,
-    get_fps,
-    get_video_dimensions,
-)
+from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
@@ -114,20 +109,8 @@ class OTVisionDetect:
             log.info(f"Detect {video_file}")
 
             video_fps = get_fps(video_file)
-            detect_start_in_frames = convert_seconds_to_frames(
-                self.config.detect.detect_start, video_fps
-            )
-            detect_end_in_frames = convert_seconds_to_frames(
-                self.config.detect.detect_end, video_fps
-            )
             model = self._get_model()
-            detections = list(
-                model.detect(
-                    file=video_file,
-                    detect_start=detect_start_in_frames,
-                    detect_end=detect_end_in_frames,
-                )
-            )
+            detections = list(model.detect(file=video_file))
 
             video_width, video_height = get_video_dimensions(video_file)
             actual_duration = get_duration(video_file)

@@ -35,6 +35,7 @@ from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
+from OTVision.helpers.video import convert_seconds_to_frames, get_fps
 from OTVision.track.preprocess import Detection
 
 DISPLAYMATRIX = "DISPLAYMATRIX"
@@ -90,16 +91,11 @@ class ObjectDetection(ABC):
     def detect(
         self,
         file: Path,
-        detect_start: int | None = None,
-        detect_end: int | None = None,
     ) -> Generator[list[Detection], None, None]:
         """Runs object detection on a video.
+
         Args:
             file (Path): the path to the video.
-            detect_start (int | None, optional): Start of the detection range
-                expressed in frames.
-            detect_end (int | None, optional): End of the detection range
-                expressed in frames. Defaults to None.
 
         Returns:
             Generator[list[list[Detection], None, None]: nested list of detections.
@@ -156,6 +152,22 @@ class Yolov8(ObjectDetection):
     def weights(self) -> str:
         return self._model.model_name
 
+    @property
+    def detect_start(self) -> int | None:
+        """Start of the detection range expressed in seconds.
+
+        Value `None` marks the start from the beginning of the video.
+        """
+        return self._detect_start
+
+    @property
+    def detect_end(self) -> int | None:
+        """End of the detection range expressed in seconds.
+
+        Value `None` marks the end of the video.
+        """
+        return self._detect_end
+
     def __init__(
         self,
         model: YOLOv8,
@@ -166,6 +178,8 @@ class Yolov8(ObjectDetection):
         normalized: bool,
         frame_rotator: AvVideoFrameRotator,
         get_number_of_frames: Callable[[Path], int] = video.get_number_of_frames,
+        detect_start: int | None = None,
+        detect_end: int | None = None,
     ) -> None:
         self._model = model
         self._confidence = confidence
@@ -175,6 +189,8 @@ class Yolov8(ObjectDetection):
         self._normalized = normalized
         self._frame_rotator = frame_rotator
         self._get_number_of_frames = get_number_of_frames
+        self._detect_start = detect_start
+        self._detect_end = detect_end
 
     def configure_with(self, config: DetectConfig) -> Self:
         self._confidence = config.yolo_config.conf
@@ -182,7 +198,15 @@ class Yolov8(ObjectDetection):
         self._img_size = config.yolo_config.img_size
         self._half_precision = config.half_precision
         self._normalized = config.yolo_config.normalized
+        self._detect_start = config.detect_start
+        self._detect_end = config.detect_end
         return self
+
+    def _convert_seconds_to_frame(
+        self, seconds: int | None, video_file: Path
+    ) -> int | None:
+        video_fps = get_fps(video_file)
+        return convert_seconds_to_frames(seconds, video_fps)
 
     @property
     def classifications(self) -> dict[int, str]:
@@ -197,22 +221,21 @@ class Yolov8(ObjectDetection):
             else self._model.predictor.model.names
         )
 
-    def detect(
-        self, file: Path, detect_start: int | None = None, detect_end: int | None = None
-    ) -> Generator[list[Detection], None, None]:
+    def detect(self, file: Path) -> Generator[list[Detection], None, None]:
         length = self._get_number_of_frames(file)
         for prediction_result in tqdm(
-            self._predict(file, detect_start, detect_end),
+            self._predict(file),
             desc="Detected frames",
             unit=" frames",
             total=length,
         ):
             yield prediction_result
 
-    def _predict(
-        self, video: Path, detect_start: int | None, detect_end: int | None
-    ) -> Generator[list[Detection], None, None]:
+    def _predict(self, video: Path) -> Generator[list[Detection], None, None]:
         start = 0
+        detect_start = self._convert_seconds_to_frame(self._detect_start, video)
+        detect_end = self._convert_seconds_to_frame(self._detect_end, video)
+
         if detect_start is not None:
             start = detect_start
 

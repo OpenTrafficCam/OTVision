@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from cv2 import VideoCapture
@@ -7,6 +7,8 @@ from torch import Tensor
 
 from OTVision.detect.yolo import Yolov8
 from OTVision.track.preprocess import Detection
+
+FPS = 20
 
 
 @pytest.fixture
@@ -68,14 +70,15 @@ class TestConvertDetections:
 
 
 class TestObjectDetection:
+    @patch("OTVision.detect.yolo.get_fps", return_value=FPS)
     @patch("OTVision.detect.yolo.Yolov8._parse_detections")
     @patch("OTVision.detect.yolo.av")
     def test_detection_start_and_end_are_considered(
-        self, mock_av: Mock, mock_parse_detections: Mock
+        self, mock_av: Mock, mock_parse_detections: Mock, mock_get_fps: Mock
     ) -> None:
         detect_start = 300
         detect_end = 600
-        total_frames = 900
+        total_frames = 18000
         file = Path("path/to/video.mp4")
         frame_rotator = Mock()
         yolo_model = Mock()
@@ -103,17 +106,20 @@ class TestObjectDetection:
             normalized=False,
             frame_rotator=frame_rotator,
             get_number_of_frames=get_number_of_frames,
+            detect_start=detect_start,
+            detect_end=detect_end,
         )
-        actual = list(target.detect(file, detect_start, detect_end))
+        actual = list(target.detect(file))
 
         mock_av.open.assert_called_once_with(str(file.absolute()))
         context_manager_container.decode.assert_called_once_with(video=0)
         self.assert_detections_are_correct(
-            actual, parsed_detection, detect_start, detect_end
+            actual, parsed_detection, detect_start * FPS, detect_end * FPS
         )
-        assert frame_rotator.rotate.call_count == 300
-        assert yolo_model.predict.call_count == 300
-        assert mock_parse_detections.call_count == 300
+        assert frame_rotator.rotate.call_count == 6000
+        assert yolo_model.predict.call_count == 6000
+        assert mock_parse_detections.call_count == 6000
+        assert mock_get_fps.call_args_list == [call(file), call(file)]
 
     def assert_detections_are_correct(
         self,
