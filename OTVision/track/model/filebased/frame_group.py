@@ -3,6 +3,8 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 
+from tqdm import tqdm
+
 
 def get_output_file(file: Path, with_suffix: str) -> Path:
     return file.with_suffix(with_suffix)
@@ -15,7 +17,7 @@ class FrameGroup:
     end_date: datetime
     hostname: str
     files: list[Path]
-    metadata_by_file: dict[Path, dict]  # TODO originally key is posix, why?
+    metadata_by_file: dict[Path, dict]
 
     def merge(self, other: "FrameGroup") -> "FrameGroup":
         if self.start_date < other.start_date:
@@ -65,7 +67,9 @@ class FrameGroup:
 class FrameGroupParser(ABC):
 
     def process_all(self, files: list[Path]) -> list[FrameGroup]:
-        parsed: list[FrameGroup] = [self.parse(file) for file in files]
+        files_progress = tqdm(files, desc="parse FrameGroups", total=len(files))
+
+        parsed: list[FrameGroup] = [self.parse(file) for file in files_progress]
         merged: list[FrameGroup] = self.merge(parsed)
         updated: list[FrameGroup] = [
             self.updated_metadata_copy(group).with_id(i)

@@ -3,6 +3,8 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Sequence
 
+from tqdm import tqdm
+
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
 from OTVision.track.model.filebased.frame_group import FrameGroup, get_output_file
 from OTVision.track.model.frame import (
@@ -83,7 +85,9 @@ class TrackedChunk(FrameChunk):
         object.__setattr__(self, "frame_group_id", frame_group_id)
 
         observed = set().union(*(f.observed_tracks for f in frames))
-        finished = set().union(*(f.finished_tracks for f in frames))
+        finished = set().union(
+            *(f.finished_tracks for f in frames)
+        )  # TODO remove discarded?
         discarded = set().union(*(f.discarded_tracks for f in frames))
         unfinished = {o for o in observed if o not in finished and o not in discarded}
 
@@ -149,6 +153,12 @@ class TrackedChunk(FrameChunk):
             frame_group_id=self.frame_group_id,
         )
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __str__(self) -> str:
+        return f"FG [{self.frame_group_id}] - {self.file}"
+
 
 @dataclass(frozen=True)
 class FinishedChunk(TrackedChunk):
@@ -162,11 +172,15 @@ class FinishedChunk(TrackedChunk):
     frames: Sequence[FinishedFrame[Path]]
 
     def to_detection_dicts(self) -> list[dict]:
-        chunk_metadata = {INPUT_FILE_PATH: self.file.as_posix()}  # TODO posix here?
+        chunk_metadata = {INPUT_FILE_PATH: self.file.as_posix()}
+
+        frames_progress = tqdm(
+            self.frames, desc="Frames to_dict", total=len(self.frames), leave=False
+        )
 
         detection_dict_list = [
             {**det_dict, **chunk_metadata}
-            for frame in self.frames
+            for frame in frames_progress
             for det_dict in frame.to_detection_dicts()
         ]
 

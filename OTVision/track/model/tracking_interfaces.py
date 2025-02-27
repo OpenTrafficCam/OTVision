@@ -156,6 +156,18 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         pass
 
     @abstractmethod
+    def _get_last_frame_of_container(self, container: C) -> FrameNo:
+        """The last FrameNo of the given container.
+
+        Args:
+            container (C): newly tracked TrackedDetection container
+
+        Returns:
+            FrameNo: last FrameNo of the given container
+        """
+        pass
+
+    @abstractmethod
     def _finish(
         self,
         container: C,
@@ -182,10 +194,11 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         for container in containers:
 
             # if track is observed in current iteration, update its last observed frame
-            self._merged_last_track_frame.update(self._get_last_track_frames(container))
-            self._unfinished_containers.append(
-                (container, self._get_unfinished_tracks(container))
-            )
+            new_last_track_frames = self._get_last_track_frames(container)
+            self._merged_last_track_frame.update(new_last_track_frames)
+
+            newly_unfinished_tracks = self._get_unfinished_tracks(container)
+            self._unfinished_containers.append((container, newly_unfinished_tracks))
 
             # update unfinished track ids of previously tracked containers
             # if containers have no pending tracks, make ready for finishing
@@ -206,6 +219,7 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
                 for c, u in self._unfinished_containers
                 if c not in ready_containers
             ]
+
             finished_containers: list[F] = self._finish_containers(ready_containers)
             yield from finished_containers
 
@@ -218,31 +232,39 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         yield from finished_containers
 
     def _finish_containers(self, containers: list[C]) -> list[F]:
-        # TODO sort containers by occurrence / start date?
+        if len(containers) == 0:
+            return []
+
         is_last: IsLastFrame = (
             lambda frame_no, track_id: frame_no
             == self._merged_last_track_frame[track_id]
         )
         keep = self._keep_discarded
         discarded = self._discarded_tracks
+
         finished_containers: list[F] = [
             self._finish(c, is_last, discarded, keep) for c in containers
         ]
 
-        # the last frame of the observed tracks have been marked
-        # track ids no longer required in _merged_last_track_frame
-        cleanup_track_ids = (
-            set()
-            .union(*(self._get_observed_tracks(c) for c in containers))
-            .union(*(self._get_newly_finished_tracks(c) for c in containers))
-            .union(*(self._get_newly_discarded_tracks(c) for c in containers))
+        # todo check if there are edge cases where track ids in merged_last_track_frame
+        # have frame no below containers last frame,
+        # but might appear in following containers
+        last_frame_of_container = max(
+            self._get_last_frame_of_container(c) for c in containers
         )
+        ids_to_delete = [
+            track_id
+            for track_id, frame_no in self._merged_last_track_frame.items()
+            if frame_no <= last_frame_of_container
+        ]
+
         self._merged_last_track_frame = {
             track_id: frame_no
             for track_id, frame_no in self._merged_last_track_frame.items()
-            if track_id not in cleanup_track_ids
+            if track_id not in ids_to_delete
         }
-        self._discarded_tracks.difference_update(cleanup_track_ids)
+        self._discarded_tracks.difference_update(ids_to_delete)
+        # self._finished_tracks.difference_update(ids_to_delete)
 
         return finished_containers
 
@@ -274,6 +296,9 @@ class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame[S], FinishedFra
 
     def _get_newly_discarded_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
         return container.discarded_tracks
+
+    def _get_last_frame_of_container(self, container: TrackedFrame[S]) -> FrameNo:
+        return container.no
 
     def _finish(
         self,

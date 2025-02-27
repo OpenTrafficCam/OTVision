@@ -2,6 +2,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from tqdm import tqdm
+
 from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
@@ -35,9 +37,8 @@ class JsonChunkParser(ChunkParser):
 
         denormalized = denormalize_bbox(
             json, file, metadata={file.as_posix(): metadata}
-        )  # TODO check as posix is correct here
+        )
         input: dict[int, dict[str, Any]] = denormalized[DATA]
-        # TODO metadata = denormalized[METADATA] should not be necessary
 
         frames = self.convert(file, frame_offset, input)
 
@@ -49,7 +50,11 @@ class JsonChunkParser(ChunkParser):
     ) -> list[Frame[Path]]:
         detection_parser = DetectionParser()
         frames = []
-        for key, value in input.items():
+
+        input_progress = tqdm(
+            input.items(), desc="parse Frames", total=len(input), leave=False
+        )
+        for key, value in input_progress:
             occurrence: datetime = parse_datetime(value[OCCURRENCE])
             data_detections = value[DETECTIONS]
             detections = detection_parser.convert(data_detections)

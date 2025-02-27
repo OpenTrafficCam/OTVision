@@ -50,7 +50,11 @@ class ChunkBasedTracker(Tracker[Path]):
         is_last_chunk: bool,
         id_generator: ID_GENERATOR,
     ) -> TrackedChunk:
-        tracked_frames = self.track(iter(chunk.frames), id_generator)
+        frames_progress = tqdm(
+            chunk.frames, desc="track Frame", total=len(chunk.frames), leave=False
+        )
+
+        tracked_frames = self.track(iter(frames_progress), id_generator)
         return TrackedChunk(
             file=chunk.file,
             frames=list(tracked_frames),
@@ -98,7 +102,15 @@ class GroupedFilesTracker(ChunkBasedTracker):
 
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group
-        file_stream = peekable(tqdm(group.files))
+        file_stream = peekable(
+            tqdm(
+                group.files,
+                desc="track FrameChunk",
+                total=len(group.files),
+                leave=False,
+            )
+        )
+
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
 
@@ -111,7 +123,10 @@ class GroupedFilesTracker(ChunkBasedTracker):
     def group_and_track_files(self, files: list[Path]) -> Iterator[TrackedChunk]:
         processed = self._group_parser.process_all(files)
 
-        for group in processed:
+        processed_progress = tqdm(
+            processed, desc="track FrameGroup", total=len(processed), leave=False
+        )
+        for group in processed_progress:
             yield from self.track_group(group)
 
     def check_skip_due_to_existing_output_files(self, group: FrameGroup) -> bool:
@@ -141,8 +156,13 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
         self.tracker = tracker
 
     def group_and_track(self, files: list[Path]) -> Iterator[FinishedChunk]:
-        tracked_chunk_stream = self.tracker.group_and_track_files(files)
-        return self.track_and_finish(tracked_chunk_stream)
+        processed = self.tracker._group_parser.process_all(files)
+
+        processed_progress = tqdm(
+            processed, desc="track FrameGroup", total=len(processed), leave=False
+        )
+        for group in processed_progress:
+            yield from self.track_group(group)
 
     def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
         tracked_chunk_stream = self.tracker.track_group(group)
@@ -162,6 +182,10 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
 
     def _get_newly_discarded_tracks(self, container: TrackedChunk) -> set[TrackId]:
         return container.discarded_tracks
+
+    def _get_last_frame_of_container(self, container: TrackedChunk) -> FrameNo:
+        return max(frame.no for frame in container.frames)
+        # todo faster implementation if sorted or save as metadata?
 
     def _finish(
         self,

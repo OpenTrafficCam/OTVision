@@ -3,9 +3,12 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generic, Iterator, TypeVar
 
-from OTVision.config import CONFIG, DEFAULT_FILETYPE, DETECTIONS, TRACK
+from tqdm import tqdm
+
+from OTVision.config import CONFIG, DEFAULT_FILETYPE, TRACK
 from OTVision.dataformat import (
     DATA,
+    DETECTIONS,
     FRAME,
     FRAME_GROUP,
     INPUT_FILE_PATH,
@@ -76,15 +79,24 @@ class FinishedTracksExporter(ABC, Generic[F]):
     @staticmethod
     def reindex(det_dicts: list[dict]) -> list[dict]:
         min_frame_no = min(det[FRAME] for det in det_dicts)
+
+        det_dicts_progress = tqdm(
+            det_dicts,
+            desc="reindex TrackedDetections",
+            total=len(det_dicts),
+            leave=False,
+        )
         reindexed_dets = [
-            {**det, **{FRAME: det[FRAME] - min_frame_no}}
-            for det in det_dicts  # TODO is 0 or 1 the first desired index
+            {**det, **{FRAME: det[FRAME] - min_frame_no + 1}}
+            for det in det_dicts_progress
         ]
 
         if len(reindexed_dets) == 0:
             return []
 
-        assert len({detection[INPUT_FILE_PATH] for detection in reindexed_dets}) == 1
+        assert (
+            len({detection[INPUT_FILE_PATH] for detection in reindexed_dets}) == 1
+        ), "Expect detections from only a single source file"
 
         reindexed_dets.sort(
             key=lambda detection: (
