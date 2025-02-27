@@ -108,6 +108,19 @@ class Yolov8(ObjectDetection):
     def config(self) -> DetectConfig:
         return self._config
 
+    @property
+    def classifications(self) -> dict[int, str]:
+        """The model's classes that it is able to predict.
+
+        Returns:
+            dict[int, str]: the classes
+        """
+        return (
+            self._model.names
+            if self._model.names is not None
+            else self._model.predictor.model.names
+        )
+
     def __init__(
         self,
         model: YOLOv8,
@@ -130,19 +143,6 @@ class Yolov8(ObjectDetection):
     ) -> int | None:
         video_fps = get_fps(video_file)
         return convert_seconds_to_frames(seconds, video_fps)
-
-    @property
-    def classifications(self) -> dict[int, str]:
-        """The model's classes that it is able to predict.
-
-        Returns:
-            dict[int, str]: the classes
-        """
-        return (
-            self._model.names
-            if self._model.names is not None
-            else self._model.predictor.model.names
-        )
 
     def detect(self, file: Path) -> Generator[list[Detection], None, None]:
         length = self._get_number_of_frames(file)
