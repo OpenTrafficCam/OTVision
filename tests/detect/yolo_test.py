@@ -5,6 +5,7 @@ import pytest
 from cv2 import VideoCapture
 from torch import Tensor
 
+from OTVision.config import DetectConfig
 from OTVision.detect.yolo import Yolov8
 from OTVision.track.preprocess import Detection
 
@@ -54,11 +55,7 @@ class TestConvertDetections:
 
         model = Yolov8(
             model=mock_yolo,
-            confidence=0.25,
-            iou=0.25,
-            img_size=640,
-            half_precision=False,
-            normalized=False,
+            config=Mock(),
             frame_rotator=Mock(),
         )
 
@@ -97,17 +94,13 @@ class TestObjectDetection:
         mock_parse_detections.return_value = parsed_detection
         get_number_of_frames = Mock(return_value=total_frames)
 
+        config = DetectConfig(detect_start=detect_start, detect_end=detect_end)
+
         target = Yolov8(
             model=yolo_model,
-            confidence=0.25,
-            iou=0.25,
-            img_size=640,
-            half_precision=False,
-            normalized=False,
+            config=config,
             frame_rotator=frame_rotator,
             get_number_of_frames=get_number_of_frames,
-            detect_start=detect_start,
-            detect_end=detect_end,
         )
         actual = list(target.detect(file))
 

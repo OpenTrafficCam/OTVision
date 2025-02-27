@@ -59,32 +59,17 @@ class ObjectDetection(ABC):
 
     @property
     @abstractmethod
+    def config(self) -> DetectConfig:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def classifications(self) -> dict[int, str]:
         """The model's classes that it is able to predict.
 
         Returns:
             dict[int, str]: the classes
         """
-        raise NotImplementedError
-
-    @property
-    def confidence(self) -> float:
-        raise NotImplementedError
-
-    @property
-    def iou(self) -> float:
-        raise NotImplementedError
-
-    @property
-    def img_size(self) -> int:
-        raise NotImplementedError
-
-    @property
-    def half_precision(self) -> bool:
-        raise NotImplementedError
-
-    @property
-    def normalized(self) -> bool:
         raise NotImplementedError
 
     @abstractmethod
@@ -107,99 +92,37 @@ class ObjectDetection(ABC):
     def configure_with(self, config: DetectConfig) -> Self:
         raise NotImplementedError
 
-    @property
-    def weights(self) -> str:
-        raise NotImplementedError
-
 
 class Yolov8(ObjectDetection):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
         model: (YOLOv8):  the YOLOv8 model to use for prediction.
-        confidence (float): the confidence threshold.
-        iou (float): the IOU threshold.
-        img_size (int): the YOLOv8 img size.
-        half_precision (bool): Whether to use half precision (FP16) for inference speed
-            up.
-        normalized (bool): Whether the bounding boxes are to be returned normalized.
+        config (DetectConfig): the configuration to use for prediction.
         frame_rotator: (AvVideoFrameRotator): use case to use rotate video frames.
         get_number_of_frames: (Callable[[Path], int]): function to get the total number
             of frames of a video.
     """
 
     @property
-    def confidence(self) -> float:
-        return self._confidence
-
-    @property
-    def iou(self) -> float:
-        return self._iou
-
-    @property
-    def img_size(self) -> int:
-        return self._img_size
-
-    @property
-    def half_precision(self) -> bool:
-        return self._half_precision
-
-    @property
-    def normalized(self) -> bool:
-        return self._normalized
-
-    @property
-    def weights(self) -> str:
-        return self._model.model_name
-
-    @property
-    def detect_start(self) -> int | None:
-        """Start of the detection range expressed in seconds.
-
-        Value `None` marks the start from the beginning of the video.
-        """
-        return self._detect_start
-
-    @property
-    def detect_end(self) -> int | None:
-        """End of the detection range expressed in seconds.
-
-        Value `None` marks the end of the video.
-        """
-        return self._detect_end
+    def config(self) -> DetectConfig:
+        return self._config
 
     def __init__(
         self,
         model: YOLOv8,
-        confidence: float,
-        iou: float,
-        img_size: int,
-        half_precision: bool,
-        normalized: bool,
         frame_rotator: AvVideoFrameRotator,
+        config: DetectConfig,
         get_number_of_frames: Callable[[Path], int] = video.get_number_of_frames,
-        detect_start: int | None = None,
-        detect_end: int | None = None,
     ) -> None:
         self._model = model
-        self._confidence = confidence
-        self._iou = iou
-        self._img_size = img_size
-        self._half_precision = half_precision
-        self._normalized = normalized
         self._frame_rotator = frame_rotator
         self._get_number_of_frames = get_number_of_frames
-        self._detect_start = detect_start
-        self._detect_end = detect_end
+        self._config = config
+        self.configure_with(config)
 
     def configure_with(self, config: DetectConfig) -> Self:
-        self._confidence = config.yolo_config.conf
-        self._iou = config.yolo_config.iou
-        self._img_size = config.yolo_config.img_size
-        self._half_precision = config.half_precision
-        self._normalized = config.yolo_config.normalized
-        self._detect_start = config.detect_start
-        self._detect_end = config.detect_end
+        self._config = config
         return self
 
     def _convert_seconds_to_frame(
@@ -233,8 +156,8 @@ class Yolov8(ObjectDetection):
 
     def _predict(self, video: Path) -> Generator[list[Detection], None, None]:
         start = 0
-        detect_start = self._convert_seconds_to_frame(self._detect_start, video)
-        detect_end = self._convert_seconds_to_frame(self._detect_end, video)
+        detect_start = self._convert_seconds_to_frame(self.config.detect_start, video)
+        detect_end = self._convert_seconds_to_frame(self.config.detect_end, video)
 
         if detect_start is not None:
             start = detect_start
@@ -249,10 +172,10 @@ class Yolov8(ObjectDetection):
                     rotated_image = self._frame_rotator.rotate(frame, side_data)
                     results = self._model.predict(
                         source=rotated_image,
-                        conf=self.confidence,
-                        iou=self.iou,
-                        half=self.half_precision,
-                        imgsz=self.img_size,
+                        conf=self.config.yolo_config.conf,
+                        iou=self.config.yolo_config.iou,
+                        half=self.config.half_precision,
+                        imgsz=self.config.yolo_config.img_size,
                         device=0 if torch.cuda.is_available() else "cpu",
                         stream=False,
                         verbose=False,
@@ -264,7 +187,11 @@ class Yolov8(ObjectDetection):
                     yield []
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
-        bboxes = detection_result.xywhn if self.normalized else detection_result.xywh
+        bboxes = (
+            detection_result.xywhn
+            if self._config.yolo_config.normalized
+            else detection_result.xywh
+        )
         detections: list[Detection] = []
         for bbox, class_idx, confidence in zip(
             bboxes, detection_result.cls, detection_result.conf
@@ -310,8 +237,9 @@ class ObjectDetectionCachedFactory(ObjectDetectionFactory):
         return model
 
     def __add_to_cache(self, model: ObjectDetection) -> None:
-        if not self.__cache.get(model.weights):
-            self.__cache[model.weights] = model
+        weights = model.config.yolo_config.weights
+        if not self.__cache.get(weights):
+            self.__cache[weights] = model
 
     def __remove_from_cache(self, weights: str) -> None:
         if self.__cache.get(weights):
@@ -348,11 +276,12 @@ class YoloFactory(ObjectDetectionFactory):
         is_custom = Path(weights).is_file()
         model = Yolov8(
             model=self._load_model(weights),
-            confidence=config.yolo_config.conf,
-            iou=config.yolo_config.iou,
-            img_size=config.yolo_config.img_size,
-            half_precision=config.half_precision,
-            normalized=config.yolo_config.normalized,
+            config=config,
+            # confidence=config.yolo_config.conf,
+            # iou=config.yolo_config.iou,
+            # img_size=config.yolo_config.img_size,
+            # half_precision=config.half_precision,
+            # normalized=config.yolo_config.normalized,
             frame_rotator=AvVideoFrameRotator(),
         )
         t2 = perf_counter()

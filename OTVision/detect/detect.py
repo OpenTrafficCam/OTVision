@@ -121,8 +121,8 @@ class OTVisionDetect:
                 actual_fps = actual_frames / actual_duration.total_seconds()
             otdet = self._otdet_builder.add_config(
                 OtdetBuilderConfig(
-                    conf=model.confidence,
-                    iou=model.iou,
+                    conf=model.config.yolo_config.conf,
+                    iou=model.config.yolo_config.iou,
                     video=video_file,
                     video_width=video_width,
                     video_height=video_height,
@@ -130,10 +130,10 @@ class OTVisionDetect:
                     recorded_fps=video_fps,
                     actual_fps=actual_fps,
                     actual_frames=actual_frames,
-                    detection_img_size=model.img_size,
-                    normalized=model.normalized,
-                    detection_model=model.weights,
-                    half_precision=model.half_precision,
+                    detection_img_size=model.config.yolo_config.img_size,
+                    normalized=model.config.yolo_config.normalized,
+                    detection_model=model.config.yolo_config.weights,
+                    half_precision=model.config.half_precision,
                     chunksize=1,
                     classifications=model.classifications,
                     detect_start=self.config.detect.detect_start,
