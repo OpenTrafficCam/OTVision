@@ -260,6 +260,18 @@ class _YoloWeights:
 
 @dataclass(frozen=True)
 class YoloConfig:
+    """Represents the configuration for the YOLO model.
+
+    Attributes:
+        weights (str): Path to YOLO model weights.
+        available_weights (_YoloWeights): List of available default YOLO model weights.
+        conf (float): Confidence threshold.
+        iou (float): Intersection over union threshold.
+        img_size (int): Size of the input image.
+        chunk_size (int): Chunk size for processing.
+        normalized (bool): Whether to normalize the bounding boxes.
+    """
+
     weights: str = _YoloWeights.yolov8s
     available_weights: _YoloWeights = _YoloWeights()
     conf: float = 0.25
@@ -291,6 +303,23 @@ class YoloConfig:
 
 @dataclass(frozen=True)
 class DetectConfig:
+    """Represents the configuration for the `detect` command.
+
+    Attributes:
+        paths (list[Path]): List of  files to be processed.
+        run_chained (bool): Whether to run chained commands.
+        yolo_config (YoloConfig): Configuration for the YOLO model.
+        expected_duration (timedelta | None): Expected duration of the video.
+            `None` if unknown.
+        overwrite (bool): Whether to overwrite existing files.
+        half_precision (bool): Whether to use half precision.
+        detect_start (int | None): Start frame for detection expressed in seconds.
+            Value `None` marks the start of the video.
+        detect_end (int | None): End frame for detection expressed in seconds.
+            Value `None` marks the end of the video.
+
+    """
+
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: YoloConfig = YoloConfig()
