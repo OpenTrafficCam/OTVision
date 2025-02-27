@@ -110,7 +110,7 @@ class OTVisionDetect:
 
             video_fps = get_fps(video_file)
             model = self._get_model()
-            detections = list(model.detect(file=video_file))
+            detections = list(model.detect(source=str(video_file)))
 
             video_width, video_height = get_video_dimensions(video_file)
             actual_duration = get_duration(video_file)

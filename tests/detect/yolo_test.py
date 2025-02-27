@@ -102,7 +102,7 @@ class TestObjectDetection:
             frame_rotator=frame_rotator,
             get_number_of_frames=get_number_of_frames,
         )
-        actual = list(target.detect(file))
+        actual = list(target.detect(str(file)))
 
         mock_av.open.assert_called_once_with(str(file.absolute()))
         context_manager_container.decode.assert_called_once_with(video=0)

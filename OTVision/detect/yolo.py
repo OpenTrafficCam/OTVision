@@ -73,14 +73,11 @@ class ObjectDetection(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def detect(
-        self,
-        file: Path,
-    ) -> Generator[list[Detection], None, None]:
+    def detect(self, source: str) -> Generator[list[Detection], None, None]:
         """Runs object detection on a video.
 
         Args:
-            file (Path): the path to the video.
+            source (str): the source to read frames from.
 
         Returns:
             Generator[list[list[Detection], None, None]: nested list of detections.
@@ -144,25 +141,30 @@ class Yolov8(ObjectDetection):
         video_fps = get_fps(video_file)
         return convert_seconds_to_frames(seconds, video_fps)
 
-    def detect(self, file: Path) -> Generator[list[Detection], None, None]:
-        length = self._get_number_of_frames(file)
+    def detect(self, source: str) -> Generator[list[Detection], None, None]:
+        video_source = Path(source)
+        length = self._get_number_of_frames(video_source)
         for prediction_result in tqdm(
-            self._predict(file),
+            self._predict(video_source),
             desc="Detected frames",
             unit=" frames",
             total=length,
         ):
             yield prediction_result
 
-    def _predict(self, video: Path) -> Generator[list[Detection], None, None]:
+    def _predict(self, video_source: Path) -> Generator[list[Detection], None, None]:
         start = 0
-        detect_start = self._convert_seconds_to_frame(self.config.detect_start, video)
-        detect_end = self._convert_seconds_to_frame(self.config.detect_end, video)
+        detect_start = self._convert_seconds_to_frame(
+            self.config.detect_start, video_source
+        )
+        detect_end = self._convert_seconds_to_frame(
+            self.config.detect_end, video_source
+        )
 
         if detect_start is not None:
             start = detect_start
 
-        with av.open(str(video.absolute())) as container:
+        with av.open(str(video_source.absolute())) as container:
             container.streams.video[0].thread_type = "AUTO"
             side_data = container.streams.video[0].side_data
             for frame_number, frame in enumerate(container.decode(video=0), start=1):
