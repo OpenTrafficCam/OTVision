@@ -199,6 +199,9 @@ def track_iou(
                 ):
                     # tracks_finished.append(track)
                     vehIDs_finished.append(track[TRACK_ID])
+                # else:
+                #    print(f"Discard track {track[TRACK_ID]}")
+                # TODO find out how discarded tracks end up in ottrk files?!
         # TODO: Alter der Tracks
         # create new tracks
         new_tracks = []
