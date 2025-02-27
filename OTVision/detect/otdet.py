@@ -4,8 +4,6 @@ from pathlib import Path
 from OTVision import dataformat, version
 from OTVision.track.model.detection import Detection
 
-# from OTVision.track.legacy.preprocess import Detection
-
 
 class OtdetBuilder:
     def __init__(

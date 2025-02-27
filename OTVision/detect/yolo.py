@@ -45,8 +45,6 @@ from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.model.detection import Detection
 
-# from OTVision.track.legacy.preprocess import Detection
-
 log = logging.getLogger(LOGGER_NAME)
 
 
