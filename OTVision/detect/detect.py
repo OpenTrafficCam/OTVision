@@ -116,10 +116,12 @@ class OTVisionDetect:
                 self.config.detect.detect_end, video_fps
             )
             model = self._get_model()
-            detections = model.detect(
-                file=video_file,
-                detect_start=detect_start_in_frames,
-                detect_end=detect_end_in_frames,
+            detections = list(
+                model.detect(
+                    file=video_file,
+                    detect_start=detect_start_in_frames,
+                    detect_end=detect_end_in_frames,
+                )
             )
 
             video_width, video_height = get_video_dimensions(video_file)

@@ -92,7 +92,7 @@ class ObjectDetection(ABC):
         file: Path,
         detect_start: int | None = None,
         detect_end: int | None = None,
-    ) -> list[list[Detection]]:
+    ) -> Generator[list[Detection], None, None]:
         """Runs object detection on a video.
         Args:
             file (Path): the path to the video.
@@ -102,8 +102,8 @@ class ObjectDetection(ABC):
                 expressed in frames. Defaults to None.
 
         Returns:
-            list[list[Detection]]: nested list of detections. First level is frames,
-            second level is detections within frame
+            Generator[list[list[Detection], None, None]: nested list of detections.
+                First level is frames, second level is detections within frame.
         """
         raise NotImplementedError
 
@@ -199,7 +199,7 @@ class Yolov8(ObjectDetection):
 
     def detect(
         self, file: Path, detect_start: int | None = None, detect_end: int | None = None
-    ) -> list[list[Detection]]:
+    ) -> Generator[list[Detection], None, None]:
         """Run object detection on video and return detection result.
 
         Args:
@@ -210,9 +210,9 @@ class Yolov8(ObjectDetection):
                 Defaults to None.
 
         Returns:
-            list[list[Detection]]: the detections for each frame in the video
+            Generator[list[list[Detection], None, None]: the detections for each frame
+                in the video.
         """
-        frames: list[list[Detection]] = []
         length = self._get_number_of_frames(file)
         for prediction_result in tqdm(
             self._predict(file, detect_start, detect_end),
@@ -220,9 +220,7 @@ class Yolov8(ObjectDetection):
             unit=" frames",
             total=length,
         ):
-            frames.append(prediction_result)
-
-        return frames
+            yield prediction_result
 
     def _predict(
         self, video: Path, detect_start: int | None, detect_end: int | None
