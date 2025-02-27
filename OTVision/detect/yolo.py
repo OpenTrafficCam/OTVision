@@ -200,19 +200,6 @@ class Yolov8(ObjectDetection):
     def detect(
         self, file: Path, detect_start: int | None = None, detect_end: int | None = None
     ) -> Generator[list[Detection], None, None]:
-        """Run object detection on video and return detection result.
-
-        Args:
-            file (Path): the video to run object detection on.
-            detect_start (int | None, optional): Start of the detection range in frames.
-                Defaults to None.
-            detect_end (int | None, optional): End of the detection range in frames.
-                Defaults to None.
-
-        Returns:
-            Generator[list[list[Detection], None, None]: the detections for each frame
-                in the video.
-        """
         length = self._get_number_of_frames(file)
         for prediction_result in tqdm(
             self._predict(file, detect_start, detect_end),
