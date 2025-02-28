@@ -1,95 +1,95 @@
 ---
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: check-yaml
-      - id: check-json
-      - id: end-of-file-fixer
-        exclude_types:
-          - json
-      - id: trailing-whitespace
-      - id: no-commit-to-branch
-      - id: debug-statements
-      - id: requirements-txt-fixer
-      - id: check-executables-have-shebangs
-      - id: detect-private-key
-  - repo: local
-    hooks:
-      - id: update-type-stubs
-        name: Check for Type Stubs and Update Config
-        entry: python312 ./update_precommit.py
-        language: system
-        files: ^requirements.*\.txt$
-        stages:
-          - commit
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
-    hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args:
-          - --profile
-          - black
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.1
-    hooks:
-      - id: mypy
-        entry: mypy .
-        additional_dependencies:
-          - av==13.0.0
-          - black==24.8.0
-          - coremltools==8.2;
-          - fire==0.7.0
-          - hatch-requirements-txt==0.4.1
-          - ijson==3.3.0
-          - interrogate==1.5.0
-          - isort==5.13.2
-          - more-itertools==10.5.0
-          - moviepy==1.0.3
-          - mypy==1.11.1
-          - numpy==1.26.4
-          - opencv-python==4.9.0.80
-          - pandas-stubs==2.2.2.240807
-          - pandas==2.2.2
-          - pre-commit==3.8.0
-          - pytest-cov==5.0.0
-          - pytest==8.3.3
-          - torch==2.3.1
-          - torchvision==0.18.1
-          - twine==6.1.0
-          - types-PyYAML
-          - types-flake8
-          - types-geopandas
-          - types-jsonschema
-          - types-setuptools
-          - types-tqdm
-          - types-ujson
-          - ultralytics==8.3.74
-          - yamllint==1.35.1
-        always_run: true
-        pass_filenames: false
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args:
-          - -c=./.yamllint.yaml
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/pecigonzalo/pre-commit-shfmt
-    rev: v2.2.0
-    hooks:
-      - id: shell-fmt-docker
-        args:
-          - -i
-          - '2'
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.6.0
+      hooks:
+          - id: check-yaml
+          - id: check-json
+          - id: end-of-file-fixer
+            exclude_types:
+                - json
+          - id: trailing-whitespace
+          - id: no-commit-to-branch
+          - id: debug-statements
+          - id: requirements-txt-fixer
+          - id: check-executables-have-shebangs
+          - id: detect-private-key
+    - repo: local
+      hooks:
+          - id: update-type-stubs
+            name: Check for Type Stubs and Update Config
+            entry: ./update_precommit.py
+            language: system
+            files: ^requirements.*\.txt$
+            stages:
+                - commit
+    - repo: https://github.com/PyCQA/flake8
+      rev: 7.1.1
+      hooks:
+          - id: flake8
+    - repo: https://github.com/pycqa/isort
+      rev: 5.13.2
+      hooks:
+          - id: isort
+            args:
+                - --profile
+                - black
+    - repo: https://github.com/psf/black
+      rev: 24.8.0
+      hooks:
+          - id: black
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.11.1
+      hooks:
+          - id: mypy
+            entry: mypy .
+            additional_dependencies:
+                - av==13.0.0
+                - black==24.8.0
+                - coremltools==8.2;
+                - fire==0.7.0
+                - hatch-requirements-txt==0.4.1
+                - ijson==3.3.0
+                - interrogate==1.5.0
+                - isort==5.13.2
+                - more-itertools==10.5.0
+                - moviepy==1.0.3
+                - mypy==1.11.1
+                - numpy==1.26.4
+                - opencv-python==4.9.0.80
+                - pandas-stubs==2.2.2.240807
+                - pandas==2.2.2
+                - pre-commit==3.8.0
+                - pytest-cov==5.0.0
+                - pytest==8.3.3
+                - torch==2.3.1
+                - torchvision==0.18.1
+                - twine==6.1.0
+                - types-PyYAML
+                - types-flake8
+                - types-geopandas
+                - types-jsonschema
+                - types-setuptools
+                - types-tqdm
+                - types-ujson
+                - ultralytics==8.3.74
+                - yamllint==1.35.1
+            always_run: true
+            pass_filenames: false
+    - repo: https://github.com/adrienverge/yamllint.git
+      rev: v1.35.1
+      hooks:
+          - id: yamllint
+            args:
+                - -c=./.yamllint.yaml
+    - repo: https://github.com/koalaman/shellcheck-precommit
+      rev: v0.10.0
+      hooks:
+          - id: shellcheck
+    - repo: https://github.com/pecigonzalo/pre-commit-shfmt
+      rev: v2.2.0
+      hooks:
+          - id: shell-fmt-docker
+            args:
+                - -i
+                - "2"
