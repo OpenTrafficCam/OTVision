@@ -68,7 +68,7 @@ class TestConvertDetections:
 
 class TestObjectDetection:
     @patch("OTVision.detect.yolo.get_fps", return_value=FPS)
-    @patch("OTVision.detect.yolo.Yolov8._parse_detections")
+    @patch("OTVision.detect.yolo.YoloDetector._parse_detections")
     @patch("OTVision.detect.yolo.av")
     def test_detection_start_and_end_are_considered(
         self, mock_av: Mock, mock_parse_detections: Mock, mock_get_fps: Mock
