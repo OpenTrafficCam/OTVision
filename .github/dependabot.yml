@@ -9,6 +9,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+      day: "sunday"
     reviewers:
       - "briemla"
     assignees:
@@ -17,6 +18,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+      day: "sunday"
     reviewers:
       - "briemla"
     assignees:

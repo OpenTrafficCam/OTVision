@@ -1,4 +1,3 @@
-import unittest.mock as mock
 from pathlib import Path
 from typing import Callable
 from unittest.mock import Mock, patch
@@ -17,20 +16,28 @@ from OTVision.config import (
     PATHS,
     WEIGHTS,
     YOLO,
+    Config,
+    DetectConfig,
+    YoloConfig,
 )
+from OTVision.domain.cli import CliParseError
+
+
+def read_yaml(yaml_file: str) -> dict:
+    with open(yaml_file, "r") as stream:
+        return yaml.safe_load(stream)
+
 
 EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
 INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())
 
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
-with open(CUSTOM_CONFIG_FILE, "r") as file:
-    custom_config = yaml.safe_load(file)
+custom_config = read_yaml(CUSTOM_CONFIG_FILE)
 
 CWD_CONFIG_FILE = r"user_config.otvision.yaml"
-with open(CWD_CONFIG_FILE, "r") as file:
-    cwd_config = yaml.safe_load(file)
+cwd_config = read_yaml(CWD_CONFIG_FILE)
 
-LOGFILE_OVERWRITE_CMD = "--logfile_overwrite"
+LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
 
@@ -48,11 +55,13 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "imagesize": {PASSED: "--imagesize 1240", EXPECTED: 1240},
     "half_precision": {PASSED: "--half", EXPECTED: True},
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
     "config": {PASSED: ""},
+    "detect_start": {PASSED: "--detect-start 300", EXPECTED: 300},
+    "detect_end": {PASSED: "--detect-end 600", EXPECTED: 600},
 }
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
@@ -69,10 +78,12 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "imagesize": {PASSED: "--imagesize 320", EXPECTED: 320},
     "half_precision": {PASSED: "--no-half", EXPECTED: False},
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "detect_start": {PASSED: "--detect-start 300", EXPECTED: 300},
+    "detect_end": {PASSED: "--detect-end 600", EXPECTED: 600},
     "config": {PASSED: ""},
 }
 
@@ -87,10 +98,12 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
         EXPECTED: cwd_config[DETECT][HALF_PRECISION],
     },
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: cwd_config[DETECT][OVERWRITE]},
+    "detect_start": {PASSED: "", EXPECTED: None},
+    "detect_end": {PASSED: "", EXPECTED: None},
     "config": {PASSED: ""},
 }
 
@@ -111,15 +124,17 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
         EXPECTED: custom_config[DETECT][HALF_PRECISION],
     },
     "expected_duration": {
-        PASSED: f"--expected_duration {INPUT_EXPECTED_DURATION}",
+        PASSED: f"--expected-duration {INPUT_EXPECTED_DURATION}",
         EXPECTED: EXPECTED_DURATION,
     },
     "overwrite": {PASSED: "", EXPECTED: custom_config[DETECT][OVERWRITE]},
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
+    "detect_start": {PASSED: "", EXPECTED: None},
+    "detect_end": {PASSED: "", EXPECTED: None},
 }
 
 required_arguments = (
-    f"--expected_duration {INPUT_EXPECTED_DURATION} {LOGFILE_OVERWRITE_CMD}"
+    f"--expected-duration {INPUT_EXPECTED_DURATION} {LOGFILE_OVERWRITE_CMD}"
 )
 TEST_FAIL_DATA = [
     {
@@ -173,30 +188,6 @@ def detect_cli() -> Callable:
     return detect_cli
 
 
-@pytest.fixture
-def detect() -> Callable:
-    """Imports and returns the main from OTVision.detect.detect.py
-
-    Returns:
-        Callable: main from OTVision.detect.detect.py
-    """
-    from OTVision import detect
-
-    return detect
-
-
-@pytest.fixture
-def loadmodel() -> Callable:
-    """Imports and returns the main from OTVision.detect.detect.py
-
-    Returns:
-        Callable: loadmodel from OTVision.detect.yolo.py
-    """
-    from OTVision.detect.yolo import loadmodel
-
-    return loadmodel
-
-
 class TestDetectCLI:
     @pytest.mark.parametrize(
         argnames="test_data",
@@ -207,65 +198,40 @@ class TestDetectCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
-    def test_pass_detect_cli(
-        self,
-        test_data: dict,
-        detect_cli: Callable,
-        detect: Callable,
-        loadmodel: Callable,
-    ) -> None:
-        detect = mock.create_autospec(detect)
-        loadmodel = mock.create_autospec(loadmodel)
-        mock_model = Mock()
+    def test_pass_detect_cli(self, test_data: dict, detect_cli: Callable) -> None:
+        with patch("detect.OTVisionDetect") as mock_detect:
+            mock_detect_instance = Mock()
+            mock_detect.return_value = mock_detect_instance
+            command = [
+                *test_data["paths"][PASSED].split(),
+                *test_data["weights"][PASSED].split(),
+                *test_data["conf"][PASSED].split(),
+                *test_data["iou"][PASSED].split(),
+                *test_data["imagesize"][PASSED].split(),
+                *test_data["half_precision"][PASSED].split(),
+                *test_data["expected_duration"][PASSED].split(),
+                *test_data["overwrite"][PASSED].split(),
+                *test_data["config"][PASSED].split(),
+                *test_data["detect_start"][PASSED].split(),
+                *test_data["detect_end"][PASSED].split(),
+                LOGFILE_OVERWRITE_CMD,
+            ]
 
-        with patch("OTVision.detect") as mock_detect:
-            with patch("detect.loadmodel") as mock_loadmodel:
-                mock_loadmodel.return_value = mock_model
-                command = [
-                    *test_data["paths"][PASSED].split(),
-                    *test_data["weights"][PASSED].split(),
-                    *test_data["conf"][PASSED].split(),
-                    *test_data["iou"][PASSED].split(),
-                    *test_data["imagesize"][PASSED].split(),
-                    *test_data["half_precision"][PASSED].split(),
-                    *test_data["expected_duration"][PASSED].split(),
-                    *test_data["overwrite"][PASSED].split(),
-                    *test_data["config"][PASSED].split(),
-                    LOGFILE_OVERWRITE_CMD,
-                ]
+            detect_cli(argv=list(filter(None, command)))
+            expected_config = create_expected_config_from_test_data(test_data)
 
-                detect_cli(argv=list(filter(None, command)))
-
-                mock_loadmodel.assert_called_once_with(
-                    weights=test_data["weights"][EXPECTED],
-                    confidence=test_data["conf"][EXPECTED],
-                    iou=test_data["iou"][EXPECTED],
-                    img_size=test_data["imagesize"][EXPECTED],
-                    half_precision=test_data["half_precision"][EXPECTED],
-                    normalized=False,
-                )
-                assert mock_loadmodel.call_count == 1
-
-                assert mock_detect.call_args_list == [
-                    mock.call(
-                        model=mock_model,
-                        paths=test_data["paths"][EXPECTED],
-                        expected_duration=(test_data["expected_duration"][EXPECTED]),
-                        overwrite=test_data["overwrite"][EXPECTED],
-                    )
-                ]
+            mock_detect_instance.update_config.assert_called_once_with(expected_config)
+            mock_detect_instance.start.assert_called_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
         self,
         detect_cli: Callable,
-        detect: Callable,
         capsys: pytest.CaptureFixture,
         test_fail_data: dict,
     ) -> None:
-        detect = mock.create_autospec(detect)
 
-        with patch("OTVision.detect"):
+        with patch("detect.OTVisionDetect"):
             with pytest.raises(SystemExit) as e:
                 command = [*test_fail_data[PASSED].split()]
                 detect_cli(argv=list(filter(None, command)))
@@ -275,24 +241,95 @@ class TestDetectCLI:
 
     @pytest.mark.parametrize(PASSED, argvalues=["--config foo", "--paths foo"])
     def test_fail_not_existing_path_passed_to_detect_cli(
-        self, detect: Callable, detect_cli: Callable, passed: str
+        self, detect_cli: Callable, passed: str
     ) -> None:
-        detect = mock.create_autospec(detect)
-
-        with patch("OTVision.detect"):
+        with patch("detect.OTVisionDetect"):
             with pytest.raises(FileNotFoundError):
                 command = required_arguments.split() + [*passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
-    def test_fail_no_paths_passed_to_detect_cli(
-        self, detect: Callable, detect_cli: Callable
-    ) -> None:
-        detect = mock.create_autospec(detect)
-
-        with patch("OTVision.detect"):
+    def test_fail_no_paths_passed_to_detect_cli(self, detect_cli: Callable) -> None:
+        with patch("detect.OTVisionDetect"):
             error_msg = (
                 "No paths have been passed as command line args."
                 + "No paths have been defined in the user config."
             )
-            with pytest.raises(OSError, match=error_msg):
+            with pytest.raises(CliParseError, match=error_msg):
                 detect_cli(argv=required_arguments.split())
+
+
+def create_expected_config_from_test_data(test_data: dict) -> Config:
+    """
+    Create a Config object from the EXPECTED values of the provided test data
+    dictionary.
+
+    Args:
+        test_data (dict): The dictionary containing EXPECTED values for configuration.
+
+    Returns:
+        Config: A Config object populated with the relevant configuration values.
+    """
+
+    if config_file_arg := test_data["config"].get(PASSED):
+        default_config = Config.from_dict(read_yaml(config_file_arg.split()[1]))
+    else:
+        default_config = Config()
+
+    # Map EXPECTED values to DetectConfig's relevant fields
+    paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
+    weights = test_data["weights"].get(
+        EXPECTED, default_config.detect.yolo_config.weights
+    )
+    conf = test_data["conf"].get(EXPECTED, default_config.detect.yolo_config.conf)
+    iou = test_data["iou"].get(EXPECTED, default_config.detect.yolo_config.iou)
+    img_size = test_data["imagesize"].get(
+        EXPECTED, default_config.detect.yolo_config.img_size
+    )
+    half_precision = test_data["half_precision"].get(
+        EXPECTED, default_config.detect.half_precision
+    )
+    expected_duration = test_data["expected_duration"].get(
+        EXPECTED, default_config.detect.expected_duration
+    )
+    overwrite = test_data["overwrite"].get(EXPECTED, default_config.detect.overwrite)
+    detect_start = test_data["detect_start"].get(
+        EXPECTED, default_config.detect.detect_start
+    )
+    detect_end = test_data["detect_end"].get(EXPECTED, default_config.detect.detect_end)
+
+    # Ensure paths are converted to Path objects if necessary
+    paths = [Path(p).expanduser() for p in paths]
+
+    # Create YoloConfig using the extracted values
+    yolo_config = YoloConfig(
+        weights=weights,
+        conf=conf,
+        iou=iou,
+        img_size=img_size,
+        normalized=default_config.detect.yolo_config.normalized,
+    )
+
+    detect_config = DetectConfig(
+        paths=paths,
+        run_chained=default_config.detect.run_chained,
+        yolo_config=yolo_config,
+        expected_duration=expected_duration,
+        overwrite=overwrite,
+        half_precision=half_precision,
+        detect_start=detect_start,
+        detect_end=detect_end,
+    )
+
+    return Config(
+        log=default_config.log,
+        search_subdirs=default_config.search_subdirs,
+        default_filetype=default_config.default_filetype,
+        filetypes=default_config.filetypes,
+        last_paths=default_config.last_paths,
+        convert=default_config.convert,
+        detect=detect_config,
+        track=default_config.track,
+        undistort=default_config.undistort,
+        transform=default_config.transform,
+        gui=default_config.gui,
+    )

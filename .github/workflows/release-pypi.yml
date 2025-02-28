@@ -1,0 +1,55 @@
+---
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions: read-all
+
+env:
+  out_dir: "dist/"
+
+jobs:
+  test:
+    if: endsWith(github.event.base_ref, 'main')
+    uses: "./.github/workflows/test.yml"
+  publish-to-pypi:
+    runs-on: ubuntu-latest
+    needs:
+      - test
+    environment:
+      name: pypi
+      url: https://pypi.org/p/OTVision
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Update Python Package Version
+        uses: platomo/update-version-py-action@v1.0.1
+        with:
+          version: ${{ github.ref_name }}
+          file-path: "OTVision"
+      - name: Install pypa/build
+        shell: bash
+        run: |
+          python3 -m pip install build --user
+
+      - name: Build a binary wheel and a source tarball
+        shell: bash
+        run: python -m build --outdir ${{ env.out_dir }}
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: ${{ env.out_dir }}
+
+      - name: Publish distribution
+        uses: pypa/gh-action-pypi-publish@release/v1
