@@ -32,7 +32,8 @@ from ultralytics.engine.results import Boxes
 
 from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.domain.detect import Detection, ObjectDetector, ObjectDetectorFactory
+from OTVision.domain.detection import Detection
+from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import convert_seconds_to_frames, get_fps

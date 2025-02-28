@@ -6,7 +6,7 @@ import pytest
 from OTVision import dataformat, version
 from OTVision.dataformat import CLASS, CONFIDENCE, H, W, X, Y
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig, OtdetBuilderError
-from OTVision.domain.detect import Detection
+from OTVision.domain.detection import Detection
 
 
 def create_expected_video_metadata(config: OtdetBuilderConfig) -> dict:

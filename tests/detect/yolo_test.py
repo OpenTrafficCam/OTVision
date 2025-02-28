@@ -7,7 +7,7 @@ from torch import Tensor
 
 from OTVision.config import DetectConfig
 from OTVision.detect.yolo import YoloDetector
-from OTVision.domain.detect import Detection
+from OTVision.domain.detection import Detection
 
 FPS = 20
 

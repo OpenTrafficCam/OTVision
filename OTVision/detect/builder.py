@@ -14,7 +14,7 @@ from OTVision.detect.detect import OTVisionDetect
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import YoloFactory
 from OTVision.domain.cli import DetectCliParser
-from OTVision.domain.detect import ObjectDetectorFactory
+from OTVision.domain.object_detection import ObjectDetectorFactory
 
 
 class DetectBuilder:

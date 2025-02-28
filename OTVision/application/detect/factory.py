@@ -1,5 +1,5 @@
 from OTVision.config import DetectConfig
-from OTVision.domain.detect import ObjectDetector, ObjectDetectorFactory
+from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 
 
 class ObjectDetectorCachedFactory(ObjectDetectorFactory):

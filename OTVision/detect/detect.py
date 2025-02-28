@@ -30,7 +30,7 @@ from tqdm import tqdm
 from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
-from OTVision.domain.detect import ObjectDetector, ObjectDetectorFactory
+from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
     FILE_NAME_PATTERN,
