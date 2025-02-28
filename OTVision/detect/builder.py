@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from functools import cached_property
 
 from OTVision.application.configure_logger import ConfigureLogger
+from OTVision.application.detect.factory import ObjectDetectorCachedFactory
 from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
 from OTVision.application.detect.update_detect_config_with_cli_args import (
     UpdateDetectConfigWithCliArgs,
@@ -11,12 +12,9 @@ from OTVision.config import ConfigParser
 from OTVision.detect.cli import ArgparseDetectCliParser
 from OTVision.detect.detect import OTVisionDetect
 from OTVision.detect.otdet import OtdetBuilder
-from OTVision.detect.yolo import (
-    ObjectDetectorCachedFactory,
-    ObjectDetectorFactory,
-    YoloFactory,
-)
+from OTVision.detect.yolo import YoloFactory
 from OTVision.domain.cli import DetectCliParser
+from OTVision.domain.detect import ObjectDetectorFactory
 
 
 class DetectBuilder:

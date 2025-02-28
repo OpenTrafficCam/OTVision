@@ -20,7 +20,6 @@ OTVision module to detect objects using yolov5
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from abc import ABC, abstractmethod
 from pathlib import Path
 from time import perf_counter
 from typing import Callable, Generator, Self
@@ -33,7 +32,7 @@ from ultralytics.engine.results import Boxes
 
 from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.domain.detect import ObjectDetector
+from OTVision.domain.detect import ObjectDetector, ObjectDetectorFactory
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import convert_seconds_to_frames, get_fps
@@ -181,35 +180,6 @@ class Yolov8(ObjectDetector):
             w=width,
             h=height,
         )
-
-
-class ObjectDetectorFactory(ABC):
-    @abstractmethod
-    def create(self, config: DetectConfig) -> ObjectDetector:
-        raise NotImplementedError
-
-
-class ObjectDetectorCachedFactory(ObjectDetectorFactory):
-
-    def __init__(self, other: ObjectDetectorFactory) -> None:
-        self._other = other
-        self.__cache: dict[str, ObjectDetector] = {}
-
-    def create(self, config: DetectConfig) -> ObjectDetector:
-        if cached_model := self.__cache.get(config.yolo_config.weights):
-            return cached_model
-        model = self._other.create(config)
-        self.__add_to_cache(model)
-        return model
-
-    def __add_to_cache(self, model: ObjectDetector) -> None:
-        weights = model.config.yolo_config.weights
-        if not self.__cache.get(weights):
-            self.__cache[weights] = model
-
-    def __remove_from_cache(self, weights: str) -> None:
-        if self.__cache.get(weights):
-            del self.__cache[weights]
 
 
 class YoloFactory(ObjectDetectorFactory):

@@ -38,3 +38,9 @@ class ObjectDetector(ABC):
     @abstractmethod
     def configure_with(self, config: DetectConfig) -> Self:
         raise NotImplementedError
+
+
+class ObjectDetectorFactory(ABC):
+    @abstractmethod
+    def create(self, config: DetectConfig) -> ObjectDetector:
+        raise NotImplementedError
