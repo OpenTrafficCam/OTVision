@@ -174,10 +174,10 @@ class Yolov8(ObjectDetection):
                     rotated_image = self._frame_rotator.rotate(frame, side_data)
                     results = self._model.predict(
                         source=rotated_image,
-                        conf=self.config.yolo_config.conf,
-                        iou=self.config.yolo_config.iou,
+                        conf=self.config.confidence,
+                        iou=self.config.iou,
                         half=self.config.half_precision,
-                        imgsz=self.config.yolo_config.img_size,
+                        imgsz=self.config.img_size,
                         device=0 if torch.cuda.is_available() else "cpu",
                         stream=False,
                         verbose=False,
@@ -190,9 +190,7 @@ class Yolov8(ObjectDetection):
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
         bboxes = (
-            detection_result.xywhn
-            if self._config.yolo_config.normalized
-            else detection_result.xywh
+            detection_result.xywhn if self._config.normalized else detection_result.xywh
         )
         detections: list[Detection] = []
         for bbox, class_idx, confidence in zip(

@@ -320,6 +320,31 @@ class DetectConfig:
 
     """
 
+    @property
+    def confidence(self) -> float:
+        """Gets the confidence level set in the YOLO configuration.
+
+        Returns:
+            float: The intersection over union threshold value.
+        """
+        return self.yolo_config.conf
+
+    @property
+    def weights(self) -> str:
+        return self.yolo_config.weights
+
+    @property
+    def iou(self) -> float:
+        return self.yolo_config.iou
+
+    @property
+    def img_size(self) -> int:
+        return self.yolo_config.img_size
+
+    @property
+    def normalized(self) -> bool:
+        return self.yolo_config.normalized
+
     paths: list[Path] = field(default_factory=list)
     run_chained: bool = True
     yolo_config: YoloConfig = YoloConfig()
