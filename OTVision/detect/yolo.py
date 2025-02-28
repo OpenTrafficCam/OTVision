@@ -55,8 +55,8 @@ class YOLOv5ModelNotFoundError(Exception):
     pass
 
 
-class Yolov8(ObjectDetector):
-    """Wrapper to YOLOv8 object detection model.
+class YoloDetector(ObjectDetector):
+    """Wrapper to YOLO object detection model.
 
     Args:
         model: (YOLOv8):  the YOLOv8 model to use for prediction.
@@ -210,7 +210,7 @@ class YoloFactory(ObjectDetectorFactory):
         log.info(f"Try loading model {weights}")
         t1 = perf_counter()
         is_custom = Path(weights).is_file()
-        model = Yolov8(
+        model = YoloDetector(
             model=self._load_model(weights),
             config=config,
             # confidence=config.yolo_config.conf,

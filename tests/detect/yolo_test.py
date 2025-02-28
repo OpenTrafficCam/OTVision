@@ -6,7 +6,7 @@ from cv2 import VideoCapture
 from torch import Tensor
 
 from OTVision.config import DetectConfig
-from OTVision.detect.yolo import Yolov8
+from OTVision.detect.yolo import YoloDetector
 from OTVision.track.preprocess import Detection
 
 FPS = 20
@@ -53,7 +53,7 @@ class TestConvertDetections:
         mock_yolo = Mock().return_value
         mock_yolo.names = names
 
-        model = Yolov8(
+        model = YoloDetector(
             model=mock_yolo,
             config=Mock(),
             frame_rotator=Mock(),
@@ -96,7 +96,7 @@ class TestObjectDetection:
 
         config = DetectConfig(detect_start=detect_start, detect_end=detect_end)
 
-        target = Yolov8(
+        target = YoloDetector(
             model=yolo_model,
             config=config,
             frame_rotator=frame_rotator,
