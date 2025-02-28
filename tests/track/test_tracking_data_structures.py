@@ -21,7 +21,7 @@ from OTVision.track.model.detection import (
     FinishedDetection,
     TrackedDetection,
 )
-from OTVision.track.model.frame import Frame, IsLastFrame, TrackedFrame, TrackId
+from OTVision.track.model.frame import Frame, TrackedFrame, TrackId
 from tests.track.test_data_builder import DEFAULT_START_DATE, DataBuilder
 
 
@@ -219,7 +219,8 @@ class TestTrackedFrame:
             discarded_ids.update(frame.discarded_tracks)
             finished_ids.update(frame.finished_tracks)
 
-        is_last: IsLastFrame = lambda no, id: id in finished_ids
+        def is_last(no: int, id: int) -> bool:
+            return id in finished_ids
 
         for frame, ids in frames_and_ids:
             finished = frame.finish(is_last, discarded_ids, True)
@@ -240,7 +241,8 @@ class TestTrackedFrame:
             discarded_ids.update(frame.discarded_tracks)
             finished_ids.update(frame.finished_tracks)
 
-        is_last: IsLastFrame = lambda no, id: id in finished_ids
+        def is_last(no: int, id: int) -> bool:
+            return id in finished_ids
 
         for frame, ids in frames_and_ids:
             finished = frame.finish(is_last, discarded_ids, False)

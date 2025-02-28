@@ -235,10 +235,9 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         if len(containers) == 0:
             return []
 
-        is_last: IsLastFrame = (
-            lambda frame_no, track_id: frame_no
-            == self._merged_last_track_frame[track_id]
-        )
+        def is_last(frame_no: FrameNo, track_id: TrackId) -> bool:
+            return frame_no == self._merged_last_track_frame[track_id]
+
         keep = self._keep_discarded
         discarded = self._discarded_tracks
 
