@@ -6,7 +6,7 @@ import pytest
 
 from OTVision import dataformat, version
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig, OtdetBuilderError
-from OTVision.track.preprocess import Detection
+from OTVision.track.model.detection import Detection
 
 
 def create_expected_video_metadata(config: OtdetBuilderConfig) -> dict:
