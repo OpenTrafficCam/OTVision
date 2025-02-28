@@ -1,12 +1,12 @@
 from datetime import timedelta
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from OTVision import dataformat, version
+from OTVision.dataformat import CLASS, CONFIDENCE, H, W, X, Y
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig, OtdetBuilderError
-from OTVision.track.preprocess import Detection
+from OTVision.domain.detect import Detection
 
 
 def create_expected_video_metadata(config: OtdetBuilderConfig) -> dict:
@@ -63,9 +63,22 @@ def create_expected_data(
     data = {}
     for frame, detection_list in enumerate(detections, start=1):
         data[str(frame)] = {
-            dataformat.DETECTIONS: [d.to_otdet() for d in detection_list]
+            dataformat.DETECTIONS: [
+                create_expected_detection(d) for d in detection_list
+            ]
         }
     return data
+
+
+def create_expected_detection(detection: Detection) -> dict:
+    return {
+        CLASS: detection.label,
+        CONFIDENCE: detection.conf,
+        X: detection.x,
+        Y: detection.y,
+        W: detection.w,
+        H: detection.h,
+    }
 
 
 class TestOtdetBuilder:
@@ -98,14 +111,15 @@ class TestOtdetBuilder:
         )
 
     @pytest.fixture
-    def mock_detection(self) -> MagicMock:
-        """Fixture to provide a mocked Detection object."""
-        detection: MagicMock = MagicMock(spec=Detection)
-        detection.to_otdet.return_value = {
-            dataformat.CLASS: "person",
-            dataformat.CONFIDENCE: 0.9,
-        }
-        return detection
+    def detection(self) -> Detection:
+        return Detection(
+            label="person",
+            conf=0.9,
+            x=100,
+            y=200,
+            w=100,
+            h=200,
+        )
 
     def test_builder_without_config_raises_error(self, builder: OtdetBuilder) -> None:
         """Test that accessing config without setting it raises an error.
@@ -146,7 +160,7 @@ class TestOtdetBuilder:
         self,
         builder: OtdetBuilder,
         config: OtdetBuilderConfig,
-        mock_detection: MagicMock,
+        detection: Detection,
     ) -> None:
         """Test the data generation with detection objects.
 
@@ -155,8 +169,7 @@ class TestOtdetBuilder:
         """  # noqa
         builder.add_config(config)
 
-        # Provide mock detections as input
-        given: list[list[Detection]] = [[mock_detection] * 2, [mock_detection]]
+        given: list[list[Detection]] = [[detection] * 2, [detection]]
         actual = builder._build_data(given)
 
         expected = create_expected_data(given)
@@ -166,7 +179,7 @@ class TestOtdetBuilder:
         self,
         builder: OtdetBuilder,
         config: OtdetBuilderConfig,
-        mock_detection: MagicMock,
+        detection: Detection,
     ) -> None:
         """Test the full build method.
 
@@ -175,8 +188,7 @@ class TestOtdetBuilder:
         """  # noqa
         builder.add_config(config)
 
-        # Provide mock detections
-        given: list[list[Detection]] = [[mock_detection] * 3]
+        given: list[list[Detection]] = [[detection] * 3]
         actual = builder.build(given)
 
         expected_metadata = create_expected_metadata(config)

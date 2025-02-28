@@ -1,8 +1,26 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Generator, Self
 
 from OTVision.config import DetectConfig
-from OTVision.track.preprocess import Detection
+
+
+@dataclass(frozen=True, repr=True)
+class Detection:
+    label: str
+    conf: float
+    x: float
+    y: float
+    w: float
+    h: float
+
+
+@dataclass(frozen=True)
+class DetectedFrame:
+    frame: int
+    occurrence: datetime
+    detections: list[Detection]
 
 
 class ObjectDetector(ABC):

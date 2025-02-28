@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Self
 
 from OTVision import dataformat, version
-from OTVision.track.preprocess import Detection
+from OTVision.domain.detect import Detection
 
 
 @dataclass
@@ -68,9 +68,21 @@ class OtdetBuilder:
     def _build_data(self, frames: list[list[Detection]]) -> dict:
         data = {}
         for frame, detections in enumerate(frames, start=1):
-            converted_detections = [detection.to_otdet() for detection in detections]
+            converted_detections = [
+                self.__convert_detection(detection) for detection in detections
+            ]
             data[str(frame)] = {dataformat.DETECTIONS: converted_detections}
         return data
+
+    def __convert_detection(self, detection: Detection) -> dict:
+        return {
+            dataformat.CLASS: detection.label,
+            dataformat.CONFIDENCE: detection.conf,
+            dataformat.X: detection.x,
+            dataformat.Y: detection.y,
+            dataformat.W: detection.w,
+            dataformat.H: detection.h,
+        }
 
     def _build_video_config(self) -> dict:
         video_config = {
