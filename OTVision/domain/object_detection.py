@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Self
+from typing import Generator
 
 from OTVision.config import DetectConfig
 from OTVision.domain.detection import Detection
@@ -33,10 +33,6 @@ class ObjectDetector(ABC):
             Generator[list[list[Detection], None, None]: nested list of detections.
                 First level is frames, second level is detections within frame.
         """
-        raise NotImplementedError
-
-    @abstractmethod
-    def configure_with(self, config: DetectConfig) -> Self:
         raise NotImplementedError
 
 

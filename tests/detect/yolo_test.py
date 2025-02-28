@@ -55,7 +55,7 @@ class TestConvertDetections:
 
         model = YoloDetector(
             model=mock_yolo,
-            config=Mock(),
+            get_current_config=Mock(),
             frame_rotator=Mock(),
         )
 
@@ -85,6 +85,11 @@ class TestObjectDetection:
         rotated_frame = Mock()
         predicted_frame = Mock()
         parsed_detection = Mock()
+        get_current_config = Mock()
+
+        detect_config = DetectConfig(detect_start=detect_start, detect_end=detect_end)
+        config = Mock()
+        config.detect = detect_config
 
         mock_av.open.return_value = container
         container.__enter__.return_value = context_manager_container
@@ -93,12 +98,11 @@ class TestObjectDetection:
         yolo_model.predict.return_value = [predicted_frame]
         mock_parse_detections.return_value = parsed_detection
         get_number_of_frames = Mock(return_value=total_frames)
-
-        config = DetectConfig(detect_start=detect_start, detect_end=detect_end)
+        get_current_config.get.return_value = config
 
         target = YoloDetector(
             model=yolo_model,
-            config=config,
+            get_current_config=get_current_config,
             frame_rotator=frame_rotator,
             get_number_of_frames=get_number_of_frames,
         )

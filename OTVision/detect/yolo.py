@@ -22,7 +22,7 @@ OTVision module to detect objects using yolov5
 import logging
 from pathlib import Path
 from time import perf_counter
-from typing import Callable, Generator, Self
+from typing import Callable, Generator
 
 import av
 import torch
@@ -30,6 +30,7 @@ from tqdm import tqdm
 from ultralytics import YOLO as YOLOv8
 from ultralytics.engine.results import Boxes
 
+from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.domain.detection import Detection
@@ -64,7 +65,7 @@ class YoloDetector(ObjectDetector):
 
     @property
     def config(self) -> DetectConfig:
-        return self._config
+        return self._get_current_config.get().detect
 
     @property
     def classifications(self) -> dict[int, str]:
@@ -83,18 +84,13 @@ class YoloDetector(ObjectDetector):
         self,
         model: YOLOv8,
         frame_rotator: AvVideoFrameRotator,
-        config: DetectConfig,
+        get_current_config: GetCurrentConfig,
         get_number_of_frames: Callable[[Path], int] = video.get_number_of_frames,
     ) -> None:
         self._model = model
         self._frame_rotator = frame_rotator
+        self._get_current_config = get_current_config
         self._get_number_of_frames = get_number_of_frames
-        self._config = config
-        self.configure_with(config)
-
-    def configure_with(self, config: DetectConfig) -> Self:
-        self._config = config
-        return self
 
     def _convert_seconds_to_frame(
         self, seconds: int | None, video_file: Path
@@ -102,6 +98,7 @@ class YoloDetector(ObjectDetector):
         video_fps = get_fps(video_file)
         return convert_seconds_to_frames(seconds, video_fps)
 
+    # def detect(self, source: InputSource) -> Generator[list[Detection], None, None]:
     def detect(self, source: str) -> Generator[list[Detection], None, None]:
         video_source = Path(source)
         length = self._get_number_of_frames(video_source)
@@ -133,6 +130,7 @@ class YoloDetector(ObjectDetector):
                     detect_end is None or frame_number < detect_end
                 ):
                     rotated_image = self._frame_rotator.rotate(frame, side_data)
+                    # Ende input source (Producer) für InputSource
                     results = self._model.predict(
                         source=rotated_image,
                         conf=self.config.confidence,
@@ -151,7 +149,7 @@ class YoloDetector(ObjectDetector):
 
     def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
         bboxes = (
-            detection_result.xywhn if self._config.normalized else detection_result.xywh
+            detection_result.xywhn if self.config.normalized else detection_result.xywh
         )
         detections: list[Detection] = []
         for bbox, class_idx, confidence in zip(
@@ -179,6 +177,8 @@ class YoloDetector(ObjectDetector):
 
 
 class YoloFactory(ObjectDetectorFactory):
+    def __init__(self, get_current_config: GetCurrentConfig) -> None:
+        self._get_current_config = get_current_config
 
     def create(self, config: DetectConfig) -> ObjectDetector:
         """
@@ -208,8 +208,8 @@ class YoloFactory(ObjectDetectorFactory):
         is_custom = Path(weights).is_file()
         model = YoloDetector(
             model=self._load_model(weights),
-            config=config,
             frame_rotator=AvVideoFrameRotator(),
+            get_current_config=self._get_current_config,
         )
         t2 = perf_counter()
 

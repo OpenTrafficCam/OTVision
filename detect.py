@@ -43,8 +43,8 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(cli_args)}")
 
     try:
+        builder.update_current_config.update(config)
         detect = builder.build()
-        detect.update_config(config)
         detect.start()
 
     except FileNotFoundError:

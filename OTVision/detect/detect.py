@@ -23,7 +23,6 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Self
 
 from tqdm import tqdm
 
@@ -66,16 +65,14 @@ class OTVisionDetect:
         self._get_current_config = get_current_config
         self._update_current_config = update_current_config
 
-    def update_config(self, config: Config) -> Self:
-        self._update_current_config.update(config)
-        return self
-
+    # def start(self) -> Generator[DetectedFrame, None, None]:
     def start(self) -> None:
         """Starts the detection of objects in multiple videos and/or images.
 
         Writes detections to one file per video/object.
 
         """
+        # Wandert zu input source
         filetypes = self.config.filetypes.video_filetypes.to_list()
         video_files = get_files(paths=self.config.detect.paths, filetypes=filetypes)
 
@@ -114,9 +111,28 @@ class OTVisionDetect:
             log.info(f"Detect {video_file}")
 
             video_fps = get_fps(video_file)
-            model = self._get_model()
-            detections = list(model.detect(source=str(video_file)))
+            # end input source
 
+            model = self._get_model()
+            detected_frame_producer = model.detect(source=str(video_file))
+
+            # TODO: Make DetectedFrameConsumer
+            # class DetectedFrameConsumer:
+            #     def __init__(
+            #         self,
+            #         self, detected_frame_producer: DetectedFrameProducer
+            #     ) -> None:
+            #         self._detected_frame_producer = detected_frame_producer
+            #
+            #     def consume(self):
+            #         for frame in self._detected_frame_producer:
+            #             # TODO: consume(frame)
+            #             pass
+            #
+            #     def stop(self) -> None:
+            #         pass
+
+            detections = list(detected_frame_producer)
             video_width, video_height = get_video_dimensions(video_file)
             actual_duration = get_duration(video_file)
             actual_frames = len(detections)
@@ -124,6 +140,7 @@ class OTVisionDetect:
                 actual_fps = actual_frames / expected_duration.total_seconds()
             else:
                 actual_fps = actual_frames / actual_duration.total_seconds()
+
             otdet = self._otdet_builder.add_config(
                 OtdetBuilderConfig(
                     conf=model.config.yolo_config.conf,
@@ -161,9 +178,7 @@ class OTVisionDetect:
         print(finished_msg)
 
     def _get_model(self) -> ObjectDetector:
-        return self._factory.create(self.config.detect).configure_with(
-            self.config.detect
-        )
+        return self._factory.create(self.config.detect)
 
 
 def derive_filename(

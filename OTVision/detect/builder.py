@@ -53,7 +53,7 @@ class DetectBuilder:
 
     @cached_property
     def object_detection_factory(self) -> ObjectDetectorFactory:
-        return ObjectDetectorCachedFactory(YoloFactory())
+        return ObjectDetectorCachedFactory(YoloFactory(self.get_current_config))
 
     @cached_property
     def current_config(self) -> CurrentConfig:
