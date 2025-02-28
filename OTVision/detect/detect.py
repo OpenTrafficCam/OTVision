@@ -27,6 +27,8 @@ from typing import Self
 
 from tqdm import tqdm
 
+from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
@@ -50,19 +52,22 @@ DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 class OTVisionDetect:
     @property
     def config(self) -> Config:
-        if self._config is None:
-            raise ValueError("Config is missing!")
-        return self._config
+        return self._get_current_config.get()
 
     def __init__(
-        self, factory: ObjectDetectorFactory, otdet_builder: OtdetBuilder
+        self,
+        factory: ObjectDetectorFactory,
+        otdet_builder: OtdetBuilder,
+        get_current_config: GetCurrentConfig,
+        update_current_config: UpdateCurrentConfig,
     ) -> None:
         self._factory = factory
         self._otdet_builder = otdet_builder
-        self._config: Config | None = None
+        self._get_current_config = get_current_config
+        self._update_current_config = update_current_config
 
     def update_config(self, config: Config) -> Self:
-        self._config = config
+        self._update_current_config.update(config)
         return self
 
     def start(self) -> None:

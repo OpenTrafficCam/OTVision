@@ -8,12 +8,15 @@ from OTVision.application.detect.update_detect_config_with_cli_args import (
     UpdateDetectConfigWithCliArgs,
 )
 from OTVision.application.get_config import GetConfig
-from OTVision.config import ConfigParser
+from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.update_current_config import UpdateCurrentConfig
+from OTVision.config import Config, ConfigParser
 from OTVision.detect.cli import ArgparseDetectCliParser
 from OTVision.detect.detect import OTVisionDetect
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import YoloFactory
 from OTVision.domain.cli import DetectCliParser
+from OTVision.domain.current_config import CurrentConfig
 from OTVision.domain.object_detection import ObjectDetectorFactory
 
 
@@ -52,6 +55,18 @@ class DetectBuilder:
     def object_detection_factory(self) -> ObjectDetectorFactory:
         return ObjectDetectorCachedFactory(YoloFactory())
 
+    @cached_property
+    def current_config(self) -> CurrentConfig:
+        return CurrentConfig(Config())
+
+    @cached_property
+    def get_current_config(self) -> GetCurrentConfig:
+        return GetCurrentConfig(self.current_config)
+
+    @cached_property
+    def update_current_config(self) -> UpdateCurrentConfig:
+        return UpdateCurrentConfig(self.current_config)
+
     def __init__(self, argv: list[str] | None = None) -> None:
         self.argv = argv
 
@@ -59,4 +74,6 @@ class DetectBuilder:
         return OTVisionDetect(
             factory=self.object_detection_factory,
             otdet_builder=self.otdet_builder,
+            get_current_config=self.get_current_config,
+            update_current_config=self.update_current_config,
         )

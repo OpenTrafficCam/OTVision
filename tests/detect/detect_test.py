@@ -538,9 +538,18 @@ class TestDetect:
 
         video_file_without_date = test_data_tmp_dir / "video_without_date.mp4"
         video_file_without_date.touch()
+        get_current_config = Mock()
+        get_current_config.get.return_value = create_config_from(
+            paths=[video_file_without_date],
+            weights=MODEL_WEIGHTS,
+            expected_duration=timedelta(seconds=3),
+        )
 
         target = OTVisionDetect(
-            factory=factory, otdet_builder=otdet_builder
+            factory=factory,
+            otdet_builder=otdet_builder,
+            get_current_config=get_current_config,
+            update_current_config=Mock(),
         ).update_config(
             create_config_from(
                 paths=[video_file_without_date],
