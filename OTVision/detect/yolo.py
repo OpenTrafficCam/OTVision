@@ -51,10 +51,6 @@ class VideoFoundError(Exception):
     pass
 
 
-class YOLOv5ModelNotFoundError(Exception):
-    pass
-
-
 class YoloDetector(ObjectDetector):
     """Wrapper to YOLO object detection model.
 
