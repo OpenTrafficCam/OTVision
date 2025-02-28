@@ -183,15 +183,15 @@ class Yolov8(ObjectDetector):
         )
 
 
-class ObjectDetectionFactory(ABC):
+class ObjectDetectorFactory(ABC):
     @abstractmethod
     def create(self, config: DetectConfig) -> ObjectDetector:
         raise NotImplementedError
 
 
-class ObjectDetectionCachedFactory(ObjectDetectionFactory):
+class ObjectDetectorCachedFactory(ObjectDetectorFactory):
 
-    def __init__(self, other: ObjectDetectionFactory) -> None:
+    def __init__(self, other: ObjectDetectorFactory) -> None:
         self._other = other
         self.__cache: dict[str, ObjectDetector] = {}
 
@@ -212,7 +212,7 @@ class ObjectDetectionCachedFactory(ObjectDetectionFactory):
             del self.__cache[weights]
 
 
-class YoloFactory(ObjectDetectionFactory):
+class YoloFactory(ObjectDetectorFactory):
 
     def create(self, config: DetectConfig) -> ObjectDetector:
         """

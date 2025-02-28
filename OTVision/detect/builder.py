@@ -12,8 +12,8 @@ from OTVision.detect.cli import ArgparseDetectCliParser
 from OTVision.detect.detect import OTVisionDetect
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.yolo import (
-    ObjectDetectionCachedFactory,
-    ObjectDetectionFactory,
+    ObjectDetectorCachedFactory,
+    ObjectDetectorFactory,
     YoloFactory,
 )
 from OTVision.domain.cli import DetectCliParser
@@ -51,8 +51,8 @@ class DetectBuilder:
         return OtdetBuilder()
 
     @cached_property
-    def object_detection_factory(self) -> ObjectDetectionFactory:
-        return ObjectDetectionCachedFactory(YoloFactory())
+    def object_detection_factory(self) -> ObjectDetectorFactory:
+        return ObjectDetectorCachedFactory(YoloFactory())
 
     def __init__(self, argv: list[str] | None = None) -> None:
         self.argv = argv

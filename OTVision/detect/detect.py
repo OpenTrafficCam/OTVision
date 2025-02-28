@@ -30,7 +30,7 @@ from tqdm import tqdm
 from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
-from OTVision.detect.yolo import ObjectDetectionFactory
+from OTVision.detect.yolo import ObjectDetectorFactory
 from OTVision.domain.detect import ObjectDetector
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
@@ -56,7 +56,7 @@ class OTVisionDetect:
         return self._config
 
     def __init__(
-        self, factory: ObjectDetectionFactory, otdet_builder: OtdetBuilder
+        self, factory: ObjectDetectorFactory, otdet_builder: OtdetBuilder
     ) -> None:
         self._factory = factory
         self._otdet_builder = otdet_builder
