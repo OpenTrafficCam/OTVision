@@ -213,11 +213,6 @@ class YoloFactory(ObjectDetectorFactory):
         model = YoloDetector(
             model=self._load_model(weights),
             config=config,
-            # confidence=config.yolo_config.conf,
-            # iou=config.yolo_config.iou,
-            # img_size=config.yolo_config.img_size,
-            # half_precision=config.half_precision,
-            # normalized=config.yolo_config.normalized,
             frame_rotator=AvVideoFrameRotator(),
         )
         t2 = perf_counter()
