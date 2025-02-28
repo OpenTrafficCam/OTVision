@@ -31,7 +31,7 @@ from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
 from OTVision.detect.yolo import ObjectDetectionFactory
-from OTVision.domain.detect import ObjectDetection
+from OTVision.domain.detect import ObjectDetector
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
     FILE_NAME_PATTERN,
@@ -156,7 +156,7 @@ class OTVisionDetect:
         log.info(finished_msg)
         print(finished_msg)
 
-    def _get_model(self) -> ObjectDetection:
+    def _get_model(self) -> ObjectDetector:
         return self._factory.create(self.config.detect).configure_with(
             self.config.detect
         )

@@ -33,7 +33,7 @@ from ultralytics.engine.results import Boxes
 
 from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.domain.detect import ObjectDetection
+from OTVision.domain.detect import ObjectDetector
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import convert_seconds_to_frames, get_fps
@@ -56,7 +56,7 @@ class YOLOv5ModelNotFoundError(Exception):
     pass
 
 
-class Yolov8(ObjectDetection):
+class Yolov8(ObjectDetector):
     """Wrapper to YOLOv8 object detection model.
 
     Args:
@@ -185,7 +185,7 @@ class Yolov8(ObjectDetection):
 
 class ObjectDetectionFactory(ABC):
     @abstractmethod
-    def create(self, config: DetectConfig) -> ObjectDetection:
+    def create(self, config: DetectConfig) -> ObjectDetector:
         raise NotImplementedError
 
 
@@ -193,16 +193,16 @@ class ObjectDetectionCachedFactory(ObjectDetectionFactory):
 
     def __init__(self, other: ObjectDetectionFactory) -> None:
         self._other = other
-        self.__cache: dict[str, ObjectDetection] = {}
+        self.__cache: dict[str, ObjectDetector] = {}
 
-    def create(self, config: DetectConfig) -> ObjectDetection:
+    def create(self, config: DetectConfig) -> ObjectDetector:
         if cached_model := self.__cache.get(config.yolo_config.weights):
             return cached_model
         model = self._other.create(config)
         self.__add_to_cache(model)
         return model
 
-    def __add_to_cache(self, model: ObjectDetection) -> None:
+    def __add_to_cache(self, model: ObjectDetector) -> None:
         weights = model.config.yolo_config.weights
         if not self.__cache.get(weights):
             self.__cache[weights] = model
@@ -214,7 +214,7 @@ class ObjectDetectionCachedFactory(ObjectDetectionFactory):
 
 class YoloFactory(ObjectDetectionFactory):
 
-    def create(self, config: DetectConfig) -> ObjectDetection:
+    def create(self, config: DetectConfig) -> ObjectDetector:
         """
         Creates an object detection model using YOLO with the specified configuration.
 
@@ -233,7 +233,7 @@ class YoloFactory(ObjectDetectionFactory):
                 and other initialization settings.
 
         Returns:
-            ObjectDetection: An initialized YOLO object detection model ready
+            ObjectDetector: An initialized YOLO object detection model ready
                 for inference.
         """
         weights = config.yolo_config.weights

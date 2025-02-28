@@ -5,7 +5,7 @@ from OTVision.config import DetectConfig
 from OTVision.track.preprocess import Detection
 
 
-class ObjectDetection(ABC):
+class ObjectDetector(ABC):
 
     @property
     @abstractmethod
