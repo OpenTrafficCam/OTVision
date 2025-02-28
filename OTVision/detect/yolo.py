@@ -33,6 +33,7 @@ from ultralytics.engine.results import Boxes
 
 from OTVision.config import DetectConfig
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
+from OTVision.domain.detect import ObjectDetection
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.helpers.video import convert_seconds_to_frames, get_fps
@@ -53,41 +54,6 @@ class VideoFoundError(Exception):
 
 class YOLOv5ModelNotFoundError(Exception):
     pass
-
-
-class ObjectDetection(ABC):
-
-    @property
-    @abstractmethod
-    def config(self) -> DetectConfig:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def classifications(self) -> dict[int, str]:
-        """The model's classes that it is able to predict.
-
-        Returns:
-            dict[int, str]: the classes
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def detect(self, source: str) -> Generator[list[Detection], None, None]:
-        """Runs object detection on a video.
-
-        Args:
-            source (str): the source to read frames from.
-
-        Returns:
-            Generator[list[list[Detection], None, None]: nested list of detections.
-                First level is frames, second level is detections within frame.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def configure_with(self, config: DetectConfig) -> Self:
-        raise NotImplementedError
 
 
 class Yolov8(ObjectDetection):
@@ -217,7 +183,7 @@ class Yolov8(ObjectDetection):
         )
 
 
-class ObjectDetectionFactory:
+class ObjectDetectionFactory(ABC):
     @abstractmethod
     def create(self, config: DetectConfig) -> ObjectDetection:
         raise NotImplementedError
