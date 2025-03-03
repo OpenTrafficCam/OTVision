@@ -6,7 +6,7 @@ from cv2 import VideoCapture
 from torch import Tensor
 
 from OTVision.detect.yolo import Yolov8
-from OTVision.track.preprocess import Detection
+from OTVision.track.model.detection import Detection
 
 
 @pytest.fixture

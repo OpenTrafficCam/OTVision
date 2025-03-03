@@ -49,8 +49,7 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-
-from .iou_util import iou
+from OTVision.track.legacy.iou_util import iou
 
 
 class TrackedDetections:
@@ -199,6 +198,9 @@ def track_iou(
                 ):
                     # tracks_finished.append(track)
                     vehIDs_finished.append(track[TRACK_ID])
+                # else:
+                #    print(f"Discard track {track[TRACK_ID]}")
+                # TODO find out how discarded tracks end up in ottrk files?!
         # TODO: Alter der Tracks
         # create new tracks
         new_tracks = []

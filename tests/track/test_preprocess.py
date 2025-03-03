@@ -22,7 +22,7 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.track.preprocess import (
+from OTVision.track.legacy.preprocess import (
     Detection,
     DetectionParser,
     Frame,

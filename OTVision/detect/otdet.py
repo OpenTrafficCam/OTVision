@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Self
 
 from OTVision import dataformat, version
-from OTVision.track.preprocess import Detection
+from OTVision.track.model.detection import Detection
 
 
 @dataclass

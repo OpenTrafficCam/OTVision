@@ -329,6 +329,7 @@ def get_metadata(otdict: dict) -> dict:
 # TODO: Type hint nested dict during refactoring
 def denormalize_bbox(
     otdict: dict,
+    file_path: Path | None = None,
     keys_width: Union[list[str], None] = None,
     keys_height: Union[list[str], None] = None,
     metadata: dict[str, dict] = {},
@@ -337,6 +338,8 @@ def denormalize_bbox(
 
     Args:
         otdict (dict): dict of detections or tracks
+        file_path (Path): file path source of the given otdict
+            if all detections stem from the same file.
         keys_width (list[str], optional): list of keys describing horizontal position.
             Defaults to ["x", "w"].
         keys_height (list[str], optional): list of keys describing vertical position.
@@ -351,7 +354,9 @@ def denormalize_bbox(
     if keys_height is None:
         keys_height = [dataformat.Y, dataformat.H]
     log.debug("Denormalize frame wise")
-    otdict = _denormalize_transformation(otdict, keys_width, keys_height, metadata)
+    otdict = _denormalize_transformation(
+        otdict, keys_width, keys_height, metadata, file_path
+    )
     return otdict
 
 
@@ -361,6 +366,7 @@ def _denormalize_transformation(
     keys_width: list[str],
     keys_height: list[str],
     metadata: dict[str, dict] = {},
+    file_path: Path | None = None,
 ) -> dict:
     """Helper to do the actual denormalization.
 
@@ -371,6 +377,8 @@ def _denormalize_transformation(
         keys_height (list[str]): list of keys describing vertical position.
             Defaults to ["y", "h"].
         metadata (dict[str, dict]): dict of metadata per input file.
+        file_path (Path): file path source of otdict
+            if all detections stem from the same file.
 
     Returns:
         dict: denormalized dict
@@ -378,7 +386,7 @@ def _denormalize_transformation(
     changed_files = set()
 
     for frame in otdict[dataformat.DATA].values():
-        input_file = frame[INPUT_FILE_PATH]
+        input_file = file_path.as_posix() if file_path else frame[INPUT_FILE_PATH]
         metadate = metadata[input_file]
         width = metadate[dataformat.VIDEO][dataformat.WIDTH]
         height = metadate[dataformat.VIDEO][dataformat.HEIGHT]

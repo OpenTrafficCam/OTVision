@@ -34,7 +34,7 @@ from ultralytics.engine.results import Boxes
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.preprocess import Detection
+from OTVision.track.model.detection import Detection
 
 DISPLAYMATRIX = "DISPLAYMATRIX"
 
