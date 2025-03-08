@@ -14,6 +14,7 @@ class Detection:
 
 @dataclass(frozen=True)
 class DetectedFrame:
-    frame: int
+    source: str
+    frame_number: int
     occurrence: datetime
     detections: list[Detection]
