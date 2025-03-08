@@ -292,7 +292,7 @@ class FrameChunkParser:
         frame_offset: int = 0,
     ) -> FrameChunk:
         detection_parser = DetectionParser()
-        frames = []
+        frames: list[Frame] = []
         for key, value in input.items():
             occurrence: datetime = parse_datetime(value[OCCURRENCE])
             data_detections = value[DETECTIONS]
