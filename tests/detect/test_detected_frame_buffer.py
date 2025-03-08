@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
+from OTVision.abstraction.observer import Subject
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBuffer,
     DetectedFrameBufferEvent,
     FlushEvent,
 )
 from OTVision.domain.detection import DetectedFrame
-from OTVision.abstraction.observer import Subject
 from tests.utils.mocking import create_mocks
 
 

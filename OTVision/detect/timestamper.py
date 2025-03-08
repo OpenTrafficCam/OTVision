@@ -9,8 +9,8 @@ from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
     FILE_NAME_PATTERN,
-    InproperFormattedFilename,
     START_DATE,
+    InproperFormattedFilename,
 )
 from OTVision.helpers.video import get_duration
 
