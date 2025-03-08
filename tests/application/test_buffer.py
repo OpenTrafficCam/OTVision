@@ -1,10 +1,11 @@
-import pytest
-from unittest.mock import Mock
 from typing import Generator
+from unittest.mock import Mock
 
+import pytest
+
+from OTVision.abstraction.observer import Observer, Subject
 from OTVision.application.buffer import Buffer
 from OTVision.detect.detected_frame_buffer import DetectedFrameBuffer
-from OTVision.abstraction.observer import Subject, Observer
 
 IntBuffer = Buffer[int, list[int], None]
 
