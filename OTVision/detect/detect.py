@@ -24,195 +24,36 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from tqdm import tqdm
-
-from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.application.update_current_config import UpdateCurrentConfig
-from OTVision.config import Config
 from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
-from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
-from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
+from OTVision.domain.detect_producer_consumer import (
+    DetectedFrameConsumer,
+    DetectedFrameProducer,
+)
 from OTVision.helpers.date import parse_date_string_to_utc_datime
 from OTVision.helpers.files import (
     FILE_NAME_PATTERN,
     START_DATE,
     InproperFormattedFilename,
-    get_files,
-    write_json,
 )
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.helpers.video import get_duration, get_fps, get_video_dimensions
+from OTVision.helpers.video import get_duration
 from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
 
-class OTVisionDetect:
-    @property
-    def config(self) -> Config:
-        return self._get_current_config.get()
+class OTVisionVideoDetect(DetectedFrameConsumer):
+    def __init__(self, producer: DetectedFrameProducer) -> None:
+        self._producer = producer
 
-    def __init__(
-        self,
-        factory: ObjectDetectorFactory,
-        otdet_builder: OtdetBuilder,
-        get_current_config: GetCurrentConfig,
-        update_current_config: UpdateCurrentConfig,
-    ) -> None:
-        self._factory = factory
-        self._otdet_builder = otdet_builder
-        self._get_current_config = get_current_config
-        self._update_current_config = update_current_config
-
-    # def start(self) -> Generator[DetectedFrame, None, None]:
     def start(self) -> None:
-        """Starts the detection of objects in multiple videos and/or images.
+        """Starts the detection of objects in multiple videos and/or images."""
+        self.consume()
 
-        Writes detections to one file per video/object.
-
-        """
-        # Wandert zu input source
-        filetypes = self.config.filetypes.video_filetypes.to_list()
-        video_files = get_files(paths=self.config.detect.paths, filetypes=filetypes)
-
-        start_msg = f"Start detection of {len(video_files)} video files"
-        log.info(start_msg)
-        print(start_msg)
-
-        if not video_files:
-            log.warning(f"No videos of type '{filetypes}' found to detect!")
-            return
-
-        for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-            detections_file = derive_filename(
-                video_file=video_file,
-                detect_start=self.config.detect.detect_start,
-                detect_end=self.config.detect.detect_end,
-                detect_suffix=self.config.filetypes.detect,
-            )
-
-            try:
-                parse_start_time_from(video_file)
-            except InproperFormattedFilename:
-                log.warning(
-                    f"Video file name of '{video_file}' must include date "
-                    f"and time in format: {DATETIME_FORMAT}"
-                )
-                continue
-
-            if not self.config.detect.overwrite and detections_file.is_file():
-                log.warning(
-                    f"{detections_file} already exists. To overwrite, set overwrite "
-                    "to True"
-                )
-                continue
-
-            log.info(f"Detect {video_file}")
-
-            video_fps = get_fps(video_file)
-            # end input source
-
-            model = self._get_model()
-            detected_frame_producer = model.detect(source=str(video_file))
-
-            # TODO: Make DetectedFrameConsumer
-            # class DetectedFrameConsumer:
-            #     def __init__(
-            #         self,
-            #         self, detected_frame_producer: DetectedFrameProducer
-            #     ) -> None:
-            #         self._detected_frame_producer = detected_frame_producer
-            #
-            #     def consume(self):
-            #         for frame in self._detected_frame_producer:
-            #             # TODO: consume(frame)
-            #             pass
-            #
-            #     def stop(self) -> None:
-            #         pass
-
-            detections = list(detected_frame_producer)
-            video_width, video_height = get_video_dimensions(video_file)
-            actual_duration = get_duration(video_file)
-            actual_frames = len(detections)
-            if (expected_duration := self.config.detect.expected_duration) is not None:
-                actual_fps = actual_frames / expected_duration.total_seconds()
-            else:
-                actual_fps = actual_frames / actual_duration.total_seconds()
-
-            otdet = self._otdet_builder.add_config(
-                OtdetBuilderConfig(
-                    conf=model.config.yolo_config.conf,
-                    iou=model.config.yolo_config.iou,
-                    video=video_file,
-                    video_width=video_width,
-                    video_height=video_height,
-                    expected_duration=expected_duration,
-                    recorded_fps=video_fps,
-                    actual_fps=actual_fps,
-                    actual_frames=actual_frames,
-                    detection_img_size=model.config.yolo_config.img_size,
-                    normalized=model.config.yolo_config.normalized,
-                    detection_model=model.config.yolo_config.weights,
-                    half_precision=model.config.half_precision,
-                    chunksize=1,
-                    classifications=model.classifications,
-                    detect_start=self.config.detect.detect_start,
-                    detect_end=self.config.detect.detect_end,
-                )
-            ).build(detections)
-
-            stamped_detections = add_timestamps(otdet, video_file, expected_duration)
-            write_json(
-                stamped_detections,
-                file=detections_file,
-                filetype=self.config.filetypes.detect,
-                overwrite=self.config.detect.overwrite,
-            )
-
-            log.info(f"Successfully detected and wrote {detections_file}")
-
-        finished_msg = "Finished detection"
-        log.info(finished_msg)
-        print(finished_msg)
-
-    def _get_model(self) -> ObjectDetector:
-        return self._factory.create(self.config.detect)
-
-
-def derive_filename(
-    video_file: Path,
-    detect_suffix: str,
-    detect_start: int | None = None,
-    detect_end: int | None = None,
-) -> Path:
-    """
-    Generates a filename for detection files by appending specified start and end
-    markers and a suffix to the stem of the input video file.
-
-    Args:
-        video_file (Path): The input video file whose filename is to be modified.
-        detect_start (int | None): The starting marker to append to the filename.
-            If None, no starting marker will be appended.
-        detect_end (int | None): The ending marker to append to the filename. If None,
-            no ending marker will be appended.
-        detect_suffix (str): The file suffix to apply to the derived filename.
-
-    Returns:
-        Path: The modified video file path with the updated stem and suffix applied.
-    """
-    cutout = ""
-    if detect_start is not None:
-        cutout += f"_start_{detect_start}"
-    if detect_end is not None:
-        cutout += f"_end_{detect_end}"
-    new_stem = f"{video_file.stem}{cutout}"
-    return video_file.with_stem(new_stem).with_suffix(detect_suffix)
-
-
-class FormatNotSupportedError(Exception):
-    pass
+    def consume(self) -> None:
+        for _ in self._producer.produce():
+            pass
 
 
 def add_timestamps(

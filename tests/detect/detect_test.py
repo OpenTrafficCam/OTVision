@@ -7,7 +7,6 @@ import shutil
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 from jsonschema import validate
@@ -33,10 +32,8 @@ from OTVision.dataformat import (
 )
 from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.detect import (
-    DATETIME_FORMAT,
-    OTVisionDetect,
+    OTVisionVideoDetect,
     Timestamper,
-    derive_filename,
     parse_start_time_from,
 )
 from tests.conftest import YieldFixture
@@ -227,31 +224,6 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
     return detect_test_data_dir / "default" / file_name
 
 
-@pytest.mark.parametrize(
-    "video_file, detection_file, detect_start, detect_end",
-    [
-        ("video.mp4", "video.otdet", None, None),
-        ("video.mp4", "video_end_20.otdet", None, 20),
-        ("video.mp4", "video_start_10.otdet", 10, None),
-        ("video.mp4", "video_start_10_end_20.otdet", 10, 20),
-    ],
-)
-def test_derive_filename(
-    video_file: str,
-    detection_file: str,
-    detect_start: int | None,
-    detect_end: int | None,
-) -> None:
-    actual = derive_filename(
-        video_file=Path(video_file),
-        detect_start=detect_start,
-        detect_end=detect_end,
-        detect_suffix=".otdet",
-    )
-
-    assert actual == Path(detection_file)
-
-
 class TestDetect:
     conf: float = 0.25
     filetypes: list[str] = config.CONFIG[config.FILETYPES][config.VID]
@@ -267,13 +239,13 @@ class TestDetect:
         return detect_builder.update_current_config
 
     @pytest.fixture(scope="class")
-    def otvision_detect(self, detect_builder: DetectBuilder) -> OTVisionDetect:
+    def otvision_detect(self, detect_builder: DetectBuilder) -> OTVisionVideoDetect:
         return detect_builder.build()
 
     @pytest.fixture(scope="class")
     def result_cyclist_otdet(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         cyclist_mp4: Path,
         detect_test_tmp_dir: Path,
         update_current_config: UpdateCurrentConfig,
@@ -291,7 +263,7 @@ class TestDetect:
 
     def test_detect_emptyDirAsParam(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         detect_test_tmp_dir: Path,
         update_current_config: UpdateCurrentConfig,
     ) -> None:
@@ -348,7 +320,7 @@ class TestDetect:
 
     def test_detect_error_raised_on_wrong_filetype(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         detect_test_tmp_dir: Path,
         update_current_config: UpdateCurrentConfig,
     ) -> None:
@@ -370,7 +342,7 @@ class TestDetect:
 
     def test_detect_bboxes_normalized(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         truck_mp4: Path,
         update_current_config: UpdateCurrentConfig,
     ) -> None:
@@ -400,7 +372,7 @@ class TestDetect:
 
     def test_detect_bboxes_denormalized(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         truck_mp4: Path,
         update_current_config: UpdateCurrentConfig,
     ) -> None:
@@ -433,7 +405,7 @@ class TestDetect:
     @pytest.mark.parametrize("conf", [0.0, 0.1, 0.5, 0.9, 1.0])
     def test_detect_conf_bbox_above_thresh(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
         truck_mp4: Path,
         conf: float,
@@ -462,7 +434,7 @@ class TestDetect:
     @pytest.mark.parametrize("overwrite", [True, False])
     def test_detect_overwrite(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
         truck_mp4: Path,
         overwrite: bool,
@@ -499,7 +471,7 @@ class TestDetect:
 
     def test_detect_fulfill_minimum_detection_requirements(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
         cyclist_mp4: Path,
     ) -> None:
@@ -516,7 +488,7 @@ class TestDetect:
 
     def test_detection_in_rotated_video(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
         cyclist_mp4: Path,
         rotated_cyclist_mp4: Path,
@@ -539,7 +511,7 @@ class TestDetect:
 
     def _get_detection_counts_for(
         self,
-        otvision_detect: OTVisionDetect,
+        otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
         converted_video: Path,
         expected_duration: timedelta = EXPECTED_DURATION,
@@ -561,40 +533,6 @@ class TestDetect:
         ]
         class_counts = count_classes(frames)
         return class_counts
-
-    @patch("OTVision.detect.detect.log")
-    def test_detect_not_run_if_no_start_date_found_in_file_name(
-        self,
-        mock_log: Mock,
-        test_data_tmp_dir: Path,
-    ) -> None:
-        model = Mock()
-        factory = Mock()
-        otdet_builder = Mock()
-
-        video_file_without_date = test_data_tmp_dir / "video_without_date.mp4"
-        video_file_without_date.touch()
-        get_current_config = Mock()
-        get_current_config.get.return_value = create_config_from(
-            paths=[video_file_without_date],
-            weights=MODEL_WEIGHTS,
-            expected_duration=timedelta(seconds=3),
-        )
-
-        target = OTVisionDetect(
-            factory=factory,
-            otdet_builder=otdet_builder,
-            get_current_config=get_current_config,
-            update_current_config=Mock(),
-        )
-        target.start()
-        factory.create.assert_not_called()
-        model.detect.assert_not_called()
-        otdet_builder.build.assert_not_called()
-        mock_log.warning.assert_called_once_with(
-            f"Video file name of '{video_file_without_date}' "
-            f"must include date and time in format: {DATETIME_FORMAT}"
-        )
 
 
 class TestTimestamper:

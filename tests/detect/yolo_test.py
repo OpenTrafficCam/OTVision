@@ -1,136 +1,181 @@
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
+from typing import Any
+from unittest.mock import Mock, call, patch
 
 import pytest
-from cv2 import VideoCapture
 from torch import Tensor
+from ultralytics.engine.results import Boxes, Results
 
-from OTVision.config import DetectConfig
-from OTVision.detect.yolo import YoloDetector
-from OTVision.domain.detection import Detection
+from OTVision.config import Config, DetectConfig
+from OTVision.detect.yolo import YoloDetectionConverter, YoloDetector
+from OTVision.domain.detection import DetectedFrame, Detection
+from OTVision.domain.frame import Frame, FrameKeys
+from tests.utils.generator import make_generator
+from tests.utils.mocking import create_mocks
 
 FPS = 20
+SOURCE = "path/to/video.mp4"
 
 
-@pytest.fixture
-def video_path() -> str:
-    return str(
-        Path(__file__).parents[1]
-        / "data"
-        / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
-    )
+class TestYoloDetectionConverter:
+    @pytest.mark.parametrize("normalized", [True, False])
+    def test_convert(self, normalized: bool) -> None:
+        given_class_mapping = {1: "car"}
+        given_boxes = self.create_boxes()
 
+        target = YoloDetectionConverter()
 
-@pytest.fixture
-def num_frames(video_path: str) -> int:
-    cap = VideoCapture(video_path)
+        actual = target.convert(given_boxes, normalized, given_class_mapping)
 
-    len_frames = 0
-
-    while True:
-        gotframe, _ = cap.read()
-        if not gotframe:
-            break
-        len_frames += 1
-    cap.release()
-
-    return len_frames
-
-
-class TestConvertDetections:
-    def test_convert_x_y_coordinates(self) -> None:
-        classification: int = 1
-        name: str = "name"
-        names = {classification: name}
-        x_input = 20
-        x_output = 15
-        y_input = 20
-        y_output = 15
-        width = 10
-        height = 10
-        confidence = 0.5
-
-        mock_yolo = Mock().return_value
-        mock_yolo.names = names
-
-        model = YoloDetector(
-            model=mock_yolo,
-            get_current_config=Mock(),
-            frame_rotator=Mock(),
+        assert actual == self.expected_detections(
+            given_boxes, normalized, given_class_mapping
         )
 
-        result = model._parse_detection(
-            Tensor([x_input, y_input, width, height]), classification, confidence
+    def expected_detections(
+        self, boxes: Boxes, normalized: bool, class_mapping: dict[int, str]
+    ) -> list[Detection]:
+
+        if normalized:
+            x, y, w, h = boxes.xywhn[0].tolist()
+        else:
+            x, y, w, h = boxes.xywh[0].tolist()
+
+        return [
+            Detection(
+                label=class_mapping[int(boxes.cls.item())],
+                conf=boxes.conf.item(),
+                x=x - w / 2,
+                y=y - w / 2,
+                w=w,
+                h=h,
+            )
+        ]
+
+    def create_boxes(self) -> Boxes:
+        return Boxes(Tensor([10, 10, 20, 20, 0.5, 1]), orig_shape=(100, 100))
+
+
+class TestYoloDetector:
+    @patch("OTVision.detect.yolo.torch")
+    def test_detect(self, mock_torch: Mock) -> None:
+        mock_torch.cuda.is_available.return_value = False
+        expected_model_predictions: list[Results] = create_mocks(2)
+        expected_detections: list[Detection] = create_mocks(2)
+        expected_detected_frames: list[DetectedFrame] = create_mocks(4)
+
+        config = Config()
+        given_model = self.create_model(expected_model_predictions)
+        given_current_config = self.create_get_current_config(config)
+        given_detection_converter = self.create_detection_converter(expected_detections)
+        given_detected_frame_factory = self.create_detected_frame_factory(
+            expected_detected_frames
         )
-
-        assert result == Detection(name, confidence, x_output, y_output, width, height)
-
-
-class TestObjectDetection:
-    @patch("OTVision.detect.yolo.get_fps", return_value=FPS)
-    @patch("OTVision.detect.yolo.YoloDetector._parse_detections")
-    @patch("OTVision.detect.yolo.av")
-    def test_detection_start_and_end_are_considered(
-        self, mock_av: Mock, mock_parse_detections: Mock, mock_get_fps: Mock
-    ) -> None:
-        detect_start = 300
-        detect_end = 600
-        total_frames = 18000
-        file = Path("path/to/video.mp4")
-        frame_rotator = Mock()
-        yolo_model = Mock()
-        container = MagicMock()
-        context_manager_container = MagicMock()
-        video_frames = self._create_mock_frames(total_frames)
-        rotated_frame = Mock()
-        predicted_frame = Mock()
-        parsed_detection = Mock()
-        get_current_config = Mock()
-
-        detect_config = DetectConfig(detect_start=detect_start, detect_end=detect_end)
-        config = Mock()
-        config.detect = detect_config
-
-        mock_av.open.return_value = container
-        container.__enter__.return_value = context_manager_container
-        context_manager_container.decode.return_value = video_frames
-        frame_rotator.rotate.return_value = rotated_frame
-        yolo_model.predict.return_value = [predicted_frame]
-        mock_parse_detections.return_value = parsed_detection
-        get_number_of_frames = Mock(return_value=total_frames)
-        get_current_config.get.return_value = config
 
         target = YoloDetector(
-            model=yolo_model,
-            get_current_config=get_current_config,
-            frame_rotator=frame_rotator,
-            get_number_of_frames=get_number_of_frames,
+            model=given_model,
+            get_current_config=given_current_config,
+            detection_converter=given_detection_converter,
+            detected_frame_factory=given_detected_frame_factory,
         )
-        actual = list(target.detect(str(file)))
+        given_input_frames = self.creat_input_frames()
+        actual = list(target.detect(make_generator(given_input_frames)))
 
-        mock_av.open.assert_called_once_with(str(file.absolute()))
-        context_manager_container.decode.assert_called_once_with(video=0)
-        self.assert_detections_are_correct(
-            actual, parsed_detection, detect_start * FPS, detect_end * FPS
+        assert actual == expected_detected_frames
+        self.assert_model_called(given_model, given_input_frames, config.detect)
+        self.assert_detected_frame_factory_called(
+            given_detected_frame_factory, given_input_frames, expected_detections
         )
-        assert frame_rotator.rotate.call_count == 6000
-        assert yolo_model.predict.call_count == 6000
-        assert mock_parse_detections.call_count == 6000
-        assert mock_get_fps.call_args_list == [call(file), call(file)]
+        self.assert_detection_converter_called(
+            given_detection_converter,
+            expected_model_predictions,
+            normalized=config.detect.normalized,
+            class_mapping=target.classifications,
+        )
 
-    def assert_detections_are_correct(
-        self,
-        detections: list[list],
-        expected: Mock,
-        detect_start: int,
-        detect_end: int,
+    def assert_model_called(
+        self, model: Mock, input_frames: list[Frame], config: DetectConfig
     ) -> None:
-        for i, actual in enumerate(detections, start=1):
-            if detect_start <= i < detect_end:
-                assert actual == expected
-            else:
-                assert actual == []
+        def create_call(source: Any) -> Any:
+            return call(
+                source=source,
+                conf=config.confidence,
+                iou=config.iou,
+                half=config.half_precision,
+                imgsz=config.img_size,
+                device="cpu",
+                stream=False,
+                verbose=False,
+                agnostic_nms=True,
+            )
 
-    def _create_mock_frames(self, total_frames: int) -> list[Mock]:
-        image = Mock()
-        return [image for _ in range(total_frames)]
+        assert model.predict.call_args_list == [
+            create_call(input_frames[1][FrameKeys.data]),
+            create_call(input_frames[2][FrameKeys.data]),
+        ]
+
+    def assert_detected_frame_factory_called(
+        self, factory: Mock, input_frames: list[Frame], detections: list[Detection]
+    ) -> None:
+        assert factory.create.call_args_list == [
+            call(input_frames[0], detections=[]),
+            call(input_frames[1], detections=detections[0]),
+            call(input_frames[2], detections=detections[1]),
+            call(input_frames[3], detections=[]),
+        ]
+
+    def assert_detection_converter_called(
+        self,
+        detection_converter: Mock,
+        model_predictions: list[Results],
+        normalized: bool,
+        class_mapping: dict[int, str],
+    ) -> None:
+        assert detection_converter.convert.call_args_list == [
+            call(
+                model_predictions[0].boxes,
+                normalized=normalized,
+                classification_mapping=class_mapping,
+            ),
+            call(
+                model_predictions[1].boxes,
+                normalized=normalized,
+                classification_mapping=class_mapping,
+            ),
+        ]
+
+    def create_model(self, model_predictions: list[Results]) -> Mock:
+        model = Mock()
+        model.predict.side_effect = [[prediction] for prediction in model_predictions]
+        return model
+
+    def create_get_current_config(self, config: Config) -> Mock:
+        get_current_config = Mock()
+        get_current_config.get.return_value = config
+        return get_current_config
+
+    def create_detection_converter(self, detections: list[Detection]) -> Mock:
+        detection_converter = Mock()
+        detection_converter.convert.side_effect = detections
+        return detection_converter
+
+    def create_detected_frame_factory(
+        self, detected_frames: list[DetectedFrame]
+    ) -> Mock:
+        factory = Mock()
+        factory.create.side_effect = detected_frames
+        return factory
+
+    def creat_input_frames(self) -> list[Frame]:
+        first = self.create_mock_detection(False, 0)
+        second = self.create_mock_detection(True, 1)
+        third = self.create_mock_detection(True, 2)
+        last = self.create_mock_detection(False, 2)
+        return [first, second, third, last]
+
+    def create_mock_detection(
+        self, has_data: bool, frame_no: int, source: str = SOURCE
+    ) -> Frame:
+        data = None
+        if has_data:
+            data = Mock()
+
+        return Frame(data=data, frame=frame_no, source=source, occurrence=Mock())

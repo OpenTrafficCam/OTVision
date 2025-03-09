@@ -198,31 +198,38 @@ class TestDetectCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
-    def test_pass_detect_cli(self, test_data: dict, detect_cli: Callable) -> None:
-        with patch("detect.DetectBuilder.build") as mock_build:
-            mock_otvision_detect = Mock()
-            mock_build.return_value = mock_otvision_detect
+    @patch("detect.DetectBuilder.update_current_config")
+    @patch("detect.DetectBuilder.build")
+    def test_pass_detect_cli(
+        self,
+        mock_build: Mock,
+        mock_update_current_config: Mock,
+        test_data: dict,
+        detect_cli: Callable,
+    ) -> None:
+        mock_otvision_detect = Mock()
+        mock_build.return_value = mock_otvision_detect
 
-            command = [
-                *test_data["paths"][PASSED].split(),
-                *test_data["weights"][PASSED].split(),
-                *test_data["conf"][PASSED].split(),
-                *test_data["iou"][PASSED].split(),
-                *test_data["imagesize"][PASSED].split(),
-                *test_data["half_precision"][PASSED].split(),
-                *test_data["expected_duration"][PASSED].split(),
-                *test_data["overwrite"][PASSED].split(),
-                *test_data["config"][PASSED].split(),
-                *test_data["detect_start"][PASSED].split(),
-                *test_data["detect_end"][PASSED].split(),
-                LOGFILE_OVERWRITE_CMD,
-            ]
+        command = [
+            *test_data["paths"][PASSED].split(),
+            *test_data["weights"][PASSED].split(),
+            *test_data["conf"][PASSED].split(),
+            *test_data["iou"][PASSED].split(),
+            *test_data["imagesize"][PASSED].split(),
+            *test_data["half_precision"][PASSED].split(),
+            *test_data["expected_duration"][PASSED].split(),
+            *test_data["overwrite"][PASSED].split(),
+            *test_data["config"][PASSED].split(),
+            *test_data["detect_start"][PASSED].split(),
+            *test_data["detect_end"][PASSED].split(),
+            LOGFILE_OVERWRITE_CMD,
+        ]
 
-            detect_cli(argv=list(filter(None, command)))
-            expected_config = create_expected_config_from_test_data(test_data)
+        detect_cli(argv=list(filter(None, command)))
+        expected_config = create_expected_config_from_test_data(test_data)
 
-            mock_otvision_detect.update_config.assert_called_once_with(expected_config)
-            mock_otvision_detect.start.assert_called_once()
+        mock_update_current_config.update.assert_called_once_with(expected_config)
+        mock_otvision_detect.start.assert_called_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(

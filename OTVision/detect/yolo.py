@@ -22,45 +22,87 @@ OTVision module to detect objects using yolov5
 import logging
 from pathlib import Path
 from time import perf_counter
-from typing import Callable, Generator
+from typing import Generator
 
-import av
 import torch
 from tqdm import tqdm
-from ultralytics import YOLO as YOLOv8
+from ultralytics import YOLO
 from ultralytics.engine.results import Boxes
 
+from OTVision.abstraction.pipes_and_filter import Filter
+from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.config import DetectConfig
-from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.domain.detection import Detection
+from OTVision.domain.detection import DetectedFrame, Detection
+from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
-from OTVision.helpers import video
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.helpers.video import convert_seconds_to_frames, get_fps
 
 DISPLAYMATRIX = "DISPLAYMATRIX"
 
 log = logging.getLogger(LOGGER_NAME)
 
 
-class VideoFiletypeNotSupportedError(Exception):
-    pass
+class YoloDetectionConverter:
+    """Converts raw YOLO model detections into standardized detection objects."""
+
+    def convert(
+        self,
+        raw_detections: Boxes,
+        normalized: bool,
+        classification_mapping: dict[int, str],
+    ) -> list[Detection]:
+        """Converts raw detection data into a list of Detection objects.
+
+        Args:
+            raw_detections: The YOLO detection data.
+            normalized: A boolean indicating whether the bounding box coordinates are
+                normalized or not.
+            classification_mapping: A dictionary mapping integer class indices to their
+                corresponding class names.
+
+        Returns:
+            list[Detection]: A list of Detection objects containing information for
+                each detection.
+        """
+        bboxes = raw_detections.xywhn if normalized else raw_detections.xywh
+        detections: list[Detection] = []
+        for bbox, class_idx, confidence in zip(
+            bboxes, raw_detections.cls, raw_detections.conf
+        ):
+            _class_idx = int(class_idx.item())
+            detections.append(
+                self._create_detection(
+                    bbox=bbox,
+                    classification=classification_mapping[_class_idx],
+                    confidence=confidence.item(),
+                )
+            )
+        return detections
+
+    def _create_detection(
+        self,
+        bbox: torch.Tensor,
+        classification: str,
+        confidence: float,
+    ) -> Detection:
+        x, y, width, height = bbox.tolist()
+
+        return Detection(
+            label=classification,
+            conf=confidence,
+            x=x - width / 2,
+            y=y - height / 2,
+            w=width,
+            h=height,
+        )
 
 
-class VideoFoundError(Exception):
-    pass
-
-
-class YoloDetector(ObjectDetector):
+class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
     """Wrapper to YOLO object detection model.
 
     Args:
-        model: (YOLOv8):  the YOLOv8 model to use for prediction.
-        config (DetectConfig): the configuration to use for prediction.
-        frame_rotator: (AvVideoFrameRotator): use case to use rotate video frames.
-        get_number_of_frames: (Callable[[Path], int]): function to get the total number
-            of frames of a video.
+        get_current_config (GetCurrentConfig): use case to get current configuration.
     """
 
     @property
@@ -82,103 +124,92 @@ class YoloDetector(ObjectDetector):
 
     def __init__(
         self,
-        model: YOLOv8,
-        frame_rotator: AvVideoFrameRotator,
+        model: YOLO,
         get_current_config: GetCurrentConfig,
-        get_number_of_frames: Callable[[Path], int] = video.get_number_of_frames,
+        detection_converter: YoloDetectionConverter,
+        detected_frame_factory: DetectedFrameFactory,
     ) -> None:
         self._model = model
-        self._frame_rotator = frame_rotator
         self._get_current_config = get_current_config
-        self._get_number_of_frames = get_number_of_frames
+        self._detection_converter = detection_converter
+        self._detected_frame_factory = detected_frame_factory
 
-    def _convert_seconds_to_frame(
-        self, seconds: int | None, video_file: Path
-    ) -> int | None:
-        video_fps = get_fps(video_file)
-        return convert_seconds_to_frames(seconds, video_fps)
+    def filter(
+        self, pipe: Generator[Frame, None, None]
+    ) -> Generator[DetectedFrame, None, None]:
+        return self.detect(pipe)
 
-    # def detect(self, source: InputSource) -> Generator[list[Detection], None, None]:
-    def detect(self, source: str) -> Generator[list[Detection], None, None]:
-        video_source = Path(source)
-        length = self._get_number_of_frames(video_source)
-        for prediction_result in tqdm(
-            self._predict(video_source),
-            desc="Detected frames",
-            unit=" frames",
-            total=length,
-        ):
-            yield prediction_result
+    def detect(
+        self, frames: Generator[Frame, None, None]
+    ) -> Generator[DetectedFrame, None, None]:
+        for frame in tqdm(frames, desc="Detected frames", unit=" frames"):
+            yield self._predict(frame)
 
-    def _predict(self, video_source: Path) -> Generator[list[Detection], None, None]:
-        start = 0
-        detect_start = self._convert_seconds_to_frame(
-            self.config.detect_start, video_source
+    def _predict(self, frame: Frame) -> DetectedFrame:
+        if frame[FrameKeys.data] is None:
+            return self._create_empty_detection(frame)
+
+        return self._process_frame(frame)
+
+    def _process_frame(self, frame: Frame) -> DetectedFrame:
+        """Process a single frame and return detected objects."""
+        model_predictions = self._model.predict(
+            source=frame[FrameKeys.data],
+            conf=self.config.confidence,
+            iou=self.config.iou,
+            half=self.config.half_precision,
+            imgsz=self.config.img_size,
+            device=0 if torch.cuda.is_available() else "cpu",
+            stream=False,
+            verbose=False,
+            agnostic_nms=True,
         )
-        detect_end = self._convert_seconds_to_frame(
-            self.config.detect_end, video_source
+
+        for prediction in model_predictions:
+            return self._create_detection_from_boxes(frame, prediction.boxes)
+
+        # Return empty detection if no predictions
+        return self._create_empty_detection(frame)
+
+    def _create_detection_from_boxes(self, frame: Frame, boxes: Boxes) -> DetectedFrame:
+        """Convert raw detection boxes to a DetectedFrame with detected objects."""
+        detections = self._detection_converter.convert(
+            boxes,
+            normalized=self.config.normalized,
+            classification_mapping=self.classifications,
         )
+        return self._detected_frame_factory.create(frame, detections=detections)
 
-        if detect_start is not None:
-            start = detect_start
-
-        with av.open(str(video_source.absolute())) as container:
-            container.streams.video[0].thread_type = "AUTO"
-            side_data = container.streams.video[0].side_data
-            for frame_number, frame in enumerate(container.decode(video=0), start=1):
-                if start <= frame_number and (
-                    detect_end is None or frame_number < detect_end
-                ):
-                    rotated_image = self._frame_rotator.rotate(frame, side_data)
-                    # Ende input source (Producer) für InputSource
-                    results = self._model.predict(
-                        source=rotated_image,
-                        conf=self.config.confidence,
-                        iou=self.config.iou,
-                        half=self.config.half_precision,
-                        imgsz=self.config.img_size,
-                        device=0 if torch.cuda.is_available() else "cpu",
-                        stream=False,
-                        verbose=False,
-                        agnostic_nms=True,
-                    )
-                    for result in results:
-                        yield self._parse_detections(result.boxes)
-                else:
-                    yield []
-
-    def _parse_detections(self, detection_result: Boxes) -> list[Detection]:
-        bboxes = (
-            detection_result.xywhn if self.config.normalized else detection_result.xywh
-        )
-        detections: list[Detection] = []
-        for bbox, class_idx, confidence in zip(
-            bboxes, detection_result.cls, detection_result.conf
-        ):
-            detections.append(
-                self._parse_detection(bbox, int(class_idx.item()), confidence.item())
-            )
-        return detections
-
-    def _parse_detection(
-        self, bbox: torch.Tensor, class_idx: int, confidence: float
-    ) -> Detection:
-        x, y, width, height = bbox.tolist()
-        classification = self.classifications[class_idx]
-
-        return Detection(
-            label=classification,
-            conf=confidence,
-            x=x - width / 2,
-            y=y - height / 2,
-            w=width,
-            h=height,
-        )
+    def _create_empty_detection(self, frame: Frame) -> DetectedFrame:
+        """Create a DetectedFrame with no detections."""
+        return self._detected_frame_factory.create(frame, detections=[])
 
 
 class YoloFactory(ObjectDetectorFactory):
-    def __init__(self, get_current_config: GetCurrentConfig) -> None:
+    """
+    A factory class responsible for creating YOLO object detection instances.
+
+    This class provides functionalities for initializing a YOLO model using specified
+    configurations and dependencies. It supports custom or pretrained model weights
+    and handles the setup of various model parameters.
+
+    Args:
+        get_current_config (GetCurrentConfig): Use case to get current configuration.
+        detection_converter (YoloDetectionConverter): Convert yolo detection results
+            to `Detection` objects.
+        detected_frame_factory (DetectedFrameFactory): Factory to create`DetectedFrame`
+            objects.
+    """
+
+    def __init__(
+        self,
+        get_current_config: GetCurrentConfig,
+        detection_converter: YoloDetectionConverter,
+        detected_frame_factory: DetectedFrameFactory,
+    ) -> None:
         self._get_current_config = get_current_config
+        self._detection_converter = detection_converter
+        self._detected_frame_factory = detected_frame_factory
 
     def create(self, config: DetectConfig) -> ObjectDetector:
         """
@@ -208,8 +239,9 @@ class YoloFactory(ObjectDetectorFactory):
         is_custom = Path(weights).is_file()
         model = YoloDetector(
             model=self._load_model(weights),
-            frame_rotator=AvVideoFrameRotator(),
             get_current_config=self._get_current_config,
+            detection_converter=self._detection_converter,
+            detected_frame_factory=self._detected_frame_factory,
         )
         t2 = perf_counter()
 
@@ -223,7 +255,7 @@ class YoloFactory(ObjectDetectorFactory):
 
         return model
 
-    def _load_model(self, weights: str | Path) -> YOLOv8:
+    def _load_model(self, weights: str | Path) -> YOLO:
         """Load a custom trained or a pretrained YOLOv8 model.
 
         Args:
@@ -234,5 +266,5 @@ class YoloFactory(ObjectDetectorFactory):
             YOLOv8: the YOLOv8 model.
 
         """
-        model = YOLOv8(model=weights, task="detect")
+        model = YOLO(model=weights, task="detect")
         return model
