@@ -1,12 +1,12 @@
 from unittest.mock import Mock
 
 from OTVision.abstraction.pipes_and_filter import Filter
-from OTVision.domain.detection import DetectedFrame
-from OTVision.domain.frame import Frame
-from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.application.detect.detected_frame_producer import (
     SimpleDetectedFrameProducer,
 )
+from OTVision.domain.detection import DetectedFrame
+from OTVision.domain.frame import Frame
+from OTVision.domain.input_source_detect import InputSourceDetect
 
 INPUT_SOURCE_GENERATOR = Mock()
 DETECTED_FRAME_GENERATOR = Mock()
