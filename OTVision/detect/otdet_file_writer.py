@@ -18,8 +18,9 @@ log = logging.getLogger(LOGGER_NAME)
 class OtdetFileWriter:
     """Handles writing object detection results to a file in OTDET format.
 
-    This class coordinates the process of building and saving object detection results. It combines
-    detection metadata, configuration settings, and frame data to create and save OTDET format files.
+    This class coordinates the process of building and saving object detection results.
+    It combines detection metadata, configuration settings, and frame data to create
+    and save OTDET format files.
 
     Args:
         builder (OtdetBuilder): Responsible for constructing datat to be written.
@@ -66,6 +67,7 @@ class OtdetFileWriter:
         else:
             actual_fps = actual_frames / source_metadata.duration.total_seconds()
 
+        class_mapping = self._current_object_detector_metadata.get().classifications
         otdet = self._builder.add_config(
             OtdetBuilderConfig(
                 conf=detect_config.confidence,
@@ -84,7 +86,7 @@ class OtdetFileWriter:
                 detection_model=detect_config.weights,
                 half_precision=detect_config.half_precision,
                 chunksize=1,
-                classifications=self._current_object_detector_metadata.get().classifications,
+                classifications=class_mapping,
                 detect_start=detect_config.detect_start,
                 detect_end=detect_config.detect_end,
             )
