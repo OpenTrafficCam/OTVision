@@ -5,8 +5,8 @@ from typing import Generator
 class Filter[IN, OUT](ABC):
     """Abstract base class for implementing pipe-and-filter pattern filters.
 
-    A filter processes a stream of input elements and produces a stream of output elements.
-    This class defines the interface for all concrete filter implementations.
+    A filter processes a stream of input elements and produces a stream of output
+    elements. This class defines the interface for all concrete filter implementations.
 
     Type Parameters:
         IN: The type of elements that the filter receives as input.
