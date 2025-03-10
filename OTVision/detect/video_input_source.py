@@ -5,7 +5,7 @@ from typing import Generator
 import av
 from tqdm import tqdm
 
-from OTVision.abstraction.observer import Observer, Subject
+from OTVision.abstraction.observer import Subject
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
@@ -65,15 +65,6 @@ class VideoSource(InputSourceDetect):
         self._save_path_provider = save_path_provider
         self.__should_flush = False
 
-    def register(self, observer: Observer[FlushEvent]) -> None:
-        """Register an observer for flush events.
-
-        Args:
-            observer (Observer[FlushEvent): The observer to register for notifications.
-        """
-
-        self._subject.register(observer)
-
     def produce(self) -> Generator[Frame, None, None]:
         """Generate frames from video files that meet detection requirements.
 
@@ -104,32 +95,37 @@ class VideoSource(InputSourceDetect):
             video_fps = get_fps(video_file)
             detect_start = self.__get_detect_start_in_frames(video_fps)
             detect_end = self.__get_detect_end_in_frames(video_fps)
-            with av.open(str(video_file.absolute())) as container:
-                container.streams.video[0].thread_type = "AUTO"
-                side_data = container.streams.video[0].side_data
-                for frame_number, frame in enumerate(
-                    container.decode(video=0), start=1
-                ):
-                    if detect_start <= frame_number and (
-                        detect_end is None or frame_number < detect_end
+            counter = 0
+            try:
+                with av.open(str(video_file.absolute())) as container:
+                    container.streams.video[0].thread_type = "AUTO"
+                    side_data = container.streams.video[0].side_data
+                    for frame_number, frame in enumerate(
+                        container.decode(video=0), start=1
                     ):
-                        rotated_image = self._frame_rotator.rotate(frame, side_data)
-                        yield timestamper.stamp(
-                            {
-                                FrameKeys.data: rotated_image,
-                                FrameKeys.frame: frame_number,
-                                FrameKeys.source: str(video_file),
-                            }
-                        )
-                    else:
-                        yield timestamper.stamp(
-                            {
-                                FrameKeys.data: None,
-                                FrameKeys.frame: frame_number,
-                                FrameKeys.source: str(video_file),
-                            }
-                        )
-            self.notify_observers(video_file)
+                        if detect_start <= frame_number and (
+                            detect_end is None or frame_number < detect_end
+                        ):
+                            rotated_image = self._frame_rotator.rotate(frame, side_data)
+                            yield timestamper.stamp(
+                                {
+                                    FrameKeys.data: rotated_image,
+                                    FrameKeys.frame: frame_number,
+                                    FrameKeys.source: str(video_file),
+                                }
+                            )
+                        else:
+                            yield timestamper.stamp(
+                                {
+                                    FrameKeys.data: None,
+                                    FrameKeys.frame: frame_number,
+                                    FrameKeys.source: str(video_file),
+                                }
+                            )
+                        counter += 1
+                self.notify_observers(video_file, video_fps)
+            except Exception as e:
+                print(e)
 
     def __collect_files_to_detect(self) -> list[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
@@ -167,14 +163,13 @@ class VideoSource(InputSourceDetect):
             return False
         return True
 
-    def notify_observers(self, current_video_file: Path) -> None:
+    def notify_observers(self, current_video_file: Path, video_fps: float) -> None:
         if expected_duration := self._current_config.detect.expected_duration:
             duration = expected_duration
         else:
             duration = get_duration(current_video_file)
 
         width, height = get_video_dimensions(current_video_file)
-        source_fps = get_fps(current_video_file)
         start_time = parse_start_time_from(current_video_file)
 
         self._subject.notify(
@@ -183,7 +178,7 @@ class VideoSource(InputSourceDetect):
                 duration=duration,
                 source_height=height,
                 source_width=width,
-                source_fps=source_fps,
+                source_fps=video_fps,
                 start_time=start_time,
             )
         )
