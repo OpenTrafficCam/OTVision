@@ -1,11 +1,10 @@
 import bz2
-import copy
 import json
 import os
 import platform
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -21,7 +20,6 @@ from OTVision.dataformat import (
     DETECTIONS,
     METADATA,
     MODEL,
-    OCCURRENCE,
     OTDET_VERSION,
     OTVISION_VERSION,
     WEIGHTS,
@@ -31,11 +29,7 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.detect.builder import DetectBuilder
-from OTVision.detect.detect import (
-    OTVisionVideoDetect,
-    Timestamper,
-    parse_start_time_from,
-)
+from OTVision.detect.detect import OTVisionVideoDetect
 from tests.conftest import YieldFixture
 
 CONF = 0.25
@@ -533,64 +527,6 @@ class TestDetect:
         ]
         class_counts = count_classes(frames)
         return class_counts
-
-
-class TestTimestamper:
-    @pytest.mark.parametrize(
-        "file_name, start_date",
-        [
-            (
-                "prefix_FR20_2022-01-01_00-00-00.mp4",
-                datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-            ),
-            (
-                "Test-Cars_FR20_2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "Test_Cars_FR20_2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "Test_Cars_2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "2022-02-03_04-05-06-suffix.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-        ],
-    )
-    def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
-        parsed_date = parse_start_time_from(Path(file_name))
-
-        assert parsed_date == start_date
-
-    def test_stamp_frames(self) -> None:
-        start_date = datetime(2022, 1, 2, 3, 4, 5)
-        time_per_frame = timedelta(microseconds=10000)
-        detections: dict[str, dict[str, dict]] = {
-            METADATA: {},
-            DATA: {
-                "1": {DETECTIONS: []},
-                "2": {DETECTIONS: [{CLASS: "car"}]},
-                "3": {DETECTIONS: []},
-            },
-        }
-
-        second_frame = start_date + time_per_frame
-        third_frame = second_frame + time_per_frame
-        expected_dict = copy.deepcopy(detections)
-        expected_dict[DATA]["1"][OCCURRENCE] = start_date.timestamp()
-        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.timestamp()
-        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.timestamp()
-        stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
-
-        assert expected_dict == stamped_dict
 
 
 @pytest.fixture

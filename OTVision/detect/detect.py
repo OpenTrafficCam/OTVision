@@ -56,12 +56,6 @@ class OTVisionVideoDetect(DetectedFrameConsumer):
             pass
 
 
-def add_timestamps(
-    detections: dict, video_file: Path, expected_duration: timedelta | None
-) -> dict:
-    return Timestamper().stamp(detections, video_file, expected_duration)
-
-
 class Timestamper:
     def stamp(
         self, detections: dict, video_file: Path, expected_duration: timedelta | None
