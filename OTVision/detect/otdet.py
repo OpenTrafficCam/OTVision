@@ -1,21 +1,23 @@
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Self
 
 from OTVision import dataformat, version
-from OTVision.track.preprocess import Detection
+from OTVision.domain.detection import DetectedFrame, Detection
 
 
 @dataclass
 class OtdetBuilderConfig:
     conf: float
     iou: float
-    video: Path
+    source: str
     video_width: int
     video_height: int
     expected_duration: timedelta | None
+    actual_duration: timedelta
     recorded_fps: float
+    recorded_start_date: datetime
     actual_fps: float
     actual_frames: int
     detection_img_size: int
@@ -50,37 +52,56 @@ class OtdetBuilder:
         self._config = None
         return self
 
-    def build(self, detections: list[list[Detection]]) -> dict:
+    def build(self, detections: list[DetectedFrame]) -> dict:
+        number_of_frames = len(detections)
         result = {
-            dataformat.METADATA: self._build_metadata(),
+            dataformat.METADATA: self._build_metadata(number_of_frames),
             dataformat.DATA: self._build_data(detections),
         }
         self.reset()
         return result
 
-    def _build_metadata(self) -> dict:
+    def _build_metadata(self, number_of_frames: int) -> dict:
         return {
             dataformat.OTDET_VERSION: version.otdet_version(),
-            dataformat.VIDEO: self._build_video_config(),
+            dataformat.VIDEO: self._build_video_config(number_of_frames),
             dataformat.DETECTION: self._build_detection_config(),
         }
 
-    def _build_data(self, frames: list[list[Detection]]) -> dict:
+    def _build_data(self, frames: list[DetectedFrame]) -> dict:
         data = {}
-        for frame, detections in enumerate(frames, start=1):
-            converted_detections = [detection.to_otdet() for detection in detections]
-            data[str(frame)] = {dataformat.DETECTIONS: converted_detections}
+        for frame in frames:
+            converted_detections = [
+                self.__convert_detection(detection) for detection in frame.detections
+            ]
+            data[str(frame.frame_number)] = {
+                dataformat.DETECTIONS: converted_detections,
+                dataformat.OCCURRENCE: frame.occurrence.timestamp(),
+            }
         return data
 
-    def _build_video_config(self) -> dict:
+    def __convert_detection(self, detection: Detection) -> dict:
+        return {
+            dataformat.CLASS: detection.label,
+            dataformat.CONFIDENCE: detection.conf,
+            dataformat.X: detection.x,
+            dataformat.Y: detection.y,
+            dataformat.W: detection.w,
+            dataformat.H: detection.h,
+        }
+
+    def _build_video_config(self, number_of_frames: int) -> dict:
+        source = Path(self.config.source)
         video_config = {
-            dataformat.FILENAME: str(self.config.video.stem),
-            dataformat.FILETYPE: str(self.config.video.suffix),
+            dataformat.FILENAME: str(source.stem),
+            dataformat.FILETYPE: str(source.suffix),
             dataformat.WIDTH: self.config.video_width,
             dataformat.HEIGHT: self.config.video_height,
             dataformat.RECORDED_FPS: self.config.recorded_fps,
             dataformat.ACTUAL_FPS: self.config.actual_fps,
-            dataformat.NUMBER_OF_FRAMES: self.config.actual_frames,
+            dataformat.NUMBER_OF_FRAMES: number_of_frames,
+            dataformat.RECORDED_START_DATE: self.config.recorded_start_date.timestamp(),
+            dataformat.LENGTH: str(self.config.actual_duration),
         }
         if self.config.expected_duration is not None:
             video_config[dataformat.EXPECTED_DURATION] = int(
