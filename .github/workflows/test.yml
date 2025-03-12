@@ -11,15 +11,21 @@ permissions: read-all
 
 jobs:
   test:
-    name: Run Python tests on multiple OS and Python versions
+    name: Execute tests across various operating systems and Python versions.
     strategy:
-      fail-fast: True
       matrix:
         os: [ubuntu-latest, windows-latest]
         py: ["3.11"]
-    uses: "platomo/GitHub-workflows/.github/workflows/reusable-python-tests.yml@main"
-    with:
-      os: ${{ matrix.os }}
-      py-version: ${{ matrix.py }}
-      test_path: OTVision
-      ffmpeg-required: True
+      fail-fast: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Python Tests
+        uses: platomo/test-python-app-action@v1
+        timeout-minutes: 60
+        with:
+          py-version: ${{ matrix.py }}
+          package-path: OTVision
+          test-path: tests
+          ffmpeg-required: true
