@@ -24,6 +24,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 LOGGER_NAME = "OTVision Logger"
 
@@ -57,7 +58,12 @@ class _OTVisionLogger:
     with LOGGER_NAME from the same module where this class is defined.
     """
 
-    def __init__(self, name: str = LOGGER_NAME) -> None:
+    def __init__(
+        self,
+        name: str = LOGGER_NAME,
+        datetime_provider: Callable[[], datetime] = datetime.now,
+    ) -> None:
+        self._provide_datetime = datetime_provider
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel("DEBUG")
         self._set_formatter()
@@ -92,12 +98,20 @@ class _OTVisionLogger:
             log_file and level are not intended to be optional, they have to be provided
             in every case. The default values provided are a safety net.
         """
-        if log_file.exists() and not overwrite:
+        if log_file.is_file() and not overwrite:
             raise LogFileAlreadyExists(
                 f"Log file '{log_file}' already exists. "
                 "Please specify option to overwrite the log file when using the CLI."
             )
-        log_file.parent.mkdir(parents=True, exist_ok=True)
+        log_dir = log_file.parent
+        if log_file.is_dir() or not log_file.suffix:
+            log_dir = log_file / "logs"
+            log_file = (
+                log_dir
+                / f"{self._provide_datetime().strftime(r'%Y-%m-%d_%H-%M-%S')}.{LOG_EXT}"
+            )
+
+        log_dir.mkdir(parents=True, exist_ok=True)
         log_file.touch()
         file_handler = logging.FileHandler(log_file, mode="w")
         self._add_handler(file_handler, level)
