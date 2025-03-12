@@ -21,10 +21,9 @@ OTVision main module to detect objects in single or multiple images or videos.
 
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
-from OTVision.dataformat import DATA, LENGTH, METADATA, RECORDED_START_DATE, VIDEO
 from OTVision.domain.detect_producer_consumer import (
     DetectedFrameConsumer,
     DetectedFrameProducer,
@@ -36,8 +35,6 @@ from OTVision.helpers.files import (
     InproperFormattedFilename,
 )
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.helpers.video import get_duration
-from OTVision.track.preprocess import OCCURRENCE
 
 log = logging.getLogger(LOGGER_NAME)
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
@@ -54,74 +51,6 @@ class OTVisionVideoDetect(DetectedFrameConsumer):
     def consume(self) -> None:
         for _ in self._producer.produce():
             pass
-
-
-class Timestamper:
-    def stamp(
-        self, detections: dict, video_file: Path, expected_duration: timedelta | None
-    ) -> dict:
-        """This method adds timestamps when the frame occurred in real time to each
-        frame.
-
-        Args:
-            detections (dict): dictionary containing all frames
-            video_file (Path): path to video file
-            expected_duration (timedelta | None): expected duration of the video used to
-                calculate the number of actual frames per second
-
-        Returns:
-            dict: input dictionary with additional occurrence per frame
-        """
-        start_time = parse_start_time_from(video_file)
-        actual_duration = get_duration(video_file)
-        if expected_duration:
-            time_per_frame = self._get_time_per_frame(detections, expected_duration)
-        else:
-            time_per_frame = self._get_time_per_frame(detections, actual_duration)
-        self._update_metadata(detections, start_time, actual_duration)
-        return self._stamp(detections, start_time, time_per_frame)
-
-    @staticmethod
-    def _get_time_per_frame(detections: dict, duration: timedelta) -> timedelta:
-        """Calculates the duration for each frame. This is done using the total
-        duration of the video and the number of frames.
-
-        Args:
-            detections (dict): dictionary containing all frames
-            video_file (Path): path to video file
-
-        Returns:
-            timedelta: duration per frame
-        """
-        number_of_frames = len(detections[DATA].keys())
-        return duration / number_of_frames
-
-    @staticmethod
-    def _update_metadata(
-        detections: dict, start_time: datetime, duration: timedelta
-    ) -> dict:
-        detections[METADATA][VIDEO][RECORDED_START_DATE] = start_time.timestamp()
-        detections[METADATA][VIDEO][LENGTH] = str(duration)
-        return detections
-
-    def _stamp(
-        self, detections: dict, start_date: datetime, time_per_frame: timedelta
-    ) -> dict:
-        """Add a timestamp (occurrence in real time) to each frame.
-
-        Args:
-            detections (dict): dictionary containing all frames
-            start_date (datetime): start date of the video recording
-            time_per_frame (timedelta): duration per frame
-
-        Returns:
-            dict: dictionary containing all frames with their occurrence in real time
-        """
-        data: dict = detections[DATA]
-        for key, value in data.items():
-            occurrence = start_date + (int(key) - 1) * time_per_frame
-            value[OCCURRENCE] = occurrence.timestamp()
-        return detections
 
 
 def parse_start_time_from(video_file: Path) -> datetime:
