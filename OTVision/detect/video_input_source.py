@@ -7,16 +7,16 @@ import av
 from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
+from OTVision.application.configure_logger import logger
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.config import DATETIME_FORMAT, Config
-from OTVision.detect.detect import parse_start_time_from
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.detect.timestamper import TimestamperFactory
+from OTVision.detect.timestamper import TimestamperFactory, parse_start_time_from
 from OTVision.domain.frame import FrameKeys
 from OTVision.domain.input_source_detect import Frame, InputSourceDetect
 from OTVision.helpers.files import InproperFormattedFilename, get_files
@@ -130,7 +130,7 @@ class VideoSource(InputSourceDetect):
                         counter += 1
                 self.notify_observers(video_file, video_fps)
             except Exception as e:
-                print(e)
+                logger().error(f"Error processing {video_file}", exc_info=e)
 
     def __collect_files_to_detect(self) -> list[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
