@@ -44,7 +44,7 @@ START_DATE = "start_date"
 FILE_NAME_PATTERN = r".*(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).*"
 HOSTNAME = "hostname"
 FULL_FILE_NAME_PATTERN = (
-    r"(?P<hostname>.*)_(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).*"
+    r"(?P<hostname>.*?)_(?P<start_date>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})*.*"
 )
 
 
