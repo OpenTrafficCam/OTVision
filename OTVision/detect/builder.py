@@ -127,7 +127,7 @@ class DetectBuilder:
 
     @cached_property
     def timestamper_factory(self) -> TimestamperFactory:
-        return TimestamperFactory(self.frame_count_provider)
+        return TimestamperFactory(self.frame_count_provider, self.get_current_config)
 
     @cached_property
     def detection_file_save_path_provider(self) -> DetectionFileSavePathProvider:

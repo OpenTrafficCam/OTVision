@@ -1,17 +1,12 @@
-import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.frame_count_provider import FrameCountProvider
+from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.dataformat import FRAME
+from OTVision.detect.detect import parse_start_time_from
 from OTVision.domain.frame import Frame, FrameKeys
-from OTVision.helpers.date import parse_date_string_to_utc_datime
-from OTVision.helpers.files import (
-    FILE_NAME_PATTERN,
-    START_DATE,
-    InproperFormattedFilename,
-)
 from OTVision.helpers.video import get_duration
 
 
@@ -32,9 +27,11 @@ class VideoTimestamper(Timestamper):
         video_file: Path,
         expected_duration: timedelta | None,
         frame_count_provider: FrameCountProvider,
+        start_time: datetime | None,
     ) -> None:
         self._video_file = video_file
         self._expected_duration = expected_duration
+        self._start_time = start_time
 
         self._number_of_frames = frame_count_provider.provide(self._video_file)
         self._time_per_frame = self._get_time_per_frame()
@@ -46,7 +43,9 @@ class VideoTimestamper(Timestamper):
         Returns:
             Frame: frame with occurrence.
         """
-        start_time = parse_start_time_from(self._video_file)
+        start_time = parse_start_time_from(
+            self._video_file, start_time=self._start_time
+        )
         frame_number = frame[FRAME]
         # Frame numbers start from 1
         occurrence = start_time + (frame_number - 1) * self._time_per_frame
@@ -73,32 +72,6 @@ class VideoTimestamper(Timestamper):
         return duration / self._number_of_frames
 
 
-def parse_start_time_from(video_file: Path) -> datetime:
-    """Parse the given filename and retrieve the start date of the video.
-
-    Args:
-        video_file (Path): path to video file
-
-    Raises:
-        InproperFormattedFilename: if the filename is not formatted as expected, an
-        exception will be raised
-
-    Returns:
-        datetime: start date of the video
-    """
-    match = re.search(
-        FILE_NAME_PATTERN,
-        video_file.name,
-    )
-    if match:
-        start_date: str = match.group(START_DATE)
-        return parse_date_string_to_utc_datime(start_date, "%Y-%m-%d_%H-%M-%S").replace(
-            tzinfo=timezone.utc
-        )
-
-    raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
-
-
 class TimestamperFactory:
     """
     Factory class for creating timestamper instances.
@@ -107,8 +80,13 @@ class TimestamperFactory:
     Timestamper class or its derivatives.
     """
 
-    def __init__(self, frame_count_provider: FrameCountProvider) -> None:
+    def __init__(
+        self,
+        frame_count_provider: FrameCountProvider,
+        get_current_config: GetCurrentConfig,
+    ) -> None:
         self._frame_count_provider = frame_count_provider
+        self._get_current_config = get_current_config
 
     def create_video_timestamper(
         self, video_file: Path, expected_duration: timedelta | None
@@ -133,4 +111,5 @@ class TimestamperFactory:
             video_file=video_file,
             expected_duration=expected_duration,
             frame_count_provider=self._frame_count_provider,
+            start_time=self._get_current_config.get().detect.start_time,
         )

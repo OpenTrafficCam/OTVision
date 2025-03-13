@@ -12,7 +12,7 @@ SOURCE = "path/to/Test-Cars_FR20_2022-02-03_04-00-00.mp4"
 EXPECTED_DURATION = timedelta(seconds=3)
 ACTUAL_DURATION = timedelta(seconds=4)
 NUMBER_OF_FRAMES = 60
-START_TIME = parse_start_time_from(Path(SOURCE))
+START_TIME = parse_start_time_from(Path(SOURCE), None)
 
 
 class TestParseStartTimeFromFilename:
@@ -46,7 +46,7 @@ class TestParseStartTimeFromFilename:
         ],
     )
     def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
-        parsed_date = parse_start_time_from(Path(file_name))
+        parsed_date = parse_start_time_from(Path(file_name), None)
 
         assert parsed_date == start_date
 
@@ -72,6 +72,7 @@ class TestVideoTimestamper:
             video_file=Path(SOURCE),
             expected_duration=expected_duration,
             frame_count_provider=given_frame_count_provider,
+            start_time=None,
         )
         actual_first_frame = target.stamp(first_frame)
         actual_second_frame = target.stamp(second_frame)
