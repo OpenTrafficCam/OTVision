@@ -19,15 +19,11 @@ OTVision main module to detect objects in single or multiple images or videos.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 
 from OTVision.domain.detect_producer_consumer import (
     DetectedFrameConsumer,
     DetectedFrameProducer,
 )
-from OTVision.helpers.log import LOGGER_NAME
-
-log = logging.getLogger(LOGGER_NAME)
 
 
 class OTVisionVideoDetect(DetectedFrameConsumer):
