@@ -14,10 +14,9 @@ from OTVision.application.detect.detection_file_save_path_provider import (
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.config import DATETIME_FORMAT, Config
-from OTVision.detect.detect import parse_start_time_from
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.detect.timestamper import TimestamperFactory
+from OTVision.detect.timestamper import TimestamperFactory, parse_start_time_from
 from OTVision.domain.frame import FrameKeys
 from OTVision.domain.input_source_detect import Frame, InputSourceDetect
 from OTVision.helpers.files import InproperFormattedFilename, get_files

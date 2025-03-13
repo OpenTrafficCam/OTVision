@@ -1,12 +1,19 @@
-from datetime import datetime, timedelta
+import re
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.frame_count_provider import FrameCountProvider
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.config import DATETIME_FORMAT
 from OTVision.dataformat import FRAME
-from OTVision.detect.detect import parse_start_time_from
 from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.helpers.date import parse_date_string_to_utc_datime
+from OTVision.helpers.files import (
+    FILE_NAME_PATTERN,
+    START_DATE,
+    InproperFormattedFilename,
+)
 from OTVision.helpers.video import get_duration
 
 
@@ -113,3 +120,33 @@ class TimestamperFactory:
             frame_count_provider=self._frame_count_provider,
             start_time=self._get_current_config.get().detect.start_time,
         )
+
+
+def parse_start_time_from(video_file: Path, start_time: datetime | None) -> datetime:
+    """Parse the given filename and retrieve the start date of the video.
+
+    Args:
+        video_file (Path): path to video file
+        start_time (datetime | None): start time of the video. The start time will be
+            parsed from the video file name if  no start time is provided.
+
+    Raises:
+        InproperFormattedFilename: if the filename is not formatted as expected, an
+        exception will be raised
+
+    Returns:
+        datetime: start date of the video
+    """
+    if start_time is not None:
+        return start_time
+    match = re.search(
+        FILE_NAME_PATTERN,
+        video_file.name,
+    )
+    if match:
+        start_date: str = match.group(START_DATE)
+        return parse_date_string_to_utc_datime(start_date, DATETIME_FORMAT).replace(
+            tzinfo=timezone.utc
+        )
+
+    raise InproperFormattedFilename(f"Could not parse {video_file.name}.")
