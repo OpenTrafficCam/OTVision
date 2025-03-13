@@ -405,7 +405,9 @@ class Preprocess:
         if match:
             return match.group(HOSTNAME)
 
-        raise InproperFormattedFilename(f"Could not parse {video_name}.")
+        raise InproperFormattedFilename(
+            f"Could not parse {video_name} with pattern: {FULL_FILE_NAME_PATTERN}."
+        )
 
     def _merge_groups(self, all_groups: list[FrameGroup]) -> list[FrameGroup]:
         """Merge frame groups whose start and end times are close to each other. Close
