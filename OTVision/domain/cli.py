@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -29,6 +29,7 @@ class DetectCliArgs(CliArgs):
     imagesize: int | None = None
     half: bool | None = None
     overwrite: bool | None = None
+    start_time: datetime | None = None
     detect_start: int | None = None
     detect_end: int | None = None
 

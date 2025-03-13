@@ -22,7 +22,7 @@ OTVision config module for setting default values
 
 import logging
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -85,8 +85,11 @@ LOG = "LOG"
 LOG_LEVEL_CONSOLE = "LOG_LEVEL_CONSOLE"
 LOG_LEVEL_FILE = "LOG_LEVEL_FILE"
 LOG_DIR = "LOG_DIR"
+START_TIME = "START_TIME"
 DETECT_END = "DETECT_END"
 DETECT_START = "DETECT_START"
+
+DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
 """Default length of a video is 15 minutes."""
 DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
@@ -351,6 +354,7 @@ class DetectConfig:
     expected_duration: timedelta | None = None
     overwrite: bool = True
     half_precision: bool = False
+    start_time: datetime | None = None
     detect_start: int | None = None
     detect_end: int | None = None
 
@@ -368,6 +372,7 @@ class DetectConfig:
         if expected_duration is not None:
             expected_duration = timedelta(seconds=int(expected_duration))
 
+        start_time = DetectConfig._parse_start_time(d)
         return DetectConfig(
             files,
             d.get(RUN_CHAINED, DetectConfig.run_chained),
@@ -375,9 +380,16 @@ class DetectConfig:
             expected_duration,
             d.get(OVERWRITE, DetectConfig.overwrite),
             d.get(HALF_PRECISION, DetectConfig.half_precision),
+            start_time,
             d.get(DETECT_START, DetectConfig.detect_start),
             d.get(DETECT_END, DetectConfig.detect_end),
         )
+
+    @staticmethod
+    def _parse_start_time(d: dict) -> datetime | None:
+        if start_time := d.get(START_TIME, DetectConfig.start_time):
+            return datetime.strptime(start_time, DATETIME_FORMAT)
+        return start_time
 
     def to_dict(self) -> dict:
         expected_duration = (
@@ -392,6 +404,9 @@ class DetectConfig:
             EXPECTED_DURATION: expected_duration,
             OVERWRITE: self.overwrite,
             HALF_PRECISION: self.half_precision,
+            START_TIME: self.start_time,
+            DETECT_START: self.detect_start,
+            DETECT_END: self.detect_end,
         }
 
 
