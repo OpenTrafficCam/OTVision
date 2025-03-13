@@ -24,6 +24,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+from OTVision.config import DATETIME_FORMAT
 from OTVision.domain.detect_producer_consumer import (
     DetectedFrameConsumer,
     DetectedFrameProducer,
@@ -37,7 +38,6 @@ from OTVision.helpers.files import (
 from OTVision.helpers.log import LOGGER_NAME
 
 log = logging.getLogger(LOGGER_NAME)
-DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
 
 class OTVisionVideoDetect(DetectedFrameConsumer):
@@ -53,7 +53,7 @@ class OTVisionVideoDetect(DetectedFrameConsumer):
             pass
 
 
-def parse_start_time_from(video_file: Path) -> datetime:
+def parse_start_time_from(video_file: Path, start_time: datetime | None) -> datetime:
     """Parse the given filename and retrieve the start date of the video.
 
     Args:
@@ -66,13 +66,15 @@ def parse_start_time_from(video_file: Path) -> datetime:
     Returns:
         datetime: start date of the video
     """
+    if start_time is not None:
+        return start_time
     match = re.search(
         FILE_NAME_PATTERN,
         video_file.name,
     )
     if match:
         start_date: str = match.group(START_DATE)
-        return parse_date_string_to_utc_datime(start_date, "%Y-%m-%d_%H-%M-%S").replace(
+        return parse_date_string_to_utc_datime(start_date, DATETIME_FORMAT).replace(
             tzinfo=timezone.utc
         )
 

@@ -1,7 +1,8 @@
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
+from OTVision.config import DATETIME_FORMAT
 from OTVision.domain.cli import CliParseError, DetectCliArgs, DetectCliParser
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
@@ -106,6 +107,14 @@ class ArgparseDetectCliParser(DetectCliParser):
             required=False,
         )
         self._parser.add_argument(
+            "--start-time",
+            default=None,
+            type=str,
+            help=f"Specify start date and time of the recording in format "
+            f"{DATETIME_FORMAT}.",
+            required=False,
+        )
+        self._parser.add_argument(
             "--detect-start",
             default=None,
             type=int,
@@ -138,6 +147,7 @@ class ArgparseDetectCliParser(DetectCliParser):
             ),
             half=bool(args.half) if args.half else None,
             overwrite=args.overwrite,
+            start_time=self._parse_start_time(args.start_time),
             detect_start=(
                 int(args.detect_start) if args.detect_start is not None else None
             ),
@@ -147,6 +157,11 @@ class ArgparseDetectCliParser(DetectCliParser):
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
         )
+
+    def _parse_start_time(self, start_time: str | None) -> datetime | None:
+        if start_time is None:
+            return None
+        return datetime.strptime(start_time, DATETIME_FORMAT)
 
     def __assert_cli_args_valid(self, args: Namespace) -> None:
         if args.paths is None and args.config is None:
