@@ -1,18 +1,17 @@
 import bz2
-import copy
 import json
 import os
 import platform
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 from jsonschema import validate
 
 import OTVision.config as config
+from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
@@ -21,7 +20,6 @@ from OTVision.dataformat import (
     DETECTIONS,
     METADATA,
     MODEL,
-    OCCURRENCE,
     OTDET_VERSION,
     OTVISION_VERSION,
     WEIGHTS,
@@ -30,16 +28,17 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.detect.detect import (
-    DATETIME_FORMAT,
-    OTVisionDetect,
-    Timestamper,
-    derive_filename,
-    parse_start_time_from,
-)
-from OTVision.detect.otdet import OtdetBuilder
-from OTVision.detect.yolo import Yolov8, create_model
+from OTVision.detect.builder import DetectBuilder
+from OTVision.detect.detect import OTVisionVideoDetect
 from tests.conftest import YieldFixture
+
+CONF = 0.25
+IOU = 0.45
+IMG_SIZE = 640
+HALF_PRECISION = False
+NORMALIZED = False
+OVERWRITE = True
+
 
 CYCLIST_VIDEO_LENGTH = timedelta(seconds=3)
 DEVIATION = 0.22
@@ -219,77 +218,59 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
     return detect_test_data_dir / "default" / file_name
 
 
-@pytest.fixture(scope="session")
-def yolov8m() -> Yolov8:
-    model_name = (
-        "tests/data/yolov8m.mlpackage" if platform.system() == "Darwin" else "yolov8m"
-    )
-    return create_model(
-        weights=model_name,
-        confidence=0.25,
-        iou=0.45,
-        img_size=640,
-        half_precision=False,
-        normalized=False,
-    )
-
-
-@pytest.mark.parametrize(
-    "video_file, detection_file, detect_start, detect_end",
-    [
-        ("video.mp4", "video.otdet", None, None),
-        ("video.mp4", "video_end_20.otdet", None, 20),
-        ("video.mp4", "video_start_10.otdet", 10, None),
-        ("video.mp4", "video_start_10_end_20.otdet", 10, 20),
-    ],
-)
-def test_derive_filename(
-    video_file: str,
-    detection_file: str,
-    detect_start: int | None,
-    detect_end: int | None,
-) -> None:
-    actual = derive_filename(
-        video_file=Path(video_file),
-        detect_start=detect_start,
-        detect_end=detect_end,
-        detect_suffix=".otdet",
-    )
-
-    assert actual == Path(detection_file)
-
-
 class TestDetect:
     conf: float = 0.25
     filetypes: list[str] = config.CONFIG[config.FILETYPES][config.VID]
 
     @pytest.fixture(scope="class")
+    def detect_builder(self) -> DetectBuilder:
+        return DetectBuilder()
+
+    @pytest.fixture(scope="class")
+    def update_current_config(
+        self, detect_builder: DetectBuilder
+    ) -> UpdateCurrentConfig:
+        return detect_builder.update_current_config
+
+    @pytest.fixture(scope="class")
+    def otvision_detect(self, detect_builder: DetectBuilder) -> OTVisionVideoDetect:
+        return detect_builder.build()
+
+    @pytest.fixture(scope="class")
     def result_cyclist_otdet(
-        self, yolov8m: Yolov8, cyclist_mp4: Path, detect_test_tmp_dir: Path
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        cyclist_mp4: Path,
+        detect_test_tmp_dir: Path,
+        update_current_config: UpdateCurrentConfig,
     ) -> Path:
-        target = create_otvision_detect(
+        update_current_config.update(
             create_config_from(
                 paths=[cyclist_mp4],
                 weights=MODEL_WEIGHTS,
                 expected_duration=EXPECTED_DURATION,
             )
         )
-        target.start()
+        otvision_detect.start()
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
-    def test_detect_emptyDirAsParam(self, detect_test_tmp_dir: Path) -> None:
+    def test_detect_emptyDirAsParam(
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        detect_test_tmp_dir: Path,
+        update_current_config: UpdateCurrentConfig,
+    ) -> None:
         empty_dir = detect_test_tmp_dir / "empty"
         empty_dir.mkdir()
-
-        target = create_otvision_detect(
+        update_current_config.update(
             create_config_from(
                 paths=[empty_dir],
                 weights=MODEL_WEIGHTS,
                 expected_duration=EXPECTED_DURATION,
             )
         )
-        target.start()
+        otvision_detect.start()
 
         assert os.listdir(empty_dir) == []
 
@@ -332,35 +313,45 @@ class TestDetect:
         return actual_cyclist_metadata
 
     def test_detect_error_raised_on_wrong_filetype(
-        self, detect_test_tmp_dir: Path
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        detect_test_tmp_dir: Path,
+        update_current_config: UpdateCurrentConfig,
     ) -> None:
         video_file_name = "video.vid"
         detect_error_wrong_filetype_dir = detect_test_tmp_dir / "wrong_filetype"
         detect_error_wrong_filetype_dir.mkdir()
         video_path = detect_error_wrong_filetype_dir / video_file_name
         video_path.touch()
-        _config = create_config_from(
-            paths=[video_path],
-            weights=MODEL_WEIGHTS,
-            expected_duration=EXPECTED_DURATION,
+        update_current_config.update(
+            create_config_from(
+                paths=[video_path],
+                weights=MODEL_WEIGHTS,
+                expected_duration=EXPECTED_DURATION,
+            )
         )
-        target = create_otvision_detect(_config)
-        target.start()
+        otvision_detect.start()
 
         assert os.listdir(detect_error_wrong_filetype_dir) == [video_file_name]
 
-    def test_detect_bboxes_normalized(self, truck_mp4: Path) -> None:
+    def test_detect_bboxes_normalized(
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        truck_mp4: Path,
+        update_current_config: UpdateCurrentConfig,
+    ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        _config = create_config_from(
-            paths=[truck_mp4],
-            weights=MODEL_WEIGHTS,
-            confidence=0.25,
-            normalized=True,
-            expected_duration=EXPECTED_DURATION,
+        update_current_config.update(
+            create_config_from(
+                paths=[truck_mp4],
+                weights=MODEL_WEIGHTS,
+                confidence=0.25,
+                normalized=True,
+                expected_duration=EXPECTED_DURATION,
+            )
         )
-        target = create_otvision_detect(_config)
-        target.start()
+        otvision_detect.start()
 
         otdet_dict = read_bz2_otdet(otdet_file)
 
@@ -373,17 +364,23 @@ class TestDetect:
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
 
-    def test_detect_bboxes_denormalized(self, truck_mp4: Path) -> None:
+    def test_detect_bboxes_denormalized(
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        truck_mp4: Path,
+        update_current_config: UpdateCurrentConfig,
+    ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        _config = create_config_from(
-            paths=[truck_mp4],
-            weights=MODEL_WEIGHTS,
-            expected_duration=EXPECTED_DURATION,
-            normalized=False,
+        update_current_config.update(
+            create_config_from(
+                paths=[truck_mp4],
+                weights=MODEL_WEIGHTS,
+                expected_duration=EXPECTED_DURATION,
+                normalized=False,
+            )
         )
-        target = create_otvision_detect(_config)
-        target.start()
+        otvision_detect.start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         frames = [
@@ -401,18 +398,23 @@ class TestDetect:
 
     @pytest.mark.parametrize("conf", [0.0, 0.1, 0.5, 0.9, 1.0])
     def test_detect_conf_bbox_above_thresh(
-        self, yolov8m: Yolov8, truck_mp4: Path, conf: float
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        update_current_config: UpdateCurrentConfig,
+        truck_mp4: Path,
+        conf: float,
     ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-        _config = create_config_from(
-            paths=[truck_mp4],
-            weights=MODEL_WEIGHTS,
-            expected_duration=EXPECTED_DURATION,
-            confidence=conf,
+        update_current_config.update(
+            create_config_from(
+                paths=[truck_mp4],
+                weights=MODEL_WEIGHTS,
+                expected_duration=EXPECTED_DURATION,
+                confidence=conf,
+            )
         )
-        target = create_otvision_detect(_config)
-        target.start()
+        otvision_detect.start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -425,12 +427,15 @@ class TestDetect:
 
     @pytest.mark.parametrize("overwrite", [True, False])
     def test_detect_overwrite(
-        self, yolov8m: Yolov8, truck_mp4: Path, overwrite: bool
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        update_current_config: UpdateCurrentConfig,
+        truck_mp4: Path,
+        overwrite: bool,
     ) -> None:
         otdet_file = truck_mp4.parent / truck_mp4.with_suffix(".otdet")
         otdet_file.unlink(missing_ok=True)
-
-        target = create_otvision_detect(
+        update_current_config.update(
             create_config_from(
                 paths=[truck_mp4],
                 weights=MODEL_WEIGHTS,
@@ -438,10 +443,10 @@ class TestDetect:
                 overwrite=True,
             )
         )
-        target.start()
+        otvision_detect.start()
 
         first_mtime = otdet_file.stat().st_mtime_ns
-        target = create_otvision_detect(
+        update_current_config.update(
             create_config_from(
                 paths=[truck_mp4],
                 weights=MODEL_WEIGHTS,
@@ -449,7 +454,7 @@ class TestDetect:
                 overwrite=overwrite,
             )
         )
-        target.start()
+        otvision_detect.start()
         second_mtime = otdet_file.stat().st_mtime_ns
 
         if overwrite:
@@ -459,9 +464,14 @@ class TestDetect:
         otdet_file.unlink()
 
     def test_detect_fulfill_minimum_detection_requirements(
-        self, yolov8m: Yolov8, cyclist_mp4: Path
+        self,
+        otvision_detect: OTVisionVideoDetect,
+        update_current_config: UpdateCurrentConfig,
+        cyclist_mp4: Path,
     ) -> None:
-        class_counts = self._get_detection_counts_for(cyclist_mp4, CYCLIST_VIDEO_LENGTH)
+        class_counts = self._get_detection_counts_for(
+            otvision_detect, update_current_config, cyclist_mp4, CYCLIST_VIDEO_LENGTH
+        )
 
         assert class_counts[CAR] >= CAR_LOWER_LIMIT
         assert class_counts[PERSON] >= PERSON_LOWER_LIMIT
@@ -472,14 +482,18 @@ class TestDetect:
 
     def test_detection_in_rotated_video(
         self,
-        yolov8m: Yolov8,
+        otvision_detect: OTVisionVideoDetect,
+        update_current_config: UpdateCurrentConfig,
         cyclist_mp4: Path,
         rotated_cyclist_mp4: Path,
         test_data_dir: Path,
         test_data_tmp_dir: Path,
     ) -> None:
         rotated_counts = self._get_detection_counts_for(
-            rotated_cyclist_mp4, CYCLIST_VIDEO_LENGTH
+            otvision_detect,
+            update_current_config,
+            rotated_cyclist_mp4,
+            CYCLIST_VIDEO_LENGTH,
         )
 
         assert rotated_counts[CAR] >= CAR_LOWER_LIMIT
@@ -491,18 +505,21 @@ class TestDetect:
 
     def _get_detection_counts_for(
         self,
+        otvision_detect: OTVisionVideoDetect,
+        update_current_config: UpdateCurrentConfig,
         converted_video: Path,
         expected_duration: timedelta = EXPECTED_DURATION,
     ) -> dict[str, float]:
-        target = create_otvision_detect(
+        update_current_config.update(
             create_config_from(
                 paths=[converted_video],
                 weights=MODEL_WEIGHTS,
                 expected_duration=expected_duration,
                 confidence=0.5,
+                overwrite=True,
             )
         )
-        target.start()
+        otvision_detect.start()
         result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
         frames = [
@@ -510,98 +527,6 @@ class TestDetect:
         ]
         class_counts = count_classes(frames)
         return class_counts
-
-    @patch("OTVision.detect.detect.log")
-    @patch("OTVision.detect.detect.create_model")
-    def test_detect_(
-        self, mock_create_model: Mock, mock_log: Mock, test_data_tmp_dir: Path
-    ) -> None:
-        model = Mock()
-        mock_create_model.return_value = model
-
-        video_file_without_date = test_data_tmp_dir / "video_without_date.mp4"
-        video_file_without_date.touch()
-
-        target = create_otvision_detect(
-            create_config_from(
-                paths=[video_file_without_date],
-                weights=MODEL_WEIGHTS,
-                expected_duration=timedelta(seconds=3),
-            )
-        )
-        target.start()
-        detect_config = target.config.detect
-        mock_create_model.assert_called_once_with(
-            weights=MODEL_WEIGHTS,
-            confidence=detect_config.yolo_config.conf,
-            iou=detect_config.yolo_config.iou,
-            img_size=detect_config.yolo_config.img_size,
-            half_precision=detect_config.half_precision,
-            normalized=detect_config.yolo_config.normalized,
-        )
-        model.detect.assert_not_called()
-        mock_log.warning.assert_called_once_with(
-            f"Video file name of '{video_file_without_date}' "
-            f"must include date and time in format: {DATETIME_FORMAT}"
-        )
-
-
-class TestTimestamper:
-    @pytest.mark.parametrize(
-        "file_name, start_date",
-        [
-            (
-                "prefix_FR20_2022-01-01_00-00-00.mp4",
-                datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-            ),
-            (
-                "Test-Cars_FR20_2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "Test_Cars_FR20_2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "Test_Cars_2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "2022-02-03_04-05-06.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-            (
-                "2022-02-03_04-05-06-suffix.mp4",
-                datetime(2022, 2, 3, 4, 5, 6, tzinfo=timezone.utc),
-            ),
-        ],
-    )
-    def test_get_start_time_from(self, file_name: str, start_date: datetime) -> None:
-        parsed_date = parse_start_time_from(Path(file_name))
-
-        assert parsed_date == start_date
-
-    def test_stamp_frames(self) -> None:
-        start_date = datetime(2022, 1, 2, 3, 4, 5)
-        time_per_frame = timedelta(microseconds=10000)
-        detections: dict[str, dict[str, dict]] = {
-            METADATA: {},
-            DATA: {
-                "1": {DETECTIONS: []},
-                "2": {DETECTIONS: [{CLASS: "car"}]},
-                "3": {DETECTIONS: []},
-            },
-        }
-
-        second_frame = start_date + time_per_frame
-        third_frame = second_frame + time_per_frame
-        expected_dict = copy.deepcopy(detections)
-        expected_dict[DATA]["1"][OCCURRENCE] = start_date.timestamp()
-        expected_dict[DATA]["2"][OCCURRENCE] = second_frame.timestamp()
-        expected_dict[DATA]["3"][OCCURRENCE] = third_frame.timestamp()
-        stamped_dict = Timestamper()._stamp(detections, start_date, time_per_frame)
-
-        assert expected_dict == stamped_dict
 
 
 @pytest.fixture
@@ -613,9 +538,9 @@ def create_config_from(
     paths: list[Path],
     weights: str,
     expected_duration: timedelta,
-    confidence: float | None = None,
-    normalized: bool | None = None,
-    overwrite: bool | None = None,
+    confidence: float = CONF,
+    normalized: bool = NORMALIZED,
+    overwrite: bool = OVERWRITE,
 ) -> config.Config:
     temp_config = config.Config().to_dict()
     temp_config[config.DETECT][config.PATHS] = [str(path) for path in paths]
@@ -623,17 +548,8 @@ def create_config_from(
     temp_config[config.DETECT][config.EXPECTED_DURATION] = int(
         expected_duration.total_seconds()
     )
-    if confidence is not None:
-        temp_config[config.DETECT][config.YOLO][config.CONF] = confidence
-    if normalized is not None:
-        temp_config[config.DETECT][config.YOLO][config.NORMALIZED] = normalized
-    if overwrite is not None:
-        temp_config[config.DETECT][config.OVERWRITE] = overwrite
+    temp_config[config.DETECT][config.YOLO][config.CONF] = confidence
+    temp_config[config.DETECT][config.YOLO][config.NORMALIZED] = normalized
+    temp_config[config.DETECT][config.OVERWRITE] = overwrite
 
     return config.Config.from_dict(temp_config)
-
-
-def create_otvision_detect(otvision_config: config.Config) -> OTVisionDetect:
-    detect = OTVisionDetect(OtdetBuilder())
-    detect.update_config(otvision_config)
-    return detect

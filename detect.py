@@ -24,7 +24,6 @@ from pathlib import Path
 
 from OTVision.config import Config
 from OTVision.detect.builder import DetectBuilder
-from OTVision.detect.detect import OTVisionDetect
 from OTVision.helpers.files import check_if_all_paths_exist
 
 
@@ -44,8 +43,8 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(cli_args)}")
 
     try:
-        detect = OTVisionDetect(otdet_builder=builder.otdet_builder)
-        detect.update_config(config)
+        builder.update_current_config.update(config)
+        detect = builder.build()
         detect.start()
 
     except FileNotFoundError:

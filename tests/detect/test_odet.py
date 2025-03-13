@@ -1,24 +1,28 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from OTVision import dataformat, version
+from OTVision.dataformat import CLASS, CONFIDENCE, H, W, X, Y
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig, OtdetBuilderError
-from OTVision.track.model.detection import Detection
+from OTVision.domain.detection import DetectedFrame, Detection
 
 
-def create_expected_video_metadata(config: OtdetBuilderConfig) -> dict:
+def create_expected_video_metadata(
+    config: OtdetBuilderConfig, number_of_frames: int
+) -> dict:
     """Create the expected video metadata based on the given config."""
     video_metadata = {
-        dataformat.FILENAME: str(config.video.stem),
-        dataformat.FILETYPE: str(config.video.suffix),
+        dataformat.FILENAME: str(Path(config.source).stem),
+        dataformat.FILETYPE: str(Path(config.source).suffix),
         dataformat.WIDTH: config.video_width,
         dataformat.HEIGHT: config.video_height,
         dataformat.RECORDED_FPS: config.recorded_fps,
         dataformat.ACTUAL_FPS: config.actual_fps,
-        dataformat.NUMBER_OF_FRAMES: config.actual_frames,
+        dataformat.NUMBER_OF_FRAMES: number_of_frames,
+        dataformat.RECORDED_START_DATE: config.recorded_start_date.timestamp(),
+        dataformat.LENGTH: str(config.actual_duration),
     }
     if config.expected_duration:
         video_metadata[dataformat.EXPECTED_DURATION] = int(
@@ -47,25 +51,56 @@ def create_expected_detection_metadata(config: OtdetBuilderConfig) -> dict:
     }
 
 
-def create_expected_metadata(config: OtdetBuilderConfig) -> dict:
+def create_expected_metadata(config: OtdetBuilderConfig, number_of_frames: int) -> dict:
     """Create the full expected metadata based on the given config."""
     return {
         dataformat.OTDET_VERSION: version.otdet_version(),
-        dataformat.VIDEO: create_expected_video_metadata(config),
+        dataformat.VIDEO: create_expected_video_metadata(config, number_of_frames),
         dataformat.DETECTION: create_expected_detection_metadata(config),
     }
 
 
 def create_expected_data(
-    detections: list[list[Detection]],
+    frames: list[DetectedFrame],
 ) -> dict:
     """Create the expected data dictionary based on input detections."""
     data = {}
-    for frame, detection_list in enumerate(detections, start=1):
-        data[str(frame)] = {
-            dataformat.DETECTIONS: [d.to_otdet() for d in detection_list]
+    for frame in frames:
+        data[str(frame.frame_number)] = {
+            dataformat.DETECTIONS: [
+                create_expected_detection(d) for d in frame.detections
+            ],
+            dataformat.OCCURRENCE: frame.occurrence.timestamp(),
         }
     return data
+
+
+def create_expected_detection(detection: Detection) -> dict:
+    return {
+        CLASS: detection.label,
+        CONFIDENCE: detection.conf,
+        X: detection.x,
+        Y: detection.y,
+        W: detection.w,
+        H: detection.h,
+    }
+
+
+def create_detected_frame(source: str, frame_number: int) -> DetectedFrame:
+    detection = Detection(
+        label="person",
+        conf=0.9,
+        x=100,
+        y=200,
+        w=100,
+        h=200,
+    )
+    return DetectedFrame(
+        source=source,
+        frame_number=frame_number,
+        detections=[detection],
+        occurrence=datetime(2020, 1, 1, 12, 0, 10),
+    )
 
 
 class TestOtdetBuilder:
@@ -80,11 +115,13 @@ class TestOtdetBuilder:
         return OtdetBuilderConfig(
             conf=0.5,
             iou=0.4,
-            video=Path("video.mp4"),
+            source="video.mp4",
             video_width=1920,
             video_height=1080,
             expected_duration=timedelta(seconds=300),
+            actual_duration=timedelta(seconds=33),
             recorded_fps=30.0,
+            recorded_start_date=datetime(2020, 1, 1, 12, 0, 0),
             actual_fps=29.97,
             actual_frames=1000,
             detection_img_size=640,
@@ -96,16 +133,6 @@ class TestOtdetBuilder:
             detect_start=300,
             detect_end=600,
         )
-
-    @pytest.fixture
-    def mock_detection(self) -> MagicMock:
-        """Fixture to provide a mocked Detection object."""
-        detection: MagicMock = MagicMock(spec=Detection)
-        detection.to_otdet.return_value = {
-            dataformat.CLASS: "person",
-            dataformat.CONFIDENCE: 0.9,
-        }
-        return detection
 
     def test_builder_without_config_raises_error(self, builder: OtdetBuilder) -> None:
         """Test that accessing config without setting it raises an error.
@@ -137,16 +164,15 @@ class TestOtdetBuilder:
 
         """  # noqa
         builder.add_config(config)
-        actual = builder._build_metadata()
+        actual = builder._build_metadata(number_of_frames=10)
 
-        expected = create_expected_metadata(config)
+        expected = create_expected_metadata(config, number_of_frames=10)
         assert actual == expected
 
     def test_build_data(
         self,
         builder: OtdetBuilder,
         config: OtdetBuilderConfig,
-        mock_detection: MagicMock,
     ) -> None:
         """Test the data generation with detection objects.
 
@@ -154,9 +180,13 @@ class TestOtdetBuilder:
 
         """  # noqa
         builder.add_config(config)
+        source = config.source
 
-        # Provide mock detections as input
-        given: list[list[Detection]] = [[mock_detection] * 2, [mock_detection]]
+        given: list[DetectedFrame] = [
+            create_detected_frame(source, 1),
+            create_detected_frame(source, 2),
+            create_detected_frame(source, 3),
+        ]
         actual = builder._build_data(given)
 
         expected = create_expected_data(given)
@@ -166,7 +196,6 @@ class TestOtdetBuilder:
         self,
         builder: OtdetBuilder,
         config: OtdetBuilderConfig,
-        mock_detection: MagicMock,
     ) -> None:
         """Test the full build method.
 
@@ -174,12 +203,18 @@ class TestOtdetBuilder:
         https://openproject.platomo.de/projects/001-opentrafficcam-live/work_packages/7188
         """  # noqa
         builder.add_config(config)
+        source = config.source
 
-        # Provide mock detections
-        given: list[list[Detection]] = [[mock_detection] * 3]
+        given: list[DetectedFrame] = [
+            create_detected_frame(source, 1),
+            create_detected_frame(source, 2),
+            create_detected_frame(source, 3),
+        ]
         actual = builder.build(given)
 
-        expected_metadata = create_expected_metadata(config)
+        expected_metadata = create_expected_metadata(
+            config, number_of_frames=len(given)
+        )
         expected_data = create_expected_data(given)
         expected = {
             dataformat.METADATA: expected_metadata,
@@ -214,7 +249,7 @@ class TestOtdetBuilder:
         actual = builder.build([])
 
         expected = {
-            dataformat.METADATA: create_expected_metadata(config),
+            dataformat.METADATA: create_expected_metadata(config, 0),
             dataformat.DATA: {},
         }
 

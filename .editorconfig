@@ -10,7 +10,5 @@ charset = utf-8
 indent_style = space
 indent_size = 4
 
-#yalm indentation
-[*.yml]
-indent_style = space
+[*.{yaml,yml,sh}]
 indent_size = 2
