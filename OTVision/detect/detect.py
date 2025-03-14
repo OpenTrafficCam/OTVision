@@ -19,25 +19,11 @@ OTVision main module to detect objects in single or multiple images or videos.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
-import re
-from datetime import datetime, timezone
-from pathlib import Path
 
 from OTVision.domain.detect_producer_consumer import (
     DetectedFrameConsumer,
     DetectedFrameProducer,
 )
-from OTVision.helpers.date import parse_date_string_to_utc_datime
-from OTVision.helpers.files import (
-    FILE_NAME_PATTERN,
-    START_DATE,
-    InproperFormattedFilename,
-)
-from OTVision.helpers.log import LOGGER_NAME
-
-log = logging.getLogger(LOGGER_NAME)
-DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
 
 class OTVisionVideoDetect(DetectedFrameConsumer):
@@ -51,29 +37,3 @@ class OTVisionVideoDetect(DetectedFrameConsumer):
     def consume(self) -> None:
         for _ in self._producer.produce():
             pass
-
-
-def parse_start_time_from(video_file: Path) -> datetime:
-    """Parse the given filename and retrieve the start date of the video.
-
-    Args:
-        video_file (Path): path to video file
-
-    Raises:
-        InproperFormattedFilename: if the filename is not formatted as expected, an
-        exception will be raised
-
-    Returns:
-        datetime: start date of the video
-    """
-    match = re.search(
-        FILE_NAME_PATTERN,
-        video_file.name,
-    )
-    if match:
-        start_date: str = match.group(START_DATE)
-        return parse_date_string_to_utc_datime(start_date, "%Y-%m-%d_%H-%M-%S").replace(
-            tzinfo=timezone.utc
-        )
-
-    raise InproperFormattedFilename(f"Could not parse {video_file.name}.")

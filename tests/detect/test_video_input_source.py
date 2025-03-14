@@ -7,8 +7,7 @@ import pytest
 from av import VideoFrame
 
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import Config, DetectConfig
-from OTVision.detect.detect import DATETIME_FORMAT
+from OTVision.config import DATETIME_FORMAT, Config, DetectConfig
 from OTVision.detect.video_input_source import VideoSource
 from OTVision.domain.frame import Frame, FrameKeys
 from tests.utils.mocking import create_mocks

@@ -68,6 +68,11 @@ class UpdateDetectConfigWithCliArgs:
                 if cli_args.half is not None
                 else detect_config.half_precision
             ),
+            start_time=(
+                cli_args.start_time
+                if cli_args.start_time is not None
+                else detect_config.start_time
+            ),
             detect_start=(
                 cli_args.detect_start
                 if cli_args.detect_start is not None

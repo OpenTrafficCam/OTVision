@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Generator
 
@@ -6,16 +7,16 @@ import av
 from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
+from OTVision.application.configure_logger import logger
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import Config
-from OTVision.detect.detect import DATETIME_FORMAT, parse_start_time_from
+from OTVision.config import DATETIME_FORMAT, Config
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
-from OTVision.detect.timestamper import TimestamperFactory
+from OTVision.detect.timestamper import TimestamperFactory, parse_start_time_from
 from OTVision.domain.frame import FrameKeys
 from OTVision.domain.input_source_detect import Frame, InputSourceDetect
 from OTVision.helpers.files import InproperFormattedFilename, get_files
@@ -49,6 +50,10 @@ class VideoSource(InputSourceDetect):
     @property
     def _current_config(self) -> Config:
         return self._get_current_config.get()
+
+    @property
+    def _start_time(self) -> datetime | None:
+        return self._get_current_config.get().detect.start_time
 
     def __init__(
         self,
@@ -125,7 +130,7 @@ class VideoSource(InputSourceDetect):
                         counter += 1
                 self.notify_observers(video_file, video_fps)
             except Exception as e:
-                print(e)
+                logger().error(f"Error processing {video_file}", exc_info=e)
 
     def __collect_files_to_detect(self) -> list[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
@@ -145,7 +150,7 @@ class VideoSource(InputSourceDetect):
 
     def __video_file_has_valid_format(self, video_file: Path) -> bool:
         try:
-            parse_start_time_from(video_file)
+            parse_start_time_from(video_file, start_time=self._start_time)
             return True
         except InproperFormattedFilename:
             log.warning(
@@ -170,7 +175,9 @@ class VideoSource(InputSourceDetect):
             duration = get_duration(current_video_file)
 
         width, height = get_video_dimensions(current_video_file)
-        start_time = parse_start_time_from(current_video_file)
+        start_time = parse_start_time_from(
+            current_video_file, start_time=self._start_time
+        )
 
         self._subject.notify(
             FlushEvent.create(

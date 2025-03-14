@@ -358,6 +358,9 @@ class TestPreprocess:
         }
 
     def test_preprocess_multiple_files(self) -> None:
+        """
+        https://openproject.platomo.de/projects/otcloud/work_packages/7527
+        """
         order_key = "order-key"
         hostname = "first-host"
         first_file_path = Path(f"{order_key}/{hostname}_2022-05-04_12-00-01.otdet")
@@ -379,7 +382,7 @@ class TestPreprocess:
         second_builder.append_classified_frame()
         second_detections = second_builder.build_ot_det()
 
-        third_file_path = Path(f"{order_key}/{hostname}_2022-05-04_13-00-01.otdet")
+        third_file_path = Path(f"{order_key}/{hostname}_non-hostname-part.otdet")
         third_start_date = datetime(2022, 5, 4, 13, 0, 1, tzinfo=timezone.utc)
         third_end_date = datetime(2022, 5, 4, 13, 0, 2, tzinfo=timezone.utc)
         third_builder = DataBuilder(
