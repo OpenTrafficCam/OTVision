@@ -12,5 +12,5 @@ call .venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install uv
 uv pip install --upgrade pip-tools pip wheel
-uv pip install -r requirements.txt --index-strategy unsafe-first-match%
+uv pip install -r requirements.txt --index-strategy unsafe-first-match --python .venv%
 deactivate
