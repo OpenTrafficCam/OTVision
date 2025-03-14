@@ -35,12 +35,19 @@ configurations:
     suffix: "win-cuda"
     output_file_name: otvision
     additional_requirements:
+      - "--extra-index-url https://pypi.nvidia.com/"
       - "--extra-index-url https://download.pytorch.org/whl/cu126"
+      - "tensorrt==10.9.0.34"
+      - "tensorrt-cu12-bindings==10.9.0.34"
+      - "tensorrt-cu12-libs==10.9.0.34"
   - package_path: OTVision
     files:
       - source: "install.sh"
     suffix: "linux-cuda"
     output_file_name: OTVision
     additional_requirements:
+      - "--extra-index-url https://pypi.nvidia.com/"
       - "--extra-index-url https://download.pytorch.org/whl/cu126"
-      - "tensorrt==10.8.0.43"
+      - "tensorrt==10.9.0.34"
+      - "tensorrt-cu12-bindings==10.9.0.34"
+      - "tensorrt-cu12-libs==10.9.0.34"
