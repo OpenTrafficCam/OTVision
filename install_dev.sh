@@ -9,5 +9,5 @@ UV="$VENV"/bin/uv
 
 bash "$WORKING_DIR"/install.sh
 
-$UV pip install -r requirements-dev.txt
+$UV pip install -r requirements-dev.txt --python .venv
 $PRE_COMMIT install --install-hooks
