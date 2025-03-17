@@ -25,7 +25,7 @@ from OTVision.track.parser.frame_group_parser_plugins import (
     MISSING_START_DATE,
     TimeThresholdFrameGroupParser,
 )
-from tests.track.test_data_builder import (
+from tests.track.helper.data_builder import (
     DEFAULT_HOSTNAME,
     DEFAULT_START_DATE,
     DataBuilder,

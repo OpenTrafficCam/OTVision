@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import EXPECTED_DURATION, FILENAME, RECORDED_START_DATE, VIDEO
 from OTVision.track.model.filebased.frame_group import FrameGroup
-from tests.track.test_data_builder import (
+from tests.track.helper.data_builder import (
     DEFAULT_HOSTNAME,
     DEFAULT_INPUT_FILE_PATH,
     DEFAULT_START_DATE,

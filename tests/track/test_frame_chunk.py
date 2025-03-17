@@ -12,7 +12,7 @@ from OTVision.track.model.filebased.frame_chunk import (
     TrackedChunk,
 )
 from OTVision.track.model.frame import TrackedFrame
-from tests.track.test_data_builder import DEFAULT_START_DATE
+from tests.track.helper.data_builder import DEFAULT_START_DATE
 
 
 class TestFrameChunk:
