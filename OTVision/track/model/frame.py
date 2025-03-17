@@ -67,8 +67,10 @@ class TrackedFrame(Frame[S]):
     unfinished_tracks: set[TrackId] = field(init=False)
 
     def __post_init__(self) -> None:
-        # derive observed and unfinished tracks
-        # from tracked detections and finished track information
+        """
+        Derive observed and unfinished tracks from tracked detections and finished
+        track information.
+        """
         observed = {d.track_id for d in self.detections}
         object.__setattr__(self, "observed_tracks", observed)
 
