@@ -20,9 +20,9 @@ from OTVision.config import (
     TRACK,
 )
 from OTVision.helpers.files import get_files
+from OTVision.helpers.input_types import check_types
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.exporter.filebased_exporter import FinishedChunkTrackExporter
-from OTVision.track.legacy.iou import _check_types
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 from OTVision.track.parser.frame_group_parser_plugins import (
     TimeThresholdFrameGroupParser,
@@ -98,7 +98,7 @@ def main(
             for this tracking run
     """
 
-    _check_types(sigma_l, sigma_h, sigma_iou, t_min, t_miss_max)
+    check_types(sigma_l, sigma_h, sigma_iou, t_min, t_miss_max)
 
     filetypes = CONFIG[FILETYPES][DETECT]
     detections_files = get_files(paths=paths, filetypes=filetypes)
