@@ -8,6 +8,7 @@ from OTVision.dataformat import (
     FILENAME,
     FIRST_TRACKED_VIDEO_START,
     LAST_TRACKED_VIDEO_END,
+    LENGTH,
     OTTRACK_VERSION,
     OTVISION_VERSION,
     RECORDED_START_DATE,
@@ -81,7 +82,7 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
         if EXPECTED_DURATION in metadata[VIDEO].keys():
             expected_duration = metadata[VIDEO][EXPECTED_DURATION]
             return timedelta(seconds=int(expected_duration))
-        return MISSING_EXPECTED_DURATION
+        return metadata[VIDEO][LENGTH]
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         metadata_by_file = dict(frame_group.metadata_by_file)
