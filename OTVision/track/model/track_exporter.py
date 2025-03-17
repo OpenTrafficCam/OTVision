@@ -94,9 +94,8 @@ class FinishedTracksExporter(ABC, Generic[F]):
         if len(reindexed_dets) == 0:
             return []
 
-        assert (
-            len({detection[INPUT_FILE_PATH] for detection in reindexed_dets}) == 1
-        ), "Expect detections from only a single source file"
+        if len({detection[INPUT_FILE_PATH] for detection in reindexed_dets}) > 1:
+            raise ValueError("Expect detections from only a single source file")
 
         reindexed_dets.sort(
             key=lambda detection: (
