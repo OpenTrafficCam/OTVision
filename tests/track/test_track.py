@@ -163,7 +163,7 @@ def test_track_pass(
         b = test_track_tmp_dir / test_case / different_file
         json_a = read_json(a)
         json_b = read_json(b)
-        assert json_a == json_b
+        assert json_b == json_a
     assert not different_files
     assert not irregular_files
 

@@ -80,9 +80,14 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def extract_expected_duration_from(self, metadata: dict) -> timedelta:
         if EXPECTED_DURATION in metadata[VIDEO].keys():
-            expected_duration = metadata[VIDEO][EXPECTED_DURATION]
-            return timedelta(seconds=int(expected_duration))
-        return metadata[VIDEO][LENGTH]
+            if expected_duration := metadata[VIDEO][EXPECTED_DURATION]:
+                return timedelta(seconds=int(expected_duration))
+        return self.parse_video_length(metadata)
+
+    def parse_video_length(self, metadata: dict) -> timedelta:
+        video_length = metadata[VIDEO][LENGTH]
+        time = datetime.strptime(video_length, "%H:%M:%S")
+        return timedelta(hours=time.hour, minutes=time.minute, seconds=time.second)
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         metadata_by_file = dict(frame_group.metadata_by_file)

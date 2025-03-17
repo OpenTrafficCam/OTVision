@@ -10,6 +10,7 @@ from OTVision.dataformat import (
     FILENAME,
     FIRST_TRACKED_VIDEO_START,
     LAST_TRACKED_VIDEO_END,
+    LENGTH,
     METADATA,
     OTTRACK_VERSION,
     OTVISION_VERSION,
@@ -21,7 +22,6 @@ from OTVision.dataformat import (
 from OTVision.helpers.files import InproperFormattedFilename
 from OTVision.track.model.filebased.frame_group import FrameGroup
 from OTVision.track.parser.frame_group_parser_plugins import (
-    MISSING_EXPECTED_DURATION,
     MISSING_START_DATE,
     TimeThresholdFrameGroupParser,
 )
@@ -261,12 +261,13 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
         assert time == parser.extract_expected_duration_from(metadata)
 
     def test_extract_expected_duration_from_missing(self) -> None:
-        metadata: dict = {VIDEO: {}}
+        seconds = 42
+        time = f"00:00:{seconds}"
+        expected_time = timedelta(seconds=seconds)
+        metadata: dict = {VIDEO: {LENGTH: time, EXPECTED_DURATION: None}}
 
         parser = self.init()
-        assert MISSING_EXPECTED_DURATION == parser.extract_expected_duration_from(
-            metadata
-        )
+        assert expected_time == parser.extract_expected_duration_from(metadata)
 
     def test_updated_metadata_copy(self) -> None:
         frame_group_a, frame_group_b = self.dummy_frame_groups(
