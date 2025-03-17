@@ -61,7 +61,6 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
         builder.append_classified_frame()
         otdet = builder.build_ot_det()
         metadata = otdet[METADATA]
-        print(metadata)
         result = parser.convert(file_path, metadata)
 
         expected = FrameGroup(
