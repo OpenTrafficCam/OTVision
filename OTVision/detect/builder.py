@@ -108,9 +108,6 @@ class DetectBuilder:
     def update_current_config(self) -> UpdateCurrentConfig:
         return UpdateCurrentConfig(self.current_config)
 
-    def __init__(self, argv: list[str] | None = None) -> None:
-        self.argv = argv
-
     @cached_property
     def input_source(self) -> InputSourceDetect:
         return VideoSource(
@@ -170,6 +167,9 @@ class DetectBuilder:
             detection_filter=self.current_object_detector,
             detected_frame_buffer=self.detected_frame_buffer,
         )
+
+    def __init__(self, argv: list[str] | None = None) -> None:
+        self.argv = argv
 
     def build(self) -> OTVisionVideoDetect:
         self.register_observers()
