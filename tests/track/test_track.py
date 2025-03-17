@@ -8,7 +8,7 @@ import pytest
 from OTVision import version
 from OTVision.config import CONFIG
 from OTVision.helpers.files import read_json
-from OTVision.track.new_track import main as track
+from OTVision.track.track import main as track
 from tests.conftest import YieldFixture
 
 TEST_RUN_ID = "test-run-id"

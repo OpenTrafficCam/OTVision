@@ -22,7 +22,7 @@ OTVision init module
 
 # TODO: Might need to change this
 from .convert.convert import main as convert
-from .track.new_track import main as track
+from .track.track import main as track
 from .transform.transform import main as transform
 
 # from .view.view import main as view
