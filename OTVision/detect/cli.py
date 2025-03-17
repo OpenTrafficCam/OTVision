@@ -110,8 +110,8 @@ class ArgparseDetectCliParser(DetectCliParser):
             "--start-time",
             default=None,
             type=str,
-            help=f"Specify start date and time of the recording in format "
-            f"{DATETIME_FORMAT}.",
+            help="Specify start date and time of the recording in format "
+            "YYYY-MM-DD_HH-MM-SS",
             required=False,
         )
         self._parser.add_argument(
