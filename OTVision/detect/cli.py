@@ -130,8 +130,6 @@ class ArgparseDetectCliParser(DetectCliParser):
         )
 
     def parse(self) -> DetectCliArgs:
-        print("Argv")
-        print(self._argv)
         args = self._parser.parse_args(self._argv)
         self.__assert_cli_args_valid(args)
 
