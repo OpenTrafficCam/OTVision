@@ -58,7 +58,7 @@ repos:
           - numpy==1.26.4
           - opencv-python==4.9.0.80
           - pandas-stubs==2.2.2.240807
-          - pandas==2.2.2
+          - pandas==2.2.3
           - pre-commit==3.8.0
           - pytest-cov==5.0.0
           - pytest==8.3.3
@@ -92,4 +92,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
