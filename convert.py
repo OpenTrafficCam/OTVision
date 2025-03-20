@@ -24,8 +24,8 @@ import argparse
 import logging
 from pathlib import Path
 
-import OTVision
 import OTVision.config as config
+from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 
@@ -211,7 +211,7 @@ def main(argv: list[str] | None = None) -> None:
     log.info(f"Arguments: {vars(args)}")
 
     try:
-        OTVision.convert(
+        convert(
             paths=paths,
             input_fps=input_fps,
             fps_from_filename=fps_from_filename,

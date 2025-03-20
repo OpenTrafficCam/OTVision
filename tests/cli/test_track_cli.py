@@ -1,7 +1,6 @@
-import unittest.mock as mock
 from pathlib import Path
 from typing import Callable
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
@@ -137,18 +136,6 @@ def track_cli() -> Callable:
     return track_cli
 
 
-@pytest.fixture()
-def track() -> Callable:
-    """Imports and returns the main from OTVision.track.track.py
-
-    Returns:
-        Callable: main from OTVision.track.track.py
-    """
-    from OTVision import track
-
-    return track
-
-
 class TestTrackCLI:
     @pytest.mark.parametrize(
         argnames="test_data",
@@ -159,74 +146,69 @@ class TestTrackCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
+    @patch("track.track")
     def test_pass_track_cli(
-        self, test_data: dict, track_cli: Callable, track: Callable
+        self, mock_track: Mock, test_data: dict, track_cli: Callable
     ) -> None:
-        track = mock.create_autospec(track)
+        command = [
+            *test_data["paths"]["passed"].split(),
+            *test_data["sigma_l"]["passed"].split(),
+            *test_data["sigma_h"]["passed"].split(),
+            *test_data["sigma_iou"]["passed"].split(),
+            *test_data["t_min"]["passed"].split(),
+            *test_data["t_miss_max"]["passed"].split(),
+            *test_data["overwrite"]["passed"].split(),
+            *test_data["config"]["passed"].split(),
+            LOGFILE_OVERWRITE_CMD,
+        ]
 
-        with patch("OTVision.track") as mock_track:
-            command = [
-                *test_data["paths"]["passed"].split(),
-                *test_data["sigma_l"]["passed"].split(),
-                *test_data["sigma_h"]["passed"].split(),
-                *test_data["sigma_iou"]["passed"].split(),
-                *test_data["t_min"]["passed"].split(),
-                *test_data["t_miss_max"]["passed"].split(),
-                *test_data["overwrite"]["passed"].split(),
-                *test_data["config"]["passed"].split(),
-                LOGFILE_OVERWRITE_CMD,
-            ]
+        track_cli(argv=list(filter(None, command)))
 
-            track_cli(argv=list(filter(None, command)))
-
-            mock_track.assert_called_once_with(
-                paths=test_data["paths"][EXPECTED],
-                sigma_l=test_data["sigma_l"][EXPECTED],
-                sigma_h=test_data["sigma_h"][EXPECTED],
-                sigma_iou=test_data["sigma_iou"][EXPECTED],
-                t_min=test_data["t_min"][EXPECTED],
-                t_miss_max=test_data["t_miss_max"][EXPECTED],
-                overwrite=test_data["overwrite"][EXPECTED],
-            )
+        mock_track.assert_called_once_with(
+            paths=test_data["paths"][EXPECTED],
+            sigma_l=test_data["sigma_l"][EXPECTED],
+            sigma_h=test_data["sigma_h"][EXPECTED],
+            sigma_iou=test_data["sigma_iou"][EXPECTED],
+            t_min=test_data["t_min"][EXPECTED],
+            t_miss_max=test_data["t_miss_max"][EXPECTED],
+            overwrite=test_data["overwrite"][EXPECTED],
+        )
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
+    @patch("track.track")
     def test_fail_wrong_types_passed_to_track_cli(
         self,
+        mock_track: Mock,
         track_cli: Callable,
-        track: Callable,
         capsys: pytest.CaptureFixture,
         test_fail_data: dict,
     ) -> None:
-        track = mock.create_autospec(track)
-
-        with patch("OTVision.track"):
-            with pytest.raises(SystemExit) as e:
-                command = [*test_fail_data["passed"].split()]
-                track_cli(argv=list(filter(None, command)))
-            assert e.value.code == 2
-            captured = capsys.readouterr()
-            assert test_fail_data["error_msg_part"] in captured.err
+        with pytest.raises(SystemExit) as e:
+            command = [*test_fail_data["passed"].split()]
+            track_cli(argv=list(filter(None, command)))
+        assert e.value.code == 2
+        captured = capsys.readouterr()
+        assert test_fail_data["error_msg_part"] in captured.err
+        mock_track.assert_not_called()
 
     @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    @patch("track.track")
     def test_fail_not_existing_path_passed_to_track_cli(
-        self, track: Callable, track_cli: Callable, passed: str
+        self, mock_track: Mock, track_cli: Callable, passed: str
     ) -> None:
-        track = mock.create_autospec(track)
+        with pytest.raises(FileNotFoundError):
+            command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
+            track_cli(argv=list(filter(None, command)))
+        mock_track.assert_not_called()
 
-        with patch("OTVision.track"):
-            with pytest.raises(FileNotFoundError):
-                command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
-                track_cli(argv=list(filter(None, command)))
-
+    @patch("track.track")
     def test_fail_no_paths_passed_to_track_cli(
-        self, track: Callable, track_cli: Callable
+        self, mock_track: Mock, track_cli: Callable
     ) -> None:
-        track = mock.create_autospec(track)
-
-        with patch("OTVision.track"):
-            error_msg = (
-                "No paths have been passed as command line args."
-                + "No paths have been defined in the user config."
-            )
-            with pytest.raises(OSError, match=error_msg):
-                track_cli(argv=[LOGFILE_OVERWRITE_CMD])
+        error_msg = (
+            "No paths have been passed as command line args."
+            + "No paths have been defined in the user config."
+        )
+        with pytest.raises(OSError, match=error_msg):
+            track_cli(argv=[LOGFILE_OVERWRITE_CMD])
+        mock_track.assert_not_called()
