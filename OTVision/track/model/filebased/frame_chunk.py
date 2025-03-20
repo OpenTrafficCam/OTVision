@@ -7,14 +7,14 @@ from tqdm import tqdm
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
 from OTVision.domain.detection import TrackId
-from OTVision.track.model.filebased.frame_group import FrameGroup, get_output_file
-from OTVision.track.model.frame import (
+from OTVision.domain.frame import (
     DetectedFrame,
     FinishedFrame,
     FrameNo,
     IsLastFrame,
     TrackedFrame,
 )
+from OTVision.track.model.filebased.frame_group import FrameGroup, get_output_file
 
 
 @dataclass(frozen=True)

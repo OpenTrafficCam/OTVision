@@ -22,7 +22,7 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.domain.detection import Detection
-from OTVision.track.model.frame import DetectedFrame
+from OTVision.domain.frame import DetectedFrame
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 
 DEFAULT_HOSTNAME = "hostname"

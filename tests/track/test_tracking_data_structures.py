@@ -21,7 +21,7 @@ from OTVision.domain.detection import (
     TrackedDetection,
     TrackId,
 )
-from OTVision.track.model.frame import DetectedFrame, TrackedFrame
+from OTVision.domain.frame import DetectedFrame, TrackedFrame
 from tests.track.helper.data_builder import DEFAULT_START_DATE, DataBuilder
 
 

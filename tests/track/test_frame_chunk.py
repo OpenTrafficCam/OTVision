@@ -6,12 +6,12 @@ from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, OCCURRENCE
 from OTVision.domain.detection import FinishedDetection, TrackedDetection
+from OTVision.domain.frame import TrackedFrame
 from OTVision.track.model.filebased.frame_chunk import (
     FinishedChunk,
     FrameChunk,
     TrackedChunk,
 )
-from OTVision.track.model.frame import TrackedFrame
 from tests.track.helper.data_builder import DEFAULT_START_DATE
 
 

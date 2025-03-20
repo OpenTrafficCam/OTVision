@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from OTVision.domain.detection import Detection, TrackedDetection, TrackId
-from OTVision.track.model.frame import DetectedFrame, TrackedFrame
-from OTVision.track.model.tracking_interfaces import ID_GENERATOR, FrameNo, Tracker
+from OTVision.domain.frame import DetectedFrame, FrameNo, TrackedFrame
+from OTVision.track.model.tracking_interfaces import ID_GENERATOR, Tracker
 
 
 @dataclass(frozen=True)

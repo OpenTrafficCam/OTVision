@@ -17,6 +17,7 @@ from OTVision.dataformat import (
     Y,
 )
 from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame
 from OTVision.helpers.date import (
     parse_date_string_to_utc_datime,
     parse_timestamp_string_to_utc_datetime,
@@ -24,7 +25,6 @@ from OTVision.helpers.date import (
 from OTVision.helpers.files import denormalize_bbox, read_json
 from OTVision.track.model.filebased.frame_chunk import ChunkParser, FrameChunk
 from OTVision.track.model.filebased.frame_group import FrameGroup
-from OTVision.track.model.frame import DetectedFrame
 
 
 class JsonChunkParser(ChunkParser):
@@ -59,7 +59,7 @@ class JsonChunkParser(ChunkParser):
             data_detections = value[DETECTIONS]
             detections = detection_parser.convert(data_detections)
             parsed_frame = DetectedFrame(
-                int(key) + frame_offset,
+                no=int(key) + frame_offset,
                 occurrence=occurrence,
                 source=str(file),
                 detections=detections,

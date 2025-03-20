@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from OTVision.config import CONFIG, DEFAULT_FILETYPE, OVERWRITE, TRACK
 from OTVision.domain.detection import TrackId
+from OTVision.domain.frame import DetectedFrame, FrameNo, IsLastFrame, TrackedFrame
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.model.filebased.frame_chunk import (
     ChunkParser,
@@ -15,7 +16,6 @@ from OTVision.track.model.filebased.frame_chunk import (
     TrackedChunk,
 )
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
-from OTVision.track.model.frame import DetectedFrame, FrameNo, IsLastFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import (
     ID_GENERATOR,
     Tracker,
