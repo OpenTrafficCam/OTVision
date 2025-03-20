@@ -9,8 +9,8 @@ from OTVision.dataformat import FRAME, INPUT_FILE_PATH, TRACK_ID
 from OTVision.domain.detection import TrackId
 from OTVision.track.model.filebased.frame_group import FrameGroup, get_output_file
 from OTVision.track.model.frame import (
+    DetectedFrame,
     FinishedFrame,
-    Frame,
     FrameNo,
     IsLastFrame,
     TrackedFrame,
@@ -25,13 +25,13 @@ class FrameChunk:
     Attributes:
         file (Path): common file path source of Frames.
         metadata (dict): otdet metadata.
-        frames (Sequence[Frame]): a sequence of untracked Frames.
+        frames (Sequence[DetectedFrame]): a sequence of untracked Frames.
         frame_group_id (int): id of FrameGroup this FrameCHunk is part of.
     """
 
     file: Path
     metadata: dict
-    frames: Sequence[Frame]
+    frames: Sequence[DetectedFrame]
     frame_group_id: int
 
     def check_output_file_exists(self, with_suffix: str) -> bool:

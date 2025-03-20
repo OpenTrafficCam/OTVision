@@ -15,7 +15,7 @@ from OTVision.track.model.filebased.frame_chunk import (
     TrackedChunk,
 )
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
-from OTVision.track.model.frame import Frame, FrameNo, IsLastFrame, TrackedFrame
+from OTVision.track.model.frame import DetectedFrame, FrameNo, IsLastFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import (
     ID_GENERATOR,
     Tracker,
@@ -34,7 +34,7 @@ class ChunkBasedTracker(Tracker):
 
     def track_frame(
         self,
-        frames: Frame,
+        frames: DetectedFrame,
         id_generator: ID_GENERATOR,
     ) -> TrackedFrame:
         return self._tracker.track_frame(frames, id_generator)

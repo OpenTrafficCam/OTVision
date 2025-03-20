@@ -21,7 +21,7 @@ from OTVision.domain.detection import (
     TrackedDetection,
     TrackId,
 )
-from OTVision.track.model.frame import Frame, TrackedFrame
+from OTVision.track.model.frame import DetectedFrame, TrackedFrame
 from tests.track.helper.data_builder import DEFAULT_START_DATE, DataBuilder
 
 
@@ -168,7 +168,7 @@ class TestTrackedFrame:
             number_of_frames=4, number_of_classifications=5
         )
 
-    def frames(self) -> list[Frame]:
+    def frames(self) -> list[DetectedFrame]:
         return list(self.data_builder().objects.values())
 
     def create_tracked_frames(self) -> list[tuple[TrackedFrame, list[TrackId]]]:

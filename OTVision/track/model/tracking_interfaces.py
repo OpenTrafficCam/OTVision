@@ -3,8 +3,8 @@ from typing import Generic, Iterator, TypeVar
 
 from OTVision.domain.detection import TrackId
 from OTVision.track.model.frame import (
+    DetectedFrame,
     FinishedFrame,
-    Frame,
     FrameNo,
     IsLastFrame,
     TrackedFrame,
@@ -23,13 +23,13 @@ class Tracker(ABC):
     """
 
     def track(
-        self, frames: Iterator[Frame], id_generator: ID_GENERATOR
+        self, frames: Iterator[DetectedFrame], id_generator: ID_GENERATOR
     ) -> Iterator[TrackedFrame]:
         """Process the given stream of Frames,
         yielding TrackedFrames one by one as a lazy stream of TrackedFrames.
 
         Args:
-            frames (Iterator[Frame]): (lazy) stream of Frames
+            frames (Iterator[DetectedFrame]): (lazy) stream of Frames
                 with untracked Detections.
             id_generator (ID_GENERATOR): provider of new (unique) track ids.
 
@@ -43,7 +43,7 @@ class Tracker(ABC):
     @abstractmethod
     def track_frame(
         self,
-        frame: Frame,
+        frame: DetectedFrame,
         id_generator: ID_GENERATOR,
     ) -> TrackedFrame:
         """Process single Frame with untracked Detections,
@@ -51,7 +51,7 @@ class Tracker(ABC):
         creating a TrackedFrame with TrackedDetections.
 
         Args:
-            frame (Frame): the Frame to be tracked.
+            frame (DetectedFrame): the Frame to be tracked.
             id_generator (ID_GENERATOR): provider of new (unique) track ids.
 
         Returns:
@@ -270,7 +270,7 @@ class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame, FinishedFrame]
         self._tracker = tracker
 
     def track(
-        self, frames: Iterator[Frame], id_generator: ID_GENERATOR
+        self, frames: Iterator[DetectedFrame], id_generator: ID_GENERATOR
     ) -> Iterator[FinishedFrame]:
         tracked_frame_stream = self._tracker.track(frames, id_generator)
         return self.track_and_finish(tracked_frame_stream)

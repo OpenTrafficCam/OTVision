@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from OTVision.domain.detection import Detection, TrackedDetection, TrackId
-from OTVision.track.model.frame import Frame, TrackedFrame
+from OTVision.track.model.frame import DetectedFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import ID_GENERATOR, FrameNo, Tracker
 
 
@@ -66,7 +66,9 @@ class ActiveIouTrack:
     last_frame: FrameNo
     track_age: int
 
-    def __init__(self, id: TrackId, frame: "Frame", detection: "Detection") -> None:
+    def __init__(
+        self, id: TrackId, frame: "DetectedFrame", detection: "Detection"
+    ) -> None:
         self.id = id
         self.frame_no = [frame.no]
         self.bboxes = [BoundingBox.from_xywh(detection)]
@@ -79,7 +81,7 @@ class ActiveIouTrack:
         self.last_frame = frame.no
         self.track_age = 0
 
-    def add_detection(self, frame: Frame, detection: Detection) -> None:
+    def add_detection(self, frame: DetectedFrame, detection: Detection) -> None:
         self.frame_no.append(frame.no)
         self.bboxes.append(BoundingBox.from_xywh(detection))
         self.center.append(Coordinate.center_of(detection))
@@ -162,7 +164,9 @@ class IouTracker(Tracker):
     def t_miss_max(self) -> int:
         return self.parameters.t_miss_max
 
-    def track_frame(self, frame: Frame, id_generator: ID_GENERATOR) -> TrackedFrame:
+    def track_frame(
+        self, frame: DetectedFrame, id_generator: ID_GENERATOR
+    ) -> TrackedFrame:
 
         detections = [d for d in frame.detections if d.conf >= self.sigma_l]
         tracked_detections: list[TrackedDetection] = []

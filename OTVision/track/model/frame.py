@@ -16,7 +16,7 @@ FrameNo = int
 
 
 @dataclass(frozen=True)
-class Frame:
+class DetectedFrame:
     """Frame metadata, optional image and respective detections.
 
     Attributes:
@@ -38,7 +38,7 @@ IsLastFrame = Callable[[FrameNo, TrackId], bool]
 
 
 @dataclass(frozen=True)
-class TrackedFrame(Frame):
+class TrackedFrame(DetectedFrame):
     """Frame metadata with tracked detections.
     Also provides additional aggregated information about:
     observed, finished and unfinished tracks.
