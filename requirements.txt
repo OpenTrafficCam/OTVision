@@ -4,8 +4,8 @@ geopandas==1.0.1
 ijson==3.3.0
 more-itertools==10.5.0
 moviepy==1.0.3
-numpy==1.26.4 # ultralytics requires numpy < 2.0.0
-opencv-python==4.9.0.80
+numpy==2.1.1 # ultralytics requires numpy <= 2.1.1
+opencv-python==4.11.0.86
 pandas==2.2.3
 PyYAML==6.0.2
 setuptools==74.0.0

@@ -55,8 +55,8 @@ repos:
           - more-itertools==10.5.0
           - moviepy==1.0.3
           - mypy==1.15.0
-          - numpy==1.26.4
-          - opencv-python==4.9.0.80
+          - numpy==2.1.1
+          - opencv-python==4.11.0.86
           - pandas-stubs==2.2.3.250308
           - pandas==2.2.3
           - pre-commit==3.8.0
@@ -92,4 +92,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
