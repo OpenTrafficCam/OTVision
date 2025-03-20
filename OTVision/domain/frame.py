@@ -1,7 +1,10 @@
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, Optional, TypedDict
+from typing import Literal, Optional, Sequence, TypedDict
 
 from numpy import ndarray
+
+from OTVision.domain.detection import Detection
 
 
 class FrameKeys:
@@ -27,3 +30,12 @@ class Frame(TypedDict):
     frame: int
     source: str
     occurrence: datetime
+
+
+@dataclass(frozen=True, repr=True)
+class DetectedFrame:
+    no: int
+    occurrence: datetime
+    source: str
+    detections: Sequence[Detection]
+    image: ndarray | None = None

@@ -33,8 +33,8 @@ from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.config import DetectConfig
-from OTVision.domain.detection import DetectedFrame, Detection
-from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 from OTVision.helpers.log import LOGGER_NAME
 

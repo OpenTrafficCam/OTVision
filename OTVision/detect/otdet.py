@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Self
 
 from OTVision import dataformat, version
-from OTVision.domain.detection import DetectedFrame, Detection
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame
 
 
 @dataclass
@@ -74,7 +75,7 @@ class OtdetBuilder:
             converted_detections = [
                 self.__convert_detection(detection) for detection in frame.detections
             ]
-            data[str(frame.frame_number)] = {
+            data[str(frame.no)] = {
                 dataformat.DETECTIONS: converted_detections,
                 dataformat.OCCURRENCE: frame.occurrence.timestamp(),
             }
