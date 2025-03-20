@@ -1,6 +1,5 @@
 import unittest
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from OTVision.dataformat import (
     CLASS,
@@ -284,7 +283,7 @@ class TestFinishedFrame(unittest.TestCase):
         return (track_id, frame_no) in [(1, 1), (2, 1), (3, 3), (4, 3)]
 
     def setUp(self) -> None:
-        self.mock_file = Path("/mock/path")
+        self.mock_file = "/mock/path"
 
         mock_tracked_frame_1 = self._mock_frame(
             no=1,

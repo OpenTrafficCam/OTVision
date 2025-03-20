@@ -25,13 +25,13 @@ class FrameChunk:
     Attributes:
         file (Path): common file path source of Frames.
         metadata (dict): otdet metadata.
-        frames (Sequence[Frame[Path]]): a sequence of untracked Frames.
+        frames (Sequence[Frame]): a sequence of untracked Frames.
         frame_group_id (int): id of FrameGroup this FrameCHunk is part of.
     """
 
     file: Path
     metadata: dict
-    frames: Sequence[Frame[Path]]
+    frames: Sequence[Frame]
     frame_group_id: int
 
     def check_output_file_exists(self, with_suffix: str) -> bool:
@@ -49,7 +49,7 @@ class TrackedChunk(FrameChunk):
     Attributes:
         is_last_chunk (bool): whether this chunk is the last of
             subsequently (related/connected) chunks.
-        frames (Sequence[TrackedFrame[Path]]): overrides frames
+        frames (Sequence[TrackedFrame]): overrides frames
             with more specific frame type.
         finished_tracks (set[TrackId]): aggregates finished tracks
             of given TrackedFrames.
@@ -62,7 +62,7 @@ class TrackedChunk(FrameChunk):
     """
 
     is_last_chunk: bool
-    frames: Sequence[TrackedFrame[Path]] = field(init=False)
+    frames: Sequence[TrackedFrame] = field(init=False)
 
     finished_tracks: set[TrackId] = field(init=False)
     observed_tracks: set[TrackId] = field(init=False)
@@ -75,7 +75,7 @@ class TrackedChunk(FrameChunk):
         file: Path,
         metadata: dict,
         is_last_chunk: bool,
-        frames: Sequence[TrackedFrame[Path]],
+        frames: Sequence[TrackedFrame],
         frame_group_id: int,
     ) -> None:
 
@@ -165,11 +165,11 @@ class FinishedChunk(TrackedChunk):
     """A chunk of FinishedFrames.
 
     Attributes:
-        frames (Sequence[FinishedFrame[Path]]): overrides frames
+        frames (Sequence[FinishedFrame]): overrides frames
             with more specific frame type.
     """
 
-    frames: Sequence[FinishedFrame[Path]]
+    frames: Sequence[FinishedFrame]
 
     def to_detection_dicts(self) -> list[dict]:
         chunk_metadata = {INPUT_FILE_PATH: self.file.as_posix()}

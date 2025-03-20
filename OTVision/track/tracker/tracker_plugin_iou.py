@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from OTVision.domain.detection import Detection, TrackedDetection, TrackId
 from OTVision.track.model.frame import Frame, TrackedFrame
-from OTVision.track.model.tracking_interfaces import ID_GENERATOR, FrameNo, S, Tracker
+from OTVision.track.model.tracking_interfaces import ID_GENERATOR, FrameNo, Tracker
 
 
 @dataclass(frozen=True)
@@ -135,7 +135,7 @@ def iou(
     return size_intersection / size_union
 
 
-class IouTracker(Tracker[S]):
+class IouTracker(Tracker):
 
     def __init__(self, parameters: IouParameters):
         super().__init__()
@@ -162,9 +162,7 @@ class IouTracker(Tracker[S]):
     def t_miss_max(self) -> int:
         return self.parameters.t_miss_max
 
-    def track_frame(
-        self, frame: Frame[S], id_generator: ID_GENERATOR
-    ) -> TrackedFrame[S]:
+    def track_frame(self, frame: Frame, id_generator: ID_GENERATOR) -> TrackedFrame:
 
         detections = [d for d in frame.detections if d.conf >= self.sigma_l]
         tracked_detections: list[TrackedDetection] = []

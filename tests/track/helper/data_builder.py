@@ -82,7 +82,7 @@ class DataBuilder:
         self.objects[frame_number] = Frame(
             no=frame_number,
             occurrence=occurrence_date,
-            source=self.input_file_path,
+            source=str(self.input_file_path),
             detections=[],
             image=None,
         )
@@ -169,7 +169,7 @@ class DataBuilder:
         self.objects[frame_number] = Frame(
             no=frame_number,
             occurrence=occurrence_date,
-            source=self.input_file_path,
+            source=str(self.input_file_path),
             detections=[
                 self.create_classification_object(label, confidence, x, y, w, h)
                 for i in range(0, number_of_classifications)
@@ -244,7 +244,7 @@ def create_frame(
     detections: list[Detection],
     occurrence: Optional[datetime] = None,
     input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
-) -> Frame[Path]:
+) -> Frame:
     default_occurrence = occurrence_from(frame_number)
     if occurrence is None:
         occurrence = default_occurrence
@@ -252,7 +252,7 @@ def create_frame(
     return Frame(
         no=frame_number,
         occurrence=occurrence,
-        source=input_file_path,
+        source=str(input_file_path),
         detections=detections,
         image=None,
     )

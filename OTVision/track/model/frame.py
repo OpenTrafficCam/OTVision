@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, Generic, Optional, Sequence, TypeVar
+from typing import Callable, Optional, Sequence
 
 from PIL.Image import Image
 
@@ -13,24 +13,23 @@ from OTVision.domain.detection import (
 )
 
 FrameNo = int
-S = TypeVar("S")
 
 
 @dataclass(frozen=True)
-class Frame(Generic[S]):
+class Frame:
     """Frame metadata, optional image and respective detections.
 
     Attributes:
         no (FrameNo): Frame number.
         occurrence (datetime): Time stamp, at which frame was recorded.
-        source (S): Generic source from where frame was obtained, e.g. video file path.
+        source (str): Source from where frame was obtained, e.g. video file path.
         detections (Sequence[Detection]): A sequence of Detections occurring in frame.
         image (Optional[Image]): Optional image data of frame.
     """
 
     no: FrameNo
     occurrence: datetime
-    source: S
+    source: str
     detections: Sequence[Detection]
     image: Optional[Image]
 
@@ -39,7 +38,7 @@ IsLastFrame = Callable[[FrameNo, TrackId], bool]
 
 
 @dataclass(frozen=True)
-class TrackedFrame(Frame[S]):
+class TrackedFrame(Frame):
     """Frame metadata with tracked detections.
     Also provides additional aggregated information about:
     observed, finished and unfinished tracks.
@@ -127,7 +126,7 @@ class TrackedFrame(Frame[S]):
 
 
 @dataclass(frozen=True)
-class FinishedFrame(TrackedFrame[S]):
+class FinishedFrame(TrackedFrame):
     """TrackedFrame with FinishedDetections.
 
     Args:

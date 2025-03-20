@@ -47,7 +47,7 @@ class JsonChunkParser(ChunkParser):
 
     def convert(
         self, file: Path, frame_offset: int, input: dict[int, dict[str, Any]]
-    ) -> list[Frame[Path]]:
+    ) -> list[Frame]:
         detection_parser = DetectionParser()
         frames = []
 
@@ -61,7 +61,7 @@ class JsonChunkParser(ChunkParser):
             parsed_frame = Frame(
                 int(key) + frame_offset,
                 occurrence=occurrence,
-                source=file,
+                source=str(file),
                 detections=detections,
                 image=None,
             )

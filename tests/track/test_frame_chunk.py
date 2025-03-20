@@ -71,7 +71,7 @@ class TestTrackedChunk(unittest.TestCase):
         return TrackedFrame(
             no=no,
             occurrence=self._mock_occurrence(no),
-            source=self.mock_file,
+            source=str(self.mock_file),
             detections=[self._mock_detection(track_id=i) for i in observed],
             image=None,
             finished_tracks=finished,

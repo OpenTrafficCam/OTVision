@@ -25,18 +25,18 @@ from OTVision.track.model.tracking_interfaces import (
 log = logging.getLogger(LOGGER_NAME)
 
 
-class ChunkBasedTracker(Tracker[Path]):
+class ChunkBasedTracker(Tracker):
 
-    def __init__(self, tracker: Tracker[Path], chunkParser: ChunkParser) -> None:
+    def __init__(self, tracker: Tracker, chunkParser: ChunkParser) -> None:
         super().__init__()
         self._chunk_parser = chunkParser
         self._tracker = tracker
 
     def track_frame(
         self,
-        frames: Frame[Path],
+        frames: Frame,
         id_generator: ID_GENERATOR,
-    ) -> TrackedFrame[Path]:
+    ) -> TrackedFrame:
         return self._tracker.track_frame(frames, id_generator)
 
     def track_chunk(
@@ -77,7 +77,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
 
     def __init__(
         self,
-        tracker: Tracker[Path],
+        tracker: Tracker,
         chunk_parser: ChunkParser,
         frame_group_parser: FrameGroupParser,
         id_generator_factory: ID_GENERATOR_FACTORY,
