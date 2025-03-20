@@ -23,4 +23,5 @@ class DetectedFrameFactory:
             no=frame[FrameKeys.frame],
             occurrence=frame[FrameKeys.occurrence],
             detections=detections,
+            image=frame[FrameKeys.data],
         )

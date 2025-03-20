@@ -19,6 +19,7 @@ class TestDetectedFrameFactory:
             no=given_frame[FrameKeys.frame],
             occurrence=given_frame[FrameKeys.occurrence],
             detections=given_detections,
+            image=given_frame[FrameKeys.data],
         )
 
     def create_frame(self) -> Frame:
