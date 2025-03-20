@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional, Sequence
 
-from PIL.Image import Image
+from numpy import ndarray
 
 from OTVision.dataformat import FRAME, OCCURRENCE, TRACK_ID
 from OTVision.domain.detection import (
@@ -24,14 +24,14 @@ class Frame:
         occurrence (datetime): Time stamp, at which frame was recorded.
         source (str): Source from where frame was obtained, e.g. video file path.
         detections (Sequence[Detection]): A sequence of Detections occurring in frame.
-        image (Optional[Image]): Optional image data of frame.
+        image (Optional[ndarray]): Optional image data of frame.
     """
 
     no: FrameNo
     occurrence: datetime
     source: str
     detections: Sequence[Detection]
-    image: Optional[Image]
+    image: Optional[ndarray]
 
 
 IsLastFrame = Callable[[FrameNo, TrackId], bool]
