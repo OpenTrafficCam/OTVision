@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Generic, Iterator, TypeVar
 
+from OTVision.domain.detection import TrackId
 from OTVision.track.model.frame import (
     FinishedFrame,
     Frame,
     FrameNo,
     IsLastFrame,
     TrackedFrame,
-    TrackId,
 )
 
 S = TypeVar("S")  # Source type (e.g., Path, URL, str, etc.)

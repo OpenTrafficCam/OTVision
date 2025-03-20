@@ -16,12 +16,13 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.track.model.detection import (
+from OTVision.domain.detection import (
     Detection,
     FinishedDetection,
     TrackedDetection,
+    TrackId,
 )
-from OTVision.track.model.frame import Frame, TrackedFrame, TrackId
+from OTVision.track.model.frame import Frame, TrackedFrame
 from tests.track.helper.data_builder import DEFAULT_START_DATE, DataBuilder
 
 

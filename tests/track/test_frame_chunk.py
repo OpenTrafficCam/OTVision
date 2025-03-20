@@ -5,7 +5,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, OCCURRENCE
-from OTVision.track.model.detection import FinishedDetection, TrackedDetection
+from OTVision.domain.detection import FinishedDetection, TrackedDetection
 from OTVision.track.model.filebased.frame_chunk import (
     FinishedChunk,
     FrameChunk,

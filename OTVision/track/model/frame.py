@@ -5,7 +5,7 @@ from typing import Callable, Generic, Optional, Sequence, TypeVar
 from PIL.Image import Image
 
 from OTVision.dataformat import FRAME, OCCURRENCE, TRACK_ID
-from OTVision.track.model.detection import (
+from OTVision.domain.detection import (
     Detection,
     FinishedDetection,
     TrackedDetection,

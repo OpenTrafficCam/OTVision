@@ -21,7 +21,7 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.track.model.detection import Detection
+from OTVision.domain.detection import Detection
 from OTVision.track.model.frame import Frame
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 

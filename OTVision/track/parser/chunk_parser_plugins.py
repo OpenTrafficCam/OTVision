@@ -16,12 +16,12 @@ from OTVision.dataformat import (
     X,
     Y,
 )
+from OTVision.domain.detection import Detection
 from OTVision.helpers.date import (
     parse_date_string_to_utc_datime,
     parse_timestamp_string_to_utc_datetime,
 )
 from OTVision.helpers.files import denormalize_bbox, read_json
-from OTVision.track.model.detection import Detection
 from OTVision.track.model.filebased.frame_chunk import ChunkParser, FrameChunk
 from OTVision.track.model.filebased.frame_group import FrameGroup
 from OTVision.track.model.frame import Frame
