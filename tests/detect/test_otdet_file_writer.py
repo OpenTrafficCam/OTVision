@@ -33,7 +33,8 @@ class TestOtdetFileWriter:
         return DetectedFrameBufferEvent(
             frames=[],
             source_metadata=SourceMetadata(
-                source="test_video.mp4",
+                source="test_video_source.mp4",
+                output="test_video_output.mp4",
                 width=1920,
                 height=1080,
                 duration=timedelta(seconds=10),
@@ -101,7 +102,7 @@ class TestOtdetFileWriter:
         )
         given_otdet_builder.build.assert_called_once_with(given_event.frames)
         given_save_path_provider.provide.assert_called_once_with(
-            expected_source_metadata.source
+            expected_source_metadata.output
         )
         mock_write_json.assert_called_once_with(
             OTDET,

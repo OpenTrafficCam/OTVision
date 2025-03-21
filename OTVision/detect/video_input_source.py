@@ -182,6 +182,7 @@ class VideoSource(InputSourceDetect):
         self._subject.notify(
             FlushEvent.create(
                 source=str(current_video_file),
+                output=str(current_video_file),
                 duration=duration,
                 source_height=height,
                 source_width=width,

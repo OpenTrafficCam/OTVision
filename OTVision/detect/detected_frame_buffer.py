@@ -8,6 +8,7 @@ from OTVision.domain.detection import DetectedFrame
 @dataclass
 class SourceMetadata:
     source: str
+    output: str
     duration: timedelta
     height: int
     width: int
@@ -22,6 +23,7 @@ class FlushEvent:
     @staticmethod
     def create(
         source: str,
+        output: str,
         duration: timedelta,
         source_height: int,
         source_width: int,
@@ -31,6 +33,7 @@ class FlushEvent:
         return FlushEvent(
             SourceMetadata(
                 source,
+                output,
                 duration,
                 source_height,
                 source_width,
