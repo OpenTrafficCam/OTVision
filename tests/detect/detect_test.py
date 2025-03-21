@@ -10,26 +10,15 @@ from pathlib import Path
 import pytest
 from jsonschema import validate
 
-import OTVision.config as config
+from OTVision import dataformat
+from OTVision.application import config as config
 from OTVision.application.update_current_config import UpdateCurrentConfig
-from OTVision.dataformat import (
-    CLASS,
-    CONFIDENCE,
-    DATA,
-    DETECTION,
-    DETECTIONS,
-    METADATA,
-    MODEL,
-    OTDET_VERSION,
-    OTVISION_VERSION,
-    WEIGHTS,
-    H,
-    W,
-    X,
-    Y,
-)
+from OTVision.config import CONFIG
 from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.detect import OTVisionVideoDetect
+from OTVision.detect.file_based_detect_builder import FileBasedDetectBuilder
+from OTVision.plugin.config_parser.file_source import FileSourceConfigParser
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 from tests.conftest import YieldFixture
 
 CONF = 0.25
@@ -115,6 +104,8 @@ otdet_schema = {
     },
 }
 
+config_parser = FileSourceConfigParser(YamlDeserializer())
+
 
 @dataclass
 class Detection:
@@ -127,7 +118,14 @@ class Detection:
 
     @staticmethod
     def from_dict(d: dict) -> "Detection":
-        return Detection(d[CLASS], d[CONFIDENCE], d[X], d[Y], d[W], d[H])
+        return Detection(
+            d[dataformat.CLASS],
+            d[dataformat.CONFIDENCE],
+            d[dataformat.X],
+            d[dataformat.Y],
+            d[dataformat.W],
+            d[dataformat.H],
+        )
 
     def is_normalized(self) -> bool:
         return (
@@ -145,7 +143,9 @@ class Frame:
 
     @staticmethod
     def from_dict(frame_number: str, d: dict) -> "Frame":
-        detections = [Detection.from_dict(detection) for detection in d[DETECTIONS]]
+        detections = [
+            Detection.from_dict(detection) for detection in d[dataformat.DETECTIONS]
+        ]
         return Frame(int(frame_number), detections)
 
 
@@ -156,8 +156,8 @@ def read_bz2_otdet(otdet: Path) -> dict:
 
 
 def remove_ignored_metadata(data: dict) -> dict:
-    data[OTDET_VERSION] = "ignored"
-    data[DETECTION][OTVISION_VERSION] = "ignored"
+    data[dataformat.OTDET_VERSION] = "ignored"
+    data[dataformat.DETECTION][dataformat.OTVISION_VERSION] = "ignored"
     return data
 
 
@@ -220,11 +220,11 @@ def default_cyclist_otdet(detect_test_data_dir: Path) -> Path:
 
 class TestDetect:
     conf: float = 0.25
-    filetypes: list[str] = config.CONFIG[config.FILETYPES][config.VID]
+    filetypes: list[str] = CONFIG[config.FILETYPES][config.VID]
 
     @pytest.fixture(scope="class")
     def detect_builder(self) -> DetectBuilder:
-        return DetectBuilder()
+        return FileBasedDetectBuilder()
 
     @pytest.fixture(scope="class")
     def update_current_config(
@@ -291,10 +291,10 @@ class TestDetect:
         self, result_cyclist_otdet: Path, default_cyclist_otdet: Path
     ) -> None:
         result_cyclist_metadata = remove_ignored_metadata(
-            read_bz2_otdet(result_cyclist_otdet)[METADATA]
+            read_bz2_otdet(result_cyclist_otdet)[dataformat.METADATA]
         )
         expected_cyclist_metadata = remove_ignored_metadata(
-            read_bz2_otdet(default_cyclist_otdet)[METADATA]
+            read_bz2_otdet(default_cyclist_otdet)[dataformat.METADATA]
         )
         result_cyclist_metadata = self.__verify_and_ignore_model_file_name(
             expected_cyclist_metadata, result_cyclist_metadata
@@ -306,10 +306,18 @@ class TestDetect:
         expected_cyclist_metadata: dict,
         actual_cyclist_metadata: dict,
     ) -> dict:
-        actual_model = Path(actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS]).stem
-        expected_model = expected_cyclist_metadata[DETECTION][MODEL][WEIGHTS]
+        actual_model = Path(
+            actual_cyclist_metadata[dataformat.DETECTION][dataformat.MODEL][
+                dataformat.WEIGHTS
+            ]
+        ).stem
+        expected_model = expected_cyclist_metadata[dataformat.DETECTION][
+            dataformat.MODEL
+        ][dataformat.WEIGHTS]
         assert actual_model == expected_model
-        actual_cyclist_metadata[DETECTION][MODEL][WEIGHTS] = expected_model
+        actual_cyclist_metadata[dataformat.DETECTION][dataformat.MODEL][
+            dataformat.WEIGHTS
+        ] = expected_model
         return actual_cyclist_metadata
 
     def test_detect_error_raised_on_wrong_filetype(
@@ -356,7 +364,8 @@ class TestDetect:
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
-            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+            Frame.from_dict(number, det)
+            for number, det in otdet_dict[dataformat.DATA].items()
         ]
         for det in detections:
             for bbox in det.detections:
@@ -384,7 +393,8 @@ class TestDetect:
         otdet_dict = read_bz2_otdet(otdet_file)
 
         frames = [
-            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+            Frame.from_dict(number, det)
+            for number, det in otdet_dict[dataformat.DATA].items()
         ]
         denormalized_bbox_found = False
         for frame in frames:
@@ -418,7 +428,8 @@ class TestDetect:
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
-            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+            Frame.from_dict(number, det)
+            for number, det in otdet_dict[dataformat.DATA].items()
         ]
         for det in detections:
             for bbox in det.detections:
@@ -523,7 +534,8 @@ class TestDetect:
         result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
         frames = [
-            Frame.from_dict(number, det) for number, det in otdet_dict[DATA].items()
+            Frame.from_dict(number, det)
+            for number, det in otdet_dict[dataformat.DATA].items()
         ]
         class_counts = count_classes(frames)
         return class_counts
@@ -552,4 +564,4 @@ def create_config_from(
     temp_config[config.DETECT][config.YOLO][config.NORMALIZED] = normalized
     temp_config[config.DETECT][config.OVERWRITE] = overwrite
 
-    return config.Config.from_dict(temp_config)
+    return config_parser.parse_from_dict(temp_config)

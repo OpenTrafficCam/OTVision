@@ -6,8 +6,7 @@ from typing import Callable, Iterator
 from tqdm import tqdm
 
 from OTVision import dataformat
-from OTVision.config import (
-    CONFIG,
+from OTVision.application.config import (
     DETECT,
     FILETYPES,
     IOU,
@@ -19,6 +18,7 @@ from OTVision.config import (
     T_MISS_MAX,
     TRACK,
 )
+from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files
 from OTVision.helpers.input_types import check_types
 from OTVision.helpers.log import LOGGER_NAME

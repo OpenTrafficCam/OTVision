@@ -22,13 +22,16 @@ OTVision script to call the detect main with arguments parsed from command line
 
 from pathlib import Path
 
-from OTVision.config import Config
-from OTVision.detect.builder import DetectBuilder
+from OTVision.application.config import Config
+from OTVision.detect.file_based_detect_builder import FileBasedDetectBuilder
+
+# from OTVision.detect.rtsp_based_detect_builder import RtspBasedDetectBuilder
 from OTVision.helpers.files import check_if_all_paths_exist
 
 
 def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
-    builder = DetectBuilder(argv=argv)
+    builder = FileBasedDetectBuilder(argv=argv)
+    # builder = RtspBasedDetectBuilder(argv=argv)
     cli_args = builder.detect_cli_parser.parse()
     config = builder.update_detect_config_with_ci_args.update(
         config=builder.get_config.get(cli_args)

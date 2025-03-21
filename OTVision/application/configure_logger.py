@@ -2,7 +2,7 @@ import logging
 from logging import Logger
 from pathlib import Path
 
-from OTVision.config import Config
+from OTVision.application.config import Config
 from OTVision.helpers.log import LOGGER_NAME, log
 
 

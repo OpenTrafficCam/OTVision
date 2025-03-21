@@ -5,7 +5,8 @@ from typing import Callable, Iterator
 from more_itertools import peekable
 from tqdm import tqdm
 
-from OTVision.config import CONFIG, DEFAULT_FILETYPE, OVERWRITE, TRACK
+from OTVision.application.config import DEFAULT_FILETYPE, OVERWRITE, TRACK
+from OTVision.config import CONFIG
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.model.filebased.frame_chunk import (
     ChunkParser,

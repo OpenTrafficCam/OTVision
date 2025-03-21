@@ -30,9 +30,9 @@ from ultralytics import YOLO
 from ultralytics.engine.results import Boxes
 
 from OTVision.abstraction.pipes_and_filter import Filter
+from OTVision.application.config import DetectConfig
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import DetectConfig
 from OTVision.domain.detection import DetectedFrame, Detection
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory

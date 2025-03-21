@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from OTVision.config import Config, ConfigParser
+from OTVision.application.config import Config
+from OTVision.application.config_parser import ConfigParser
 from OTVision.domain.cli import CliArgs
 
 DEFAULT_USER_CONFIG = "user_config.otvision.yaml"

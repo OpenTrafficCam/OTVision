@@ -3,12 +3,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from OTVision.application.config import Config
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
     derive_filename,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import Config
 
 CONFIG = Config()
 

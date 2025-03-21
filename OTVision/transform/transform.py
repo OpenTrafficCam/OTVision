@@ -31,8 +31,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from OTVision.config import (
-    CONFIG,
+from OTVision.application.config import (
     DEFAULT_FILETYPE,
     FILETYPES,
     OVERWRITE,
@@ -40,6 +39,7 @@ from OTVision.config import (
     TRACK,
     TRANSFORM,
 )
+from OTVision.config import CONFIG
 from OTVision.helpers.files import (
     get_files,
     get_metadata,

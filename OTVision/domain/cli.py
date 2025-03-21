@@ -17,7 +17,7 @@ class CliParseError(Exception):
 @dataclass
 class DetectCliArgs(CliArgs):
     expected_duration: timedelta | None
-    paths: list[Path] | None
+    paths: list[str] | None
     config_file: Path | None
     logfile: Path
     logfile_overwrite: bool

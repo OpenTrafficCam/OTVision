@@ -2,7 +2,7 @@ from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from OTVision.config import DATETIME_FORMAT
+from OTVision.application.config import DATETIME_FORMAT
 from OTVision.domain.cli import CliParseError, DetectCliArgs, DetectCliParser
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
@@ -172,10 +172,10 @@ class ArgparseDetectCliParser(DetectCliParser):
                 )
             )
 
-    def _parse_files(self, files: list[str] | None) -> list[Path] | None:
+    def _parse_files(self, files: list[str] | None) -> list[str] | None:
         if files is None:
             return None
 
         result = [Path(file).expanduser() for file in files]
         check_if_all_paths_exist(result)
-        return result
+        return list(map(str, result))

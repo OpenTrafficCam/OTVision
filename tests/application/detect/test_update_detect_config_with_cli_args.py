@@ -2,15 +2,15 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock
 
+from OTVision.application.config import Config, DetectConfig, YoloConfig, _LogConfig
 from OTVision.application.detect.update_detect_config_with_cli_args import (
     UpdateDetectConfigWithCliArgs,
 )
-from OTVision.config import Config, DetectConfig, YoloConfig, _LogConfig
 from OTVision.domain.cli import DetectCliArgs
 
 # Define constants for DetectCliArgs arguments
 EXPECTED_DURATION = timedelta(seconds=300)
-PATHS = [Path("file1.mp4"), Path("file2.mp4")]
+PATHS = ["file1.mp4", "file2.mp4"]
 CONFIG_FILE = Path("config.yaml")
 LOGFILE = Path("logfile.log")
 LOGFILE_OVERWRITE = True

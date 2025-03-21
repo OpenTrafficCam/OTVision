@@ -7,13 +7,13 @@ import av
 from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
+from OTVision.application.config import DATETIME_FORMAT, Config
 from OTVision.application.configure_logger import logger
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import DATETIME_FORMAT, Config
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.detect.timestamper import TimestamperFactory, parse_start_time_from

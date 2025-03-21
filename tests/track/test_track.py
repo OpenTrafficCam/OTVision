@@ -208,7 +208,7 @@ def test_track_fail_wrong_paths(paths) -> None:  # type: ignore
     paths are given"""
 
     # Check if TypeError is raised
-    with pytest.raises(TypeError, match=r"Paths needs to be a list of pathlib.Path"):
+    with pytest.raises(TypeError, match=r"Paths needs to be a list"):
         track(paths=paths)
 
 

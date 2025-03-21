@@ -1,8 +1,8 @@
 from unittest.mock import Mock
 
+from OTVision.application.config import Config
 from OTVision.application.detect.current_object_detector import CurrentObjectDetector
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import Config
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 
 CONFIG = Config()

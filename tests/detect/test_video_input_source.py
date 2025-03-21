@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, Mock, _Call, call, patch
 import pytest
 from av import VideoFrame
 
+from OTVision.application.config import DATETIME_FORMAT, Config, DetectConfig
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import DATETIME_FORMAT, Config, DetectConfig
 from OTVision.detect.video_input_source import VideoSource
 from OTVision.domain.frame import Frame, FrameKeys
 from tests.utils.mocking import create_mocks
@@ -70,7 +70,7 @@ class TestVideoSource:
 
         assert actual == given.all_timestamped_frames
         given.get_files.assert_called_once_with(
-            paths=[cyclist_mp4],
+            paths=[str(cyclist_mp4)],
             filetypes=given.config.filetypes.video_filetypes.to_list(),
         )
         given.get_fps.assert_called_once_with(cyclist_mp4)
@@ -303,14 +303,14 @@ def create_expected_frame_call(
 
 def assert_get_files_called(given: Given) -> None:
     given.get_files.assert_called_once_with(
-        paths=given.input_files,
+        paths=list(map(str, given.input_files)),
         filetypes=given.config.filetypes.video_filetypes.to_list(),
     )
 
 
 def assert_get_fps_called(given: Given) -> None:
     assert given.get_fps.call_args_list == [
-        call(input_file) for input_file in given.input_files
+        call(Path(input_file)) for input_file in given.input_files
     ]
 
 
@@ -398,7 +398,7 @@ def create_config(
     detect_end: int | None = None,
 ) -> Config:
     detect_config = DetectConfig(
-        paths=video_files,
+        paths=list(map(str, video_files)),
         overwrite=detect_overwrite,
         detect_start=detect_start,
         detect_end=detect_end,

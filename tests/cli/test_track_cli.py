@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 import yaml
 
-from OTVision.config import (
+from OTVision.application.config import (
     IOU,
     OVERWRITE,
     PATHS,

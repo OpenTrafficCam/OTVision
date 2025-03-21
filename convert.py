@@ -25,6 +25,18 @@ import logging
 from pathlib import Path
 
 import OTVision.config as config
+from OTVision.application.config import (
+    CONVERT,
+    DELETE_INPUT,
+    FPS_FROM_FILENAME,
+    INPUT_FPS,
+    LOG,
+    LOG_LEVEL_CONSOLE,
+    LOG_LEVEL_FILE,
+    OVERWRITE,
+    PATHS,
+    ROTATION,
+)
 from OTVision.convert.convert import main as convert
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
@@ -129,27 +141,27 @@ def _process_parameters(
         raise
 
     if args.input_fps is None:
-        input_fps = config.CONFIG[config.CONVERT][config.INPUT_FPS]
+        input_fps = config.CONFIG[CONVERT][INPUT_FPS]
     else:
         input_fps = args.input_fps
 
     if args.fps_from_filename is None:
-        fps_from_filename = config.CONFIG[config.CONVERT][config.FPS_FROM_FILENAME]
+        fps_from_filename = config.CONFIG[CONVERT][FPS_FROM_FILENAME]
     else:
         fps_from_filename = args.fps_from_filename
 
     if args.rotation is None:
-        rotation = config.CONFIG[config.CONVERT][config.ROTATION]
+        rotation = config.CONFIG[CONVERT][ROTATION]
     else:
         rotation = args.rotation
 
     if args.overwrite is None:
-        overwrite = config.CONFIG[config.CONVERT][config.OVERWRITE]
+        overwrite = config.CONFIG[CONVERT][OVERWRITE]
     else:
         overwrite = args.overwrite
 
     if args.delete_input is None:
-        delete_input = config.CONFIG[config.CONVERT][config.DELETE_INPUT]
+        delete_input = config.CONFIG[CONVERT][DELETE_INPUT]
     else:
         delete_input = args.delete_input
     return paths, input_fps, fps_from_filename, rotation, overwrite, delete_input
@@ -157,7 +169,7 @@ def _process_parameters(
 
 def _extract_paths(args: argparse.Namespace) -> list[Path]:
     if args.paths is None:
-        str_paths = config.CONFIG[config.CONVERT][config.PATHS]
+        str_paths = config.CONFIG[CONVERT][PATHS]
     else:
         str_paths = args.paths
     if len(str_paths) == 0:
@@ -173,12 +185,12 @@ def _extract_paths(args: argparse.Namespace) -> list[Path]:
 
 def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     if args.log_level_console is None:
-        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
+        log_level_console = config.CONFIG[LOG][LOG_LEVEL_CONSOLE]
     else:
         log_level_console = args.log_level_console
 
     if args.log_level_file is None:
-        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+        log_level_file = config.CONFIG[LOG][LOG_LEVEL_FILE]
     else:
         log_level_file = args.log_level_file
 

@@ -7,7 +7,8 @@ import cv2
 import numpy as np
 import pytest
 
-from OTVision.config import CONFIG, FILETYPES, VID_ROTATABLE
+from OTVision.application.config import FILETYPES, VID_ROTATABLE
+from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 
@@ -297,7 +298,7 @@ def test_fail_convert_wrong_paths(paths) -> None:  # type: ignore
     when wrong paths are given"""
 
     # Check if TypeError is raised
-    with pytest.raises(TypeError, match=r"Paths needs to be a list of pathlib.Path"):
+    with pytest.raises(TypeError, match=r"Paths needs to be a list"):
         convert(paths=paths)
 
 

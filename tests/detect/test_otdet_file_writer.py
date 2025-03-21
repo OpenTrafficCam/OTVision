@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
@@ -11,7 +12,6 @@ from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import Config, DetectConfig
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBufferEvent,
     SourceMetadata,

@@ -25,6 +25,20 @@ import logging
 from pathlib import Path
 
 import OTVision.config as config
+from OTVision.application.config import (
+    IOU,
+    LOG,
+    LOG_LEVEL_CONSOLE,
+    LOG_LEVEL_FILE,
+    OVERWRITE,
+    PATHS,
+    SIGMA_H,
+    SIGMA_IOU,
+    SIGMA_L,
+    T_MIN,
+    T_MISS_MAX,
+    TRACK,
+)
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 from OTVision.track.track import main as track
@@ -131,32 +145,32 @@ def _process_parameters(
         raise
 
     if args.sigma_l is None:
-        sigma_l = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_L]
+        sigma_l = config.CONFIG[TRACK][IOU][SIGMA_L]
     else:
         sigma_l = args.sigma_l
 
     if args.sigma_h is None:
-        sigma_h = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_H]
+        sigma_h = config.CONFIG[TRACK][IOU][SIGMA_H]
     else:
         sigma_h = args.sigma_h
 
     if args.sigma_iou is None:
-        sigma_iou = config.CONFIG[config.TRACK][config.IOU][config.SIGMA_IOU]
+        sigma_iou = config.CONFIG[TRACK][IOU][SIGMA_IOU]
     else:
         sigma_iou = args.sigma_iou
 
     if args.t_min is None:
-        t_min = config.CONFIG[config.TRACK][config.IOU][config.T_MIN]
+        t_min = config.CONFIG[TRACK][IOU][T_MIN]
     else:
         t_min = args.t_min
 
     if args.t_miss_max is None:
-        t_miss_max = config.CONFIG[config.TRACK][config.IOU][config.T_MISS_MAX]
+        t_miss_max = config.CONFIG[TRACK][IOU][T_MISS_MAX]
     else:
         t_miss_max = args.t_miss_max
 
     if args.overwrite is None:
-        overwrite = config.CONFIG[config.TRACK][config.OVERWRITE]
+        overwrite = config.CONFIG[TRACK][OVERWRITE]
     else:
         overwrite = args.overwrite
 
@@ -165,7 +179,7 @@ def _process_parameters(
 
 def _extract_paths(args: argparse.Namespace) -> list[Path]:
     if args.paths is None:
-        str_paths = config.CONFIG[config.TRACK][config.PATHS]
+        str_paths = config.CONFIG[TRACK][PATHS]
     else:
         str_paths = args.paths
     if len(str_paths) == 0:
@@ -182,12 +196,12 @@ def _extract_paths(args: argparse.Namespace) -> list[Path]:
 # TODO: Refactor/outsource this function, as it is redundant in each CLI script
 def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     if args.log_level_console is None:
-        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
+        log_level_console = config.CONFIG[LOG][LOG_LEVEL_CONSOLE]
     else:
         log_level_console = args.log_level_console
 
     if args.log_level_file is None:
-        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+        log_level_file = config.CONFIG[LOG][LOG_LEVEL_FILE]
     else:
         log_level_file = args.log_level_file
 

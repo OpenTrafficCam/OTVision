@@ -1,8 +1,8 @@
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from OTVision.application.config import Config
 from OTVision.application.get_config import DEFAULT_USER_CONFIG, GetConfig
-from OTVision.config import Config
 
 config_file_path = Path("path/to/my.otvision.config.yaml")
 

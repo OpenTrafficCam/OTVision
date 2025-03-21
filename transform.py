@@ -25,6 +25,14 @@ import logging
 from pathlib import Path
 
 import OTVision.config as config
+from OTVision.application.config import (
+    LOG,
+    LOG_LEVEL_CONSOLE,
+    LOG_LEVEL_FILE,
+    OVERWRITE,
+    PATHS,
+    TRANSFORM,
+)
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 from OTVision.transform.transform import main as transform
@@ -119,7 +127,7 @@ def _process_parameters(
         refpts_file = None
 
     if args.overwrite is None:
-        overwrite = config.CONFIG[config.TRANSFORM][config.OVERWRITE]
+        overwrite = config.CONFIG[TRANSFORM][OVERWRITE]
     else:
         overwrite = args.overwrite
     return paths, refpts_file, overwrite
@@ -127,7 +135,7 @@ def _process_parameters(
 
 def _extract_paths(args: argparse.Namespace) -> list[Path]:
     if args.paths is None:
-        str_paths = config.CONFIG[config.TRANSFORM][config.PATHS]
+        str_paths = config.CONFIG[TRANSFORM][PATHS]
     else:
         str_paths = args.paths
     if len(str_paths) == 0:
@@ -143,12 +151,12 @@ def _extract_paths(args: argparse.Namespace) -> list[Path]:
 
 def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     if args.log_level_console is None:
-        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
+        log_level_console = config.CONFIG[LOG][LOG_LEVEL_CONSOLE]
     else:
         log_level_console = args.log_level_console
 
     if args.log_level_file is None:
-        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+        log_level_file = config.CONFIG[LOG][LOG_LEVEL_FILE]
     else:
         log_level_file = args.log_level_file
 
