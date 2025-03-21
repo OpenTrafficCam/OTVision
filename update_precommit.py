@@ -19,6 +19,7 @@ ADDITIONAL_DEPENDENCIES = "additional_dependencies"
 CAPTURE_GROUP_URL = "url"
 CAPTURE_GROUP_PACKAGE = "package"
 CAPTURE_GROUP_VERSION = "version"
+CAPTURE_GROUP_ADDITIONAL_INFORMATION = "additional_information"
 
 
 class AdditionalMypyDependency(ABC):
@@ -65,9 +66,16 @@ class TypeStubPackage(Package):
     def version(self) -> str | None:
         return self._version
 
-    def __init__(self, name: str, version: str | None) -> None:
+    @property
+    def additional_information(self) -> str | None:
+        return self._additional_information
+
+    def __init__(
+        self, name: str, version: str | None, additional_information: str | None
+    ) -> None:
         self._name = name
         self._version = version
+        self._additional_information = additional_information
 
     def serialize(self) -> str:
         return self.name
@@ -82,13 +90,20 @@ class NormalPackage(Package):
     def version(self) -> str | None:
         return self._version
 
-    def __init__(self, name: str, version: str | None) -> None:
+    @property
+    def additional_information(self) -> str:
+        return self._additional_information if self._additional_information else ""
+
+    def __init__(
+        self, name: str, version: str | None, additional_information: str | None
+    ) -> None:
         self._name = name
         self._version = version
+        self._additional_information = additional_information
 
     def serialize(self) -> str:
         if self.version:
-            return self.name + "==" + self.version
+            return self.name + "==" + self.version + self.additional_information
         return self.name
 
 
@@ -142,6 +157,7 @@ def parse_requirements_file(requirements_file: Path) -> set[AdditionalMypyDepend
 
 pattern_package = re.compile(
     r"^(?!--extra-index-url)(?P<package>[a-zA-Z0-9_\-\.]+)(?:[<>=~!]+(?P<version>\S*))?"
+    r"(?P<additional_information>;[\s\S]*?)?(?:\s*#.*)?$"
 )
 pattern_extra_index_url = re.compile(r"^--extra-index-url\s+(?P<url>\S+)")
 
@@ -161,23 +177,41 @@ def parse_requirement(requirement_line: str) -> AdditionalMypyDependency | None:
     package_name = match.group(CAPTURE_GROUP_PACKAGE).strip()
     if package_version := match.group(CAPTURE_GROUP_VERSION):
         package_version = package_version.strip()
+    if additional_information := match.group(CAPTURE_GROUP_ADDITIONAL_INFORMATION):
+        additional_information = additional_information.strip()
 
-    return create_package(name=package_name, version=package_version)
+    return create_package(
+        name=package_name,
+        version=package_version,
+        additional_information=additional_information,
+    )
 
 
 def create_extra_index_url(url: str) -> AdditionalMypyDependency:
     return ExtraIndexUrl(url)
 
 
-def create_package(name: str, version: str | None) -> AdditionalMypyDependency:
-    """Check if a type stub exists for a given package name and return it."""
+def create_package(
+    name: str, version: str | None, additional_information: str | None
+) -> AdditionalMypyDependency:
+    """Check if a type stub exists for a given package name and return it.
+
+    Args:
+        additional_information:
+    """
     types_package_name = f"types-{name}"
     if __check_types_for_package_exists(types_package_name):
-        return create_type_stub_package(name=types_package_name, version=version)
+        return create_type_stub_package(
+            name=types_package_name,
+            version=version,
+            additional_information=additional_information,
+        )
 
     # Some packages already provide type stubs with their package
     # If they don't pre-commit mypy won't fail
-    return create_normal_package(name=name, version=version)
+    return create_normal_package(
+        name=name, version=version, additional_information=additional_information
+    )
 
 
 def __check_types_for_package_exists(package_name: str) -> bool:
@@ -186,13 +220,19 @@ def __check_types_for_package_exists(package_name: str) -> bool:
 
 
 def create_type_stub_package(
-    name: str, version: str | None
+    name: str, version: str | None, additional_information: str | None
 ) -> AdditionalMypyDependency:
-    return TypeStubPackage(name=name, version=version)
+    return TypeStubPackage(
+        name=name, version=version, additional_information=additional_information
+    )
 
 
-def create_normal_package(name: str, version: str | None) -> AdditionalMypyDependency:
-    return NormalPackage(name=name, version=version)
+def create_normal_package(
+    name: str, version: str | None, additional_information: str | None
+) -> AdditionalMypyDependency:
+    return NormalPackage(
+        name=name, version=version, additional_information=additional_information
+    )
 
 
 def serialize_packages(packages: Iterable[AdditionalMypyDependency]) -> list[str]:
