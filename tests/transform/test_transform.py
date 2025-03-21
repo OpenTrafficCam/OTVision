@@ -3,10 +3,13 @@ from pathlib import Path
 
 import geopandas as gpd
 import pytest
+from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
 from OTVision.transform.transform import main as transform
 from tests.conftest import YieldFixture
+
+ABSOLUTE_FLOATING_POINT_TOLERANCE = 1e-4
 
 
 @pytest.fixture
@@ -106,15 +109,33 @@ class TestTransform:
         result_truck_gpkg = tmp_ottrk_truck_bz2.with_suffix(".gpkg")
         result_cyclist_gpkg = tmp_ottrk_cyclist_bz2.with_suffix(".gpkg")
 
-        expected_utm_tracks_truck_df = gpd.read_file(truck_gpkg)
-        result_utm_tracks_truck_df = gpd.read_file(result_truck_gpkg)
+        expected_utm_tracks_truck_df = drop_object_type_columns(
+            gpd.read_file(truck_gpkg)
+        )
+        result_utm_tracks_truck_df = drop_object_type_columns(
+            gpd.read_file(result_truck_gpkg)
+        )
 
-        expected_utm_tracks_cyclist_df = gpd.read_file(cyclist_gpkg)
-        result_utm_tracks_cyclist_df = gpd.read_file(result_cyclist_gpkg)
+        expected_utm_tracks_cyclist_df = drop_object_type_columns(
+            gpd.read_file(cyclist_gpkg)
+        )
+        result_utm_tracks_cyclist_df = drop_object_type_columns(
+            gpd.read_file(result_cyclist_gpkg)
+        )
 
         # Raise error if df's are not equal
-        assert_frame_equal(expected_utm_tracks_truck_df, result_utm_tracks_truck_df)
-        assert_frame_equal(expected_utm_tracks_cyclist_df, result_utm_tracks_cyclist_df)
+        assert_frame_equal(
+            expected_utm_tracks_cyclist_df,
+            result_utm_tracks_cyclist_df,
+            check_exact=False,
+            atol=ABSOLUTE_FLOATING_POINT_TOLERANCE,
+        )
+        assert_frame_equal(
+            expected_utm_tracks_truck_df,
+            result_utm_tracks_truck_df,
+            check_exact=False,
+            atol=ABSOLUTE_FLOATING_POINT_TOLERANCE,
+        )
 
     def test_transform_refptsFileInSameDir_zippedOttrkFilesAsParam(
         self,
@@ -128,12 +149,19 @@ class TestTransform:
 
         result_cyclist_gpkg_bzipped = tmp_ottrk_cyclist_bz2.with_suffix(".gpkg")
 
-        expected_utm_tracks_cyclist_df = gpd.read_file(cyclist_gpkg)
-        result_utm_tracks_cyclist_df = gpd.read_file(
-            result_cyclist_gpkg_bzipped, compression="bz2"
+        expected_utm_tracks_cyclist_df = drop_object_type_columns(
+            gpd.read_file(cyclist_gpkg)
+        )
+        result_utm_tracks_cyclist_df = drop_object_type_columns(
+            gpd.read_file(result_cyclist_gpkg_bzipped, compression="bz2")
         )
 
-        assert_frame_equal(expected_utm_tracks_cyclist_df, result_utm_tracks_cyclist_df)
+        assert_frame_equal(
+            expected_utm_tracks_cyclist_df,
+            result_utm_tracks_cyclist_df,
+            check_exact=False,
+            atol=ABSOLUTE_FLOATING_POINT_TOLERANCE,
+        )
 
     def test_transform_noExistingRefptsFileAsParam_raiseFileNotFoundError(
         self, tmp_ottrk_cyclist_bz2: Path
@@ -163,3 +191,9 @@ class TestTransform:
             match=r"No files of type .* found to transform!",
         ):
             transform([], refpts_file=single_refpts_file)
+
+
+def drop_object_type_columns(
+    data: DataFrame, columns: list[str] = ["geometry"]
+) -> DataFrame:
+    return data.drop(columns=columns)

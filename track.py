@@ -24,10 +24,10 @@ import argparse
 import logging
 from pathlib import Path
 
-import OTVision
 import OTVision.config as config
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
+from OTVision.track.track import main as track
 
 
 def parse(argv: list[str] | None) -> argparse.Namespace:
@@ -221,7 +221,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     log.info(f"Arguments: {vars(args)}")
 
     try:
-        OTVision.track(
+        track(
             paths=paths,
             sigma_l=sigma_l,
             sigma_h=sigma_h,

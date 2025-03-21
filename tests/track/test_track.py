@@ -1,6 +1,5 @@
 import os
 import shutil
-from filecmp import cmpfiles
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -8,6 +7,7 @@ import pytest
 
 from OTVision import version
 from OTVision.config import CONFIG
+from OTVision.helpers.files import read_json
 from OTVision.track.track import main as track
 from tests.conftest import YieldFixture
 
@@ -141,14 +141,29 @@ def test_track_pass(
     tracks_file_names = [file.name for file in ref_tracks_files]
 
     # Compare all test tracks files to their respective reference tracks files
-    equal_files, different_files, irregular_files = cmpfiles(
-        a=test_track_dir / test_case,
-        b=test_track_tmp_dir / test_case,
-        common=tracks_file_names,
-        shallow=False,
-    )
+    equal_files = []
+    different_files = []
+    irregular_files = []
+    for file in tracks_file_names:
+        a = test_track_dir / test_case / file
+        b = test_track_tmp_dir / test_case / file
+        try:
+            json_a = read_json(a)
+            json_b = read_json(b)
+            if json_a == json_b:
+                equal_files.append(file)
+            else:
+                different_files.append(file)
+        except Exception:
+            irregular_files.append(file)
     for equal_file in equal_files:
         assert equal_file in tracks_file_names
+    for different_file in different_files:
+        a = test_track_dir / test_case / different_file
+        b = test_track_tmp_dir / test_case / different_file
+        json_a = read_json(a)
+        json_b = read_json(b)
+        assert json_b == json_a
     assert not different_files
     assert not irregular_files
 
