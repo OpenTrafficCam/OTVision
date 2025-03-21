@@ -4,8 +4,9 @@ geopandas==1.0.1
 ijson==3.3.0
 more-itertools==10.5.0
 moviepy==1.0.3
-numpy==1.26.4 # ultralytics requires numpy < 2.0.0
-opencv-python==4.9.0.80
+numpy==2.1.1; sys_platform != 'win32' # ultralytics requires numpy <= 2.1.1
+numpy==1.26.4; sys_platform == 'win32' # ultralytics requires numpy <= 2.1.1; torch on windows is built with numpy < 2
+opencv-python==4.11.0.86
 pandas==2.2.3
 PyYAML==6.0.2
 setuptools==74.0.0
@@ -14,4 +15,4 @@ torch==2.3.1 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.18.1 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.67.1
 ujson==5.10.0
-ultralytics==8.3.74
+ultralytics==8.3.94

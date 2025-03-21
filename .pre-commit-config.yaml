@@ -46,7 +46,7 @@ repos:
         additional_dependencies:
           - av==13.0.0
           - black==24.8.0
-          - coremltools==8.2;
+          - coremltools==8.2; sys_platform == 'darwin'
           - fire==0.7.0
           - hatch-requirements-txt==0.4.1
           - ijson==3.3.0
@@ -55,8 +55,9 @@ repos:
           - more-itertools==10.5.0
           - moviepy==1.0.3
           - mypy==1.15.0
-          - numpy==1.26.4
-          - opencv-python==4.9.0.80
+          - numpy==1.26.4; sys_platform == 'win32'
+          - numpy==2.1.1; sys_platform != 'win32'
+          - opencv-python==4.11.0.86
           - pandas-stubs==2.2.3.250308
           - pandas==2.2.3
           - pre-commit==3.8.0
@@ -72,7 +73,7 @@ repos:
           - types-setuptools
           - types-tqdm
           - types-ujson
-          - ultralytics==8.3.74
+          - ultralytics==8.3.94
           - yamllint==1.35.1
         always_run: true
         pass_filenames: false
