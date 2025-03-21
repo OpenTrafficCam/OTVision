@@ -42,7 +42,7 @@ from OTVision.detect.yolo import YoloDetectionConverter, YoloFactory
 from OTVision.domain.cli import DetectCliParser
 from OTVision.domain.current_config import CurrentConfig
 from OTVision.domain.detect_producer_consumer import DetectedFrameProducer
-from OTVision.domain.detection import DetectedFrame
+from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.object_detection import ObjectDetectorFactory
 

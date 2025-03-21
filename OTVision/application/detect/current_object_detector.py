@@ -2,8 +2,7 @@ from typing import Generator
 
 from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.domain.detection import DetectedFrame
-from OTVision.domain.frame import Frame
+from OTVision.domain.frame import DetectedFrame, Frame
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 
 

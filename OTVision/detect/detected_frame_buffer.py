@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from OTVision.application.buffer import Buffer
-from OTVision.domain.detection import DetectedFrame
+from OTVision.domain.frame import DetectedFrame
 
 
 @dataclass

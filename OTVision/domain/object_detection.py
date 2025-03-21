@@ -2,8 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generator
 
 from OTVision.config import DetectConfig
-from OTVision.domain.detection import DetectedFrame
-from OTVision.domain.frame import Frame
+from OTVision.domain.frame import DetectedFrame, Frame
 
 
 class ObjectDetectorMetadata(ABC):

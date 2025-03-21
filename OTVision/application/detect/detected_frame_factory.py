@@ -1,5 +1,5 @@
-from OTVision.domain.detection import DetectedFrame, Detection
-from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
 
 
 class DetectedFrameFactory:
@@ -20,7 +20,8 @@ class DetectedFrameFactory:
 
         return DetectedFrame(
             source=frame[FrameKeys.source],
-            frame_number=frame[FrameKeys.frame],
+            no=frame[FrameKeys.frame],
             occurrence=frame[FrameKeys.occurrence],
             detections=detections,
+            image=frame[FrameKeys.data],
         )

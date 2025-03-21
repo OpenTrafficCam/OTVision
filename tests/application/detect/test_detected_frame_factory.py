@@ -2,8 +2,8 @@ from datetime import datetime
 from unittest.mock import Mock
 
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
-from OTVision.domain.detection import DetectedFrame, Detection
-from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
 
 
 class TestDetectedFrameFactory:
@@ -16,9 +16,10 @@ class TestDetectedFrameFactory:
 
         assert actual == DetectedFrame(
             source=given_frame[FrameKeys.source],
-            frame_number=given_frame[FrameKeys.frame],
+            no=given_frame[FrameKeys.frame],
             occurrence=given_frame[FrameKeys.occurrence],
             detections=given_detections,
+            image=given_frame[FrameKeys.data],
         )
 
     def create_frame(self) -> Frame:

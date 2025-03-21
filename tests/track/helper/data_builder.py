@@ -21,8 +21,8 @@ from OTVision.dataformat import (
     X,
     Y,
 )
-from OTVision.track.model.detection import Detection
-from OTVision.track.model.frame import Frame
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 
 DEFAULT_HOSTNAME = "hostname"
@@ -48,7 +48,7 @@ def occurrence_serialized(key: int, start_date: datetime = DEFAULT_START_DATE) -
 
 class DataBuilder:
     data: dict[int, dict[str, Any]]
-    objects: dict[int, Frame]
+    objects: dict[int, DetectedFrame]
     classified_frames: list[int]
     non_classified_frames: list[int]
     current_key: int
@@ -79,10 +79,10 @@ class DataBuilder:
         }
 
         occurrence_date = occurrence_from(frame_number, self.start_date)
-        self.objects[frame_number] = Frame(
+        self.objects[frame_number] = DetectedFrame(
             no=frame_number,
             occurrence=occurrence_date,
-            source=self.input_file_path,
+            source=str(self.input_file_path),
             detections=[],
             image=None,
         )
@@ -166,10 +166,10 @@ class DataBuilder:
         }
 
         occurrence_date = occurrence_from(frame_number, self.start_date)
-        self.objects[frame_number] = Frame(
+        self.objects[frame_number] = DetectedFrame(
             no=frame_number,
             occurrence=occurrence_date,
-            source=self.input_file_path,
+            source=str(self.input_file_path),
             detections=[
                 self.create_classification_object(label, confidence, x, y, w, h)
                 for i in range(0, number_of_classifications)
@@ -209,10 +209,10 @@ class DataBuilder:
     def build(self) -> dict[int, dict[str, list]]:
         return self.data.copy()
 
-    def build_objects(self) -> dict[int, Frame]:
+    def build_objects(self) -> dict[int, DetectedFrame]:
         return self.objects.copy()
 
-    def build_as_detections(self) -> list[Frame]:
+    def build_as_detections(self) -> list[DetectedFrame]:
         return JsonChunkParser().convert(DEFAULT_INPUT_FILE_PATH, 0, self.data.copy())
 
     def build_ot_det(self) -> dict:
@@ -244,15 +244,15 @@ def create_frame(
     detections: list[Detection],
     occurrence: Optional[datetime] = None,
     input_file_path: Path = DEFAULT_INPUT_FILE_PATH,
-) -> Frame[Path]:
+) -> DetectedFrame:
     default_occurrence = occurrence_from(frame_number)
     if occurrence is None:
         occurrence = default_occurrence
 
-    return Frame(
+    return DetectedFrame(
         no=frame_number,
         occurrence=occurrence,
-        source=input_file_path,
+        source=str(input_file_path),
         detections=detections,
         image=None,
     )

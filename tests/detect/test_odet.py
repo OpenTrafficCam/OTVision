@@ -6,7 +6,8 @@ import pytest
 from OTVision import dataformat, version
 from OTVision.dataformat import CLASS, CONFIDENCE, H, W, X, Y
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig, OtdetBuilderError
-from OTVision.domain.detection import DetectedFrame, Detection
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame
 
 
 def create_expected_video_metadata(
@@ -66,7 +67,7 @@ def create_expected_data(
     """Create the expected data dictionary based on input detections."""
     data = {}
     for frame in frames:
-        data[str(frame.frame_number)] = {
+        data[str(frame.no)] = {
             dataformat.DETECTIONS: [
                 create_expected_detection(d) for d in frame.detections
             ],
@@ -97,7 +98,7 @@ def create_detected_frame(source: str, frame_number: int) -> DetectedFrame:
     )
     return DetectedFrame(
         source=source,
-        frame_number=frame_number,
+        no=frame_number,
         detections=[detection],
         occurrence=datetime(2020, 1, 1, 12, 0, 10),
     )
