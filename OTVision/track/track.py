@@ -111,7 +111,7 @@ def main(
         log.warning(f"No files of type '{filetypes}' found to track!")
         return
 
-    iou_tracker: IouTracker[Path] = IouTracker(
+    iou_tracker: IouTracker = IouTracker(
         parameters=IouParameters(sigma_l, sigma_h, sigma_iou, t_min, t_miss_max)
     )
 

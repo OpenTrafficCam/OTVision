@@ -7,8 +7,8 @@ from ultralytics.engine.results import Boxes, Results
 
 from OTVision.application.config import Config, DetectConfig
 from OTVision.detect.yolo import YoloDetectionConverter, YoloDetector
-from OTVision.domain.detection import DetectedFrame, Detection
-from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
 from tests.utils.generator import make_generator
 from tests.utils.mocking import create_mocks
 

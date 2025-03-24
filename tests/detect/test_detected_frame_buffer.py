@@ -8,7 +8,7 @@ from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBufferEvent,
     FlushEvent,
 )
-from OTVision.domain.detection import DetectedFrame
+from OTVision.domain.frame import DetectedFrame
 from tests.utils.mocking import create_mocks
 
 
