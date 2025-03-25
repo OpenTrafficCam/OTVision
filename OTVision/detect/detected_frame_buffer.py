@@ -55,3 +55,6 @@ class DetectedFrameBuffer(Buffer[DetectedFrame, DetectedFrameBufferEvent, FlushE
                 source_metadata=event.source_metadata, frames=elements
             )
         )
+
+    def buffer(self, to_buffer: DetectedFrame) -> None:
+        self._buffer.append(to_buffer.without_image())
