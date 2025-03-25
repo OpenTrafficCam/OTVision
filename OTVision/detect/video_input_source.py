@@ -7,7 +7,6 @@ import av
 from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
-from OTVision.application.configure_logger import logger
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
@@ -130,7 +129,7 @@ class VideoSource(InputSourceDetect):
                         counter += 1
                 self.notify_observers(video_file, video_fps)
             except Exception as e:
-                logger().error(f"Error processing {video_file}", exc_info=e)
+                log.error(f"Error processing {video_file}", exc_info=e)
 
     def __collect_files_to_detect(self) -> list[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
