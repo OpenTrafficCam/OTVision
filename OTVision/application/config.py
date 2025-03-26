@@ -61,6 +61,10 @@ DETECT_START = "DETECT_START"
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
 """Default length of a video is 15 minutes."""
+STREAM = "STREAM"
+STREAM_SAVE_DIR = "SAVE_DIR"
+STREAM_NAME = "NAME"
+STREAM_SOURCE = "SOURCE"
 
 
 @dataclass(frozen=True)
@@ -389,6 +393,20 @@ class _GuiConfig:
         }
 
 
+@dataclass(frozen=True)
+class StreamConfig:
+    name: str
+    source: str
+    save_dir: Path
+
+    def to_dict(self) -> dict:
+        return {
+            STREAM_NAME: self.name,
+            STREAM_SOURCE: self.source,
+            STREAM_SAVE_DIR: str(self.save_dir),
+        }
+
+
 @dataclass
 class Config:
     """Represents the OTVision config file.
@@ -408,6 +426,7 @@ class Config:
     undistort: _UndistortConfig = _UndistortConfig()
     transform: _TransformConfig = _TransformConfig()
     gui: _GuiConfig = _GuiConfig()
+    stream: StreamConfig | None = None
 
     def to_dict(self) -> dict:
         """Returns the OTVision config as a dict.
@@ -415,7 +434,7 @@ class Config:
         Returns:
             dict: The OTVision config.
         """
-        return {
+        data = {
             LOG: self.log.to_dict(),
             SEARCH_SUBDIRS: self.search_subdirs,
             DEFAULT_FILETYPE: self.default_filetype.to_dict(),
@@ -428,3 +447,6 @@ class Config:
             TRANSFORM: self.transform.to_dict(),
             GUI: self.gui.to_dict(),
         }
+        if self.stream is not None:
+            data[STREAM] = self.stream.to_dict()
+        return data

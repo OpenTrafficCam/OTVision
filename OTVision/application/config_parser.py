@@ -41,6 +41,10 @@ from OTVision.application.config import (
     SIGMA_IOU,
     SIGMA_L,
     START_TIME,
+    STREAM,
+    STREAM_NAME,
+    STREAM_SAVE_DIR,
+    STREAM_SOURCE,
     T_MIN,
     T_MISS_MAX,
     TRACK,
@@ -53,6 +57,7 @@ from OTVision.application.config import (
     Config,
     ConvertConfig,
     DetectConfig,
+    StreamConfig,
     TrackConfig,
     YoloConfig,
     _DefaultFiletype,
@@ -87,6 +92,7 @@ class ConfigParser(ABC):
         undistort_dict = d.get(UNDISTORT)
         transform_dict = d.get(TRANSFORM)
         gui_dict = d.get(GUI)
+        stream_config_dict = d.get(STREAM)
 
         log_config = self.parse_log_config(log_dict) if log_dict else Config.log
         default_filetype = (
@@ -114,6 +120,9 @@ class ConfigParser(ABC):
             else Config.transform
         )
         gui_config = self.parse_gui_config(gui_dict) if gui_dict else Config.gui
+        stream_config = None
+        if stream_config_dict is not None:
+            stream_config = self.parse_stream_config(stream_config_dict)
 
         return Config(
             log=log_config,
@@ -125,6 +134,7 @@ class ConfigParser(ABC):
             undistort=undistort_config,
             transform=transform_config,
             gui=gui_config,
+            stream=stream_config,
         )
 
     def parse_log_config(self, data: dict) -> _LogConfig:
@@ -256,3 +266,9 @@ class ConfigParser(ABC):
             data.get(LOCATION_X, _GuiWindowConfig.location_x),
             data.get(LOCATION_Y, _GuiWindowConfig.location_y),
         )
+
+    def parse_stream_config(self, data: dict) -> StreamConfig:
+        name = data[STREAM_NAME]
+        source = data[STREAM_SOURCE]
+        save_dir = data[STREAM_SAVE_DIR]
+        return StreamConfig(name=name, source=source, save_dir=save_dir)
