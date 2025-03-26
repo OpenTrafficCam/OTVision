@@ -59,6 +59,15 @@ class DetectedFrame:
     detections: Sequence[Detection]
     image: Optional[ndarray] = None
 
+    def without_image(self) -> "DetectedFrame":
+        return DetectedFrame(
+            no=self.no,
+            occurrence=self.occurrence,
+            source=self.source,
+            detections=self.detections,
+            image=None,
+        )
+
 
 IsLastFrame = Callable[[FrameNo, TrackId], bool]
 
