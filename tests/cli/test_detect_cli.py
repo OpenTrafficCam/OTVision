@@ -19,12 +19,12 @@ from OTVision.application.config import (
     DetectConfig,
     YoloConfig,
 )
+from OTVision.application.config_parser import ConfigParser
 from OTVision.domain.cli import CliParseError
-from OTVision.plugin.config_parser.file_source import FileSourceConfigParser
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 YAML_DESERIALIZER = YamlDeserializer()
-CONFIG_PARSER = FileSourceConfigParser(YAML_DESERIALIZER)
+CONFIG_PARSER = ConfigParser(YAML_DESERIALIZER)
 
 EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
 INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())

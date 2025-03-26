@@ -80,8 +80,8 @@ from OTVision.application.config import (
     YOLO,
     Config,
 )
+from OTVision.application.config_parser import ConfigParser
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.plugin.config_parser.file_source import FileSourceConfigParser
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 log = logging.getLogger(LOGGER_NAME)
@@ -95,7 +95,7 @@ def parse_user_config(yaml_file: Path | str) -> Config:
     """
     user_config_file = Path(yaml_file)
     deserializer = YamlDeserializer()
-    user_config = FileSourceConfigParser(deserializer).parse(user_config_file)
+    user_config = ConfigParser(deserializer).parse(user_config_file)
     CONFIG.update(user_config.to_dict())
     return user_config
 

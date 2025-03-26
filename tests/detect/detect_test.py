@@ -12,12 +12,12 @@ from jsonschema import validate
 
 from OTVision import dataformat
 from OTVision.application import config as config
+from OTVision.application.config_parser import ConfigParser
 from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.config import CONFIG
 from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.detect import OTVisionVideoDetect
 from OTVision.detect.file_based_detect_builder import FileBasedDetectBuilder
-from OTVision.plugin.config_parser.file_source import FileSourceConfigParser
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 from tests.conftest import YieldFixture
 
@@ -104,7 +104,7 @@ otdet_schema = {
     },
 }
 
-config_parser = FileSourceConfigParser(YamlDeserializer())
+config_parser = ConfigParser(YamlDeserializer())
 
 
 @dataclass

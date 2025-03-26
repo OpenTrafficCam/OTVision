@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -71,10 +70,7 @@ from OTVision.application.config import (
 from OTVision.domain.serialization import Deserializer
 
 
-class ConfigParser(ABC):
-    @abstractmethod
-    def parse_sources(self, sources: list[str]) -> list[str]:
-        raise NotImplementedError
+class ConfigParser:
 
     def __init__(self, deserializer: Deserializer) -> None:
         self._deserialize = deserializer
@@ -165,6 +161,9 @@ class ConfigParser(ABC):
             data.get(ROTATION, ConvertConfig.rotation),
             data.get(OVERWRITE, ConvertConfig.overwrite),
         )
+
+    def parse_sources(self, sources: list[str]) -> list[str]:
+        return [str(Path(source).expanduser()) for source in sources]
 
     def parse_detect_config(self, data: dict) -> DetectConfig:
         yolo_config_dict = data.get(YOLO)

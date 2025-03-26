@@ -46,6 +46,8 @@ from OTVision.domain.detect_producer_consumer import DetectedFrameProducer
 from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.object_detection import ObjectDetectorFactory
+from OTVision.domain.serialization import Deserializer
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 
 class DetectBuilder(ABC):
@@ -155,17 +157,20 @@ class DetectBuilder(ABC):
             detected_frame_buffer=self.detected_frame_buffer,
         )
 
+    @cached_property
+    def config_parser(self) -> ConfigParser:
+        return ConfigParser(self.yaml_deserializer)
+
+    @cached_property
+    def yaml_deserializer(self) -> Deserializer:
+        return YamlDeserializer()
+
     def __init__(self, argv: list[str] | None = None) -> None:
         self.argv = argv
 
     @property
     @abstractmethod
     def input_source(self) -> InputSourceDetect:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def config_parser(self) -> ConfigParser:
         raise NotImplementedError
 
     def build(self) -> OTVisionVideoDetect:
