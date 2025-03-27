@@ -39,6 +39,11 @@ class ObjectDetector(ObjectDetectorMetadata):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def preload(self) -> None:
+        """Preload the model if possible."""
+        raise NotImplementedError
+
 
 class ObjectDetectorFactory(ABC):
     @abstractmethod

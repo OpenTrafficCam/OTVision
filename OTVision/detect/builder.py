@@ -175,7 +175,12 @@ class DetectBuilder(ABC):
 
     def build(self) -> OTVisionVideoDetect:
         self.register_observers()
+        self._preload_object_detection_model()
         return OTVisionVideoDetect(self.detected_frame_producer)
+
+    def _preload_object_detection_model(self) -> None:
+        model = self.current_object_detector.get()
+        model.preload()
 
     def register_observers(self) -> None:
         self.input_source.register(self.detected_frame_buffer.on_flush)

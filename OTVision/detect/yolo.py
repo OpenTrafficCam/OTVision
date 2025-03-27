@@ -184,6 +184,22 @@ class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
         """Create a DetectedFrame with no detections."""
         return self._detected_frame_factory.create(frame, detections=[])
 
+    def preload(self) -> None:
+        model_name = Path(self.config.weights).name
+        log.info(f"Preloading YOLO model '{model_name}...'")
+        self._model.predict(
+            source=None,
+            conf=self.config.confidence,
+            iou=self.config.iou,
+            half=self.config.half_precision,
+            imgsz=self.config.img_size,
+            device=0 if torch.cuda.is_available() else "cpu",
+            stream=False,
+            verbose=False,
+            agnostic_nms=True,
+        )
+        log.info(f"YOLO model '{model_name}' loaded and ready for inference.'")
+
 
 class YoloFactory(ObjectDetectorFactory):
     """
