@@ -149,7 +149,7 @@ class RtspInputSource(InputSourceDetect):
         )
         duration = timedelta(seconds=round(frames / fps))
         output_filename = (
-            f"{self.stream_config.name}_FR{fps}"
+            f"{self.stream_config.name}_FR{round(fps)}"
             f"_{_start_time.strftime(DATETIME_FORMAT)}.mp4"
         )
         output = str(self.stream_config.save_dir / output_filename)

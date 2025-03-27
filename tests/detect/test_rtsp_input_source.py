@@ -17,7 +17,7 @@ SECOND_OCCURRENCE = FIRST_OCCURRENCE + timedelta(seconds=2)
 
 WIDTH = 800
 HEIGHT = 600
-OUTPUT_FPS = 1
+OUTPUT_FPS = 1.0
 
 FIRST_FRAME_DATA = Mock()
 SECOND_FRAME_DATA = Mock()
@@ -95,7 +95,7 @@ class TestRtspInputSource:
         expected_flush_event = FlushEvent.create(
             source=RTSP_URL,
             output=str(
-                STREAM_SAVE_DIR / f"{STREAM_NAME}_FR{OUTPUT_FPS}"
+                STREAM_SAVE_DIR / f"{STREAM_NAME}_FR{round(OUTPUT_FPS)}"
                 f"_{START_TIME.strftime(DATETIME_FORMAT)}.mp4"
             ),
             duration=timedelta(seconds=2),
