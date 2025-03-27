@@ -140,7 +140,7 @@ def convert(
         overwrite (bool, optional): Whether to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether to delete the input h264.
-          Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
+            Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
 
     Raises:
         TypeError: If output video filetype is not supported.
