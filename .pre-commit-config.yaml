@@ -57,7 +57,7 @@ repos:
           - mypy==1.15.0
           - numpy==1.26.4; sys_platform == 'win32'
           - numpy==2.1.1; sys_platform != 'win32'
-          - opencv-python==4.11.0.86
+          - opencv-python==4.10.0.84
           - pandas-stubs==2.2.3.250308
           - pandas==2.2.3
           - pre-commit==3.8.0
@@ -93,4 +93,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
