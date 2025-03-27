@@ -65,6 +65,7 @@ STREAM = "STREAM"
 STREAM_SAVE_DIR = "SAVE_DIR"
 STREAM_NAME = "NAME"
 STREAM_SOURCE = "SOURCE"
+FLUSH_BUFFER_SIZE = "FLUSH_BUFFER_SIZE"
 
 
 @dataclass(frozen=True)
@@ -398,12 +399,14 @@ class StreamConfig:
     name: str
     source: str
     save_dir: Path
+    flush_buffer_size: int
 
     def to_dict(self) -> dict:
         return {
             STREAM_NAME: self.name,
             STREAM_SOURCE: self.source,
             STREAM_SAVE_DIR: str(self.save_dir),
+            FLUSH_BUFFER_SIZE: self.flush_buffer_size,
         }
 
 

@@ -33,7 +33,3 @@ TRACK:
 LOG:
   LOG_LEVEL_CONSOLE: WARNING
   LOG_LEVEL_FILE: DEBUG
-
-STREAM:
-  CAMERA: OTCamera15
-  SAVE_DIR: "/Users/rseng/temp/streaming-tracker"

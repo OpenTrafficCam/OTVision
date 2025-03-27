@@ -12,6 +12,7 @@ from OTVision.application.config import (
     DETECT_END,
     DETECT_START,
     EXPECTED_DURATION,
+    FLUSH_BUFFER_SIZE,
     FONT,
     FONT_SIZE,
     FPS_FROM_FILENAME,
@@ -269,5 +270,11 @@ class ConfigParser:
     def parse_stream_config(self, data: dict) -> StreamConfig:
         name = data[STREAM_NAME]
         source = data[STREAM_SOURCE]
-        save_dir = data[STREAM_SAVE_DIR]
-        return StreamConfig(name=name, source=source, save_dir=save_dir)
+        save_dir = Path(data[STREAM_SAVE_DIR])
+        flush_buffer_size = int(data[FLUSH_BUFFER_SIZE])
+        return StreamConfig(
+            name=name,
+            source=source,
+            save_dir=save_dir,
+            flush_buffer_size=flush_buffer_size,
+        )
