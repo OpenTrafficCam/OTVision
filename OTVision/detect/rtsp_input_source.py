@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from time import sleep
 from typing import Generator
 
 from cv2 import (
@@ -17,6 +18,7 @@ from OTVision.application.config import (
     DetectConfig,
     StreamConfig,
 )
+from OTVision.application.configure_logger import logger
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame
@@ -24,6 +26,7 @@ from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.time import DatetimeProvider
 
 RTSP_URL = "rtsp://127.0.0.1:8554/test"
+RETRY_SECONDS = 1
 
 
 class Counter:
@@ -83,21 +86,28 @@ class RtspInputSource(InputSourceDetect):
         # Property is moved below __init__ otherwise mypy is somehow unable to determine
         # types of self._current_stream and self._current_video_capture
         new_source = self.stream_config.source
-        if self._current_stream != new_source or self._current_video_capture is None:
+        if (
+            self._current_stream is not None
+            and self._current_stream == new_source
+            and self._current_video_capture
+        ):
+            # current source has not changed
+            return self._current_video_capture
+
+        # Stream changed or has not been initialized
+        if self._current_video_capture is not None:
             # If the stream changed and there's an existing capture, release it
-            if self._current_video_capture is not None:
-                self._current_video_capture.release()
-            self._current_stream = new_source
-            self._current_video_capture = VideoCapture(new_source)
+            self._current_video_capture.release()
+        self._current_stream = new_source
+        self._current_video_capture = VideoCapture(new_source)
 
         if self._current_video_capture is None:
             raise ValueError("Video capture not initialized")
+
+        self._current_video_capture = self._init_video_capture(self._current_stream)
         return self._current_video_capture
 
     def produce(self) -> Generator[Frame, None, None]:
-        if not self._video_capture.isOpened():
-            print("Error: Couldn't open the RTSP stream.")
-            exit()
         start_time = self._datetime_provider.provide()
         while not self.should_stop():
             if (frame := self._read_next_frame()) is not None:
@@ -114,13 +124,23 @@ class RtspInputSource(InputSourceDetect):
                     self._notify(start_time, current_frame_number)
         self._notify(start_time, self.current_frame_number)
 
+    def _init_video_capture(self, source: str) -> VideoCapture:
+        cap = VideoCapture(source)
+        while not self.should_stop() and not cap.isOpened():
+            logger().warning(
+                f"Couldn't open the RTSP stream: {source}. "
+                f"Trying again in {RETRY_SECONDS}s..."
+            )
+            sleep(RETRY_SECONDS)
+            cap.release()
+            cap = VideoCapture(source)
+        return cap
+
     def _read_next_frame(self) -> ndarray | None:
         successful, frame = self._video_capture.read()
         if successful:
             return frame
-        print("Failed to grab frame")
-        # self._video_capture.release()
-        # self.__video_capture = VideoCapture(self.rtsp_url)
+        logger().debug("Failed to grab frame")
         return None
 
     def should_stop(self) -> bool:
