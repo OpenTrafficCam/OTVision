@@ -81,7 +81,7 @@ class TestOtdetFileWriter:
             OtdetBuilderConfig(
                 conf=expected_detect_config.confidence,
                 iou=expected_detect_config.iou,
-                source=expected_source_metadata.source,
+                source=expected_source_metadata.output,
                 video_width=expected_source_metadata.width,
                 video_height=expected_source_metadata.height,
                 expected_duration=EXPECTED_DURATION,

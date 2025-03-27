@@ -72,7 +72,7 @@ class OtdetFileWriter:
             OtdetBuilderConfig(
                 conf=detect_config.confidence,
                 iou=detect_config.iou,
-                source=source_metadata.source,
+                source=source_metadata.output,
                 video_width=source_metadata.width,
                 video_height=source_metadata.height,
                 expected_duration=expected_duration,
