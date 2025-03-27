@@ -22,7 +22,8 @@ class Buffer[T, SUBJECT_TYPE, OBSERVING_TYPE](Observable[SUBJECT_TYPE], Filter[T
         return self._buffer
 
     def _reset_buffer(self) -> None:
-        self._buffer = []
+        del self._buffer
+        self._buffer = list()
 
     def on_flush(self, event: OBSERVING_TYPE) -> None:
         buffered_elements = self._get_buffered_elements()
