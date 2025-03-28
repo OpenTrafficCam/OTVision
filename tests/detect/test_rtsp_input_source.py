@@ -24,7 +24,7 @@ SECOND_FRAME_DATA = Mock()
 THIRD_FRAME_DATA = Mock()
 
 FIRST_FRAME_RGB_DATA = Mock()
-SECOND_FRAME_RGB_DATA = Mock()
+THIRD_FRAME_RGB_DATA = Mock()
 RTSP_URL = "rtsp://192.168.1.100:554/1/h264preview"
 STREAM_NAME = "OTCamera15"
 STREAM_SAVE_DIR = Path("path/to/save/dir")
@@ -74,7 +74,7 @@ class TestRtspInputSource:
                 occurrence=FIRST_OCCURRENCE,
             ),
             Frame(
-                data=SECOND_FRAME_RGB_DATA,
+                data=THIRD_FRAME_RGB_DATA,
                 frame=2,
                 source=RTSP_URL,
                 occurrence=SECOND_OCCURRENCE,
@@ -146,7 +146,7 @@ def create_target_with(
 
     given.convert_frame_to_rgb.side_effect = [
         FIRST_FRAME_RGB_DATA,
-        SECOND_FRAME_RGB_DATA,
+        THIRD_FRAME_RGB_DATA,
     ]
     given.config.stream = STREAM_CONFIG
     given.config.convert.output_fps = OUTPUT_FPS
@@ -156,6 +156,5 @@ def create_target_with(
         subject=given.subject,
         datetime_provider=given.datetime_provider,
         frame_counter=given.frame_counter,
-        flush_buffer_size=given.flush_buffer_size,
         get_current_config=given.get_current_config,
     )

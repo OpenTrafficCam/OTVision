@@ -29,7 +29,6 @@ class RtspBasedDetectBuilder(DetectBuilder):
             subject=Subject[FlushEvent](),
             datetime_provider=self.datetime_provider,
             frame_counter=Counter(),
-            flush_buffer_size=self.stream_config.flush_buffer_size,
             get_current_config=self.get_current_config,
         )
 

@@ -64,19 +64,21 @@ class RtspInputSource(InputSourceDetect):
     def rtsp_url(self) -> str:
         return self.stream_config.source
 
+    @property
+    def flush_buffer_size(self) -> int:
+        return self.stream_config.flush_buffer_size
+
     def __init__(
         self,
         subject: Subject[FlushEvent],
         datetime_provider: DatetimeProvider,
         frame_counter: Counter,
         get_current_config: GetCurrentConfig,
-        flush_buffer_size: int,
     ) -> None:
         super().__init__(subject)
         self._datetime_provider = datetime_provider
         self._stop_capture = False
         self._frame_counter = frame_counter
-        self._flush_buffer_size = flush_buffer_size
         self._get_current_config = get_current_config
         self._current_stream: str | None = None
         self._current_video_capture: VideoCapture | None = None
@@ -98,12 +100,8 @@ class RtspInputSource(InputSourceDetect):
         if self._current_video_capture is not None:
             # If the stream changed and there's an existing capture, release it
             self._current_video_capture.release()
+
         self._current_stream = new_source
-        self._current_video_capture = VideoCapture(new_source)
-
-        if self._current_video_capture is None:
-            raise ValueError("Video capture not initialized")
-
         self._current_video_capture = self._init_video_capture(self._current_stream)
         return self._current_video_capture
 
@@ -113,16 +111,15 @@ class RtspInputSource(InputSourceDetect):
             if (frame := self._read_next_frame()) is not None:
                 self._frame_counter.increment()
 
-                current_frame_number = self.current_frame_number
                 yield Frame(
                     data=convert_frame_to_rgb(frame),  # YOLO expects RGB
-                    frame=current_frame_number,
+                    frame=self.current_frame_number,
                     source=self.rtsp_url,
                     occurrence=self._datetime_provider.provide(),
                 )
                 if self.flush_condition_met():
-                    self._notify(start_time, current_frame_number)
-        self._notify(start_time, self.current_frame_number)
+                    self._notify(start_time)
+        self._notify(start_time)
 
     def _init_video_capture(self, source: str) -> VideoCapture:
         cap = VideoCapture(source)
@@ -153,19 +150,19 @@ class RtspInputSource(InputSourceDetect):
         self._stop_capture = False
 
     def flush_condition_met(self) -> bool:
-        return self.current_frame_number % self._flush_buffer_size == 0
+        return self.current_frame_number % self.flush_buffer_size == 0
 
-    def _notify(self, start_time: datetime, current_frame_number: int) -> None:
+    def _notify(self, start_time: datetime) -> None:
         frame_width = int(self._video_capture.get(CAP_PROP_FRAME_WIDTH))
         frame_height = int(self._video_capture.get(CAP_PROP_FRAME_HEIGHT))
         fps = self.config.convert.output_fps
         _start_time = calculate_start_time(
-            start_time, current_frame_number, fps, self._flush_buffer_size
+            start_time, self.current_frame_number, fps, self.flush_buffer_size
         )
         frames = (
-            self._flush_buffer_size
-            if current_frame_number % self._flush_buffer_size == 0
-            else self.current_frame_number % self._flush_buffer_size
+            self.flush_buffer_size
+            if self.current_frame_number % self.flush_buffer_size == 0
+            else self.current_frame_number % self.flush_buffer_size
         )
         duration = timedelta(seconds=round(frames / fps))
         output_filename = (
