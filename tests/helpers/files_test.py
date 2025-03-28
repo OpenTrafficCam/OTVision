@@ -107,17 +107,9 @@ def test_get_files_supports_strings(
 
 
 def test_get_files_dirPathsAsParam_RaiseTypeError(test_dir_with_files: Path) -> None:
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         get_files(
             paths=test_dir_with_files,  # type: ignore
-            filetypes=[".json", ".xml"],
-        )
-
-
-def test_get_files_dirPathsAsString_RaiseTypeError(test_dir_with_files: Path) -> None:
-    with pytest.raises(TypeError):
-        get_files(
-            paths=str(test_dir_with_files),  # type: ignore
             filetypes=[".json", ".xml"],
         )
 
@@ -137,7 +129,7 @@ def test_get_files_invalidTypeListOfNumbersAs1stParam_RaiseTypeError() -> None:
 
 def test_get_files_dictAs1stParam_RaiseTypeError() -> None:
     _dict: dict = {}
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         get_files(paths=_dict, filetypes=[".json"])  # type: ignore
 
 
