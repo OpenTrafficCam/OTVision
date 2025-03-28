@@ -93,6 +93,7 @@ class OtdetFileWriter:
         ).build(event.frames)
 
         detections_file = self._save_path_provider.provide(source_metadata.output)
+        detections_file.parent.mkdir(parents=True, exist_ok=True)
         write_json(
             otdet,
             file=detections_file,
