@@ -1,5 +1,5 @@
+from OTVision.application.config import Config, DetectConfig, YoloConfig, _LogConfig
 from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
-from OTVision.config import Config, DetectConfig, YoloConfig, _LogConfig
 from OTVision.domain.cli import DetectCliArgs
 
 
@@ -20,6 +20,7 @@ class UpdateDetectConfigWithCliArgs:
             undistort=config.undistort,
             transform=config.transform,
             gui=config.gui,
+            stream=config.stream,
         )
 
     def _update_detect_config(

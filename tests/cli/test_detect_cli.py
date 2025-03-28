@@ -3,9 +3,8 @@ from typing import Callable
 from unittest.mock import Mock, patch
 
 import pytest
-import yaml
 
-from OTVision.config import (
+from OTVision.application.config import (
     CONF,
     DEFAULT_EXPECTED_DURATION,
     DETECT,
@@ -20,22 +19,21 @@ from OTVision.config import (
     DetectConfig,
     YoloConfig,
 )
+from OTVision.application.config_parser import ConfigParser
 from OTVision.domain.cli import CliParseError
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 
-
-def read_yaml(yaml_file: str) -> dict:
-    with open(yaml_file, "r") as stream:
-        return yaml.safe_load(stream)
-
+YAML_DESERIALIZER = YamlDeserializer()
+CONFIG_PARSER = ConfigParser(YAML_DESERIALIZER)
 
 EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
 INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())
 
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
-custom_config = read_yaml(CUSTOM_CONFIG_FILE)
+custom_config = YAML_DESERIALIZER.deserialize(Path(CUSTOM_CONFIG_FILE))
 
 CWD_CONFIG_FILE = r"user_config.otvision.yaml"
-cwd_config = read_yaml(CWD_CONFIG_FILE)
+cwd_config = YAML_DESERIALIZER.deserialize(Path(CWD_CONFIG_FILE))
 
 LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
@@ -45,8 +43,8 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
         PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         EXPECTED: [
-            Path("./"),
-            Path(f"./{CUSTOM_CONFIG_FILE}"),
+            "./",
+            f"./{CUSTOM_CONFIG_FILE}",
         ],
     },
     "weights": {PASSED: "--weights yolov8l", EXPECTED: "yolov8l"},
@@ -68,8 +66,8 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
         PASSED: f"-p ./ ./{CUSTOM_CONFIG_FILE}",
         EXPECTED: [
-            Path("./"),
-            Path(f"./{CUSTOM_CONFIG_FILE}"),
+            "./",
+            f"./{CUSTOM_CONFIG_FILE}",
         ],
     },
     "weights": {PASSED: "--weights yolov8x", EXPECTED: "yolov8x"},
@@ -88,7 +86,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
 }
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
-    "paths": {PASSED: "-p ./", EXPECTED: [Path("./")]},
+    "paths": {PASSED: "-p ./", EXPECTED: ["./"]},
     "weights": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][WEIGHTS]},
     "conf": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][CONF]},
     "iou": {PASSED: "", EXPECTED: cwd_config[DETECT][YOLO][IOU]},
@@ -111,8 +109,8 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "paths": {
         PASSED: "",
         EXPECTED: [
-            Path(custom_config[DETECT][PATHS][0]),
-            Path(custom_config[DETECT][PATHS][1]),
+            custom_config[DETECT][PATHS][0],
+            custom_config[DETECT][PATHS][1],
         ],
     },
     "weights": {PASSED: "", EXPECTED: custom_config[DETECT][YOLO][WEIGHTS]},
@@ -198,8 +196,8 @@ class TestDetectCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
-    @patch("detect.DetectBuilder.update_current_config")
-    @patch("detect.DetectBuilder.build")
+    @patch("detect.FileBasedDetectBuilder.update_current_config")
+    @patch("detect.FileBasedDetectBuilder.build")
     def test_pass_detect_cli(
         self,
         mock_build: Mock,
@@ -239,7 +237,7 @@ class TestDetectCLI:
         test_fail_data: dict,
     ) -> None:
 
-        with patch("detect.DetectBuilder.build"):
+        with patch("detect.FileBasedDetectBuilder.build"):
             with pytest.raises(SystemExit) as e:
                 command = [*test_fail_data[PASSED].split()]
                 detect_cli(argv=list(filter(None, command)))
@@ -251,13 +249,13 @@ class TestDetectCLI:
     def test_fail_not_existing_path_passed_to_detect_cli(
         self, detect_cli: Callable, passed: str
     ) -> None:
-        with patch("detect.DetectBuilder.build"):
+        with patch("detect.FileBasedDetectBuilder.build"):
             with pytest.raises(FileNotFoundError):
                 command = required_arguments.split() + [*passed.split()]
                 detect_cli(argv=list(filter(None, command)))
 
     def test_fail_no_paths_passed_to_detect_cli(self, detect_cli: Callable) -> None:
-        with patch("detect.DetectBuilder.build"):
+        with patch("detect.FileBasedDetectBuilder.build"):
             error_msg = (
                 "No paths have been passed as command line args."
                 + "No paths have been defined in the user config."
@@ -279,7 +277,7 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     """
 
     if config_file_arg := test_data["config"].get(PASSED):
-        default_config = Config.from_dict(read_yaml(config_file_arg.split()[1]))
+        default_config = CONFIG_PARSER.parse(config_file_arg.split()[1])
     else:
         default_config = Config()
 
@@ -305,8 +303,7 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     )
     detect_end = test_data["detect_end"].get(EXPECTED, default_config.detect.detect_end)
 
-    # Ensure paths are converted to Path objects if necessary
-    paths = [Path(p).expanduser() for p in paths]
+    paths = [str(Path(p).expanduser()) for p in paths]
 
     # Create YoloConfig using the extracted values
     yolo_config = YoloConfig(

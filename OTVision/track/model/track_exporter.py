@@ -5,7 +5,8 @@ from typing import Generic, Iterator, TypeVar
 
 from tqdm import tqdm
 
-from OTVision.config import CONFIG, DEFAULT_FILETYPE, TRACK
+from OTVision.application.config import DEFAULT_FILETYPE, TRACK
+from OTVision.config import CONFIG
 from OTVision.dataformat import (
     DATA,
     DETECTIONS,

@@ -5,7 +5,8 @@ from typing import Callable, Iterator
 from more_itertools import peekable
 from tqdm import tqdm
 
-from OTVision.config import CONFIG, DEFAULT_FILETYPE, OVERWRITE, TRACK
+from OTVision.application.config import DEFAULT_FILETYPE, OVERWRITE, TRACK
+from OTVision.config import CONFIG
 from OTVision.domain.detection import TrackId
 from OTVision.domain.frame import DetectedFrame, FrameNo, IsLastFrame, TrackedFrame
 from OTVision.helpers.log import LOGGER_NAME

@@ -5,7 +5,7 @@ import pytest
 from torch import Tensor
 from ultralytics.engine.results import Boxes, Results
 
-from OTVision.config import Config, DetectConfig
+from OTVision.application.config import Config, DetectConfig
 from OTVision.detect.yolo import YoloDetectionConverter, YoloDetector
 from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys

@@ -2,10 +2,10 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from OTVision.application.config import DATETIME_FORMAT
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.frame_count_provider import FrameCountProvider
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import DATETIME_FORMAT
 from OTVision.dataformat import FRAME
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.helpers.date import parse_date_string_to_utc_datime

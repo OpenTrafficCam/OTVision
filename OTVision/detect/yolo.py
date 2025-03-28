@@ -30,9 +30,9 @@ from ultralytics import YOLO
 from ultralytics.engine.results import Boxes
 
 from OTVision.abstraction.pipes_and_filter import Filter
+from OTVision.application.config import DetectConfig
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import DetectConfig
 from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
@@ -183,6 +183,22 @@ class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
     def _create_empty_detection(self, frame: Frame) -> DetectedFrame:
         """Create a DetectedFrame with no detections."""
         return self._detected_frame_factory.create(frame, detections=[])
+
+    def preload(self) -> None:
+        model_name = Path(self.config.weights).name
+        log.info(f"Preloading YOLO model '{model_name}...'")
+        self._model.predict(
+            source=None,
+            conf=self.config.confidence,
+            iou=self.config.iou,
+            half=self.config.half_precision,
+            imgsz=self.config.img_size,
+            device=0 if torch.cuda.is_available() else "cpu",
+            stream=False,
+            verbose=False,
+            agnostic_nms=True,
+        )
+        log.info(f"YOLO model '{model_name}' loaded and ready for inference.'")
 
 
 class YoloFactory(ObjectDetectorFactory):

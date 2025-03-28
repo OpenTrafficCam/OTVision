@@ -27,8 +27,7 @@ from typing import Optional
 
 from tqdm import tqdm
 
-from OTVision.config import (
-    CONFIG,
+from OTVision.application.config import (
     CONVERT,
     DELETE_INPUT,
     FILETYPES,
@@ -40,6 +39,7 @@ from OTVision.config import (
     VID,
     VID_ROTATABLE,
 )
+from OTVision.config import CONFIG
 from OTVision.helpers.files import get_files
 from OTVision.helpers.formats import _get_fps_from_filename
 from OTVision.helpers.log import LOGGER_NAME
@@ -140,7 +140,7 @@ def convert(
         overwrite (bool, optional): Whether to overwrite existing video files.
             Defaults to CONFIG["CONVERT"]["OVERWRITE"].
         delete_input (bool, optional): Whether to delete the input h264.
-          Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
+            Defaults to CONFIG["CONVERT"]["DELETE_INPUT"].
 
     Raises:
         TypeError: If output video filetype is not supported.

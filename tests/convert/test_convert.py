@@ -7,7 +7,8 @@ import cv2
 import numpy as np
 import pytest
 
-from OTVision.config import CONFIG, FILETYPES, VID_ROTATABLE
+from OTVision.application.config import FILETYPES, VID_ROTATABLE
+from OTVision.config import CONFIG
 from OTVision.convert.convert import check_ffmpeg
 from OTVision.convert.convert import main as convert
 
@@ -284,20 +285,22 @@ def test_fail_convert_fps_from_filename(test_convert_tmp_dir: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "paths",
+    "paths, message",
     [
-        (1),
-        ("some_str"),
-        (Path("some_str")),
-        ([Path("some_str"), Path("some_other_str")]),
+        (1, "Paths needs to be a sequence"),
+        ("some_str", "some_str is neither a file nor a dir"),
+        (Path("some_str"), "Paths needs to be a sequence"),
+        (
+            [Path("some_str"), Path("some_other_str")],
+            "some_str is neither a file nor a dir",
+        ),
     ],
 )
-def test_fail_convert_wrong_paths(paths) -> None:  # type: ignore
+def test_fail_convert_wrong_paths(paths, message) -> None:  # type: ignore
     """Tests if the main function of OTVision/convert/convert.py raises specific errors
     when wrong paths are given"""
 
-    # Check if TypeError is raised
-    with pytest.raises(TypeError, match=r"Paths needs to be a list of pathlib.Path"):
+    with pytest.raises(ValueError, match=message):
         convert(paths=paths)
 
 

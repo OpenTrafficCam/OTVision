@@ -1,8 +1,11 @@
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import cached_property
 
 from OTVision.abstraction.observer import Subject
 from OTVision.application.buffer import Buffer
+from OTVision.application.config import Config
+from OTVision.application.config_parser import ConfigParser
 from OTVision.application.configure_logger import ConfigureLogger
 from OTVision.application.detect.current_object_detector import CurrentObjectDetector
 from OTVision.application.detect.current_object_detector_metadata import (
@@ -24,7 +27,6 @@ from OTVision.application.frame_count_provider import FrameCountProvider
 from OTVision.application.get_config import GetConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.update_current_config import UpdateCurrentConfig
-from OTVision.config import Config, ConfigParser
 from OTVision.detect.cli import ArgparseDetectCliParser
 from OTVision.detect.detect import OTVisionVideoDetect
 from OTVision.detect.detected_frame_buffer import (
@@ -37,7 +39,6 @@ from OTVision.detect.otdet_file_writer import OtdetFileWriter
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.detect.pyav_frame_count_provider import PyAVFrameCountProvider
 from OTVision.detect.timestamper import TimestamperFactory
-from OTVision.detect.video_input_source import VideoSource
 from OTVision.detect.yolo import YoloDetectionConverter, YoloFactory
 from OTVision.domain.cli import DetectCliParser
 from OTVision.domain.current_config import CurrentConfig
@@ -45,16 +46,14 @@ from OTVision.domain.detect_producer_consumer import DetectedFrameProducer
 from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.object_detection import ObjectDetectorFactory
+from OTVision.domain.serialization import Deserializer
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 
-class DetectBuilder:
+class DetectBuilder(ABC):
     @cached_property
     def get_config(self) -> GetConfig:
         return GetConfig(self.config_parser)
-
-    @cached_property
-    def config_parser(self) -> ConfigParser:
-        return ConfigParser()
 
     @cached_property
     def get_detect_cli_args(self) -> GetDetectCliArgs:
@@ -108,19 +107,6 @@ class DetectBuilder:
     def update_current_config(self) -> UpdateCurrentConfig:
         return UpdateCurrentConfig(self.current_config)
 
-    def __init__(self, argv: list[str] | None = None) -> None:
-        self.argv = argv
-
-    @cached_property
-    def input_source(self) -> InputSourceDetect:
-        return VideoSource(
-            subject=Subject[FlushEvent](),
-            get_current_config=self.get_current_config,
-            frame_rotator=self.frame_rotator,
-            timestamper_factory=self.timestamper_factory,
-            save_path_provider=self.detection_file_save_path_provider,
-        )
-
     @cached_property
     def frame_rotator(self) -> AvVideoFrameRotator:
         return AvVideoFrameRotator()
@@ -171,9 +157,30 @@ class DetectBuilder:
             detected_frame_buffer=self.detected_frame_buffer,
         )
 
+    @cached_property
+    def config_parser(self) -> ConfigParser:
+        return ConfigParser(self.yaml_deserializer)
+
+    @cached_property
+    def yaml_deserializer(self) -> Deserializer:
+        return YamlDeserializer()
+
+    def __init__(self, argv: list[str] | None = None) -> None:
+        self.argv = argv
+
+    @property
+    @abstractmethod
+    def input_source(self) -> InputSourceDetect:
+        raise NotImplementedError
+
     def build(self) -> OTVisionVideoDetect:
         self.register_observers()
+        self._preload_object_detection_model()
         return OTVisionVideoDetect(self.detected_frame_producer)
+
+    def _preload_object_detection_model(self) -> None:
+        model = self.current_object_detector.get()
+        model.preload()
 
     def register_observers(self) -> None:
         self.input_source.register(self.detected_frame_buffer.on_flush)
