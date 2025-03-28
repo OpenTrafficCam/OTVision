@@ -86,7 +86,7 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def parse_video_length(self, metadata: dict) -> timedelta:
         video_length = metadata[VIDEO][LENGTH]
-        time = datetime.strptime(video_length, "%H:%M:%S")
+        time = datetime.strptime(video_length, "%H:%M:%S.%f")
         return timedelta(hours=time.hour, minutes=time.minute, seconds=time.second)
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
