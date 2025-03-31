@@ -1,7 +1,7 @@
-from argparse import ArgumentParser, BooleanOptionalAction
+from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from pathlib import Path
 
-from OTVision.domain.cli import TrackCliArgs, TrackCliParser
+from OTVision.domain.cli import CliParseError, TrackCliArgs, TrackCliParser
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
 
@@ -93,6 +93,8 @@ class ArgparseTrackCliParser(TrackCliParser):
 
     def parse(self) -> TrackCliArgs:
         args = self._parser.parse_args(self._argv)
+        self.__assert_cli_args_valid(args)
+
         return TrackCliArgs(
             paths=self._parse_files(args.paths),
             config_file=args.config,
@@ -107,6 +109,15 @@ class ArgparseTrackCliParser(TrackCliParser):
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
         )
+
+    def __assert_cli_args_valid(self, args: Namespace) -> None:
+        if args.paths is None and args.config is None:
+            raise CliParseError(
+                (
+                    "No paths have been passed as command line args."
+                    "No paths have been defined in the user config."
+                )
+            )
 
     def _parse_files(self, files: list[str] | None) -> list[str] | None:
         if files is None:
