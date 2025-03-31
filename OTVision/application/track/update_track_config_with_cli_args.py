@@ -28,13 +28,11 @@ class UpdateTrackConfigWithCliArgs:
         self, track_config: TrackConfig, cli_args: TrackCliArgs
     ) -> TrackConfig:
         iou_config = _TrackIouConfig(
-            sigma_l=value_or_default(cli_args.sigma_l, _TrackIouConfig.sigma_l),
-            sigma_h=value_or_default(cli_args.sigma_h, _TrackIouConfig.sigma_h),
-            sigma_iou=value_or_default(cli_args.sigma_iou, _TrackIouConfig.sigma_iou),
-            t_min=value_or_default(cli_args.t_min, _TrackIouConfig.t_min),
-            t_miss_max=value_or_default(
-                cli_args.t_miss_max, _TrackIouConfig.t_miss_max
-            ),
+            sigma_l=value_or_default(cli_args.sigma_l, track_config.sigma_l),
+            sigma_h=value_or_default(cli_args.sigma_h, track_config.sigma_h),
+            sigma_iou=value_or_default(cli_args.sigma_iou, track_config.sigma_iou),
+            t_min=value_or_default(cli_args.t_min, track_config.t_min),
+            t_miss_max=value_or_default(cli_args.t_miss_max, track_config.t_miss_max),
         )
         return TrackConfig(
             paths=value_or_default(cli_args.paths, track_config.paths),

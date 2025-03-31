@@ -27,7 +27,7 @@ class TestUpdateTrackConfigWithCliArgs:
         #Requirement https://openproject.platomo.de/projects/001-opentrafficcam-live/work_packages/7148
         """  # noqa
         given = create_get_track_cli_args()
-        given_config = default_config()
+        given_config = custom_config()
         target = UpdateTrackConfigWithCliArgs(given)
 
         actual = target.update(given_config)
@@ -35,8 +35,13 @@ class TestUpdateTrackConfigWithCliArgs:
         given.get.assert_called_once()
 
 
-def default_config() -> Config:
-    return Config()
+def custom_config() -> Config:
+    track_config = TrackConfig(
+        iou=_TrackIouConfig(
+            sigma_l=0.0, sigma_h=0.0, sigma_iou=0.0, t_min=0, t_miss_max=0
+        )
+    )
+    return Config(track=track_config)
 
 
 def cli_args() -> TrackCliArgs:
@@ -63,7 +68,7 @@ def create_get_track_cli_args() -> Mock:
 
 
 def expected_config() -> Config:
-    config = default_config()
+    config = custom_config()
     return Config(
         log=_LogConfig(
             log_level_file=LOG_LEVEL_FILE, log_level_console=LOG_LEVEL_CONSOLE

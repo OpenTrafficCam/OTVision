@@ -18,7 +18,7 @@ from OTVision.track.model.filebased.frame_chunk import (
 )
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
 from OTVision.track.model.tracking_interfaces import (
-    ID_GENERATOR,
+    IdGenerator,
     Tracker,
     UnfinishedTracksBuffer,
 )
@@ -36,7 +36,7 @@ class ChunkBasedTracker(Tracker):
     def track_frame(
         self,
         frames: DetectedFrame,
-        id_generator: ID_GENERATOR,
+        id_generator: IdGenerator,
     ) -> TrackedFrame:
         return self._tracker.track_frame(frames, id_generator)
 
@@ -44,7 +44,7 @@ class ChunkBasedTracker(Tracker):
         self,
         chunk: FrameChunk,
         is_last_chunk: bool,
-        id_generator: ID_GENERATOR,
+        id_generator: IdGenerator,
     ) -> TrackedChunk:
         frames_progress = tqdm(
             chunk.frames, desc="track Frame", total=len(chunk.frames), leave=False
@@ -64,14 +64,14 @@ class ChunkBasedTracker(Tracker):
         file: Path,
         frame_group: FrameGroup,
         is_last_file: bool,
-        id_generator: ID_GENERATOR,
+        id_generator: IdGenerator,
         frame_offset: int = 0,
     ) -> TrackedChunk:
         chunk = self._chunk_parser.parse(file, frame_group, frame_offset)
         return self.track_chunk(chunk, is_last_file, id_generator)
 
 
-ID_GENERATOR_FACTORY = Callable[[FrameGroup], ID_GENERATOR]
+IdGeneratorFactory = Callable[[FrameGroup], IdGenerator]
 
 
 class GroupedFilesTracker(ChunkBasedTracker):
@@ -81,7 +81,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
         tracker: Tracker,
         chunk_parser: ChunkParser,
         frame_group_parser: FrameGroupParser,
-        id_generator_factory: ID_GENERATOR_FACTORY,
+        id_generator_factory: IdGeneratorFactory,
         overwrite: bool = CONFIG[TRACK][OVERWRITE],
         file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK],
     ) -> None:
