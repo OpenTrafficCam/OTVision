@@ -43,7 +43,22 @@ For a complete list of dependencies, see the [requirements.txt](requirements.txt
 
 ## Installation
 
-### Basic Installation
+### Installation from GitHub Releases
+
+Pre-built releases are available on GitHub for easy installation:
+
+1. Go to the [OTVision Releases page](https://github.com/OpenTrafficCam/OTVision/releases) on GitHub
+2. Download the appropriate release for your platform:
+   - **Windows**: Choose between `otvision-win.zip` (standard) or `otvision-win-cuda.zip` (with CUDA support)
+   - **Linux**: Choose between `otvision-linux.zip` (standard) or `otvision-linux-cuda.zip` (with CUDA support)
+   - **macOS**: Choose `OTVision-macos.zip`
+3. Extract the downloaded ZIP file
+4. Run the installation script:
+   - On Windows: Double-click `install.cmd`
+   - On Linux: Run `./install.sh`
+   - On macOS: Double-click `install.command`
+
+### Manual Installation
 
 1. Clone the repository:
    ```bash
@@ -61,7 +76,9 @@ For a complete list of dependencies, see the [requirements.txt](requirements.txt
      ./install.sh
      ```
 
-### Installation with CUDA Support (for GPU acceleration)
+### Manual Development Installation
+
+For development purposes, if you want to contribute to the project:
 
 1. Clone the repository:
    ```bash
@@ -69,29 +86,15 @@ For a complete list of dependencies, see the [requirements.txt](requirements.txt
    cd OTVision
    ```
 
-2. Install the package with CUDA support:
+2. Install the development version:
    - On Windows:
      ```bash
-     install.cmd
+     install_dev.cmd
      ```
-     Select the CUDA option when prompted.
-   - On Linux:
+   - On Linux/macOS:
      ```bash
-     ./install.sh
+     ./install_dev.sh
      ```
-     Select the CUDA option when prompted.
-
-### Development Installation
-
-For development purposes, use:
-- On Windows:
-  ```bash
-  install_dev.cmd
-  ```
-- On Linux/macOS:
-  ```bash
-  ./install_dev.sh
-  ```
 
 ## Usage
 
