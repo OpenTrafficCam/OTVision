@@ -329,6 +329,26 @@ class _TrackIouConfig:
 
 @dataclass(frozen=True)
 class TrackConfig:
+    @property
+    def sigma_l(self) -> float:
+        return self.iou.sigma_l
+
+    @property
+    def sigma_h(self) -> float:
+        return self.iou.sigma_h
+
+    @property
+    def sigma_iou(self) -> float:
+        return self.iou.sigma_iou
+
+    @property
+    def t_min(self) -> int:
+        return self.iou.t_min
+
+    @property
+    def t_miss_max(self) -> int:
+        return self.iou.t_miss_max
+
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
