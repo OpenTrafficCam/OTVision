@@ -43,14 +43,10 @@ class UpdateTrackConfigWithCliArgs:
 
     def _update_log_config(self, config: Config, cli_args: TrackCliArgs) -> _LogConfig:
         return _LogConfig(
-            log_level_console=(
-                cli_args.log_level_console
-                if cli_args.log_level_console is not None
-                else config.log.log_level_console
+            log_level_console=value_or_default(
+                cli_args.log_level_console, config.log.log_level_console
             ),
-            log_level_file=(
-                cli_args.log_level_file
-                if cli_args.log_level_file is not None
-                else config.log.log_level_file
+            log_level_file=value_or_default(
+                cli_args.log_level_file, config.log.log_level_file
             ),
         )
