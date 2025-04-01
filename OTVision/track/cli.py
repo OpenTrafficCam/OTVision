@@ -115,7 +115,7 @@ class ArgparseTrackCliParser(TrackCliParser):
             raise CliParseError(
                 (
                     "No paths have been passed as command line args."
-                    "No paths have been defined in the user config."
+                    "No user config has been passed as command line arg."
                 )
             )
 
