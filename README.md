@@ -1,6 +1,7 @@
 # OTVision
 
 [![PyPI version](https://img.shields.io/pypi/v/OTVision.svg)](https://pypi.org/project/OTVision/)
+[![Tests](https://github.com/OpenTrafficCam/OTVision/actions/workflows/test.yml/badge.svg?tag=latest)](https://github.com/OpenTrafficCam/OTVision/actions/workflows/test.yml?query=tag%3Alatest)
 [![Tests](https://github.com/OpenTrafficCam/OTVision/actions/workflows/build-release.yml/badge.svg)](https://github.com/OpenTrafficCam/OTVision/actions/workflows/build-release.yml)
 
 OTVision is a core module of the [OpenTrafficCam framework](https://github.com/OpenTrafficCam) designed to detect and track objects (road users) in videos recorded by [OTCamera](https://github.com/OpenTrafficCam/OTCamera) or other camera systems. The resulting trajectories can be used for traffic analysis using [OTAnalytics](https://github.com/OpenTrafficCam/OTAnalytics).
