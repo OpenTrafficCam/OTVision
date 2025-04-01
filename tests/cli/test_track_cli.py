@@ -214,7 +214,7 @@ class TestTrackCLI:
     def test_fail_no_paths_passed_to_track_cli(self, track_cli: Callable) -> None:
         error_msg = (
             "No paths have been passed as command line args."
-            + "No paths have been defined in the user config."
+            + "No user config has been passed as command line arg."
         )
         with pytest.raises(CliParseError, match=error_msg):
             track_cli(argv=[LOGFILE_OVERWRITE_CMD])
