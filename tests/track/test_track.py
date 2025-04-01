@@ -1,14 +1,18 @@
 import os
 import shutil
+from functools import cached_property
 from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
 from OTVision import version
+from OTVision.application.config import TrackConfig, _TrackIouConfig
 from OTVision.config import CONFIG
 from OTVision.helpers.files import read_json
-from OTVision.track.track import main as track
+from OTVision.track.builder import TrackBuilder
+from OTVision.track.id_generator import StrIdGenerator
+from OTVision.track.track import OtvisionTrack
 from tests.conftest import YieldFixture
 
 TEST_RUN_ID = "test-run-id"
@@ -78,15 +82,16 @@ def test_update_test_data(
 ) -> None:
     # Track all test detections files
     input_folder = test_track_tmp_dir.relative_to(os.getcwd())
-    track(
+    otvision_track = create_otvision_track(
         paths=[input_folder / test_case],
         sigma_l=sigma_l,
         sigma_h=sigma_h,
         sigma_iou=sigma_iou,
         t_min=t_min,
         t_miss_max=t_miss_max,
-        tracking_run_id_generator=lambda: TEST_RUN_ID,
+        overwrite=True,
     )
+    otvision_track.start()
     shutil.copytree(
         test_track_tmp_dir / test_case, test_track_dir / test_case, dirs_exist_ok=True
     )
@@ -125,15 +130,16 @@ def test_track_pass(
 
     # Track all test detections files
     input_folder = test_track_tmp_dir.relative_to(os.getcwd())
-    track(
+    otvision_track = create_otvision_track(
         paths=[input_folder / test_case],
         sigma_l=sigma_l,
         sigma_h=sigma_h,
         sigma_iou=sigma_iou,
         t_min=t_min,
         t_miss_max=t_miss_max,
-        tracking_run_id_generator=lambda: TEST_RUN_ID,
+        overwrite=True,
     )
+    otvision_track.start()
 
     # Get reference tracks file names
     extension = CONFIG["DEFAULT_FILETYPE"]["TRACK"]
@@ -179,11 +185,17 @@ def test_track_overwrite(test_track_tmp_dir: Path, overwrite: bool) -> None:
     test_tracks_files = (test_track_tmp_dir / test_case).glob(f"*{extension}")
 
     # Track all test detections files for a first time and get file statistics
-    track(paths=[test_track_tmp_dir / test_case])
+    otvision_track = create_otvision_track(
+        paths=[test_track_tmp_dir / test_case], overwrite=overwrite
+    )
+    otvision_track.start()
     pre_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
 
     # Track all test detections files for a second time and get file statistics
-    track(paths=[test_track_tmp_dir / test_case], overwrite=overwrite)
+    otvision_track = create_otvision_track(
+        paths=[test_track_tmp_dir / test_case], overwrite=overwrite
+    )
+    otvision_track.start()
     post_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
 
     # Check if file statistics are different
@@ -211,7 +223,8 @@ def test_track_fail_wrong_paths(paths, message) -> None:  # type: ignore
     paths are given"""
 
     with pytest.raises(ValueError, match=message):
-        track(paths=paths)
+        otvision_track = create_otvision_track(paths=paths)
+        otvision_track.start()
 
 
 @pytest.mark.parametrize(
@@ -246,7 +259,7 @@ def test_track_fail_wrong_parameters(
 
     # Track all test detections files
     with pytest.raises(ValueError, match=".*has to be.*"):
-        track(
+        otvision_track = create_otvision_track(
             paths=[test_track_tmp_dir / test_case],
             sigma_l=sigma_l,
             sigma_h=sigma_h,
@@ -254,12 +267,60 @@ def test_track_fail_wrong_parameters(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
+        otvision_track.start()
 
 
 def test_track_emptyDirAsParam(test_track_tmp_dir: Path) -> None:
     empty_dir = test_track_tmp_dir / "empty"
     empty_dir.mkdir()
 
-    track(paths=[empty_dir])
+    otvision_track = create_otvision_track(paths=[empty_dir])
+    otvision_track.start()
 
     assert os.listdir(empty_dir) == []
+
+
+def create_otvision_track(
+    paths: list,
+    sigma_l: float = TrackConfig.iou.sigma_l,
+    sigma_h: float = TrackConfig.iou.sigma_h,
+    sigma_iou: float = TrackConfig.iou.sigma_iou,
+    t_min: int = TrackConfig.iou.t_min,
+    t_miss_max: int = TrackConfig.iou.t_miss_max,
+    overwrite: bool = TrackConfig.overwrite,
+) -> OtvisionTrack:
+    track_config = create_track_config(
+        paths, sigma_l, sigma_h, sigma_iou, t_min, t_miss_max, overwrite
+    )
+    builder = MockTrackBuilder()
+    builder.update_current_track_config.update(track_config)
+    return builder.build()
+
+
+def create_track_config(
+    paths: list[str],
+    sigma_l: float,
+    sigma_h: float,
+    sigma_iou: float,
+    t_min: int,
+    t_miss_max: int,
+    overwrite: bool = False,
+) -> TrackConfig:
+    return TrackConfig(
+        paths=paths,
+        run_chained=TrackConfig.run_chained,
+        iou=_TrackIouConfig(
+            sigma_l=sigma_l,
+            sigma_h=sigma_h,
+            sigma_iou=sigma_iou,
+            t_min=t_min,
+            t_miss_max=t_miss_max,
+        ),
+        overwrite=overwrite,
+    )
+
+
+class MockTrackBuilder(TrackBuilder):
+    @cached_property
+    def tracking_run_id_generator(self) -> StrIdGenerator:
+        return lambda: TEST_RUN_ID

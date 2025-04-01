@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from OTVision.application.config import TrackConfig
+from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.domain.detection import Detection, TrackedDetection, TrackId
 from OTVision.domain.frame import DetectedFrame, FrameNo, TrackedFrame
-from OTVision.track.model.tracking_interfaces import ID_GENERATOR, Tracker
+from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 
 
 @dataclass(frozen=True)
@@ -138,34 +140,37 @@ def iou(
 
 
 class IouTracker(Tracker):
+    @property
+    def config(self) -> TrackConfig:
+        return self._get_current_config.get().track
 
-    def __init__(self, parameters: IouParameters):
+    def __init__(self, get_current_config: GetCurrentConfig):
         super().__init__()
-        self.parameters = parameters
+        self._get_current_config = get_current_config
         self.active_tracks: list[ActiveIouTrack] = []
 
     @property
     def sigma_l(self) -> float:
-        return self.parameters.sigma_l
+        return self.config.iou.sigma_l
 
     @property
     def sigma_h(self) -> float:
-        return self.parameters.sigma_h
+        return self.config.iou.sigma_h
 
     @property
     def sigma_iou(self) -> float:
-        return self.parameters.sigma_iou
+        return self.config.iou.sigma_iou
 
     @property
     def t_min(self) -> int:
-        return self.parameters.t_min
+        return self.config.iou.t_min
 
     @property
     def t_miss_max(self) -> int:
-        return self.parameters.t_miss_max
+        return self.config.iou.t_miss_max
 
     def track_frame(
-        self, frame: DetectedFrame, id_generator: ID_GENERATOR
+        self, frame: DetectedFrame, id_generator: IdGenerator
     ) -> TrackedFrame:
 
         detections = [d for d in frame.detections if d.conf >= self.sigma_l]

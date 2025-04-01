@@ -10,7 +10,7 @@ from OTVision.domain.frame import (
     TrackedFrame,
 )
 
-ID_GENERATOR = Iterator[TrackId]
+IdGenerator = Iterator[TrackId]
 
 
 class Tracker(ABC):
@@ -23,7 +23,7 @@ class Tracker(ABC):
     """
 
     def track(
-        self, frames: Iterator[DetectedFrame], id_generator: ID_GENERATOR
+        self, frames: Iterator[DetectedFrame], id_generator: IdGenerator
     ) -> Iterator[TrackedFrame]:
         """Process the given stream of Frames,
         yielding TrackedFrames one by one as a lazy stream of TrackedFrames.
@@ -31,7 +31,7 @@ class Tracker(ABC):
         Args:
             frames (Iterator[DetectedFrame]): (lazy) stream of Frames
                 with untracked Detections.
-            id_generator (ID_GENERATOR): provider of new (unique) track ids.
+            id_generator (IdGenerator): provider of new (unique) track ids.
 
         Yields:
             Iterator[TrackedFrame]: (lazy) stream of TrackedFrames with
@@ -44,7 +44,7 @@ class Tracker(ABC):
     def track_frame(
         self,
         frame: DetectedFrame,
-        id_generator: ID_GENERATOR,
+        id_generator: IdGenerator,
     ) -> TrackedFrame:
         """Process single Frame with untracked Detections,
         by adding tracking information,
@@ -52,7 +52,7 @@ class Tracker(ABC):
 
         Args:
             frame (DetectedFrame): the Frame to be tracked.
-            id_generator (ID_GENERATOR): provider of new (unique) track ids.
+            id_generator (IdGenerator): provider of new (unique) track ids.
 
         Returns:
             TrackedFrame: TrackedFrame with TrackedDetections
@@ -270,7 +270,7 @@ class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame, FinishedFrame]
         self._tracker = tracker
 
     def track(
-        self, frames: Iterator[DetectedFrame], id_generator: ID_GENERATOR
+        self, frames: Iterator[DetectedFrame], id_generator: IdGenerator
     ) -> Iterator[FinishedFrame]:
         tracked_frame_stream = self._tracker.track(frames, id_generator)
         return self.track_and_finish(tracked_frame_stream)
