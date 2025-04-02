@@ -25,15 +25,18 @@ OTVision is a core module of the [OpenTrafficCam framework](https://github.com/O
 OTVision depends on several Python packages:
 
 - **Video Processing**:
+
   - av (PyAV)
   - moviepy
   - opencv-python
 
 - **Machine Learning**:
+
   - torch and torchvision (PyTorch)
   - ultralytics (YOLOv8)
 
 - **Data Processing**:
+
   - numpy
   - pandas
   - geopandas
@@ -65,6 +68,7 @@ Pre-built releases are available on GitHub for easy installation:
 ### Manual Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/OpenTrafficCam/OTVision.git
    cd OTVision
@@ -85,6 +89,7 @@ Pre-built releases are available on GitHub for easy installation:
 For development purposes, if you want to contribute to the project:
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/OpenTrafficCam/OTVision.git
    cd OTVision
@@ -147,6 +152,7 @@ python detect.py --config /path/to/custom_config.yaml
 ## Documentation
 
 For detailed documentation, visit:
+
 - [OTVision Documentation](https://opentrafficcam.org/OTVision/)
 - [Getting Started Guide](https://opentrafficcam.org/OTVision/gettingstarted/firstuse/)
 - [Requirements](https://opentrafficcam.org/OTVision/gettingstarted/requirements/)
