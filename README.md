@@ -19,34 +19,7 @@ OTVision is a core module of the [OpenTrafficCam framework](https://github.com/O
 
 - Python 3.12 or higher
 - CUDA-capable GPU (recommended for faster processing)
-
-### Dependencies
-
-OTVision depends on several Python packages:
-
-- **Video Processing**:
-
-  - av (PyAV)
-  - moviepy
-  - opencv-python
-
-- **Machine Learning**:
-
-  - torch and torchvision (PyTorch)
-  - ultralytics (YOLOv8)
-
-- **Data Processing**:
-
-  - numpy
-  - pandas
-  - geopandas
-
-- **Other Utilities**:
-  - PyYAML
-  - tqdm
-  - fire
-
-For a complete list of dependencies, see the [requirements.txt](requirements.txt) file.
+- Dependencies listed in [requirements.txt](requirements.txt)
 
 ## Installation
 
