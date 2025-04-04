@@ -11,7 +11,7 @@ OTVision is a core module of the [OpenTrafficCam framework](https://github.com/O
 - **Video Conversion**: Convert video files (h264 to mp4) with options to set frame rate and rotation
 - **Object Detection**: Detect road users in videos using state-of-the-art YOLO models
 - **Object Tracking**: Track detected objects through video frames using IOU-based tracking algorithms
-- **Coordinate Transformation**: Transform pixel coordinates to real-world UTM coordinates for accurate measurements
+- **Coordinate Transformation**: Transform pixel coordinates to real-world UTM coordinates
 
 ## Requirements
 
@@ -49,7 +49,7 @@ Pre-built releases are available on GitHub for easy installation:
 
 2. Install the package:
    - On Windows:
-     ```bash
+     ```cmd
      install.cmd
      ```
    - On Linux/macOS:
@@ -70,7 +70,7 @@ For development purposes, if you want to contribute to the project:
 
 2. Install the development version:
    - On Windows:
-     ```bash
+     ```cmd
      install_dev.cmd
      ```
    - On Linux/macOS:
@@ -142,4 +142,4 @@ This software is licensed under the [GPL-3.0 License](LICENSE).
 ## Contact
 
 - GitHub: [https://github.com/OpenTrafficCam](https://github.com/OpenTrafficCam)
-- Email: team@opentrafficcam.org
+- Email: [team@opentrafficcam.org](mailto:team@opentrafficcam.org)
