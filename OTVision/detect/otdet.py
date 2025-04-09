@@ -130,13 +130,13 @@ class OtdetBuilder:
 
 
 def serialize_video_length(video_length: timedelta) -> str:
-    """Serialize a timedelta object to a video length string in 'HH:MM:SS' format.
+    """Serialize a timedelta object to a video length string in 'H+:MM:SS' format.
 
     Args:
         video_length (timedelta): The video length to serialize.
 
     Returns:
-        str: The video length represented in 'HH:MM:SS' format.
+        str: The video length represented in 'H+:MM:SS' format.
     """
 
     total_seconds = int(video_length.total_seconds())
@@ -154,13 +154,16 @@ class VideoLengthParseError(Exception):
 
 
 def parse_video_length(video_length: str) -> timedelta:
-    """Parse a video length string in 'HH:MM:SS' format into a timedelta object.
+    """Parse a video length string in 'H+:MM:SS.mmmuuu' format into a timedelta object
+    ignoring milliseconds and microseconds.
 
     Args:
-        video_length (str): A string representing the video length in 'HH:MM:SS' format.
+        video_length (str): A string representing the video length in 'H+:MM:SS.mmmuuu'
+            format.
 
     Returns:
-        timedelta: A timedelta object representing the parsed video length.
+        timedelta: A timedelta object representing the parsed video length ignoring
+            milliseconds and microseconds.
 
     Raises:
         VideoLengthParseError: If the input string is not in the expected format.
