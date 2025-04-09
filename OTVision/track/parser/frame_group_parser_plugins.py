@@ -18,6 +18,7 @@ from OTVision.dataformat import (
     TRACKING,
     VIDEO,
 )
+from OTVision.detect.otdet import parse_video_length
 from OTVision.helpers.files import (
     FULL_FILE_NAME_PATTERN,
     HOSTNAME,
@@ -103,8 +104,7 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def parse_video_length(self, metadata: dict) -> timedelta:
         video_length = metadata[VIDEO][LENGTH]
-        time = datetime.strptime(video_length, "%H:%M:%S")
-        return timedelta(hours=time.hour, minutes=time.minute, seconds=time.second)
+        return parse_video_length(video_length)
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         metadata_by_file = dict(frame_group.metadata_by_file)
