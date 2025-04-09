@@ -138,12 +138,14 @@ def serialize_video_length(video_length: timedelta) -> str:
     Returns:
         str: The video length represented in 'H+:MM:SS' format.
     """
+    seconds_per_hour = 3600
+    seconds_per_minute = 60
 
     total_seconds = int(video_length.total_seconds())
-    total_hours = total_seconds // 3600
-    minutes_per_hour = (total_seconds % 3600) // 60
-    seconds_per_minute = total_seconds % 60
-    return f"{total_hours}:{minutes_per_hour:02}:{seconds_per_minute:02}"
+    hours = total_seconds // seconds_per_hour
+    minutes = (total_seconds % seconds_per_hour) // seconds_per_minute
+    seconds = total_seconds % seconds_per_minute
+    return f"{hours}:{minutes:02}:{seconds:02}"
 
 
 class VideoLengthParseError(Exception):
