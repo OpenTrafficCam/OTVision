@@ -154,12 +154,12 @@ class VideoLengthParseError(Exception):
 
 
 def parse_video_length(video_length: str) -> timedelta:
-    """Parse a video length string in 'H+:MM:SS.mmmuuu' format into a timedelta object
-    ignoring milliseconds and microseconds.
+    """Parse a video length string that is in either 'H+:MM:SS' or 'H+:MM:SS.mmmuuu'
+    format into a timedelta object ignoring milliseconds and microseconds.
 
     Args:
-        video_length (str): A string representing the video length in 'H+:MM:SS.mmmuuu'
-            format.
+        video_length (str): A string representing the video length in or
+            'H+:MM:SS.mmmuuu' or 'H+:MM:SS.mmmuuu' format.
 
     Returns:
         timedelta: A timedelta object representing the parsed video length ignoring
