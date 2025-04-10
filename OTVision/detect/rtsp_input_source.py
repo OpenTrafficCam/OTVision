@@ -132,15 +132,15 @@ class RtspInputSource(InputSourceDetect):
                     data=convert_frame_to_rgb(frame),  # YOLO expects RGB
                     frame=self.current_frame_number,
                     source=self.rtsp_url,
-                    output=self.create_output(self._current_video_start_time),
+                    output=self.create_output(),
                     occurrence=occurrence,
                 )
                 if self.flush_condition_met():
-                    self._notify(self._current_video_start_time)
+                    self._notify()
                     self._outdated = True
                     self._frame_counter.reset()
 
-        self._notify(self._current_video_start_time)
+        self._notify()
 
     def _init_video_capture(self, source: str) -> VideoCapture:
         cap = VideoCapture(source)
@@ -173,17 +173,16 @@ class RtspInputSource(InputSourceDetect):
     def flush_condition_met(self) -> bool:
         return self.current_frame_number % self.flush_buffer_size == 0
 
-    def _notify(self, start_time: datetime) -> None:
+    def _notify(self) -> None:
         frame_width = int(self._video_capture.get(CAP_PROP_FRAME_WIDTH))
         frame_height = int(self._video_capture.get(CAP_PROP_FRAME_HEIGHT))
-        # _start_time = self.calculate_video_start_time(start_time)
         frames = (
             self.flush_buffer_size
             if self.current_frame_number % self.flush_buffer_size == 0
             else self.current_frame_number % self.flush_buffer_size
         )
         duration = timedelta(seconds=round(frames / self.fps))
-        output = self.create_output(start_time)
+        output = self.create_output()
         self._subject.notify(
             FlushEvent.create(
                 source=self.rtsp_url,
@@ -196,29 +195,12 @@ class RtspInputSource(InputSourceDetect):
             )
         )
 
-    def create_output(self, original_start_time: datetime) -> str:
+    def create_output(self) -> str:
         output_filename = (
             f"{self.stream_config.name}_FR{round(self.fps)}"
             f"_{self._current_video_start_time.strftime(DATETIME_FORMAT)}.mp4"
         )
         return str(self.stream_config.save_dir / output_filename)
-
-    # def calculate_video_start_time(self, start_time: datetime) -> datetime:
-    #     return calculate_start_time(
-    #         start_time, self.current_frame_number, self.fps, self.flush_buffer_size
-    #     )
-
-
-# def calculate_start_time(
-#     start: datetime, current_frame_number: int, fps: float, flush_buffer_size: int
-# ) -> datetime:
-#     offset_in_frames = (
-#         ((current_frame_number - 1) // flush_buffer_size)
-#     ) * flush_buffer_size
-#     if offset_in_frames <= 0:
-#         return start
-# offset_in_seconds = offset_in_frames / fps
-# return start + timedelta(seconds=offset_in_seconds)
 
 
 def convert_frame_to_rgb(frame: ndarray) -> ndarray:
