@@ -61,6 +61,7 @@ class VideoTimestamper(Timestamper):
             data=frame[FrameKeys.data],
             frame=frame[FrameKeys.frame],
             source=frame[FrameKeys.source],
+            output=frame[FrameKeys.output],
             occurrence=occurrence,
         )
 

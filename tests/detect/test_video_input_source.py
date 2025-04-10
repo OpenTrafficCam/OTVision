@@ -91,6 +91,7 @@ class TestVideoSource:
                     FrameKeys.data: rotated_frame,
                     FrameKeys.frame: frame_number,
                     FrameKeys.source: str(cyclist_mp4),
+                    FrameKeys.output: str(cyclist_mp4),
                 }
             )
             for frame_number, rotated_frame in enumerate(
@@ -137,6 +138,7 @@ class TestVideoSource:
                         FrameKeys.data: rotated_frame,
                         FrameKeys.frame: frame_number,
                         FrameKeys.source: str(input_file),
+                        FrameKeys.output: str(input_file),
                     }
                 )
                 for frame_number, rotated_frame in enumerate(

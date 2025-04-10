@@ -178,4 +178,6 @@ class TestYoloDetector:
         if has_data:
             data = Mock()
 
-        return Frame(data=data, frame=frame_no, source=source, occurrence=Mock())
+        return Frame(
+            data=data, frame=frame_no, source=source, output=SOURCE, occurrence=Mock()
+        )

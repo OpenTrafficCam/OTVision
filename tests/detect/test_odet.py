@@ -19,6 +19,7 @@ GIVEN_ACTUAL_DURATION = timedelta(
     hours=36, seconds=33, milliseconds=12, microseconds=15
 )
 EXPECTED_VIDEO_LENGTH = "36:00:33"
+DETECTED_FRAME_OUTPUT = "path/to/output.mp4"
 
 
 def create_expected_video_metadata(
@@ -109,6 +110,7 @@ def create_detected_frame(source: str, frame_number: int) -> DetectedFrame:
     )
     return DetectedFrame(
         source=source,
+        output=DETECTED_FRAME_OUTPUT,
         no=frame_number,
         detections=[detection],
         occurrence=datetime(2020, 1, 1, 12, 0, 10),

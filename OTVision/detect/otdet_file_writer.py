@@ -62,7 +62,7 @@ class OtdetFileWriter:
         detect_config = config.detect
 
         actual_frames = len(event.frames)
-        if (expected_duration := detect_config.expected_duration) is not None:
+        if expected_duration := detect_config.expected_duration:
             actual_fps = actual_frames / expected_duration.total_seconds()
         else:
             actual_fps = actual_frames / source_metadata.duration.total_seconds()

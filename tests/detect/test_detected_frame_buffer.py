@@ -47,6 +47,7 @@ class TestDetectedFrameBuffer:
         frame_number = 1
         occurrence = datetime(2020, 1, 1, 12, 0, 0)
         source = "my_source"
+        output = "path/to/output.mp4"
         detections: list[Detection] = create_mocks(3)
         image = Mock()
 
@@ -54,6 +55,7 @@ class TestDetectedFrameBuffer:
             no=frame_number,
             occurrence=occurrence,
             source=source,
+            output=output,
             detections=detections,
             image=image,
         )
@@ -64,6 +66,7 @@ class TestDetectedFrameBuffer:
             no=frame_number,
             occurrence=occurrence,
             source=source,
+            output=output,
             detections=detections,
             image=None,
         )

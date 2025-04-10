@@ -20,6 +20,7 @@ class FrameKeys:
     frame: Literal["frame"] = "frame"
     source: Literal["source"] = "source"
     occurrence: Literal["occurrence"] = "occurrence"
+    output: Literal["output"] = "output"
 
 
 class Frame(TypedDict):
@@ -35,6 +36,7 @@ class Frame(TypedDict):
     data: Optional[ndarray]
     frame: int
     source: str
+    output: str
     occurrence: datetime
 
 
@@ -49,6 +51,7 @@ class DetectedFrame:
         no (FrameNo): Frame number.
         occurrence (datetime): Time stamp, at which frame was recorded.
         source (str): Source from where frame was obtained, e.g. video file path.
+        output (str): Output file name, e.g. video file name.
         detections (Sequence[Detection]): A sequence of Detections occurring in frame.
         image (Optional[ndarray]): Optional image data of frame.
     """
@@ -56,6 +59,7 @@ class DetectedFrame:
     no: FrameNo
     occurrence: datetime
     source: str
+    output: str
     detections: Sequence[Detection]
     image: Optional[ndarray] = None
 
@@ -64,6 +68,7 @@ class DetectedFrame:
             no=self.no,
             occurrence=self.occurrence,
             source=self.source,
+            output=self.output,
             detections=self.detections,
             image=None,
         )
@@ -153,6 +158,7 @@ class TrackedFrame(DetectedFrame):
             no=self.no,
             occurrence=self.occurrence,
             source=self.source,
+            output=self.output,
             finished_tracks=self.finished_tracks,
             detections=detections,
             image=self.image,
