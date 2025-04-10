@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, _Call, call, patch
+from typing import Any
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from av import VideoFrame
@@ -293,7 +294,7 @@ class TestVideoSource:
 
 def create_expected_frame_call(
     data: Mock | None, frame_number: int, source: Path
-) -> _Call:
+) -> Any:
     return call(
         {
             FrameKeys.data: data,
