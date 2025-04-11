@@ -116,6 +116,7 @@ class VideoSource(InputSourceDetect):
                                     FrameKeys.data: rotated_image,
                                     FrameKeys.frame: frame_number,
                                     FrameKeys.source: str(video_file),
+                                    FrameKeys.output: str(video_file),
                                 }
                             )
                         else:
@@ -124,6 +125,7 @@ class VideoSource(InputSourceDetect):
                                     FrameKeys.data: None,
                                     FrameKeys.frame: frame_number,
                                     FrameKeys.source: str(video_file),
+                                    FrameKeys.output: str(video_file),
                                 }
                             )
                         counter += 1
@@ -206,8 +208,9 @@ class VideoSource(InputSourceDetect):
     def __add_occurrence(self, timestamper: Timestamper, frame: dict) -> Frame:
         updated = timestamper.stamp(frame)
         return Frame(
-            data=updated["data"],
-            frame=updated["frame"],
-            source=updated["source"],
-            occurrence=updated["occurrence"],
+            data=updated[FrameKeys.data],
+            frame=updated[FrameKeys.frame],
+            source=updated[FrameKeys.source],
+            output=updated[FrameKeys.output],
+            occurrence=updated[FrameKeys.occurrence],
         )

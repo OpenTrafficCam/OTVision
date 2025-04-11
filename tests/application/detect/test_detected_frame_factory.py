@@ -16,6 +16,7 @@ class TestDetectedFrameFactory:
 
         assert actual == DetectedFrame(
             source=given_frame[FrameKeys.source],
+            output=given_frame[FrameKeys.output],
             no=given_frame[FrameKeys.frame],
             occurrence=given_frame[FrameKeys.occurrence],
             detections=given_detections,
@@ -28,6 +29,7 @@ class TestDetectedFrameFactory:
             frame=1,
             occurrence=datetime(2020, 1, 1, 12, 1, 1),
             source="path/to/source.mp4",
+            output="path/to/output.mp4",
         )
 
     def create_detections(self) -> list[Detection]:

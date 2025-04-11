@@ -20,6 +20,7 @@ class DetectedFrameFactory:
 
         return DetectedFrame(
             source=frame[FrameKeys.source],
+            output=frame[FrameKeys.output],
             no=frame[FrameKeys.frame],
             occurrence=frame[FrameKeys.occurrence],
             detections=detections,

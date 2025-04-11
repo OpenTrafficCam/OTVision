@@ -222,6 +222,7 @@ class IouTracker(Tracker):
             no=frame.no,
             occurrence=frame.occurrence,
             source=frame.source,
+            output=frame.output,
             detections=tracked_detections,
             image=frame.image,
             finished_tracks=set(finished_track_ids),
