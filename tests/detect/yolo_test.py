@@ -179,5 +179,5 @@ class TestYoloDetector:
             data = Mock()
 
         return Frame(
-            data=data, frame=frame_no, source=source, output=SOURCE, occurrence=Mock()
+            data=data, frame=frame_no, source=source, output=source, occurrence=Mock()
         )
