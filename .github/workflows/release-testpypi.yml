@@ -30,10 +30,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Get latest tag and create new version
+        id: get_version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          DATE_TIME=$(date +'%Y%m%d%H%M%S')
+          NEW_VERSION="${LATEST_TAG#v}-${DATE_TIME}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
       - name: Update Python Package Version
         uses: platomo/update-version-py-action@v1.0.1
         with:
-          version: nightly
+          version: ${{ steps.get_version.outputs.new_version }}
           file-path: "OTVision"
       - name: Install pypa/build
         shell: bash
