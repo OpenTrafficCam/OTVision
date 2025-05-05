@@ -37,8 +37,16 @@ jobs:
         id: get_version
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          # Extract version without 'v' prefix
+          VERSION=${LATEST_TAG#v}
+          # Split version into parts
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          # Increment patch version
+          PATCH=$((PATCH + 1))
+          # Create new version with incremented patch
+          INCREMENTED_VERSION="$MAJOR.$MINOR.$PATCH"
           DATE_TIME=$(date +'%Y%m%d%H%M%S')
-          NEW_VERSION="${LATEST_TAG#v}-${DATE_TIME}"
+          NEW_VERSION="${INCREMENTED_VERSION}-${DATE_TIME}"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Update Python Package Version
