@@ -25,8 +25,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-tags: true
+      - name: Fetch all tags
+        run: git fetch --tags --unshallow
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
