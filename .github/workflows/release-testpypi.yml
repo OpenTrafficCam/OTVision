@@ -45,7 +45,7 @@ jobs:
           # Create new version with incremented patch
           INCREMENTED_VERSION="$MAJOR.$MINOR.$PATCH"
           DATE_TIME=$(date +'%Y%m%d%H%M%S')
-          NEW_VERSION="${INCREMENTED_VERSION}.${DATE_TIME}"
+          NEW_VERSION="${INCREMENTED_VERSION}a${DATE_TIME}"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Update Python Package Version
