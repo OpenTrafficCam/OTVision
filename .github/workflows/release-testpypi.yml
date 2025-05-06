@@ -37,6 +37,7 @@ jobs:
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
           echo "latest"
+          LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n 1 || echo "v0.0.0")
           echo $LATEST_TAG
           # Extract version without 'v' prefix
           VERSION=${LATEST_TAG#v}
