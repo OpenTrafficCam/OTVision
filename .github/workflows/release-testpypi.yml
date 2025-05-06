@@ -48,7 +48,7 @@ jobs:
           DATE_TIME="$(date +'%Y%m%d%H%M%S')"
           NEW_VERSION="${INCREMENTED_VERSION}a${DATE_TIME}"
           echo "Final version: $NEW_VERSION"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Update Python Package Version
         uses: platomo/update-version-py-action@v1.0.1
