@@ -26,6 +26,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Fetch all tags
         run: git fetch --tags --unshallow
 
@@ -33,6 +34,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Get latest tag and create new version
         id: get_version
         run: |
@@ -56,6 +58,7 @@ jobs:
         with:
           version: ${{ steps.get_version.outputs.new_version }}
           file-path: "OTVision"
+
       - name: Install pypa/build
         shell: bash
         run: |
