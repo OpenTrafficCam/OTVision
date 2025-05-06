@@ -25,23 +25,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Fetch all tags
-        run: git fetch --tags
-
       - name: Get latest tag and create new version
         id: get_version
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo $LATEST_TAG
           # Extract version without 'v' prefix
           VERSION=${LATEST_TAG#v}
+          echo $VERSION
           # Split version into parts
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          echo $PATCH
           # Increment patch version
           PATCH=$((PATCH + 1))
+          echo $PATCH
           # Create new version with incremented patch
           INCREMENTED_VERSION="$MAJOR.$MINOR.$PATCH"
           DATE_TIME=$(date +'%Y%m%d%H%M%S')
