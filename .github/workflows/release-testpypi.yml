@@ -56,7 +56,7 @@ jobs:
       - name: Update Python Package Version
         uses: platomo/update-version-py-action@v1.0.1
         with:
-          version: nightly
+          version: ${{ steps.get_version.outputs.new_version }}
           file-path: "OTVision"
       - name: Install pypa/build
         shell: bash
