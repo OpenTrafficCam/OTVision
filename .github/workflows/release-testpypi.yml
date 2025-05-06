@@ -35,27 +35,27 @@ jobs:
       - name: Get latest tag and create new version
         id: get_version
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
-          echo "latest"
+          # Get the latest tag in format v*.*.* (ignoring tags like "nightly")
           LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n 1 || echo "v0.0.0")
+          echo "Latest semantic version tag:"
           echo $LATEST_TAG
           # Extract version without 'v' prefix
           VERSION=${LATEST_TAG#v}
-          echo "Version"
+          echo "Version:"
           echo $VERSION
           # Split version into parts
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          echo "Patch"
+          echo "Patch:"
           echo $PATCH
           # Increment patch version
           PATCH=$((PATCH + 1))
-          echo "Patch updated"
+          echo "Patch updated:"
           echo $PATCH
           # Create new version with incremented patch
           INCREMENTED_VERSION="$MAJOR.$MINOR.$PATCH"
           DATE_TIME=$(date +'%Y%m%d%H%M%S')
           NEW_VERSION="${INCREMENTED_VERSION}a${DATE_TIME}"
-          echo "Final version"
+          echo "Final version:"
           echo $NEW_VERSION
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
