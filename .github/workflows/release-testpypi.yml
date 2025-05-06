@@ -52,27 +52,27 @@ jobs:
           NEW_VERSION="${INCREMENTED_VERSION}a${DATE_TIME}"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Update Python Package Version
-        uses: platomo/update-version-py-action@v1.0.1
-        with:
-          version: ${{ steps.get_version.outputs.new_version }}
-          file-path: "OTVision"
-      - name: Install pypa/build
-        shell: bash
-        run: |
-          python3 -m pip install build --user
-
-      - name: Build a binary wheel and a source tarball
-        shell: bash
-        run: python -m build --outdir ${{ env.out_dir }}
-
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-package-distributions
-          path: ${{ env.out_dir }}
-
-      - name: Publish distribution
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: ${{ vars.PYPI_REPO_URL }}
+#      - name: Update Python Package Version
+#        uses: platomo/update-version-py-action@v1.0.1
+#        with:
+#          version: ${{ steps.get_version.outputs.new_version }}
+#          file-path: "OTVision"
+#      - name: Install pypa/build
+#        shell: bash
+#        run: |
+#          python3 -m pip install build --user
+#
+#      - name: Build a binary wheel and a source tarball
+#        shell: bash
+#        run: python -m build --outdir ${{ env.out_dir }}
+#
+#      - name: Store the distribution packages
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: python-package-distributions
+#          path: ${{ env.out_dir }}
+#
+#      - name: Publish distribution
+#        uses: pypa/gh-action-pypi-publish@release/v1
+#        with:
+#          repository-url: ${{ vars.PYPI_REPO_URL }}
