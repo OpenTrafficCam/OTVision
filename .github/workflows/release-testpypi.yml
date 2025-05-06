@@ -36,16 +36,16 @@ jobs:
         id: get_version
         run: |
           # Get the latest tag in format v*.*.* (ignoring tags like "nightly")
-          LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n 1 || echo "v0.0.0")
+          LATEST_TAG="$(git tag -l "v*.*.*" | sort -V | tail -n 1 || echo 'v0.0.0')"
           # Extract version without 'v' prefix
-          VERSION=${LATEST_TAG#v}
+          VERSION="${LATEST_TAG#v}"
           # Split version into parts
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           # Increment patch version
-          PATCH=$((PATCH + 1))
+          PATCH="$((PATCH + 1))"
           # Create new version with incremented patch
           INCREMENTED_VERSION="$MAJOR.$MINOR.$PATCH"
-          DATE_TIME=$(date +'%Y%m%d%H%M%S')
+          DATE_TIME="$(date +'%Y%m%d%H%M%S')"
           NEW_VERSION="${INCREMENTED_VERSION}a${DATE_TIME}"
           echo "Final version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
