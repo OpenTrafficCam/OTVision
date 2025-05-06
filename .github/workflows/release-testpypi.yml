@@ -2,8 +2,9 @@
 name: Publish to TestPyPI
 
 on:
-  pull_request:
-  workflow_call:
+  push:
+    branches:
+      - main
 
 permissions: read-all
 
