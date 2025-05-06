@@ -34,6 +34,7 @@ jobs:
       - name: Get latest tag and create new version
         id: get_version
         run: |
+          git tag --list
           LATEST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
           echo $LATEST_TAG
           # Extract version without 'v' prefix
