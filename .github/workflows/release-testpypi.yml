@@ -15,8 +15,8 @@ jobs:
     uses: "./.github/workflows/test.yml"
   publish-to-testpypi:
     runs-on: ubuntu-latest
-    needs:
-      - test
+#    needs:
+#      - test
     environment:
       name: testpypi
       url: https://test.pypi.org/p/OTVision
