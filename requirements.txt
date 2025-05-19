@@ -9,7 +9,7 @@ numpy==1.26.4; sys_platform == 'win32' # ultralytics requires numpy <= 2.1.1; to
 opencv-python==4.10.0.84 # only upgrade when https://github.com/opencv/opencv/issues/27091 is resolved
 pandas==2.2.3
 PyYAML==6.0.2
-setuptools==74.0.0
+setuptools==78.1.1
 # Follow instructions at https://pytorch.org to install torch with CUDA
 torch==2.3.1 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.18.1 # NOTE: Omit if using torch with CUDA and install manually
