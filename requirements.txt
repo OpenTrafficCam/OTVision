@@ -2,7 +2,7 @@ av==13.0.0
 fire==0.7.0
 geopandas==1.0.1
 ijson==3.3.0
-more-itertools==10.5.0
+more-itertools==10.7.0
 moviepy==1.0.3
 numpy==2.1.1; sys_platform != 'win32' # ultralytics requires numpy <= 2.1.1
 numpy==1.26.4; sys_platform == 'win32' # ultralytics requires numpy <= 2.1.1; torch on windows is built with numpy < 2
