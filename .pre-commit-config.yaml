@@ -63,14 +63,13 @@ repos:
           - pre-commit==3.8.0
           - pytest-cov==5.0.0
           - pytest==8.3.3
-          - torch==2.3.1
           - torchvision==0.18.1
           - twine==6.1.0
           - types-PyYAML
           - types-flake8
           - types-geopandas
           - types-jsonschema
-          - types-setuptools
+          - types-torch
           - types-tqdm
           - types-ujson
           - ultralytics==8.3.94
@@ -93,4 +92,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
