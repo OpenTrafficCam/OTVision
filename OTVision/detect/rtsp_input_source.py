@@ -27,6 +27,7 @@ from OTVision.domain.time import DatetimeProvider
 
 RTSP_URL = "rtsp://127.0.0.1:8554/test"
 RETRY_SECONDS = 1
+DEFAULT_READ_FAIL_THRESHOLD = 5
 
 
 class Counter:
@@ -82,6 +83,7 @@ class RtspInputSource(InputSourceDetect):
         datetime_provider: DatetimeProvider,
         frame_counter: Counter,
         get_current_config: GetCurrentConfig,
+        read_fail_threshold: int = DEFAULT_READ_FAIL_THRESHOLD,
     ) -> None:
         super().__init__(subject)
         self._datetime_provider = datetime_provider
@@ -93,6 +95,8 @@ class RtspInputSource(InputSourceDetect):
         self._stream_start_time: datetime = self._datetime_provider.provide()
         self._current_video_start_time = self._stream_start_time
         self._outdated = True
+        self._read_fail_threshold = read_fail_threshold
+        self._consecutive_read_fails = 0
 
     @property
     def _video_capture(self) -> VideoCapture:
@@ -157,9 +161,21 @@ class RtspInputSource(InputSourceDetect):
     def _read_next_frame(self) -> ndarray | None:
         successful, frame = self._video_capture.read()
         if successful:
+            self._consecutive_read_fails = 0
             return frame
+        self._consecutive_read_fails += 1
+
+        if self._consecutive_read_fails >= self._read_fail_threshold:
+            self._try_reconnecting_stream()
+
         logger().debug("Failed to grab frame")
         return None
+
+    def _try_reconnecting_stream(self) -> None:
+        self._video_capture.release()
+        self._current_video_capture = None
+        if not self.should_stop() and self._current_stream is not None:
+            self._current_video_capture = self._init_video_capture(self._current_stream)
 
     def should_stop(self) -> bool:
         return self._stop_capture
