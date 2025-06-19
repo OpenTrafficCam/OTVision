@@ -98,6 +98,7 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
     def write(self, image: ndarray) -> None:
         try:
             self._ffmpeg_process.stdin.write(image.tobytes())
+            self._ffmpeg_process.stdin.flush()
         except BrokenPipeError:
             # Check if the process is still running
             if self._ffmpeg_process.poll() is not None:
@@ -115,6 +116,7 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
 
     def close(self) -> None:
         if self.__ffmpeg_process is not None:
+            self._ffmpeg_process.stdin.flush()
             self._ffmpeg_process.stdin.close()
             self._ffmpeg_process.wait()
 
@@ -131,6 +133,7 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
             ffmpeg.input(
                 "pipe:0",
                 format=self._input_format.value,
+                framerate=fps,
                 pix_fmt=self._input_pixel_format.value,
                 s=f"{width}x{height}",
             )
@@ -138,7 +141,6 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
                 output_file,
                 pix_fmt=self._output_pixel_format.value,
                 vcodec=self._output_video_codec.value,
-                r=fps,
                 preset=self._encoding_speed.value,
                 crf=self._constant_rate_factor.value,
                 format=self._output_format.value,
