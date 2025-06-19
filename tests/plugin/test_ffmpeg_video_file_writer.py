@@ -8,6 +8,7 @@ from numpy import ndarray
 
 from OTVision.detect.rtsp_input_source import convert_frame_to_rgb
 from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
     EncodingSpeed,
     FfmpegVideoWriter,
     PixelFormat,
@@ -25,10 +26,10 @@ class TestFfmpegVideoFileWriter:
             encoding_speed=EncodingSpeed.FAST,
             input_format=VideoFormat.RAW,
             output_format=VideoFormat.MP4,
-            input_pixel_format=PixelFormat.RGB,
+            input_pixel_format=PixelFormat.RGB24,
             output_pixel_format=PixelFormat.YUV420P,
             output_video_codec=VideoCodec.H264,
-            constant_rate_factor=23,
+            constant_rate_factor=ConstantRateFactor.LOSSLESS,
         )
         target.open(str(save_location), width=given.width, height=given.height, fps=FPS)
         for frame in given.frames:
@@ -81,8 +82,9 @@ def read_frames_from(video_capture: VideoCapture) -> Iterator[ndarray]:
         successful, frame = video_capture.read()
         if successful:
             yield convert_frame_to_rgb(frame)
-        video_capture.release()
-        raise StopIteration
+        else:
+            video_capture.release()
+            break
 
 
 @pytest.fixture

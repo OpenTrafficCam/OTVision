@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from typing import Any, Generator
 
 import ffmpeg
@@ -18,13 +18,14 @@ class VideoCodec(StrEnum):
 
 
 class VideoFormat(StrEnum):
-    RAW = "raw"
+    RAW = "rawvideo"
     MP4 = "mp4"
 
 
 class PixelFormat(StrEnum):
     YUV420P = "yuv420p"  # compatible with most players for H.264
-    RGB = "rgb24"  # adjust quality/size (lower means better quality/larger file)
+    RGB24 = "rgb24"  # adjust quality/size (lower means better quality/larger file)
+    BGR24 = "bgr24"
 
 
 class EncodingSpeed(StrEnum):
@@ -37,6 +38,11 @@ class EncodingSpeed(StrEnum):
     SLOW = "slow"
     SLOWER = "slower"
     VERY_SLOW = "veryslow"
+
+
+class ConstantRateFactor(IntEnum):
+    LOSSLESS = 0
+    DEFAULT = 23
 
 
 @dataclass(frozen=True)
@@ -66,10 +72,10 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
         encoding_speed: EncodingSpeed = EncodingSpeed.FAST,
         input_format: VideoFormat = VideoFormat.RAW,
         output_format: VideoFormat = VideoFormat.MP4,
-        input_pixel_format: PixelFormat = PixelFormat.RGB,
+        input_pixel_format: PixelFormat = PixelFormat.RGB24,
         output_pixel_format: PixelFormat = PixelFormat.YUV420P,
         output_video_codec: VideoCodec = VideoCodec.H264,
-        constant_rate_factor: int = DEFAULT_CRF,
+        constant_rate_factor: ConstantRateFactor = ConstantRateFactor.LOSSLESS,
     ) -> None:
         self._encoding_speed = encoding_speed
         self._input_format = input_format
@@ -90,7 +96,22 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
         )
 
     def write(self, image: ndarray) -> None:
-        self._ffmpeg_process.stdin.write(image.tobytes())
+        try:
+            self._ffmpeg_process.stdin.write(image.tobytes())
+        except BrokenPipeError:
+            # Check if the process is still running
+            if self._ffmpeg_process.poll() is not None:
+                # Process has terminated, get the error message
+                stderr = (
+                    self._ffmpeg_process.stderr.read()
+                    if self._ffmpeg_process.stderr
+                    else b""
+                )
+                raise RuntimeError(
+                    "ffmpeg process terminated unexpectedly: "
+                    f"{stderr.decode('utf-8', errors='ignore')}"
+                )
+            raise  # Re-raise the original exception if the process is still running
 
     def close(self) -> None:
         if self.__ffmpeg_process is not None:
@@ -110,20 +131,20 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
             ffmpeg.input(
                 "pipe:0",
                 format=self._input_format.value,
-                pix_fmt=self._input_pixel_format,
+                pix_fmt=self._input_pixel_format.value,
                 s=f"{width}x{height}",
             )
             .output(
                 output_file,
-                pix_fmt=self._output_pixel_format,
-                vcodec=self._output_video_codec,
+                pix_fmt=self._output_pixel_format.value,
+                vcodec=self._output_video_codec.value,
                 r=fps,
                 preset=self._encoding_speed.value,
-                crf=self._constant_rate_factor,
+                crf=self._constant_rate_factor.value,
                 format=self._output_format.value,
             )
             .overwrite_output()
-            .run_async(pipe_stdin=True)
+            .run_async(pipe_stdin=True, pipe_stderr=True)
         )
         return process
 
