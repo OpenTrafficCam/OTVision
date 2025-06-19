@@ -47,6 +47,7 @@ repos:
           - av==13.0.0
           - black==24.8.0
           - coremltools==8.2; sys_platform == 'darwin'
+          - ffmpeg-python==0.2.0
           - fire==0.7.0
           - hatch-requirements-txt==0.4.1
           - ijson==3.3.0
@@ -92,4 +93,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
