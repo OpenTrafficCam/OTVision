@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
+from unittest.mock import Mock, patch
 
 import pytest
 from cv2 import CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH, VideoCapture
@@ -11,6 +12,7 @@ from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
     FfmpegVideoWriter,
+    NewVideoStartEvent,
     PixelFormat,
     VideoCodec,
     VideoFormat,
@@ -21,17 +23,11 @@ FPS = 20
 
 class TestFfmpegVideoFileWriter:
     def test_write_video(self, cyclist_mp4: Path, save_location: Path) -> None:
-        given = create_given_video(cyclist_mp4)
-        target = FfmpegVideoWriter(
-            encoding_speed=EncodingSpeed.FAST,
-            input_format=VideoFormat.RAW,
-            output_format=VideoFormat.MP4,
-            input_pixel_format=PixelFormat.RGB24,
-            output_pixel_format=PixelFormat.YUV420P,
-            output_video_codec=VideoCodec.H264,
-            constant_rate_factor=ConstantRateFactor.LOSSLESS,
+        given = create_given_video(cyclist_mp4, save_location)
+        target = create_target()
+        target.open(
+            given.save_location, width=given.width, height=given.height, fps=FPS
         )
-        target.open(str(save_location), width=given.width, height=given.height, fps=FPS)
         for frame in given.frames:
             target.write(frame)
         target.close()
@@ -42,21 +38,85 @@ class TestFfmpegVideoFileWriter:
         assert save_location.exists()
         assert save_location.stat().st_size > 0
         assert len(actual_frames) == len(given_frames)
+        assert target.is_closed
+
+    def test_open_and_close_writer(
+        self, cyclist_mp4: Path, save_location: Path
+    ) -> None:
+        given = create_given_video(cyclist_mp4, save_location)
+        target = create_target()
+
+        assert target.is_closed
+        target.open(
+            given.save_location, width=given.width, height=given.height, fps=FPS
+        )
+        assert not target.is_closed
+        target.close()
+        assert target.is_closed
+
+    def test_notify_on_flush_event(
+        self, cyclist_mp4: Path, save_location: Path
+    ) -> None:
+        given = create_given_video(cyclist_mp4, save_location)
+        target = create_target()
+
+        target.open(
+            given.save_location, width=given.width, height=given.height, fps=FPS
+        )
+        assert not target.is_closed
+        target.notify_on_flush_event(Mock())
+        assert target.is_closed
+
+    @patch("OTVision.plugin.ffmpeg_video_writer.FfmpegVideoWriter.open")
+    def test_notify_on_new_video_start(
+        self, mock_open: Mock, cyclist_mp4: Path, save_location: Path
+    ) -> None:
+        given_video = create_given_video(cyclist_mp4, save_location)
+        given_event = derive_event_from(given_video)
+        target = create_target()
+        target.notify_on_new_video_start(given_event)
+
+        mock_open.assert_called_once_with(
+            given_event.output, given_event.width, given_event.height, given_event.fps
+        )
+
+
+def create_target() -> FfmpegVideoWriter:
+    return FfmpegVideoWriter(
+        encoding_speed=EncodingSpeed.FAST,
+        input_format=VideoFormat.RAW,
+        output_format=VideoFormat.MP4,
+        input_pixel_format=PixelFormat.RGB24,
+        output_pixel_format=PixelFormat.YUV420P,
+        output_video_codec=VideoCodec.H264,
+        constant_rate_factor=ConstantRateFactor.LOSSLESS,
+    )
 
 
 @dataclass
 class GivenVideo:
+    save_location: str
     frames: Iterator[ndarray]
     width: int
     height: int
 
 
-def create_given_video(video_file: Path) -> GivenVideo:
+def create_given_video(video_file: Path, save_location: Path) -> GivenVideo:
     video_capture = VideoCapture(str(video_file))
     return GivenVideo(
+        save_location=str(save_location),
         frames=read_frames_from(video_capture),
         width=get_width(video_capture),
         height=get_height(video_capture),
+    )
+
+
+def derive_event_from(given_video: GivenVideo) -> NewVideoStartEvent:
+    return NewVideoStartEvent(
+        output=str(save_location),
+        width=given_video.width,
+        height=given_video.height,
+        fps=FPS,
     )
 
 

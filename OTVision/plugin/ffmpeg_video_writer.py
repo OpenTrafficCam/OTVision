@@ -24,7 +24,7 @@ class VideoFormat(StrEnum):
 
 class PixelFormat(StrEnum):
     YUV420P = "yuv420p"  # compatible with most players for H.264
-    RGB24 = "rgb24"  # adjust quality/size (lower means better quality/larger file)
+    RGB24 = "rgb24"
     BGR24 = "bgr24"
 
 
@@ -41,6 +41,8 @@ class EncodingSpeed(StrEnum):
 
 
 class ConstantRateFactor(IntEnum):
+    """Adjust quality/size (lower means better quality/larger file)."""
+
     LOSSLESS = 0
     DEFAULT = 23
 
@@ -66,6 +68,14 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
         if self.__ffmpeg_process is None:
             raise ValueError("FfmpegVideoWriter is not initialized yet.")
         return self.__ffmpeg_process
+
+    @property
+    def is_open(self) -> bool:
+        return self.__ffmpeg_process is not None
+
+    @property
+    def is_closed(self) -> bool:
+        return self.is_open is False
 
     def __init__(
         self,
@@ -119,6 +129,7 @@ class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
             self._ffmpeg_process.stdin.flush()
             self._ffmpeg_process.stdin.close()
             self._ffmpeg_process.wait()
+            self.__ffmpeg_process = None
 
     def notify_on_flush_event(self, event: FlushEvent) -> None:
         self.close()
