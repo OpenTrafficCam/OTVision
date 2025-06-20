@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Iterator
 from unittest.mock import Mock, patch
@@ -8,6 +9,7 @@ from cv2 import CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH, VideoCapture
 from numpy import ndarray
 
 from OTVision.detect.rtsp_input_source import convert_frame_to_rgb
+from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
@@ -28,7 +30,7 @@ class TestFfmpegVideoFileWriter:
         target.open(
             given.save_location, width=given.width, height=given.height, fps=FPS
         )
-        for frame in given.frames:
+        for frame in given.images:
             target.write(frame)
         target.close()
 
@@ -80,6 +82,25 @@ class TestFfmpegVideoFileWriter:
             given_event.output, given_event.width, given_event.height, given_event.fps
         )
 
+    def test_filter(self, cyclist_mp4: Path, save_location: Path) -> None:
+        given_video = create_given_video(cyclist_mp4, save_location)
+        given_event = derive_event_from(given_video)
+        given_frames = create_frames_from(given_video.images)
+        target = create_target()
+
+        target.notify_on_new_video_start(given_event)
+        actual = list(target.filter(frame for frame in given_frames))
+
+        assert actual == given_frames
+
+        assert save_location.exists()
+        assert save_location.stat().st_size > 0
+        assert target.is_closed is False  # Writer should still be open
+
+        # Close the writer
+        target.notify_on_flush_event(Mock())
+        assert target.is_closed
+
 
 def create_target() -> FfmpegVideoWriter:
     return FfmpegVideoWriter(
@@ -96,7 +117,7 @@ def create_target() -> FfmpegVideoWriter:
 @dataclass
 class GivenVideo:
     save_location: str
-    frames: Iterator[ndarray]
+    images: Iterator[ndarray]
     width: int
     height: int
 
@@ -105,7 +126,7 @@ def create_given_video(video_file: Path, save_location: Path) -> GivenVideo:
     video_capture = VideoCapture(str(video_file))
     return GivenVideo(
         save_location=str(save_location),
-        frames=read_frames_from(video_capture),
+        images=read_frames_from(video_capture),
         width=get_width(video_capture),
         height=get_height(video_capture),
     )
@@ -113,7 +134,7 @@ def create_given_video(video_file: Path, save_location: Path) -> GivenVideo:
 
 def derive_event_from(given_video: GivenVideo) -> NewVideoStartEvent:
     return NewVideoStartEvent(
-        output=str(save_location),
+        output=given_video.save_location,
         width=given_video.width,
         height=given_video.height,
         fps=FPS,
@@ -145,6 +166,20 @@ def read_frames_from(video_capture: VideoCapture) -> Iterator[ndarray]:
         else:
             video_capture.release()
             break
+
+
+def create_frames_from(images: Iterator[ndarray]) -> list[Frame]:
+    frame_objects = []
+    for i, frame_data in enumerate(images):
+        frame_obj: Frame = {
+            FrameKeys.data: frame_data,
+            FrameKeys.frame: i,
+            FrameKeys.source: str(cyclist_mp4),
+            FrameKeys.output: str(save_location),
+            FrameKeys.occurrence: datetime.now(),
+        }
+        frame_objects.append(frame_obj)
+    return frame_objects
 
 
 @pytest.fixture
