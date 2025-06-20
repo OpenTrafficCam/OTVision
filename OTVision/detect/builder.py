@@ -173,6 +173,10 @@ class DetectBuilder(ABC):
     def input_source(self) -> InputSourceDetect:
         raise NotImplementedError
 
+    @abstractmethod
+    def register_observers(self) -> None:
+        raise NotImplementedError
+
     def build(self) -> OTVisionVideoDetect:
         self.register_observers()
         self._preload_object_detection_model()
@@ -181,7 +185,3 @@ class DetectBuilder(ABC):
     def _preload_object_detection_model(self) -> None:
         model = self.current_object_detector.get()
         model.preload()
-
-    def register_observers(self) -> None:
-        self.input_source.register(self.detected_frame_buffer.on_flush)
-        self.detected_frame_buffer.register(self.otdet_file_writer.write)

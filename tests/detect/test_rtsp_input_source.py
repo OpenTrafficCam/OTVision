@@ -5,9 +5,9 @@ from typing import Any
 from unittest.mock import Mock, call, patch
 
 import pytest
-from cv2 import CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH
 
 from OTVision.application.config import DATETIME_FORMAT, StreamConfig
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.rtsp_input_source import Counter, RtspInputSource
 from OTVision.domain.frame import Frame
@@ -63,7 +63,8 @@ FIFTH_OUTPUT = str(
 
 @dataclass
 class Given:
-    subject: Mock
+    subject_flush_event: Mock
+    subject_new_video_start: Mock
     datetime_provider: Mock
     frame_counter: Counter
     flush_buffer_size: int
@@ -130,15 +131,14 @@ class TestRtspInputSource:
             call(FOURTH_FRAME_DATA),
             call(FIFTH_FRAME_DATA),
         ]
-        assert given.video_capture_instance.get.call_args_list == [
-            call(CAP_PROP_FRAME_WIDTH),
-            call(CAP_PROP_FRAME_HEIGHT),
-            call(CAP_PROP_FRAME_WIDTH),
-            call(CAP_PROP_FRAME_HEIGHT),
-            call(CAP_PROP_FRAME_WIDTH),
-            call(CAP_PROP_FRAME_HEIGHT),
+        assert (
+            given.subject_flush_event.notify.call_args_list
+            == create_expected_flush_events()
+        )
+        assert given.subject_new_video_start.notify.call_args_list == [
+            call(create_expected_new_video_start(FIRST_OUTPUT)),
+            call(create_expected_new_video_start(FOURTH_OUTPUT)),
         ]
-        assert given.subject.notify.call_args_list == create_expected_flush_events()
 
     @patch("OTVision.detect.rtsp_input_source.convert_frame_to_rgb")
     @patch("OTVision.detect.rtsp_input_source.VideoCapture")
@@ -195,7 +195,8 @@ class TestRtspInputSource:
 
 def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
     return Given(
-        subject=Mock(),
+        subject_flush_event=Mock(),
+        subject_new_video_start=Mock(),
         datetime_provider=Mock(),
         frame_counter=Counter(),
         flush_buffer_size=FLUSH_BUFFER_SIZE,
@@ -209,7 +210,8 @@ def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
 
 def create_target(given: Given) -> RtspInputSource:
     return RtspInputSource(
-        subject=given.subject,
+        subject_flush=given.subject_flush_event,
+        subject_new_video_start=given.subject_new_video_start,
         datetime_provider=given.datetime_provider,
         frame_counter=given.frame_counter,
         get_current_config=given.get_current_config,
@@ -228,6 +230,10 @@ def setup_with(given: Given, video_capture_is_opened: bool = True) -> Given:
     given.video_capture_instance.isOpened.return_value = video_capture_is_opened
     given.video_capture_instance.read.side_effect = frames
     given.video_capture_instance.get.side_effect = [
+        WIDTH,
+        HEIGHT,
+        WIDTH,
+        HEIGHT,
         WIDTH,
         HEIGHT,
         WIDTH,
@@ -280,3 +286,7 @@ def create_expected_flush_event(start_time: datetime) -> FlushEvent:
         source_fps=OUTPUT_FPS,
         start_time=start_time,
     )
+
+
+def create_expected_new_video_start(output: str) -> NewVideoStartEvent:
+    return NewVideoStartEvent(output=output, width=WIDTH, height=HEIGHT, fps=OUTPUT_FPS)

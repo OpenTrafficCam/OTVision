@@ -8,13 +8,13 @@ import pytest
 from cv2 import CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH, VideoCapture
 from numpy import ndarray
 
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.rtsp_input_source import convert_frame_to_rgb
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
     FfmpegVideoWriter,
-    NewVideoStartEvent,
     PixelFormat,
     VideoCodec,
     VideoFormat,

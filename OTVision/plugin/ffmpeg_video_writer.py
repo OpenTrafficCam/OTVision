@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import IntEnum, StrEnum
 from typing import Any, Generator
 
@@ -6,6 +5,7 @@ import ffmpeg
 from numpy import ndarray
 
 from OTVision.abstraction.pipes_and_filter import Filter
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.video_writer import VideoWriter
@@ -45,14 +45,6 @@ class ConstantRateFactor(IntEnum):
 
     LOSSLESS = 0
     DEFAULT = 23
-
-
-@dataclass(frozen=True)
-class NewVideoStartEvent:
-    output: str
-    width: int
-    height: int
-    fps: float
 
 
 class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
