@@ -53,6 +53,7 @@ from OTVision.application.config import (
     VID,
     WEIGHTS,
     WINDOW,
+    WRITE_VIDEO,
     YOLO,
     Config,
     ConvertConfig,
@@ -181,15 +182,16 @@ class ConfigParser:
 
         start_time = self._parse_start_time(data)
         return DetectConfig(
-            sources,
-            data.get(RUN_CHAINED, DetectConfig.run_chained),
-            yolo_config,
-            expected_duration,
-            data.get(OVERWRITE, DetectConfig.overwrite),
-            data.get(HALF_PRECISION, DetectConfig.half_precision),
-            start_time,
-            data.get(DETECT_START, DetectConfig.detect_start),
-            data.get(DETECT_END, DetectConfig.detect_end),
+            paths=sources,
+            run_chained=data.get(RUN_CHAINED, DetectConfig.run_chained),
+            yolo_config=yolo_config,
+            expected_duration=expected_duration,
+            overwrite=data.get(OVERWRITE, DetectConfig.overwrite),
+            half_precision=data.get(HALF_PRECISION, DetectConfig.half_precision),
+            start_time=start_time,
+            detect_start=data.get(DETECT_START, DetectConfig.detect_start),
+            detect_end=data.get(DETECT_END, DetectConfig.detect_end),
+            write_video=data.get(WRITE_VIDEO, DetectConfig.write_video),
         )
 
     def parse_yolo_config(self, data: dict) -> YoloConfig:

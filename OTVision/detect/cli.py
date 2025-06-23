@@ -128,6 +128,12 @@ class ArgparseDetectCliParser(DetectCliParser):
             help="Specify end of detection in seconds.",
             required=False,
         )
+        self._parser.add_argument(
+            "--write-video",
+            action="store_true",
+            help="Write video to output folder.",
+            required=False,
+        )
 
     def parse(self) -> DetectCliArgs:
         args = self._parser.parse_args(self._argv)
@@ -156,6 +162,7 @@ class ArgparseDetectCliParser(DetectCliParser):
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
+            write_video=bool(args.write_video),
         )
 
     def _parse_start_time(self, start_time: str | None) -> datetime | None:

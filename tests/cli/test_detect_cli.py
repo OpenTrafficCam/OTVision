@@ -29,6 +29,7 @@ CONFIG_PARSER = ConfigParser(YAML_DESERIALIZER)
 EXPECTED_DURATION = DEFAULT_EXPECTED_DURATION
 INPUT_EXPECTED_DURATION = int(EXPECTED_DURATION.total_seconds())
 
+
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
 custom_config = YAML_DESERIALIZER.deserialize(Path(CUSTOM_CONFIG_FILE))
 
@@ -38,6 +39,10 @@ cwd_config = YAML_DESERIALIZER.deserialize(Path(CWD_CONFIG_FILE))
 LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
+
+DEFAULT_WRITE_VIDEO_ARGUMENT = {
+    "write_video": {PASSED: "--write-video", EXPECTED: False},
+}
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
@@ -60,7 +65,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "config": {PASSED: ""},
     "detect_start": {PASSED: "--detect-start 300", EXPECTED: 300},
     "detect_end": {PASSED: "--detect-end 600", EXPECTED: 600},
-}
+} | DEFAULT_WRITE_VIDEO_ARGUMENT
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "paths": {
@@ -83,7 +88,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "detect_start": {PASSED: "--detect-start 300", EXPECTED: 300},
     "detect_end": {PASSED: "--detect-end 600", EXPECTED: 600},
     "config": {PASSED: ""},
-}
+} | DEFAULT_WRITE_VIDEO_ARGUMENT
 
 TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
     "paths": {PASSED: "-p ./", EXPECTED: ["./"]},
@@ -103,7 +108,7 @@ TEST_DATA_PARAMS_FROM_DEFAULT_CONFIG = {
     "detect_start": {PASSED: "", EXPECTED: None},
     "detect_end": {PASSED: "", EXPECTED: None},
     "config": {PASSED: ""},
-}
+} | DEFAULT_WRITE_VIDEO_ARGUMENT
 
 TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "paths": {
@@ -129,7 +134,7 @@ TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG = {
     "config": {PASSED: f"--config {CUSTOM_CONFIG_FILE}"},
     "detect_start": {PASSED: "", EXPECTED: None},
     "detect_end": {PASSED: "", EXPECTED: None},
-}
+} | DEFAULT_WRITE_VIDEO_ARGUMENT
 
 required_arguments = (
     f"--expected-duration {INPUT_EXPECTED_DURATION} {LOGFILE_OVERWRITE_CMD}"

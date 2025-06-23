@@ -12,9 +12,6 @@ from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
-from OTVision.application.detect.detected_frame_producer import (
-    SimpleDetectedFrameProducer,
-)
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
@@ -33,6 +30,10 @@ from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBuffer,
     DetectedFrameBufferEvent,
     FlushEvent,
+)
+from OTVision.detect.detected_frame_producer import (
+    DetectedFrameProducerFactory,
+    SimpleDetectedFrameProducer,
 )
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.otdet_file_writer import OtdetFileWriter
@@ -153,10 +154,17 @@ class DetectBuilder(ABC):
     @cached_property
     def detected_frame_producer(self) -> DetectedFrameProducer:
         return SimpleDetectedFrameProducer(
+            producer_factory=self.detected_frame_producer_factory,
+        )
+
+    @cached_property
+    def detected_frame_producer_factory(self) -> DetectedFrameProducerFactory:
+        return DetectedFrameProducerFactory(
             input_source=self.input_source,
             video_writer_filter=self.video_file_writer,
             detection_filter=self.current_object_detector,
             detected_frame_buffer=self.detected_frame_buffer,
+            get_current_config=self.get_current_config,
         )
 
     @cached_property
