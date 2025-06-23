@@ -67,7 +67,7 @@ class VideoSource(InputSourceDetect):
         timestamper_factory: TimestamperFactory,
         save_path_provider: DetectionFileSavePathProvider,
     ) -> None:
-        self.subject_flush_event = subject_flush
+        self.subject_flush = subject_flush
         self.subject_new_video_start = subject_new_video_start
         self._frame_rotator = frame_rotator
         self._get_current_config = get_current_config
@@ -189,7 +189,7 @@ class VideoSource(InputSourceDetect):
             current_video_file, start_time=self._start_time
         )
 
-        self.subject_flush_event.notify(
+        self.subject_flush.notify(
             FlushEvent.create(
                 source=str(current_video_file),
                 output=str(current_video_file),

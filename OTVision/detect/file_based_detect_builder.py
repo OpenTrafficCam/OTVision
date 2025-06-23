@@ -21,7 +21,11 @@ class FileBasedDetectBuilder(DetectBuilder):
         )
 
     def register_observers(self) -> None:
-        self.input_source.subject_flush_event.register(
-            self.detected_frame_buffer.on_flush
+        self.input_source.subject_new_video_start.register(
+            self.video_file_writer.notify_on_new_video_start
         )
+        self.input_source.subject_flush.register(
+            self.video_file_writer.notify_on_flush_event
+        )
+        self.input_source.subject_flush.register(self.detected_frame_buffer.on_flush)
         self.detected_frame_buffer.register(self.otdet_file_writer.write)
