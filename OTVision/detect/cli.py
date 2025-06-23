@@ -130,7 +130,7 @@ class ArgparseDetectCliParser(DetectCliParser):
         )
         self._parser.add_argument(
             "--write-video",
-            action="store_true",
+            default=None,
             help="Write video to output folder.",
             required=False,
         )
@@ -162,7 +162,9 @@ class ArgparseDetectCliParser(DetectCliParser):
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
-            write_video=bool(args.write_video),
+            write_video=(
+                bool(args.write_video) if args.write_video is not None else None
+            ),
         )
 
     def _parse_start_time(self, start_time: str | None) -> datetime | None:
