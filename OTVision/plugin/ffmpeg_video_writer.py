@@ -1,6 +1,6 @@
 from enum import IntEnum, StrEnum
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Callable, Generator
 
 import ffmpeg
 from numpy import ndarray
@@ -9,6 +9,8 @@ from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.video_writer import VideoWriter
+
+VideoSaveLocationStrategy = Callable[[str], str]
 
 DEFAULT_CRF = 23
 SAVE_STEM_POSTFIX = "_save"
@@ -72,6 +74,7 @@ class FfmpegVideoWriter(VideoWriter):
 
     def __init__(
         self,
+        save_location_strategy: VideoSaveLocationStrategy,
         encoding_speed: EncodingSpeed = EncodingSpeed.FAST,
         input_format: VideoFormat = VideoFormat.RAW,
         output_format: VideoFormat = VideoFormat.MP4,
@@ -80,6 +83,7 @@ class FfmpegVideoWriter(VideoWriter):
         output_video_codec: VideoCodec = VideoCodec.H264,
         constant_rate_factor: ConstantRateFactor = ConstantRateFactor.LOSSLESS,
     ) -> None:
+        self._save_location_strategy = save_location_strategy
         self._encoding_speed = encoding_speed
         self._input_format = input_format
         self._output_format = output_format
@@ -142,7 +146,7 @@ class FfmpegVideoWriter(VideoWriter):
                 s=f"{width}x{height}",
             )
             .output(
-                self.__create_output_file(output_file),
+                self._save_location_strategy(output_file),
                 pix_fmt=self._output_pixel_format.value,
                 vcodec=self._output_video_codec.value,
                 preset=self._encoding_speed.value,
@@ -165,3 +169,12 @@ class FfmpegVideoWriter(VideoWriter):
             if (image := frame.get(FrameKeys.data)) is not None:
                 self.write(image)
             yield frame
+
+
+def append_save_suffix_to_save_location(given: str) -> str:
+    filepath = Path(given)
+    return str(Path(filepath).with_stem(f"{filepath.stem}{SAVE_STEM_POSTFIX}"))
+
+
+def keep_original_save_location(given: str) -> str:
+    return given

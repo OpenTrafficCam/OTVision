@@ -12,24 +12,28 @@ from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.rtsp_input_source import convert_frame_to_rgb
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.plugin.ffmpeg_video_writer import (
-    SAVE_STEM_POSTFIX,
     ConstantRateFactor,
     EncodingSpeed,
     FfmpegVideoWriter,
     PixelFormat,
     VideoCodec,
     VideoFormat,
+    keep_original_save_location,
 )
+from tests.conftest import YieldFixture
 
 FPS = 20
 
 
 class TestFfmpegVideoFileWriter:
     def test_write_video(
-        self, cyclist_mp4: Path, save_location: Path, expected_save_location: Path
+        self,
+        target: FfmpegVideoWriter,
+        cyclist_mp4: Path,
+        save_location: Path,
+        expected_save_location: Path,
     ) -> None:
         given = create_given_video(cyclist_mp4, save_location)
-        target = create_target()
         target.open(
             given.save_location, width=given.width, height=given.height, fps=FPS
         )
@@ -46,10 +50,9 @@ class TestFfmpegVideoFileWriter:
         assert target.is_closed
 
     def test_open_and_close_writer(
-        self, cyclist_mp4: Path, save_location: Path
+        self, target: FfmpegVideoWriter, cyclist_mp4: Path, save_location: Path
     ) -> None:
         given = create_given_video(cyclist_mp4, save_location)
-        target = create_target()
 
         assert target.is_closed
         target.open(
@@ -60,10 +63,9 @@ class TestFfmpegVideoFileWriter:
         assert target.is_closed
 
     def test_notify_on_flush_event(
-        self, cyclist_mp4: Path, save_location: Path
+        self, target: FfmpegVideoWriter, cyclist_mp4: Path, save_location: Path
     ) -> None:
         given = create_given_video(cyclist_mp4, save_location)
-        target = create_target()
 
         target.open(
             given.save_location, width=given.width, height=given.height, fps=FPS
@@ -74,11 +76,14 @@ class TestFfmpegVideoFileWriter:
 
     @patch("OTVision.plugin.ffmpeg_video_writer.FfmpegVideoWriter.open")
     def test_notify_on_new_video_start(
-        self, mock_open: Mock, cyclist_mp4: Path, save_location: Path
+        self,
+        mock_open: Mock,
+        target: FfmpegVideoWriter,
+        cyclist_mp4: Path,
+        save_location: Path,
     ) -> None:
         given_video = create_given_video(cyclist_mp4, save_location)
         given_event = derive_event_from(given_video)
-        target = create_target()
         target.notify_on_new_video_start(given_event)
 
         mock_open.assert_called_once_with(
@@ -86,12 +91,15 @@ class TestFfmpegVideoFileWriter:
         )
 
     def test_filter(
-        self, cyclist_mp4: Path, save_location: Path, expected_save_location: Path
+        self,
+        target: FfmpegVideoWriter,
+        cyclist_mp4: Path,
+        save_location: Path,
+        expected_save_location: Path,
     ) -> None:
         given_video = create_given_video(cyclist_mp4, save_location)
         given_event = derive_event_from(given_video)
         given_frames = create_frames_from(given_video.images)
-        target = create_target()
 
         target.notify_on_new_video_start(given_event)
         actual = list(target.filter(frame for frame in given_frames))
@@ -104,18 +112,6 @@ class TestFfmpegVideoFileWriter:
         # Close the writer
         target.notify_on_flush_event(Mock())
         assert target.is_closed
-
-
-def create_target() -> FfmpegVideoWriter:
-    return FfmpegVideoWriter(
-        encoding_speed=EncodingSpeed.FAST,
-        input_format=VideoFormat.RAW,
-        output_format=VideoFormat.MP4,
-        input_pixel_format=PixelFormat.RGB24,
-        output_pixel_format=PixelFormat.YUV420P,
-        output_video_codec=VideoCodec.H264,
-        constant_rate_factor=ConstantRateFactor.LOSSLESS,
-    )
 
 
 @dataclass
@@ -187,6 +183,23 @@ def create_frames_from(images: Iterator[ndarray]) -> list[Frame]:
 
 
 @pytest.fixture
+def target() -> YieldFixture[FfmpegVideoWriter]:
+    writer = FfmpegVideoWriter(
+        save_location_strategy=keep_original_save_location,
+        encoding_speed=EncodingSpeed.FAST,
+        input_format=VideoFormat.RAW,
+        output_format=VideoFormat.MP4,
+        input_pixel_format=PixelFormat.RGB24,
+        output_pixel_format=PixelFormat.YUV420P,
+        output_video_codec=VideoCodec.H264,
+        constant_rate_factor=ConstantRateFactor.LOSSLESS,
+    )
+    yield writer
+    # Ensure the writer is closed before the next test runs.
+    writer.close()
+
+
+@pytest.fixture
 def cyclist_mp4(test_data_dir: Path) -> Path:
     return test_data_dir / "Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.mp4"
 
@@ -198,4 +211,4 @@ def save_location(test_data_tmp_dir: Path, cyclist_mp4: Path) -> Path:
 
 @pytest.fixture
 def expected_save_location(save_location: Path) -> Path:
-    return save_location.with_stem(f"{save_location.stem}{SAVE_STEM_POSTFIX}")
+    return save_location

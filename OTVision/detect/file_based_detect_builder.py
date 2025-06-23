@@ -5,6 +5,16 @@ from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.video_input_source import VideoSource
+from OTVision.domain.video_writer import VideoWriter
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    FfmpegVideoWriter,
+    PixelFormat,
+    VideoCodec,
+    VideoFormat,
+    append_save_suffix_to_save_location,
+)
 
 
 class FileBasedDetectBuilder(DetectBuilder):
@@ -18,6 +28,22 @@ class FileBasedDetectBuilder(DetectBuilder):
             frame_rotator=self.frame_rotator,
             timestamper_factory=self.timestamper_factory,
             save_path_provider=self.detection_file_save_path_provider,
+        )
+
+    @cached_property
+    def video_file_writer(self) -> VideoWriter:
+        # Using save_location_strategy=keep_original_save_location is not supported for
+        # file-based detection. Otherwise, we would be overwriting the input source that
+        # we are reading from.
+        return FfmpegVideoWriter(
+            save_location_strategy=append_save_suffix_to_save_location,
+            encoding_speed=EncodingSpeed.FAST,
+            input_format=VideoFormat.RAW,
+            output_format=VideoFormat.MP4,
+            input_pixel_format=PixelFormat.RGB24,
+            output_pixel_format=PixelFormat.YUV420P,
+            output_video_codec=VideoCodec.H264,
+            constant_rate_factor=ConstantRateFactor.LOSSLESS,
         )
 
     def register_observers(self) -> None:

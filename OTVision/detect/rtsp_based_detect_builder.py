@@ -7,6 +7,16 @@ from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.rtsp_input_source import Counter, RtspInputSource
 from OTVision.domain.time import CurrentDatetimeProvider, DatetimeProvider
+from OTVision.domain.video_writer import VideoWriter
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    FfmpegVideoWriter,
+    PixelFormat,
+    VideoCodec,
+    VideoFormat,
+    keep_original_save_location,
+)
 
 FLUSH_BUFFER_SIZE = 18000
 FLUSH_BUFFER_SIZE = 1200
@@ -36,6 +46,19 @@ class RtspBasedDetectBuilder(DetectBuilder):
     @cached_property
     def datetime_provider(self) -> DatetimeProvider:
         return CurrentDatetimeProvider()
+
+    @cached_property
+    def video_file_writer(self) -> VideoWriter:
+        return FfmpegVideoWriter(
+            save_location_strategy=keep_original_save_location,
+            encoding_speed=EncodingSpeed.FAST,
+            input_format=VideoFormat.RAW,
+            output_format=VideoFormat.MP4,
+            input_pixel_format=PixelFormat.RGB24,
+            output_pixel_format=PixelFormat.YUV420P,
+            output_video_codec=VideoCodec.H264,
+            constant_rate_factor=ConstantRateFactor.LOSSLESS,
+        )
 
     def register_observers(self) -> None:
         self.input_source.subject_new_video_start.register(
