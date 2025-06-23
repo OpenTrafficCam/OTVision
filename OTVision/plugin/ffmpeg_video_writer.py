@@ -13,7 +13,7 @@ from OTVision.domain.video_writer import VideoWriter
 VideoSaveLocationStrategy = Callable[[str], str]
 
 DEFAULT_CRF = 23
-SAVE_STEM_POSTFIX = "_save"
+VIDEO_SAVE_FILE_POSTFIX = "_processed"
 
 
 class VideoCodec(StrEnum):
@@ -160,7 +160,9 @@ class FfmpegVideoWriter(VideoWriter):
 
     def __create_output_file(self, given: str) -> str:
         filepath = Path(given)
-        return str(Path(filepath).with_stem(f"{filepath.stem}{SAVE_STEM_POSTFIX}"))
+        return str(
+            Path(filepath).with_stem(f"{filepath.stem}{VIDEO_SAVE_FILE_POSTFIX}")
+        )
 
     def filter(
         self, pipe: Generator[Frame, None, None]
@@ -173,7 +175,7 @@ class FfmpegVideoWriter(VideoWriter):
 
 def append_save_suffix_to_save_location(given: str) -> str:
     filepath = Path(given)
-    return str(Path(filepath).with_stem(f"{filepath.stem}{SAVE_STEM_POSTFIX}"))
+    return str(Path(filepath).with_stem(f"{filepath.stem}{VIDEO_SAVE_FILE_POSTFIX}"))
 
 
 def keep_original_save_location(given: str) -> str:
