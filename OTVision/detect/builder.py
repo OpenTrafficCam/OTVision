@@ -47,6 +47,15 @@ from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.object_detection import ObjectDetectorFactory
 from OTVision.domain.serialization import Deserializer
+from OTVision.domain.video_writer import VideoWriter
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    FfmpegVideoWriter,
+    PixelFormat,
+    VideoCodec,
+    VideoFormat,
+)
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 
@@ -153,6 +162,7 @@ class DetectBuilder(ABC):
     def detected_frame_producer(self) -> DetectedFrameProducer:
         return SimpleDetectedFrameProducer(
             input_source=self.input_source,
+            video_writer_filter=self.video_file_writer,
             detection_filter=self.current_object_detector,
             detected_frame_buffer=self.detected_frame_buffer,
         )
@@ -164,6 +174,18 @@ class DetectBuilder(ABC):
     @cached_property
     def yaml_deserializer(self) -> Deserializer:
         return YamlDeserializer()
+
+    @cached_property
+    def video_file_writer(self) -> VideoWriter:
+        return FfmpegVideoWriter(
+            encoding_speed=EncodingSpeed.FAST,
+            input_format=VideoFormat.RAW,
+            output_format=VideoFormat.MP4,
+            input_pixel_format=PixelFormat.RGB24,
+            output_pixel_format=PixelFormat.YUV420P,
+            output_video_codec=VideoCodec.H264,
+            constant_rate_factor=ConstantRateFactor.LOSSLESS,
+        )
 
     def __init__(self, argv: list[str] | None = None) -> None:
         self.argv = argv

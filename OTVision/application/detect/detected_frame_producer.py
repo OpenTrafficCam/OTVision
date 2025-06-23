@@ -11,14 +11,18 @@ class SimpleDetectedFrameProducer(DetectedFrameProducer):
     def __init__(
         self,
         input_source: InputSourceDetect,
+        video_writer_filter: Filter[Frame, Frame],
         detection_filter: Filter[Frame, DetectedFrame],
         detected_frame_buffer: Filter[DetectedFrame, DetectedFrame],
     ) -> None:
         self._input_source = input_source
+        self._video_writer_filter = video_writer_filter
         self._detection_filter = detection_filter
         self._detected_frame_buffer = detected_frame_buffer
 
     def produce(self) -> Generator[DetectedFrame, None, None]:
         return self._detected_frame_buffer.filter(
-            self._detection_filter.filter(self._input_source.produce())
+            self._detection_filter.filter(
+                self._video_writer_filter.filter(self._input_source.produce())
+            )
         )

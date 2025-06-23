@@ -4,7 +4,6 @@ from typing import Any, Generator
 import ffmpeg
 from numpy import ndarray
 
-from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame, FrameKeys
@@ -47,7 +46,7 @@ class ConstantRateFactor(IntEnum):
     DEFAULT = 23
 
 
-class FfmpegVideoWriter(VideoWriter, Filter[Frame, Frame]):
+class FfmpegVideoWriter(VideoWriter):
 
     @property
     def _current_video_metadata(self) -> NewVideoStartEvent:
