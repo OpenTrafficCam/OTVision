@@ -17,33 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         py: ["3.12"]
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install ffmpeg
-        if: matrix.os == 'windows-latest'  # Adjust as needed
-        uses: FedericoCarboni/setup-ffmpeg@v3
-
-      - name: Set up Python ${{ matrix.py }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.py }}
-          cache: 'pip'
-
-      - name: Install Python dependencies
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt || true
-          pip install -r requirements-dev.txt || true
-
-      - name: Lint
-        run: flake8 .
-
-      - name: Type check
-        run: mypy .
-
-      - name: Run tests
-        run: pytest --cov=OTVision tests/
+    uses: "platomo/GitHub-workflows/.github/workflows/reusable-python-tests.yml@main"
+    with:
+      os: ${{ matrix.os }}
+      py-version: ${{ matrix.py }}
+      test_path: OTVision
+      ffmpeg-required: True
