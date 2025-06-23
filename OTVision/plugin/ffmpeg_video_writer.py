@@ -44,10 +44,24 @@ class EncodingSpeed(StrEnum):
 
 
 class ConstantRateFactor(IntEnum):
-    """Adjust quality/size (lower means better quality/larger file)."""
+    """Adjust quality/size (lower means better quality/larger file).
+    Attributes:
+        LOSSLESS: Perfect quality, massive file size.
+        HIGH_QUALITY: Visually lossless for most eyes.
+        GOOD: High quality, slightly compressed.
+        DEFAULT: x264 default; good balance of size and quality.
+        COMPACT: Acceptable quality for small screens or streaming.
+        LOW_QUALITY: Noticeable compression artifacts; smaller file.
+        WORST_ACCEPTABLE: Very low quality; only for previews or constrained storage.
+    """
 
     LOSSLESS = 0
+    HIGH_QUALITY = 18
+    GOOD = 20
     DEFAULT = 23
+    COMPACT = 26
+    LOW_QUALITY = 28
+    WORST_ACCEPTABLE = 35
 
 
 class FfmpegVideoWriter(VideoWriter):

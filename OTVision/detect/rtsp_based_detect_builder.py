@@ -57,7 +57,7 @@ class RtspBasedDetectBuilder(DetectBuilder):
             input_pixel_format=PixelFormat.RGB24,
             output_pixel_format=PixelFormat.YUV420P,
             output_video_codec=VideoCodec.H264,
-            constant_rate_factor=ConstantRateFactor.LOSSLESS,
+            constant_rate_factor=ConstantRateFactor.DEFAULT,
         )
 
     def register_observers(self) -> None:
