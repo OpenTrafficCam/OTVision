@@ -1,5 +1,6 @@
 from enum import IntEnum, StrEnum
 from pathlib import Path
+from subprocess import PIPE, Popen
 from typing import Any, Callable, Generator
 
 import ffmpeg
@@ -153,7 +154,7 @@ class FfmpegVideoWriter(VideoWriter):
     def __create_ffmpeg_process(
         self, output_file: str, width: int, height: int, fps: float
     ) -> Any:
-        process = (
+        cmd = (
             ffmpeg.input(
                 "pipe:0",
                 format=self._input_format.value,
@@ -170,7 +171,14 @@ class FfmpegVideoWriter(VideoWriter):
                 format=self._output_format.value,
             )
             .overwrite_output()
-            .run_async(pipe_stdin=True, pipe_stderr=True)
+            .compile()
+        )
+
+        process = Popen(
+            cmd,
+            stdin=PIPE,
+            stderr=PIPE,
+            bufsize=10**8,
         )
         return process
 
