@@ -84,6 +84,7 @@ class UpdateDetectConfigWithCliArgs:
                 if cli_args.detect_end is not None
                 else detect_config.detect_end
             ),
+            write_video=cli_args.write_video,
         )
 
     def _update_log_config(self, config: Config, cli_args: DetectCliArgs) -> _LogConfig:

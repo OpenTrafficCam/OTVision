@@ -24,6 +24,7 @@ HALF_PRECISION = True
 OVERWRITE = True
 DETECT_START = 300
 DETECT_END = 600
+WRITE_VIDEO = True
 
 
 class TestUpdateDetectConfigWithCliArgs:
@@ -67,6 +68,7 @@ def cli_args() -> DetectCliArgs:
         overwrite=OVERWRITE,
         detect_start=DETECT_START,
         detect_end=DETECT_END,
+        write_video=WRITE_VIDEO,
     )
 
 
@@ -97,6 +99,7 @@ def expected_config() -> Config:
             half_precision=HALF_PRECISION,
             detect_start=DETECT_START,
             detect_end=DETECT_END,
+            write_video=WRITE_VIDEO,
         ),
         track=config.track,
         undistort=config.undistort,
