@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 from unittest.mock import Mock, patch
 
 import pytest
@@ -109,9 +109,47 @@ class TestFfmpegVideoFileWriter:
         assert expected_save_location.stat().st_size > 0
         assert target.is_closed is False  # Writer should still be open
 
-        # Close the writer
+        # Close the writer to finalize the video file
         target.notify_on_flush_event(Mock())
         assert target.is_closed
+
+        # Now that the writer is closed, we can read frames from the output file
+        actual_frames = get_frames_from(expected_save_location)
+        assert len(actual_frames) == len(given_frames)
+
+    def test_filter_drops_frame_without_data(
+        self,
+        target: FfmpegVideoWriter,
+        cyclist_mp4: Path,
+        save_location: Path,
+        expected_save_location: Path,
+    ) -> None:
+        given_video = create_given_video(cyclist_mp4, save_location)
+        images = list(given_video.images)
+        given_event = derive_event_from(given_video)
+        # Ensure we have at least two valid frames (first and third)
+        given_frames: list[Frame] = create_frames_from(
+            iter([images[0], None, images[2]])
+        )
+
+        target.notify_on_new_video_start(given_event)
+        actual = list(target.filter(frame for frame in given_frames))
+
+        assert actual == given_frames
+        assert expected_save_location.exists()
+        assert target.is_closed is False  # Writer should still be open
+
+        # Close the writer to finalize the video file
+        target.notify_on_flush_event(Mock())
+        assert target.is_closed
+
+        # Now that the writer is closed, we can check the output file
+        assert expected_save_location.stat().st_size > 0
+
+        # We should have 2 frames in the output video (the first and third frames)
+        actual_frames = get_frames_from(expected_save_location)
+        # We expect 2 frames because one frame had None data and was skipped
+        assert len(actual_frames) == 2
 
 
 @dataclass
@@ -168,7 +206,7 @@ def read_frames_from(video_capture: VideoCapture) -> Iterator[ndarray]:
             break
 
 
-def create_frames_from(images: Iterator[ndarray]) -> list[Frame]:
+def create_frames_from(images: Iterator[Optional[ndarray]]) -> list[Frame]:
     frame_objects = []
     for i, frame_data in enumerate(images):
         frame_obj: Frame = {

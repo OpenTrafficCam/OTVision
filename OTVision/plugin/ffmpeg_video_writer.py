@@ -141,11 +141,13 @@ class FfmpegVideoWriter(VideoWriter):
             self._ffmpeg_process.stdin.close()
             self._ffmpeg_process.wait()
             self.__ffmpeg_process = None
+        self.__current_video_metadata = None
 
     def notify_on_flush_event(self, event: FlushEvent) -> None:
         self.close()
 
     def notify_on_new_video_start(self, event: NewVideoStartEvent) -> None:
+        self.__current_video_metadata = event
         self.open(event.output, event.width, event.height, event.fps)
 
     def __create_ffmpeg_process(
