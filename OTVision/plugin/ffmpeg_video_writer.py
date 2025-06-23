@@ -1,4 +1,5 @@
 from enum import IntEnum, StrEnum
+from pathlib import Path
 from typing import Any, Generator
 
 import ffmpeg
@@ -10,6 +11,7 @@ from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.video_writer import VideoWriter
 
 DEFAULT_CRF = 23
+SAVE_STEM_POSTFIX = "_save"
 
 
 class VideoCodec(StrEnum):
@@ -140,7 +142,7 @@ class FfmpegVideoWriter(VideoWriter):
                 s=f"{width}x{height}",
             )
             .output(
-                output_file,
+                self.__create_output_file(output_file),
                 pix_fmt=self._output_pixel_format.value,
                 vcodec=self._output_video_codec.value,
                 preset=self._encoding_speed.value,
@@ -151,6 +153,10 @@ class FfmpegVideoWriter(VideoWriter):
             .run_async(pipe_stdin=True, pipe_stderr=True)
         )
         return process
+
+    def __create_output_file(self, given: str) -> str:
+        filepath = Path(given)
+        return str(Path(filepath).with_stem(f"{filepath.stem}{SAVE_STEM_POSTFIX}"))
 
     def filter(
         self, pipe: Generator[Frame, None, None]

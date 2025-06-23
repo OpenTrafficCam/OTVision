@@ -12,6 +12,7 @@ from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.rtsp_input_source import convert_frame_to_rgb
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.plugin.ffmpeg_video_writer import (
+    SAVE_STEM_POSTFIX,
     ConstantRateFactor,
     EncodingSpeed,
     FfmpegVideoWriter,
@@ -24,7 +25,9 @@ FPS = 20
 
 
 class TestFfmpegVideoFileWriter:
-    def test_write_video(self, cyclist_mp4: Path, save_location: Path) -> None:
+    def test_write_video(
+        self, cyclist_mp4: Path, save_location: Path, expected_save_location: Path
+    ) -> None:
         given = create_given_video(cyclist_mp4, save_location)
         target = create_target()
         target.open(
@@ -35,10 +38,10 @@ class TestFfmpegVideoFileWriter:
         target.close()
 
         given_frames = get_frames_from(cyclist_mp4)
-        actual_frames = get_frames_from(save_location)
+        actual_frames = get_frames_from(expected_save_location)
 
-        assert save_location.exists()
-        assert save_location.stat().st_size > 0
+        assert expected_save_location.exists()
+        assert expected_save_location.stat().st_size > 0
         assert len(actual_frames) == len(given_frames)
         assert target.is_closed
 
@@ -82,7 +85,9 @@ class TestFfmpegVideoFileWriter:
             given_event.output, given_event.width, given_event.height, given_event.fps
         )
 
-    def test_filter(self, cyclist_mp4: Path, save_location: Path) -> None:
+    def test_filter(
+        self, cyclist_mp4: Path, save_location: Path, expected_save_location: Path
+    ) -> None:
         given_video = create_given_video(cyclist_mp4, save_location)
         given_event = derive_event_from(given_video)
         given_frames = create_frames_from(given_video.images)
@@ -92,9 +97,8 @@ class TestFfmpegVideoFileWriter:
         actual = list(target.filter(frame for frame in given_frames))
 
         assert actual == given_frames
-
-        assert save_location.exists()
-        assert save_location.stat().st_size > 0
+        assert expected_save_location.exists()
+        assert expected_save_location.stat().st_size > 0
         assert target.is_closed is False  # Writer should still be open
 
         # Close the writer
@@ -190,3 +194,8 @@ def cyclist_mp4(test_data_dir: Path) -> Path:
 @pytest.fixture
 def save_location(test_data_tmp_dir: Path, cyclist_mp4: Path) -> Path:
     return test_data_tmp_dir / cyclist_mp4.name
+
+
+@pytest.fixture
+def expected_save_location(save_location: Path) -> Path:
+    return save_location.with_stem(f"{save_location.stem}{SAVE_STEM_POSTFIX}")
