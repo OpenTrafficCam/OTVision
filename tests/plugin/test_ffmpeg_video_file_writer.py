@@ -1,4 +1,3 @@
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +11,7 @@ from numpy import ndarray
 from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.rtsp_input_source import convert_frame_to_rgb
 from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.helpers.machine import ON_WINDOWS
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
@@ -24,12 +24,9 @@ from OTVision.plugin.ffmpeg_video_writer import (
 from tests.conftest import YieldFixture
 
 FPS = 20
-PLATFORM_WINDOWS = "win32"
 
 
-@pytest.mark.skipif(
-    sys.platform == PLATFORM_WINDOWS, reason="Feature is not supported on Windows."
-)
+@pytest.mark.skipif(ON_WINDOWS, reason="Feature is not supported on Windows.")
 class TestFfmpegVideoFileWriter:
     def test_write_video(
         self,

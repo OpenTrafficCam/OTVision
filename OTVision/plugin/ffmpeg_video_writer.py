@@ -12,6 +12,7 @@ from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.video_writer import VideoWriter
 from OTVision.helpers.log import LOGGER_NAME
+from OTVision.helpers.machine import ON_WINDOWS
 
 VideoSaveLocationStrategy = Callable[[str], str]
 
@@ -103,7 +104,8 @@ class FfmpegVideoWriter(VideoWriter):
         output_video_codec: VideoCodec = VideoCodec.H264,
         constant_rate_factor: ConstantRateFactor = ConstantRateFactor.LOSSLESS,
     ) -> None:
-        log.warning("FfmpegVideoWriter is not supported on Windows.")
+        if ON_WINDOWS:
+            log.warning("FfmpegVideoWriter is not supported on Windows.")
         self._save_location_strategy = save_location_strategy
         self._encoding_speed = encoding_speed
         self._input_format = input_format
@@ -148,9 +150,7 @@ class FfmpegVideoWriter(VideoWriter):
             self._ffmpeg_process.stdin.close()
             self._ffmpeg_process.wait()
             self.__ffmpeg_process = None
-            log.info(
-                f"Video file created successfully at '{self.__get_output_file()}'."
-            )
+
         self.__current_video_metadata = None
 
     def notify_on_flush_event(self, event: FlushEvent) -> None:
@@ -163,6 +163,7 @@ class FfmpegVideoWriter(VideoWriter):
     def __create_ffmpeg_process(
         self, output_file: str, width: int, height: int, fps: float
     ) -> Any:
+        save_file = self._save_location_strategy(output_file)
         cmd = (
             ffmpeg.input(
                 "pipe:0",
@@ -172,7 +173,7 @@ class FfmpegVideoWriter(VideoWriter):
                 s=f"{width}x{height}",
             )
             .output(
-                self.__get_output_file(),
+                save_file,
                 pix_fmt=self._output_pixel_format.value,
                 vcodec=self._output_video_codec.value,
                 preset=self._encoding_speed.value,
@@ -189,10 +190,8 @@ class FfmpegVideoWriter(VideoWriter):
             stderr=PIPE,
             bufsize=BUFFER_SIZE_100MB,
         )
+        log.info(f"Writing new video file to '{save_file}'.")
         return process
-
-    def __get_output_file(self) -> str:
-        return self._save_location_strategy(self._current_video_metadata.output)
 
     def filter(
         self, pipe: Generator[Frame, None, None]
