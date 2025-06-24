@@ -105,7 +105,9 @@ class FfmpegVideoWriter(VideoWriter):
         constant_rate_factor: ConstantRateFactor = ConstantRateFactor.LOSSLESS,
     ) -> None:
         if ON_WINDOWS:
-            log.warning("FfmpegVideoWriter is not supported on Windows.")
+            log.warning(
+                "Writing every frame into a new video is not supported on Windows."
+            )
         self._save_location_strategy = save_location_strategy
         self._encoding_speed = encoding_speed
         self._input_format = input_format
