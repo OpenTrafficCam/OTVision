@@ -13,6 +13,7 @@ from OTVision.domain.video_writer import VideoWriter
 
 VideoSaveLocationStrategy = Callable[[str], str]
 
+BUFFER_SIZE_100MB = 10**8
 DEFAULT_CRF = 23
 VIDEO_SAVE_FILE_POSTFIX = "_processed"
 
@@ -178,7 +179,7 @@ class FfmpegVideoWriter(VideoWriter):
             cmd,
             stdin=PIPE,
             stderr=PIPE,
-            bufsize=10**8,
+            bufsize=BUFFER_SIZE_100MB,
         )
         return process
 
