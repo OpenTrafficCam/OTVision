@@ -291,6 +291,28 @@ class TestVideoSource:
                 )
         mock_notify_observers.assert_called_once_with(input_file, FPS)
 
+    @patch("OTVision.detect.video_input_source.log")
+    def test_extract_side_data_attribute_error(self, mock_log: Mock) -> None:
+        container = MagicMock()
+        video_stream = MagicMock()
+        del video_stream.side_data
+        container.streams.video.__getitem__.return_value = video_stream
+
+        target = VideoSource(
+            subject=Mock(),
+            get_current_config=Mock(),
+            frame_rotator=Mock(),
+            timestamper_factory=Mock(),
+            save_path_provider=Mock(),
+        )
+        result = target._extract_side_data(container)
+
+        assert result == {}
+        mock_log.warning.assert_called_once_with(
+            "No side_data found in video stream. "
+            "Existing rotation will not be applied."
+        )
+
 
 def create_expected_frame_call(
     data: Mock | None, frame_number: int, source: Path
