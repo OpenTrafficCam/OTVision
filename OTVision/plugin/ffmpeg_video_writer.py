@@ -1,3 +1,4 @@
+import logging
 from enum import IntEnum, StrEnum
 from pathlib import Path
 from subprocess import PIPE, Popen
@@ -10,12 +11,15 @@ from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame, FrameKeys
 from OTVision.domain.video_writer import VideoWriter
+from OTVision.helpers.log import LOGGER_NAME
 
 VideoSaveLocationStrategy = Callable[[str], str]
 
 BUFFER_SIZE_100MB = 10**8
 DEFAULT_CRF = 23
 VIDEO_SAVE_FILE_POSTFIX = "_processed"
+
+log = logging.getLogger(LOGGER_NAME)
 
 
 class VideoCodec(StrEnum):
@@ -99,6 +103,7 @@ class FfmpegVideoWriter(VideoWriter):
         output_video_codec: VideoCodec = VideoCodec.H264,
         constant_rate_factor: ConstantRateFactor = ConstantRateFactor.LOSSLESS,
     ) -> None:
+        log.warning("FfmpegVideoWriter is not supported on Windows.")
         self._save_location_strategy = save_location_strategy
         self._encoding_speed = encoding_speed
         self._input_format = input_format
@@ -143,6 +148,9 @@ class FfmpegVideoWriter(VideoWriter):
             self._ffmpeg_process.stdin.close()
             self._ffmpeg_process.wait()
             self.__ffmpeg_process = None
+            log.info(
+                f"Video file created successfully at '{self.__get_output_file()}'."
+            )
         self.__current_video_metadata = None
 
     def notify_on_flush_event(self, event: FlushEvent) -> None:
@@ -164,7 +172,7 @@ class FfmpegVideoWriter(VideoWriter):
                 s=f"{width}x{height}",
             )
             .output(
-                self._save_location_strategy(output_file),
+                self.__get_output_file(),
                 pix_fmt=self._output_pixel_format.value,
                 vcodec=self._output_video_codec.value,
                 preset=self._encoding_speed.value,
@@ -183,11 +191,8 @@ class FfmpegVideoWriter(VideoWriter):
         )
         return process
 
-    def __create_output_file(self, given: str) -> str:
-        filepath = Path(given)
-        return str(
-            Path(filepath).with_stem(f"{filepath.stem}{VIDEO_SAVE_FILE_POSTFIX}")
-        )
+    def __get_output_file(self) -> str:
+        return self._save_location_strategy(self._current_video_metadata.output)
 
     def filter(
         self, pipe: Generator[Frame, None, None]
