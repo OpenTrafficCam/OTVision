@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Generator
 
 import av
+from av.container.input import InputContainer
 from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
@@ -103,7 +104,7 @@ class VideoSource(InputSourceDetect):
             try:
                 with av.open(str(video_file.absolute())) as container:
                     container.streams.video[0].thread_type = "AUTO"
-                    side_data = container.streams.video[0].side_data
+                    side_data = self._extract_side_data(container)
                     for frame_number, frame in enumerate(
                         container.decode(video=0), start=1
                     ):
@@ -132,6 +133,16 @@ class VideoSource(InputSourceDetect):
                 self.notify_observers(video_file, video_fps)
             except Exception as e:
                 log.error(f"Error processing {video_file}", exc_info=e)
+
+    def _extract_side_data(self, container: InputContainer) -> dict:
+        try:
+            return container.streams.video[0].side_data
+        except AttributeError:
+            log.warning(
+                "No side_data found in video stream. "
+                "Existing rotation will not be applied."
+            )
+            return {}
 
     def __collect_files_to_detect(self) -> list[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
