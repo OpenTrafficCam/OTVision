@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -23,8 +24,12 @@ from OTVision.plugin.ffmpeg_video_writer import (
 from tests.conftest import YieldFixture
 
 FPS = 20
+PLATFORM_WINDOWS = "win32"
 
 
+@pytest.mark.skipif(
+    sys.platform == PLATFORM_WINDOWS, reason="Feature is not supported on Windows."
+)
 class TestFfmpegVideoFileWriter:
     def test_write_video(
         self,
