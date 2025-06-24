@@ -131,7 +131,7 @@ class ArgparseDetectCliParser(DetectCliParser):
         self._parser.add_argument(
             "--write-video",
             default=None,
-            help="Write video to output folder.",
+            help="Write video to output folder. Not supported on Windows.",
             required=False,
         )
 
