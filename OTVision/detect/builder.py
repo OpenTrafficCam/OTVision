@@ -12,9 +12,6 @@ from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
-from OTVision.application.detect.detected_frame_producer import (
-    SimpleDetectedFrameProducer,
-)
 from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
@@ -34,6 +31,10 @@ from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBufferEvent,
     FlushEvent,
 )
+from OTVision.detect.detected_frame_producer import (
+    DetectedFrameProducerFactory,
+    SimpleDetectedFrameProducer,
+)
 from OTVision.detect.otdet import OtdetBuilder
 from OTVision.detect.otdet_file_writer import OtdetFileWriter
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
@@ -47,6 +48,7 @@ from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.object_detection import ObjectDetectorFactory
 from OTVision.domain.serialization import Deserializer
+from OTVision.domain.video_writer import VideoWriter
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 
@@ -152,9 +154,17 @@ class DetectBuilder(ABC):
     @cached_property
     def detected_frame_producer(self) -> DetectedFrameProducer:
         return SimpleDetectedFrameProducer(
+            producer_factory=self.detected_frame_producer_factory,
+        )
+
+    @cached_property
+    def detected_frame_producer_factory(self) -> DetectedFrameProducerFactory:
+        return DetectedFrameProducerFactory(
             input_source=self.input_source,
+            video_writer_filter=self.video_file_writer,
             detection_filter=self.current_object_detector,
             detected_frame_buffer=self.detected_frame_buffer,
+            get_current_config=self.get_current_config,
         )
 
     @cached_property
@@ -173,6 +183,15 @@ class DetectBuilder(ABC):
     def input_source(self) -> InputSourceDetect:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def video_file_writer(self) -> VideoWriter:
+        raise NotImplementedError
+
+    @abstractmethod
+    def register_observers(self) -> None:
+        raise NotImplementedError
+
     def build(self) -> OTVisionVideoDetect:
         self.register_observers()
         self._preload_object_detection_model()
@@ -181,7 +200,3 @@ class DetectBuilder(ABC):
     def _preload_object_detection_model(self) -> None:
         model = self.current_object_detector.get()
         model.preload()
-
-    def register_observers(self) -> None:
-        self.input_source.register(self.detected_frame_buffer.on_flush)
-        self.detected_frame_buffer.register(self.otdet_file_writer.write)

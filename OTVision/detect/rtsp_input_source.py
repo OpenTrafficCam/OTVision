@@ -19,6 +19,7 @@ from OTVision.application.config import (
     StreamConfig,
 )
 from OTVision.application.configure_logger import logger
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame
@@ -79,13 +80,16 @@ class RtspInputSource(InputSourceDetect):
 
     def __init__(
         self,
-        subject: Subject[FlushEvent],
+        subject_flush: Subject[FlushEvent],
+        subject_new_video_start: Subject[NewVideoStartEvent],
         datetime_provider: DatetimeProvider,
         frame_counter: Counter,
         get_current_config: GetCurrentConfig,
         read_fail_threshold: int = DEFAULT_READ_FAIL_THRESHOLD,
     ) -> None:
-        super().__init__(subject)
+
+        self.subject_flush = subject_flush
+        self.subject_new_video_start = subject_new_video_start
         self._datetime_provider = datetime_provider
         self._stop_capture = False
         self._frame_counter = frame_counter
@@ -131,6 +135,7 @@ class RtspInputSource(InputSourceDetect):
                 if self._outdated:
                     self._current_video_start_time = occurrence
                     self._outdated = False
+                    self._notify_new_video_start_observers()
 
                 yield Frame(
                     data=convert_frame_to_rgb(frame),  # YOLO expects RGB
@@ -140,11 +145,11 @@ class RtspInputSource(InputSourceDetect):
                     occurrence=occurrence,
                 )
                 if self.flush_condition_met():
-                    self._notify()
+                    self._notify_flush_observers()
                     self._outdated = True
                     self._frame_counter.reset()
 
-        self._notify()
+        self._notify_flush_observers()
 
     def _init_video_capture(self, source: str) -> VideoCapture:
         cap = VideoCapture(source)
@@ -189,9 +194,9 @@ class RtspInputSource(InputSourceDetect):
     def flush_condition_met(self) -> bool:
         return self.current_frame_number % self.flush_buffer_size == 0
 
-    def _notify(self) -> None:
-        frame_width = int(self._video_capture.get(CAP_PROP_FRAME_WIDTH))
-        frame_height = int(self._video_capture.get(CAP_PROP_FRAME_HEIGHT))
+    def _notify_flush_observers(self) -> None:
+        frame_width = self._get_width()
+        frame_height = self._get_height()
         frames = (
             self.flush_buffer_size
             if self.current_frame_number % self.flush_buffer_size == 0
@@ -199,7 +204,7 @@ class RtspInputSource(InputSourceDetect):
         )
         duration = timedelta(seconds=round(frames / self.fps))
         output = self.create_output()
-        self._subject.notify(
+        self.subject_flush.notify(
             FlushEvent.create(
                 source=self.rtsp_url,
                 output=output,
@@ -210,6 +215,21 @@ class RtspInputSource(InputSourceDetect):
                 start_time=self._current_video_start_time,
             )
         )
+
+    def _get_width(self) -> int:
+        return int(self._video_capture.get(CAP_PROP_FRAME_WIDTH))
+
+    def _get_height(self) -> int:
+        return int(self._video_capture.get(CAP_PROP_FRAME_HEIGHT))
+
+    def _notify_new_video_start_observers(self) -> None:
+        event = NewVideoStartEvent(
+            output=self.create_output(),
+            width=self._get_width(),
+            height=self._get_height(),
+            fps=self.fps,
+        )
+        self.subject_new_video_start.notify(event)
 
     def create_output(self) -> str:
         output_filename = (

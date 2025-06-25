@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import datetime
 
 
 class DatetimeProvider(ABC):
@@ -10,4 +10,4 @@ class DatetimeProvider(ABC):
 
 class CurrentDatetimeProvider(DatetimeProvider):
     def provide(self) -> datetime:
-        return datetime.now(tz=timezone.utc)
+        return datetime.now()

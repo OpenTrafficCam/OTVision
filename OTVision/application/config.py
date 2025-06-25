@@ -58,6 +58,7 @@ LOG_DIR = "LOG_DIR"
 START_TIME = "START_TIME"
 DETECT_END = "DETECT_END"
 DETECT_START = "DETECT_START"
+WRITE_VIDEO = "WRITE_VIDEO"
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
 """Default length of a video is 15 minutes."""
@@ -289,6 +290,7 @@ class DetectConfig:
     start_time: datetime | None = None
     detect_start: int | None = None
     detect_end: int | None = None
+    write_video: bool = False
 
     def to_dict(self) -> dict:
         expected_duration = (

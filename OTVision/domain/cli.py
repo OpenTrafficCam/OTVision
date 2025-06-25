@@ -32,6 +32,7 @@ class DetectCliArgs(CliArgs):
     start_time: datetime | None = None
     detect_start: int | None = None
     detect_end: int | None = None
+    write_video: bool | None = None
 
     def get_config_file(self) -> Path | None:
         return self.config_file
