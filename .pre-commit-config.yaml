@@ -45,7 +45,7 @@ repos:
         entry: mypy .
         additional_dependencies:
           - av==13.0.0
-          - black==24.8.0
+          - black==25.1.0
           - coremltools==8.2; sys_platform == 'darwin'
           - ffmpeg-python==0.2.0
           - fire==0.7.0
