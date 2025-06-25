@@ -5,9 +5,9 @@ from typing import Any
 from unittest.mock import Mock, call, patch
 
 import pytest
-from cv2 import CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH
 
 from OTVision.application.config import DATETIME_FORMAT, StreamConfig
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.rtsp_input_source import Counter, RtspInputSource
 from OTVision.domain.frame import Frame
@@ -63,7 +63,8 @@ FIFTH_OUTPUT = str(
 
 @dataclass
 class Given:
-    subject: Mock
+    subject_flush_event: Mock
+    subject_new_video_start: Mock
     datetime_provider: Mock
     frame_counter: Counter
     flush_buffer_size: int
@@ -80,8 +81,8 @@ class TestRtspInputSource:
     def test_produce(
         self, mock_video_capture: Mock, mock_convert_frame_to_rgb: Mock
     ) -> None:
-        given = create_given(mock_video_capture, mock_convert_frame_to_rgb)
-        target = create_target_with(given)
+        given = setup_with(create_given(mock_video_capture, mock_convert_frame_to_rgb))
+        target = create_target(given)
         generator = target.produce()
         actual = list()
         actual.append(next(generator))
@@ -130,20 +131,72 @@ class TestRtspInputSource:
             call(FOURTH_FRAME_DATA),
             call(FIFTH_FRAME_DATA),
         ]
-        assert given.video_capture_instance.get.call_args_list == [
-            call(CAP_PROP_FRAME_WIDTH),
-            call(CAP_PROP_FRAME_HEIGHT),
-            call(CAP_PROP_FRAME_WIDTH),
-            call(CAP_PROP_FRAME_HEIGHT),
-            call(CAP_PROP_FRAME_WIDTH),
-            call(CAP_PROP_FRAME_HEIGHT),
+        assert (
+            given.subject_flush_event.notify.call_args_list
+            == create_expected_flush_events()
+        )
+        assert given.subject_new_video_start.notify.call_args_list == [
+            call(create_expected_new_video_start(FIRST_OUTPUT)),
+            call(create_expected_new_video_start(FOURTH_OUTPUT)),
         ]
-        assert given.subject.notify.call_args_list == create_expected_flush_events()
+
+    @patch("OTVision.detect.rtsp_input_source.convert_frame_to_rgb")
+    @patch("OTVision.detect.rtsp_input_source.VideoCapture")
+    def test_reconnecting_on_consecutive_read_fails(
+        self, mock_video_capture: Mock, mock_convert_frame_to_rgb: Mock
+    ) -> None:
+        first_vc_instance = Mock()
+        second_vc_instance = Mock()
+        third_vc_instance = Mock()
+
+        given = create_given(mock_video_capture, mock_convert_frame_to_rgb)
+
+        # This triggers the reconnecting
+        first_vc_instance.read.side_effect = [
+            (True, FIRST_FRAME_DATA),
+            (False, None),
+            (False, None),
+        ]
+
+        # This simulates the first re-connect try that fails
+        second_vc_instance.isOpened.return_value = False
+
+        # This simulates the second re-connect try that succeeds
+        third_vc_instance.read.side_effect = [(True, SECOND_FRAME_DATA)]
+        third_vc_instance.isOpened.return_value = True
+
+        given.video_capture.side_effect = [
+            first_vc_instance,
+            second_vc_instance,
+            third_vc_instance,
+        ]
+
+        target = create_target(given)
+        target._read_fail_threshold = 2
+
+        actual = list()
+        actual.append(target._read_next_frame())  # First read successful
+        actual.append(target._read_next_frame())  # Second read fails
+        actual.append(target._read_next_frame())  # Third read fails
+        actual.append(target._read_next_frame())  # Fourth read successful
+
+        assert actual == [FIRST_FRAME_DATA, None, None, SECOND_FRAME_DATA]
+        first_vc_instance.release.assert_called_once()
+        assert first_vc_instance.read.call_count == 3
+        second_vc_instance.isOpened.assert_called_once()
+        second_vc_instance.read.assert_not_called()
+        assert second_vc_instance.read.call_count == 0
+
+        third_vc_instance.release.assert_not_called()
+        assert third_vc_instance.read.call_count == 1
+
+        assert target._consecutive_read_fails == 0
 
 
 def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
     return Given(
-        subject=Mock(),
+        subject_flush_event=Mock(),
+        subject_new_video_start=Mock(),
         datetime_provider=Mock(),
         frame_counter=Counter(),
         flush_buffer_size=FLUSH_BUFFER_SIZE,
@@ -155,9 +208,17 @@ def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
     )
 
 
-def create_target_with(
-    given: Given, video_capture_is_opened: bool = True
-) -> RtspInputSource:
+def create_target(given: Given) -> RtspInputSource:
+    return RtspInputSource(
+        subject_flush=given.subject_flush_event,
+        subject_new_video_start=given.subject_new_video_start,
+        datetime_provider=given.datetime_provider,
+        frame_counter=given.frame_counter,
+        get_current_config=given.get_current_config,
+    )
+
+
+def setup_with(given: Given, video_capture_is_opened: bool = True) -> Given:
     frames = [
         (True, FIRST_FRAME_DATA),
         (False, SECOND_FRAME_DATA),
@@ -169,6 +230,10 @@ def create_target_with(
     given.video_capture_instance.isOpened.return_value = video_capture_is_opened
     given.video_capture_instance.read.side_effect = frames
     given.video_capture_instance.get.side_effect = [
+        WIDTH,
+        HEIGHT,
+        WIDTH,
+        HEIGHT,
         WIDTH,
         HEIGHT,
         WIDTH,
@@ -197,12 +262,7 @@ def create_target_with(
     given.config.convert.output_fps = OUTPUT_FPS
     given.get_current_config.get.return_value = given.config
 
-    return RtspInputSource(
-        subject=given.subject,
-        datetime_provider=given.datetime_provider,
-        frame_counter=given.frame_counter,
-        get_current_config=given.get_current_config,
-    )
+    return given
 
 
 def create_expected_flush_events() -> list[Any]:
@@ -226,3 +286,7 @@ def create_expected_flush_event(start_time: datetime) -> FlushEvent:
         source_fps=OUTPUT_FPS,
         start_time=start_time,
     )
+
+
+def create_expected_new_video_start(output: str) -> NewVideoStartEvent:
+    return NewVideoStartEvent(output=output, width=WIDTH, height=HEIGHT, fps=OUTPUT_FPS)

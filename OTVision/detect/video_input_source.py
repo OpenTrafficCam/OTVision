@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Generator
 
 import av
+from av.container.input import InputContainer
 from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
@@ -12,6 +13,7 @@ from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
 from OTVision.application.detect.timestamper import Timestamper
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
@@ -38,6 +40,9 @@ class VideoSource(InputSourceDetect):
     and selective frame processing based on configuration parameters.
 
     Args:
+        subject_flush: (Subject[FlushEvent]): Subject for notifying about flush events.
+        subject_new_video_start (Subject[NewVideoStartEvent): Subject for notifying
+            about new video start events.
         get_current_config (GetCurrentConfig): Use case to retrieve current
             configuration.
         frame_rotator (AvVideoFrameRotator): Use to rotate video frames.
@@ -56,13 +61,15 @@ class VideoSource(InputSourceDetect):
 
     def __init__(
         self,
-        subject: Subject[FlushEvent],
+        subject_flush: Subject[FlushEvent],
+        subject_new_video_start: Subject[NewVideoStartEvent],
         get_current_config: GetCurrentConfig,
         frame_rotator: AvVideoFrameRotator,
         timestamper_factory: TimestamperFactory,
         save_path_provider: DetectionFileSavePathProvider,
     ) -> None:
-        super().__init__(subject)
+        self.subject_flush = subject_flush
+        self.subject_new_video_start = subject_new_video_start
         self._frame_rotator = frame_rotator
         self._get_current_config = get_current_config
         self._timestamper_factory = timestamper_factory
@@ -97,13 +104,14 @@ class VideoSource(InputSourceDetect):
                 expected_duration=self._current_config.detect.expected_duration,
             )
             video_fps = get_fps(video_file)
+            self.notify_new_video_start_observers(video_file, video_fps)
             detect_start = self.__get_detect_start_in_frames(video_fps)
             detect_end = self.__get_detect_end_in_frames(video_fps)
             counter = 0
             try:
                 with av.open(str(video_file.absolute())) as container:
                     container.streams.video[0].thread_type = "AUTO"
-                    side_data = container.streams.video[0].side_data
+                    side_data = self._extract_side_data(container)
                     for frame_number, frame in enumerate(
                         container.decode(video=0), start=1
                     ):
@@ -129,9 +137,19 @@ class VideoSource(InputSourceDetect):
                                 }
                             )
                         counter += 1
-                self.notify_observers(video_file, video_fps)
+                self.notify_flush_event_observers(video_file, video_fps)
             except Exception as e:
                 log.error(f"Error processing {video_file}", exc_info=e)
+
+    def _extract_side_data(self, container: InputContainer) -> dict:
+        try:
+            return container.streams.video[0].side_data
+        except AttributeError:
+            log.warning(
+                "No side_data found in video stream. "
+                "Existing rotation will not be applied."
+            )
+            return {}
 
     def __collect_files_to_detect(self) -> list[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
@@ -169,7 +187,9 @@ class VideoSource(InputSourceDetect):
             return False
         return True
 
-    def notify_observers(self, current_video_file: Path, video_fps: float) -> None:
+    def notify_flush_event_observers(
+        self, current_video_file: Path, video_fps: float
+    ) -> None:
         if expected_duration := self._current_config.detect.expected_duration:
             duration = expected_duration
         else:
@@ -180,7 +200,7 @@ class VideoSource(InputSourceDetect):
             current_video_file, start_time=self._start_time
         )
 
-        self._subject.notify(
+        self.subject_flush.notify(
             FlushEvent.create(
                 source=str(current_video_file),
                 output=str(current_video_file),
@@ -191,6 +211,18 @@ class VideoSource(InputSourceDetect):
                 start_time=start_time,
             )
         )
+
+    def notify_new_video_start_observers(
+        self, current_video_file: Path, video_fps: float
+    ) -> None:
+        width, height = get_video_dimensions(current_video_file)
+        event = NewVideoStartEvent(
+            output=str(current_video_file),
+            width=width,
+            height=height,
+            fps=video_fps,
+        )
+        self.subject_new_video_start.notify(event)
 
     def __get_detect_start_in_frames(self, video_fps: float) -> int:
         detect_start = convert_seconds_to_frames(

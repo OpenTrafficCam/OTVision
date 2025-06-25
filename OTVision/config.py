@@ -77,6 +77,7 @@ from OTVision.application.config import (
     VIDEOS,
     WEIGHTS,
     WINDOW,
+    WRITE_VIDEO,
     YOLO,
     Config,
 )
@@ -176,6 +177,7 @@ CONFIG[DETECT][OVERWRITE] = True
 CONFIG[DETECT][HALF_PRECISION] = False
 CONFIG[DETECT][DETECT_START] = None
 CONFIG[DETECT][DETECT_END] = None
+CONFIG[DETECT][WRITE_VIDEO] = False
 
 # TRACK
 CONFIG[TRACK] = {}

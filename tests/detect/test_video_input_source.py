@@ -8,12 +8,15 @@ import pytest
 from av import VideoFrame
 
 from OTVision.application.config import DATETIME_FORMAT, Config, DetectConfig
+from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.video_input_source import VideoSource
 from OTVision.domain.frame import Frame, FrameKeys
 from tests.utils.mocking import create_mocks
 
 FPS = 20
+WIDTH = 800
+HEIGHT = 600
 SIDE_DATA = Mock()
 
 
@@ -25,7 +28,8 @@ def cyclist_mp4(test_data_dir: Path) -> Path:
 @dataclass
 class Given:
     config: Config
-    subject: Mock
+    subject_flush: Mock
+    subject_new_video_start: Mock
     get_current_config: Mock
     frame_rotator: Mock
     timestamper_factory: Mock
@@ -39,6 +43,7 @@ class Given:
     timestamped_frames_per_video: list[list[Frame]]
     video_frames_per_video: list[list[Mock]]
     mock_av: Mock | None = None
+    mock_get_video_dimensions: Mock | None = None
 
     @property
     def all_video_frames(self) -> list[Mock]:
@@ -99,17 +104,24 @@ class TestVideoSource:
                 given.all_rotated_frames, start=1
             )
         ]
+        given.subject_new_video_start.notify.assert_called_once_with(
+            create_new_video_start_event(cyclist_mp4)
+        )
 
-    @patch("OTVision.detect.video_input_source.VideoSource.notify_observers")
+    @patch(
+        "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
+    )
     @patch("OTVision.detect.video_input_source.av")
+    @patch("OTVision.detect.video_input_source.get_video_dimensions")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
     def test_produce_with_multiple_video_files(
         self,
         mock_get_files: Mock,
         mock_get_fps: Mock,
+        mock_get_video_dimensions: Mock,
         mock_av: Mock,
-        mock_notify_observers: Mock,
+        mock_notify_flush_event_observers: Mock,
     ) -> None:
         amount_of_frames_per_video = 60
         input_files = [
@@ -117,12 +129,13 @@ class TestVideoSource:
             Path("Testvideo2_FR20_2020-01-01_00-00-03.mp4"),
         ]
         given = setup_args(
-            mock_get_files,
-            mock_get_fps,
-            input_files,
-            True,
-            amount_of_frames_per_video,
-            mock_av,
+            get_files=mock_get_files,
+            get_fps=mock_get_fps,
+            video_files=input_files,
+            detect_overwrite=True,
+            amount_frames_per_video=amount_of_frames_per_video,
+            mock_av=mock_av,
+            mock_get_video_dimensions=mock_get_video_dimensions,
         )
         target = setup(given)
         actual = list(target.produce())
@@ -146,12 +159,21 @@ class TestVideoSource:
                     given.rotated_frames_per_video[index], start=1
                 )
             ]
-        assert mock_notify_observers.call_args_list == [
+        assert mock_notify_flush_event_observers.call_args_list == [
             call(input_file, FPS) for input_file in input_files
+        ]
+        assert mock_get_video_dimensions.call_args_list == [
+            call(input_files[0]),
+            call(input_files[1]),
+        ]
+        assert given.subject_new_video_start.notify.call_args_list == [
+            call(create_new_video_start_event(input_file)) for input_file in input_files
         ]
 
     @patch("OTVision.detect.video_input_source.log")
-    @patch("OTVision.detect.video_input_source.VideoSource.notify_observers")
+    @patch(
+        "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
+    )
     @patch("OTVision.detect.video_input_source.av")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
@@ -160,18 +182,18 @@ class TestVideoSource:
         mock_get_files: Mock,
         mock_get_fps: Mock,
         mock_av: Mock,
-        mock_notify_observers: Mock,
+        mock_notify_flush_event_observers: Mock,
         mock_log: Mock,
     ) -> None:
         amount_of_frames_per_video = 5
         input_file = Path("Video_without_start_date.mp4")
         given = setup_args(
-            mock_get_files,
-            mock_get_fps,
-            [input_file],
-            True,
-            amount_of_frames_per_video,
-            mock_av,
+            get_files=mock_get_files,
+            get_fps=mock_get_fps,
+            video_files=[input_file],
+            detect_overwrite=True,
+            amount_frames_per_video=amount_of_frames_per_video,
+            mock_av=mock_av,
         )
 
         target = setup(given)
@@ -187,10 +209,13 @@ class TestVideoSource:
         given.frame_rotator.rotate.assert_not_called()
         for timestamper in given.timestampers:
             timestamper.stamp.assert_not_called()
-        mock_notify_observers.assert_not_called()
+        mock_notify_flush_event_observers.assert_not_called()
+        given.subject_new_video_start.notify.assert_not_called()
 
     @patch("OTVision.detect.video_input_source.log")
-    @patch("OTVision.detect.video_input_source.VideoSource.notify_observers")
+    @patch(
+        "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
+    )
     @patch("OTVision.detect.video_input_source.av")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
@@ -199,18 +224,18 @@ class TestVideoSource:
         mock_get_files: Mock,
         mock_get_fps: Mock,
         mock_av: Mock,
-        mock_notify_observers: Mock,
+        mock_notify_flush_event_observers: Mock,
         mock_log: Mock,
         cyclist_mp4: Path,
     ) -> None:
         amount_of_frames_per_video = 5
         given = setup_args(
-            mock_get_files,
-            mock_get_fps,
-            [cyclist_mp4],
-            False,
-            amount_of_frames_per_video,
-            mock_av,
+            get_files=mock_get_files,
+            get_fps=mock_get_fps,
+            video_files=[cyclist_mp4],
+            detect_overwrite=False,
+            amount_frames_per_video=amount_of_frames_per_video,
+            mock_av=mock_av,
         )
 
         target = setup(given)
@@ -226,9 +251,13 @@ class TestVideoSource:
         given.frame_rotator.rotate.assert_not_called()
         for timestamper in given.timestampers:
             timestamper.stamp.assert_not_called()
-        mock_notify_observers.assert_not_called()
+        mock_notify_flush_event_observers.assert_not_called()
+        given.subject_new_video_start.notify.assert_not_called()
 
-    @patch("OTVision.detect.video_input_source.VideoSource.notify_observers")
+    @patch(
+        "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
+    )
+    @patch("OTVision.detect.video_input_source.get_video_dimensions")
     @patch("OTVision.detect.video_input_source.av")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
@@ -237,7 +266,8 @@ class TestVideoSource:
         mock_get_files: Mock,
         mock_get_fps: Mock,
         mock_av: Mock,
-        mock_notify_observers: Mock,
+        mock_get_video_dimensions: Mock,
+        mock_notify_flush_event_observers: Mock,
     ) -> None:
         detect_start = 1
         detect_end = 2
@@ -254,6 +284,7 @@ class TestVideoSource:
             mock_av=mock_av,
             detect_start=detect_start,
             detect_end=detect_end,
+            mock_get_video_dimensions=mock_get_video_dimensions,
         )
 
         target = setup(given)
@@ -289,7 +320,34 @@ class TestVideoSource:
                     frame_number=frame_number,
                     source=input_file,
                 )
-        mock_notify_observers.assert_called_once_with(input_file, FPS)
+        mock_notify_flush_event_observers.assert_called_once_with(input_file, FPS)
+        mock_get_video_dimensions.assert_called_once_with(input_file)
+        given.subject_new_video_start.notify.assert_called_once_with(
+            create_new_video_start_event(input_file)
+        )
+
+    @patch("OTVision.detect.video_input_source.log")
+    def test_extract_side_data_attribute_error(self, mock_log: Mock) -> None:
+        container = MagicMock()
+        video_stream = MagicMock()
+        del video_stream.side_data
+        container.streams.video.__getitem__.return_value = video_stream
+
+        target = VideoSource(
+            subject_flush=Mock(),
+            subject_new_video_start=Mock(),
+            get_current_config=Mock(),
+            frame_rotator=Mock(),
+            timestamper_factory=Mock(),
+            save_path_provider=Mock(),
+        )
+        result = target._extract_side_data(container)
+
+        assert result == {}
+        mock_log.warning.assert_called_once_with(
+            "No side_data found in video stream. "
+            "Existing rotation will not be applied."
+        )
 
 
 def create_expected_frame_call(
@@ -334,7 +392,8 @@ def assert_frame_rotator_called(given: Given) -> None:
 
 def setup(given: Given) -> VideoSource:
     return VideoSource(
-        subject=given.subject,
+        subject_flush=given.subject_flush,
+        subject_new_video_start=given.subject_new_video_start,
         get_current_config=given.get_current_config,
         frame_rotator=given.frame_rotator,
         timestamper_factory=given.timestamper_factory,
@@ -351,6 +410,7 @@ def setup_args(
     mock_av: Mock | None = None,
     detect_start: int | None = None,
     detect_end: int | None = None,
+    mock_get_video_dimensions: Mock | None = None,
 ) -> Given:
     config = create_config(video_files, detect_overwrite, detect_start, detect_end)
     detection_files = [_file.with_suffix(".otdet") for _file in video_files]
@@ -375,9 +435,13 @@ def setup_args(
 
     total_rotated_frames = list(chain.from_iterable(rotated_frames_per_video))
 
+    if mock_get_video_dimensions is not None:
+        mock_get_video_dimensions.return_value = (WIDTH, HEIGHT)
+
     return Given(
         config=config,
-        subject=Mock(),
+        subject_flush=Mock(),
+        subject_new_video_start=Mock(),
         get_current_config=create_get_current_config(config),
         frame_rotator=create_frame_rotator(total_rotated_frames),
         timestamper_factory=create_timestamper_factory(timestampers_per_video),
@@ -391,6 +455,7 @@ def setup_args(
         rotated_frames_per_video=rotated_frames_per_video,
         timestamped_frames_per_video=timestamped_frames_per_video,
         mock_av=mock_av,
+        mock_get_video_dimensions=mock_get_video_dimensions,
     )
 
 
@@ -448,3 +513,7 @@ def configure_mock_av(mock_av: Mock, video_frames_per_video: list[list[Mock]]) -
     context_manager_container.decode.side_effect = [
         iter(video_frames) for video_frames in video_frames_per_video
     ]
+
+
+def create_new_video_start_event(output: Path) -> NewVideoStartEvent:
+    return NewVideoStartEvent(output=str(output), width=WIDTH, height=HEIGHT, fps=FPS)
