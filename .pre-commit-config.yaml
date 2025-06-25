@@ -92,4 +92,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - '2'
+          - "2"
