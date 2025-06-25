@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Generator
 
-from OTVision.abstraction.observer import Observable
-from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.domain.frame import Frame
 
 
-class InputSourceDetect(Observable[FlushEvent], ABC):
+class InputSourceDetect(ABC):
     """Interface for input sources that generate frames and notify about flush events.
 
     This class combines the Observable pattern for flush events with frame generation

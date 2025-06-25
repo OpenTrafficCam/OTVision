@@ -2,7 +2,9 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from OTVision import version
+from OTVision import dataformat, version
+from OTVision.application.config import TrackConfig
+from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.dataformat import (
     EXPECTED_DURATION,
     FILENAME,
@@ -16,6 +18,7 @@ from OTVision.dataformat import (
     TRACKING,
     VIDEO,
 )
+from OTVision.detect.otdet import parse_video_length
 from OTVision.helpers.files import (
     FULL_FILE_NAME_PATTERN,
     HOSTNAME,
@@ -30,12 +33,27 @@ MISSING_EXPECTED_DURATION = timedelta(minutes=15)
 
 
 class TimeThresholdFrameGroupParser(FrameGroupParser):
+    @property
+    def config(self) -> TrackConfig:
+        return self._get_current_config.get().track
+
+    @property
+    def _tracker_data(self) -> dict:
+        return tracker_metadata(
+            sigma_l=self.config.sigma_l,
+            sigma_h=self.config.sigma_h,
+            sigma_iou=self.config.sigma_iou,
+            t_min=self.config.t_min,
+            t_miss_max=self.config.t_miss_max,
+        )
 
     def __init__(
-        self, tracker_data: dict, time_without_frames: timedelta = timedelta(minutes=1)
+        self,
+        get_current_config: GetCurrentConfig,
+        time_without_frames: timedelta = timedelta(minutes=1),
     ):
+        self._get_current_config = get_current_config
         self._time_without_frames = time_without_frames
-        self._tracker_data: dict = tracker_data
         self._id_count = 0
 
     def new_id(self) -> int:
@@ -86,8 +104,7 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def parse_video_length(self, metadata: dict) -> timedelta:
         video_length = metadata[VIDEO][LENGTH]
-        time = datetime.strptime(video_length, "%H:%M:%S")
-        return timedelta(hours=time.hour, minutes=time.minute, seconds=time.second)
+        return parse_video_length(video_length)
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         metadata_by_file = dict(frame_group.metadata_by_file)
@@ -125,3 +142,16 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
                 last_group = current_group
         merged_groups.append(last_group)
         return merged_groups
+
+
+def tracker_metadata(
+    sigma_l: float, sigma_h: float, sigma_iou: float, t_min: float, t_miss_max: float
+) -> dict:
+    return {
+        dataformat.NAME: "IOU",
+        dataformat.SIGMA_L: sigma_l,
+        dataformat.SIGMA_H: sigma_h,
+        dataformat.SIGMA_IOU: sigma_iou,
+        dataformat.T_MIN: t_min,
+        dataformat.T_MISS_MAX: t_miss_max,
+    }

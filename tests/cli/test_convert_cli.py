@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 import yaml
 
-from OTVision.config import (
+from OTVision.application.config import (
     CONVERT,
     DELETE_INPUT,
     FPS_FROM_FILENAME,

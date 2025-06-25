@@ -94,31 +94,22 @@ def test_get_files_dirPathAsListOfPathObjectAs1stParam_returnsCorrectList(
     assert xml_file_path in files
 
 
-def test_get_files_dirPathsAsListOfString_RaiseTypeError(
+def test_get_files_supports_strings(
     test_dir_with_files: Path,
 ) -> None:
-    list_of_str = [
-        str(Path(test_dir_with_files, "img_1.PNG")),
-        Path(test_dir_with_files, "img_2.png"),
-        Path(test_dir_with_files, "img_3.PnG"),
-    ]
+    first_image = Path(test_dir_with_files, "img_1.PNG")
+    second_image = Path(test_dir_with_files, "img_2.png")
+    third_image = Path(test_dir_with_files, "img_3.PnG")
+    list_of_str = [str(first_image), str(second_image), str(third_image)]
 
-    with pytest.raises(TypeError):
-        get_files(paths=list_of_str)  # type: ignore
+    files = get_files(paths=list_of_str)
+    assert set(files) == {first_image, second_image, third_image}
 
 
 def test_get_files_dirPathsAsParam_RaiseTypeError(test_dir_with_files: Path) -> None:
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         get_files(
             paths=test_dir_with_files,  # type: ignore
-            filetypes=[".json", ".xml"],
-        )
-
-
-def test_get_files_dirPathsAsString_RaiseTypeError(test_dir_with_files: Path) -> None:
-    with pytest.raises(TypeError):
-        get_files(
-            paths=str(test_dir_with_files),  # type: ignore
             filetypes=[".json", ".xml"],
         )
 
@@ -138,7 +129,7 @@ def test_get_files_invalidTypeListOfNumbersAs1stParam_RaiseTypeError() -> None:
 
 def test_get_files_dictAs1stParam_RaiseTypeError() -> None:
     _dict: dict = {}
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         get_files(paths=_dict, filetypes=[".json"])  # type: ignore
 
 

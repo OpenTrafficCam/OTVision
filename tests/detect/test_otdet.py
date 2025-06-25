@@ -5,9 +5,21 @@ import pytest
 
 from OTVision import dataformat, version
 from OTVision.dataformat import CLASS, CONFIDENCE, H, W, X, Y
-from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig, OtdetBuilderError
+from OTVision.detect.otdet import (
+    OtdetBuilder,
+    OtdetBuilderConfig,
+    OtdetBuilderError,
+    parse_video_length,
+    serialize_video_length,
+)
 from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame
+
+GIVEN_ACTUAL_DURATION = timedelta(
+    hours=36, seconds=33, milliseconds=12, microseconds=15
+)
+EXPECTED_VIDEO_LENGTH = "36:00:33"
+DETECTED_FRAME_OUTPUT = "path/to/output.mp4"
 
 
 def create_expected_video_metadata(
@@ -23,7 +35,7 @@ def create_expected_video_metadata(
         dataformat.ACTUAL_FPS: config.actual_fps,
         dataformat.NUMBER_OF_FRAMES: number_of_frames,
         dataformat.RECORDED_START_DATE: config.recorded_start_date.timestamp(),
-        dataformat.LENGTH: str(config.actual_duration),
+        dataformat.LENGTH: EXPECTED_VIDEO_LENGTH,
     }
     if config.expected_duration:
         video_metadata[dataformat.EXPECTED_DURATION] = int(
@@ -98,6 +110,7 @@ def create_detected_frame(source: str, frame_number: int) -> DetectedFrame:
     )
     return DetectedFrame(
         source=source,
+        output=DETECTED_FRAME_OUTPUT,
         no=frame_number,
         detections=[detection],
         occurrence=datetime(2020, 1, 1, 12, 0, 10),
@@ -120,7 +133,7 @@ class TestOtdetBuilder:
             video_width=1920,
             video_height=1080,
             expected_duration=timedelta(seconds=300),
-            actual_duration=timedelta(seconds=33),
+            actual_duration=GIVEN_ACTUAL_DURATION,
             recorded_fps=30.0,
             recorded_start_date=datetime(2020, 1, 1, 12, 0, 0),
             actual_fps=29.97,
@@ -254,4 +267,48 @@ class TestOtdetBuilder:
             dataformat.DATA: {},
         }
 
+        assert actual == expected
+
+
+class TestSerializeVideoLength:
+    @pytest.mark.parametrize(
+        "given_duration, expected",
+        [
+            (
+                timedelta(hours=2, seconds=1, microseconds=30, milliseconds=50),
+                "2:00:01",
+            ),
+            (
+                timedelta(
+                    days=1,
+                    hours=29,
+                    minutes=90,
+                    seconds=29,
+                    milliseconds=1500,
+                ),
+                "54:30:30",
+            ),
+        ],
+    )
+    def test_format(self, given_duration: timedelta, expected: str) -> None:
+        """
+        #Bug https://openproject.platomo.de/wp/7647
+        """
+        actual = serialize_video_length(given_duration)
+        assert actual == expected
+
+
+class TestParseVideoLength:
+    @pytest.mark.parametrize(
+        "given_duration, expected",
+        [
+            ("54:30:30", timedelta(hours=54, minutes=30, seconds=30)),
+            ("2:00:01.1023", timedelta(hours=2, minutes=0, seconds=1)),
+        ],
+    )
+    def test_parse(self, given_duration: str, expected: timedelta) -> None:
+        """
+        #Bug https://openproject.platomo.de/wp/7647
+        """
+        actual = parse_video_length(given_duration)
         assert actual == expected

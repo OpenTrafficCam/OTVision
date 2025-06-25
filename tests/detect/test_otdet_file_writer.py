@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
@@ -11,7 +12,6 @@ from OTVision.application.detect.detection_file_save_path_provider import (
     DetectionFileSavePathProvider,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.config import Config, DetectConfig
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBufferEvent,
     SourceMetadata,
@@ -33,7 +33,8 @@ class TestOtdetFileWriter:
         return DetectedFrameBufferEvent(
             frames=[],
             source_metadata=SourceMetadata(
-                source="test_video.mp4",
+                source="test_video_source.mp4",
+                output="test_video_output.mp4",
                 width=1920,
                 height=1080,
                 duration=timedelta(seconds=10),
@@ -80,7 +81,7 @@ class TestOtdetFileWriter:
             OtdetBuilderConfig(
                 conf=expected_detect_config.confidence,
                 iou=expected_detect_config.iou,
-                source=expected_source_metadata.source,
+                source=expected_source_metadata.output,
                 video_width=expected_source_metadata.width,
                 video_height=expected_source_metadata.height,
                 expected_duration=EXPECTED_DURATION,
@@ -101,7 +102,7 @@ class TestOtdetFileWriter:
         )
         given_otdet_builder.build.assert_called_once_with(given_event.frames)
         given_save_path_provider.provide.assert_called_once_with(
-            expected_source_metadata.source
+            expected_source_metadata.output
         )
         mock_write_json.assert_called_once_with(
             OTDET,

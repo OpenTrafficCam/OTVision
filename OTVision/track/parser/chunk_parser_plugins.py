@@ -62,6 +62,7 @@ class JsonChunkParser(ChunkParser):
                 no=int(key) + frame_offset,
                 occurrence=occurrence,
                 source=str(file),
+                output=str(file),
                 detections=detections,
                 image=None,
             )

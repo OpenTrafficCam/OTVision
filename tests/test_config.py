@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from OTVision import config
+from OTVision.application.config import Config
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ class TestConfig:
     def test_default_config_from_parser_identical_to_dict(
         self, default_config: dict
     ) -> None:
-        result = config.Config().to_dict()
+        result = Config().to_dict()
         assert result == default_config
 
     def test_parse_user_config_overwrite_default(

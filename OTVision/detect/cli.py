@@ -2,7 +2,7 @@ from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from OTVision.config import DATETIME_FORMAT
+from OTVision.application.config import DATETIME_FORMAT
 from OTVision.domain.cli import CliParseError, DetectCliArgs, DetectCliParser
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
@@ -128,6 +128,12 @@ class ArgparseDetectCliParser(DetectCliParser):
             help="Specify end of detection in seconds.",
             required=False,
         )
+        self._parser.add_argument(
+            "--write-video",
+            default=None,
+            help="Write video to output folder. Not supported on Windows.",
+            required=False,
+        )
 
     def parse(self) -> DetectCliArgs:
         args = self._parser.parse_args(self._argv)
@@ -156,6 +162,9 @@ class ArgparseDetectCliParser(DetectCliParser):
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
+            write_video=(
+                bool(args.write_video) if args.write_video is not None else None
+            ),
         )
 
     def _parse_start_time(self, start_time: str | None) -> datetime | None:
@@ -172,10 +181,10 @@ class ArgparseDetectCliParser(DetectCliParser):
                 )
             )
 
-    def _parse_files(self, files: list[str] | None) -> list[Path] | None:
+    def _parse_files(self, files: list[str] | None) -> list[str] | None:
         if files is None:
             return None
 
         result = [Path(file).expanduser() for file in files]
         check_if_all_paths_exist(result)
-        return result
+        return list(map(str, result))

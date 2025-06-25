@@ -102,7 +102,7 @@ class OtdetBuilder:
             dataformat.ACTUAL_FPS: self.config.actual_fps,
             dataformat.NUMBER_OF_FRAMES: number_of_frames,
             dataformat.RECORDED_START_DATE: self.config.recorded_start_date.timestamp(),
-            dataformat.LENGTH: str(self.config.actual_duration),
+            dataformat.LENGTH: serialize_video_length(self.config.actual_duration),
         }
         if self.config.expected_duration is not None:
             video_config[dataformat.EXPECTED_DURATION] = int(
@@ -127,3 +127,56 @@ class OtdetBuilder:
             dataformat.DETECT_START: self.config.detect_start,
             dataformat.DETECT_END: self.config.detect_end,
         }
+
+
+def serialize_video_length(video_length: timedelta) -> str:
+    """Serialize a timedelta object to a video length string in 'H+:MM:SS' format.
+
+    Args:
+        video_length (timedelta): The video length to serialize.
+
+    Returns:
+        str: The video length represented in 'H+:MM:SS' format.
+    """
+    seconds_per_hour = 3600
+    seconds_per_minute = 60
+
+    total_seconds = int(video_length.total_seconds())
+    hours = total_seconds // seconds_per_hour
+    minutes = (total_seconds % seconds_per_hour) // seconds_per_minute
+    seconds = total_seconds % seconds_per_minute
+    return f"{hours}:{minutes:02}:{seconds:02}"
+
+
+class VideoLengthParseError(Exception):
+    """Exception raised for errors in parsing video length strings."""
+
+    pass
+
+
+def parse_video_length(video_length: str) -> timedelta:
+    """Parse a video length string that is in either 'H+:MM:SS' or 'H+:MM:SS.mmmuuu'
+    format into a timedelta object ignoring milliseconds and microseconds.
+
+    Args:
+        video_length (str): A string representing the video length in or
+            'H+:MM:SS.mmmuuu' or 'H+:MM:SS.mmmuuu' format.
+
+    Returns:
+        timedelta: A timedelta object representing the parsed video length ignoring
+            milliseconds and microseconds.
+
+    Raises:
+        VideoLengthParseError: If the input string is not in the expected format.
+    """
+
+    try:
+        hours, minutes, seconds = video_length.strip().split(":")
+        return timedelta(
+            hours=int(hours), minutes=int(minutes), seconds=int(float(seconds))
+        )
+    except ValueError as cause:
+        raise VideoLengthParseError(
+            f"Could not parse video length '{video_length}'. "
+            "Expected format 'HH:MM:SS'."
+        ) from cause

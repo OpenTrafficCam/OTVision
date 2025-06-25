@@ -2,9 +2,12 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+
+import pytest
 
 from OTVision import version
+from OTVision.application.config import Config
 from OTVision.dataformat import (
     EXPECTED_DURATION,
     FILENAME,
@@ -24,6 +27,7 @@ from OTVision.track.model.filebased.frame_group import FrameGroup
 from OTVision.track.parser.frame_group_parser_plugins import (
     MISSING_START_DATE,
     TimeThresholdFrameGroupParser,
+    tracker_metadata,
 )
 from tests.track.helper.data_builder import (
     DEFAULT_HOSTNAME,
@@ -31,24 +35,22 @@ from tests.track.helper.data_builder import (
     DataBuilder,
 )
 
+DEFAULT_CONFIG = Config()
+THRESHOLD = timedelta(minutes=1)
+EXPECTED_TRACK_METADATA = tracker_metadata(
+    sigma_l=DEFAULT_CONFIG.track.sigma_l,
+    sigma_h=DEFAULT_CONFIG.track.sigma_h,
+    sigma_iou=DEFAULT_CONFIG.track.sigma_iou,
+    t_min=DEFAULT_CONFIG.track.t_min,
+    t_miss_max=DEFAULT_CONFIG.track.t_miss_max,
+)
 
-class TestTimeThresholdFrameGroupParser(unittest.TestCase):
 
-    @property
-    def threshold(self) -> timedelta:
-        return timedelta(minutes=1)
-
-    @property
-    def tracker_config(self) -> dict:
-        return {"sigma_test": 42, "alpha_0": 1337}
-
-    def init(self) -> TimeThresholdFrameGroupParser:
-        return TimeThresholdFrameGroupParser(
-            tracker_data=self.tracker_config, time_without_frames=self.threshold
-        )
+class TestTimeThresholdFrameGroupParser:
 
     def test_convert(self) -> None:
-        parser = self.init()
+        given = create_given()
+        parser = create_target(given)
 
         order_key = "order-key"
         file_path = Path(f"{order_key}/{DEFAULT_HOSTNAME}_2022-05-04_12-00-01.otdet")
@@ -75,7 +77,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
         assert expected == result
 
     def test_merge_empty(self) -> None:
-        parser = self.init()
+        parser = create_target(create_given())
         assert [] == parser.merge([])
 
     def dummy_frame_groups(
@@ -112,7 +114,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             files=[file_b],
             metadata_by_file=metadata_b,
         )
-        return (frame_group_a, frame_group_b)
+        return frame_group_a, frame_group_b
 
     def test_merge_to_single_group(self) -> None:
         frame_group_a, frame_group_b = self.dummy_frame_groups(
@@ -131,7 +133,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             },
         )
 
-        parser = self.init()
+        parser = create_target(create_given())
         result_1 = parser.merge([frame_group_a, frame_group_b])
         # check merge applies correct ordering
         result_2 = parser.merge([frame_group_b, frame_group_a])
@@ -141,10 +143,10 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
 
     def test_merge_threshold_exceeded(self) -> None:
         frame_group_a, frame_group_b = self.dummy_frame_groups(
-            time_diff=self.threshold + timedelta(microseconds=1)
+            time_diff=THRESHOLD + timedelta(microseconds=1)
         )
 
-        parser = self.init()
+        parser = create_target(create_given())
         result_1 = parser.merge([frame_group_a, frame_group_b])
         # check merge applies correct ordering
         result_2 = parser.merge([frame_group_b, frame_group_a])
@@ -160,7 +162,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             hostname_b="hostB",
         )
 
-        parser = self.init()
+        parser = create_target(create_given())
         result_1 = parser.merge([frame_group_a, frame_group_b])
         # check merge applies correct ordering
         result_2 = parser.merge([frame_group_b, frame_group_a])
@@ -173,7 +175,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
         frame_group_a, frame_group_b = self.dummy_frame_groups(
             time_diff=timedelta(microseconds=5)
         )
-        parser = self.init()
+        parser = create_target(create_given())
         merged = parser.merge([frame_group_a, frame_group_b])
 
         expected_metadata = self.expected_metadata_merged(frame_group_a, frame_group_b)
@@ -187,16 +189,16 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             VIDEO: {FILENAME: f"order-key/{hostname}_2022-05-04_13-00-01.otdet"}
         }
 
-        parser = self.init()
+        parser = create_target(create_given())
         result = parser.get_hostname(metadata)
 
         assert hostname == result
 
     def test_get_hostname_error(self) -> None:
         invalid_metadata = {VIDEO: {FILENAME: "somevideofile.mp4"}}
-        parser = self.init()
+        parser = create_target(create_given())
 
-        with self.assertRaises(InproperFormattedFilename):
+        with pytest.raises(InproperFormattedFilename):
             parser.get_hostname(invalid_metadata)
 
     def expected_metadata_merged(
@@ -213,7 +215,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
                     OTVISION_VERSION: version.otvision_version(),
                     FIRST_TRACKED_VIDEO_START: frame_group_a.start_date.timestamp(),
                     LAST_TRACKED_VIDEO_END: frame_group_b.end_date.timestamp(),
-                    TRACKER: self.tracker_config,
+                    TRACKER: EXPECTED_TRACK_METADATA,
                 },
             },
             file_b: {
@@ -223,7 +225,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
                     OTVISION_VERSION: version.otvision_version(),
                     FIRST_TRACKED_VIDEO_START: frame_group_a.start_date.timestamp(),
                     LAST_TRACKED_VIDEO_END: frame_group_b.end_date.timestamp(),
-                    TRACKER: self.tracker_config,
+                    TRACKER: EXPECTED_TRACK_METADATA,
                 },
             },
         }
@@ -238,13 +240,13 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             }
         }
 
-        parser = self.init()
+        parser = create_target(create_given())
         assert date == parser.extract_start_date_from(metadata)
 
     def test_extract_start_date_from_missing(self) -> None:
         metadata: dict = {VIDEO: {}}
 
-        parser = self.init()
+        parser = create_target(create_given())
         assert MISSING_START_DATE == parser.extract_start_date_from(metadata)
 
     def test_extract_expected_duration_from(self) -> None:
@@ -256,7 +258,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             }
         }
 
-        parser = self.init()
+        parser = create_target(create_given())
         assert time == parser.extract_expected_duration_from(metadata)
 
     def test_extract_expected_duration_from_missing(self) -> None:
@@ -265,14 +267,14 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
         expected_time = timedelta(seconds=seconds)
         metadata: dict = {VIDEO: {LENGTH: time, EXPECTED_DURATION: None}}
 
-        parser = self.init()
+        parser = create_target(create_given())
         assert expected_time == parser.extract_expected_duration_from(metadata)
 
     def test_updated_metadata_copy(self) -> None:
         frame_group_a, frame_group_b = self.dummy_frame_groups(
             time_diff=timedelta(seconds=5)
         )
-        parser = self.init()
+        parser = create_target(create_given())
         merged = parser.merge([frame_group_a, frame_group_b])[0]
 
         expected = FrameGroup(
@@ -300,7 +302,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
 
         mock_parse.side_effect = [frame_group_a, frame_group_b]
 
-        instance = TimeThresholdFrameGroupParser(self.tracker_config, self.threshold)
+        instance = TimeThresholdFrameGroupParser(create_given(), THRESHOLD)
 
         result = instance.process_all([file_a, file_b])
 
@@ -329,7 +331,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
                 OTVISION_VERSION: version.otvision_version(),
                 FIRST_TRACKED_VIDEO_START: frame_group.start_date.timestamp(),
                 LAST_TRACKED_VIDEO_END: frame_group.end_date.timestamp(),
-                TRACKER: self.tracker_config,
+                TRACKER: EXPECTED_TRACK_METADATA,
             },
         }
 
@@ -342,7 +344,7 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             time_diff=timedelta(minutes=5)
         )
         mock_parse.side_effect = [frame_group_a, frame_group_b]
-        instance = TimeThresholdFrameGroupParser(self.tracker_config, self.threshold)
+        instance = TimeThresholdFrameGroupParser(create_given(), THRESHOLD)
 
         result = instance.process_all([file_a, file_b])
 
@@ -370,3 +372,13 @@ class TestTimeThresholdFrameGroupParser(unittest.TestCase):
             ),
         ]
         assert expected == result
+
+
+def create_given() -> Mock:
+    given = Mock()
+    given.get.return_value = DEFAULT_CONFIG
+    return given
+
+
+def create_target(given: Mock) -> TimeThresholdFrameGroupParser:
+    return TimeThresholdFrameGroupParser(given)

@@ -26,14 +26,37 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Fetch all tags
+        run: git fetch --tags --unshallow
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Get latest tag and create new version
+        id: get_version
+        run: |
+          # Get the latest tag in format v*.*.* (ignoring tags like "nightly")
+          LATEST_TAG="$(git tag -l "v*.*.*" | sort -V | tail -n 1 || echo 'v0.0.0')"
+          # Extract version without 'v' prefix
+          VERSION="${LATEST_TAG#v}"
+          # Split version into parts
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          # Increment patch version
+          PATCH="$((PATCH + 1))"
+          # Create new version with incremented patch
+          INCREMENTED_VERSION="$MAJOR.$MINOR.$PATCH"
+          DATE_TIME="$(date +'%Y%m%d%H%M%S')"
+          NEW_VERSION="${INCREMENTED_VERSION}a${DATE_TIME}"
+          echo "Final version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Update Python Package Version
         uses: platomo/update-version-py-action@v1.0.1
         with:
-          version: nightly
+          version: ${{ steps.get_version.outputs.new_version }}
           file-path: "OTVision"
       - name: Install pypa/build
         shell: bash

@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import OTVision.config as config
+from OTVision.application.config import LOG, LOG_LEVEL_CONSOLE, LOG_LEVEL_FILE
 from OTVision.helpers.log import DEFAULT_LOG_FILE, LOGGER_NAME, VALID_LOG_LEVELS, log
 from OTVision.transform.reference_points_picker import ReferencePointsPicker
 
@@ -49,7 +50,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     # Add console handler to existing logger instance
 
     if args.log_level_console is None:
-        log_level_console = config.CONFIG[config.LOG][config.LOG_LEVEL_CONSOLE]
+        log_level_console = config.CONFIG[LOG][LOG_LEVEL_CONSOLE]
     else:
         log_level_console = args.log_level_console
 
@@ -58,7 +59,7 @@ def _configure_logger(args: argparse.Namespace) -> logging.Logger:
     # Add file handler to existing logger instance
 
     if args.log_level_file is None:
-        log_level_file = config.CONFIG[config.LOG][config.LOG_LEVEL_FILE]
+        log_level_file = config.CONFIG[LOG][LOG_LEVEL_FILE]
     else:
         log_level_file = args.log_level_file
 
