@@ -1,12 +1,11 @@
-import unittest.mock as mock
 from pathlib import Path
 from typing import Callable
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 import yaml
 
-from OTVision.config import (
+from OTVision.application.config import (
     CONVERT,
     DELETE_INPUT,
     FPS_FROM_FILENAME,
@@ -118,18 +117,6 @@ def convert_cli() -> Callable:
     return convert_cli
 
 
-@pytest.fixture()
-def convert() -> Callable:
-    """Imports and returns the main from OTVision.convert.convert.py
-
-    Returns:
-        Callable: main from OTVision.convert.convert.py
-    """
-    from OTVision import convert
-
-    return convert
-
-
 class TestConvertCLI:
     @pytest.mark.parametrize(
         argnames="test_data",
@@ -140,72 +127,67 @@ class TestConvertCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
+    @patch("convert.convert")
     def test_pass_convert_cli(
-        self, test_data: dict, convert_cli: Callable, convert: Callable
+        self, mock_convert: Mock, test_data: dict, convert_cli: Callable
     ) -> None:
-        convert = mock.create_autospec(convert)
+        command = [
+            *test_data["paths"][PASSED].split(),
+            *test_data["input_fps"][PASSED].split(),
+            *test_data["fps_from_filename"][PASSED].split(),
+            *test_data["overwrite"][PASSED].split(),
+            *test_data["delete_input"][PASSED].split(),
+            *test_data["config"][PASSED].split(),
+            *test_data["rotation"][PASSED].split(),
+            LOGFILE_OVERWRITE_CMD,
+        ]
 
-        with patch("OTVision.convert") as mock_convert:
-            command = [
-                *test_data["paths"][PASSED].split(),
-                *test_data["input_fps"][PASSED].split(),
-                *test_data["fps_from_filename"][PASSED].split(),
-                *test_data["overwrite"][PASSED].split(),
-                *test_data["delete_input"][PASSED].split(),
-                *test_data["config"][PASSED].split(),
-                *test_data["rotation"][PASSED].split(),
-                LOGFILE_OVERWRITE_CMD,
-            ]
+        convert_cli(argv=list(filter(None, command)))
 
-            convert_cli(argv=list(filter(None, command)))
-
-            mock_convert.assert_called_once_with(
-                paths=test_data["paths"][EXPECTED],
-                input_fps=test_data["input_fps"][EXPECTED],
-                fps_from_filename=test_data["fps_from_filename"][EXPECTED],
-                overwrite=test_data["overwrite"][EXPECTED],
-                delete_input=test_data["delete_input"][EXPECTED],
-                rotation=test_data["rotation"][EXPECTED],
-            )
+        mock_convert.assert_called_once_with(
+            paths=test_data["paths"][EXPECTED],
+            input_fps=test_data["input_fps"][EXPECTED],
+            fps_from_filename=test_data["fps_from_filename"][EXPECTED],
+            overwrite=test_data["overwrite"][EXPECTED],
+            delete_input=test_data["delete_input"][EXPECTED],
+            rotation=test_data["rotation"][EXPECTED],
+        )
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
+    @patch("convert.convert")
     def test_fail_wrong_types_passed_to_convert_cli(
         self,
+        mock_convert: Mock,
         convert_cli: Callable,
-        convert: Callable,
         capsys: pytest.CaptureFixture,
         test_fail_data: dict,
     ) -> None:
-        convert = mock.create_autospec(convert)
-
-        with patch("OTVision.convert"):
-            with pytest.raises(SystemExit) as e:
-                command = [*test_fail_data[PASSED].split()]
-                convert_cli(argv=list(filter(None, command)))
-            assert e.value.code == 2
-            captured = capsys.readouterr()
-            assert test_fail_data["error_msg_part"] in captured.err
+        with pytest.raises(SystemExit) as e:
+            command = [*test_fail_data[PASSED].split()]
+            convert_cli(argv=list(filter(None, command)))
+        assert e.value.code == 2
+        captured = capsys.readouterr()
+        assert test_fail_data["error_msg_part"] in captured.err
+        mock_convert.assert_not_called()
 
     @pytest.mark.parametrize(PASSED, argvalues=["--config foo", "--paths foo"])
+    @patch("convert.convert")
     def test_fail_not_existing_path_passed_to_convert_cli(
-        self, convert: Callable, convert_cli: Callable, passed: str
+        self, mock_convert: Mock, convert_cli: Callable, passed: str
     ) -> None:
-        convert = mock.create_autospec(convert)
+        with pytest.raises(FileNotFoundError):
+            command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
+            convert_cli(argv=list(filter(None, command)))
+        mock_convert.assert_not_called()
 
-        with patch("OTVision.convert"):
-            with pytest.raises(FileNotFoundError):
-                command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
-                convert_cli(argv=list(filter(None, command)))
-
+    @patch("convert.convert")
     def test_fail_no_paths_passed_to_convert_cli(
-        self, convert: Callable, convert_cli: Callable
+        self, mock_convert: Mock, convert_cli: Callable
     ) -> None:
-        convert = mock.create_autospec(convert)
-
-        with patch("OTVision.convert"):
-            error_msg = (
-                "No paths have been passed as command line args."
-                + "No paths have been defined in the user config."
-            )
-            with pytest.raises(OSError, match=error_msg):
-                convert_cli(argv=[LOGFILE_OVERWRITE_CMD])
+        error_msg = (
+            "No paths have been passed as command line args."
+            + "No paths have been defined in the user config."
+        )
+        with pytest.raises(OSError, match=error_msg):
+            convert_cli(argv=[LOGFILE_OVERWRITE_CMD])
+        mock_convert.assert_not_called()

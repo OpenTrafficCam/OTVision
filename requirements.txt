@@ -1,17 +1,18 @@
 av==13.0.0
+ffmpeg-python==0.2.0
 fire==0.7.0
 geopandas==1.0.1
 ijson==3.3.0
-more-itertools==10.5.0
+more-itertools==10.7.0
 moviepy==1.0.3
-numpy==1.26.4 # ultralytics requires numpy < 2.0.0
-opencv-python==4.9.0.80
-pandas==2.2.2
+numpy==2.1.1; sys_platform != 'win32' # ultralytics requires numpy <= 2.1.1
+numpy==1.26.4; sys_platform == 'win32' # ultralytics requires numpy <= 2.1.1; torch on windows is built with numpy < 2
+opencv-python==4.10.0.84 # only upgrade when https://github.com/opencv/opencv/issues/27091 is resolved
+pandas==2.2.3
 PyYAML==6.0.2
-setuptools==74.0.0
 # Follow instructions at https://pytorch.org to install torch with CUDA
 torch==2.3.1 #  NOTE: Omit if using torch with CUDA and install manually
 torchvision==0.18.1 # NOTE: Omit if using torch with CUDA and install manually
-tqdm==4.66.5
+tqdm==4.67.1
 ujson==5.10.0
-ultralytics==8.3.74
+ultralytics==8.3.94

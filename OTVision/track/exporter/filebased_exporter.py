@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from OTVision.config import CONFIG, DEFAULT_FILETYPE, TRACK
+from OTVision.application.config import DEFAULT_FILETYPE, TRACK
+from OTVision.config import CONFIG
 from OTVision.track.model.filebased.frame_chunk import FinishedChunk
 from OTVision.track.model.filebased.frame_group import get_output_file
 from OTVision.track.model.track_exporter import FinishedTracksExporter

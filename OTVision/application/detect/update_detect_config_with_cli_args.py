@@ -1,5 +1,5 @@
+from OTVision.application.config import Config, DetectConfig, YoloConfig, _LogConfig
 from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
-from OTVision.config import Config, DetectConfig, YoloConfig, _LogConfig
 from OTVision.domain.cli import DetectCliArgs
 
 
@@ -20,6 +20,7 @@ class UpdateDetectConfigWithCliArgs:
             undistort=config.undistort,
             transform=config.transform,
             gui=config.gui,
+            stream=config.stream,
         )
 
     def _update_detect_config(
@@ -82,6 +83,11 @@ class UpdateDetectConfigWithCliArgs:
                 cli_args.detect_end
                 if cli_args.detect_end is not None
                 else detect_config.detect_end
+            ),
+            write_video=(
+                cli_args.write_video
+                if cli_args.write_video is not None
+                else detect_config.write_video
             ),
         )
 

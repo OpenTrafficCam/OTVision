@@ -1,12 +1,10 @@
-import unittest.mock as mock
 from pathlib import Path
 from typing import Callable
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
-import yaml
 
-from OTVision.config import (
+from OTVision.application.config import (
     IOU,
     OVERWRITE,
     PATHS,
@@ -16,15 +14,22 @@ from OTVision.config import (
     T_MIN,
     T_MISS_MAX,
     TRACK,
+    Config,
+    TrackConfig,
+    _TrackIouConfig,
 )
+from OTVision.application.config_parser import ConfigParser
+from OTVision.domain.cli import CliParseError
+from OTVision.plugin.yaml_serialization import YamlDeserializer
+
+YAML_DESERIALIZER = YamlDeserializer()
+CONFIG_PARSER = ConfigParser(YAML_DESERIALIZER)
 
 CUSTOM_CONFIG_FILE = r"tests/cli/custom_cli_test_config.yaml"
-with open(CUSTOM_CONFIG_FILE, "r") as file:
-    custom_config = yaml.safe_load(file)
+custom_config = YAML_DESERIALIZER.deserialize(Path(CUSTOM_CONFIG_FILE))
 
 CWD_CONFIG_FILE = r"user_config.otvision.yaml"
-with open(CWD_CONFIG_FILE, "r") as file:
-    cwd_config = yaml.safe_load(file)
+cwd_config = YAML_DESERIALIZER.deserialize(Path(CWD_CONFIG_FILE))
 
 LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
@@ -137,18 +142,6 @@ def track_cli() -> Callable:
     return track_cli
 
 
-@pytest.fixture()
-def track() -> Callable:
-    """Imports and returns the main from OTVision.track.track.py
-
-    Returns:
-        Callable: main from OTVision.track.track.py
-    """
-    from OTVision import track
-
-    return track
-
-
 class TestTrackCLI:
     @pytest.mark.parametrize(
         argnames="test_data",
@@ -159,74 +152,126 @@ class TestTrackCLI:
             TEST_DATA_PARAMS_FROM_CUSTOM_CONFIG,
         ],
     )
+    @patch("track.TrackBuilder.update_current_config")
+    @patch("track.TrackBuilder.build")
     def test_pass_track_cli(
-        self, test_data: dict, track_cli: Callable, track: Callable
+        self,
+        mock_build: Mock,
+        mock_update_current_config: Mock,
+        test_data: dict,
+        track_cli: Callable,
     ) -> None:
-        track = mock.create_autospec(track)
+        mock_otvision_track = Mock()
+        mock_build.return_value = mock_otvision_track
 
-        with patch("OTVision.track") as mock_track:
-            command = [
-                *test_data["paths"]["passed"].split(),
-                *test_data["sigma_l"]["passed"].split(),
-                *test_data["sigma_h"]["passed"].split(),
-                *test_data["sigma_iou"]["passed"].split(),
-                *test_data["t_min"]["passed"].split(),
-                *test_data["t_miss_max"]["passed"].split(),
-                *test_data["overwrite"]["passed"].split(),
-                *test_data["config"]["passed"].split(),
-                LOGFILE_OVERWRITE_CMD,
-            ]
+        command = [
+            *test_data["paths"]["passed"].split(),
+            *test_data["sigma_l"]["passed"].split(),
+            *test_data["sigma_h"]["passed"].split(),
+            *test_data["sigma_iou"]["passed"].split(),
+            *test_data["t_min"]["passed"].split(),
+            *test_data["t_miss_max"]["passed"].split(),
+            *test_data["overwrite"]["passed"].split(),
+            *test_data["config"]["passed"].split(),
+            LOGFILE_OVERWRITE_CMD,
+        ]
 
-            track_cli(argv=list(filter(None, command)))
+        track_cli(argv=list(filter(None, command)))
+        expected_config = create_expected_config_from_test_data(test_data)
 
-            mock_track.assert_called_once_with(
-                paths=test_data["paths"][EXPECTED],
-                sigma_l=test_data["sigma_l"][EXPECTED],
-                sigma_h=test_data["sigma_h"][EXPECTED],
-                sigma_iou=test_data["sigma_iou"][EXPECTED],
-                t_min=test_data["t_min"][EXPECTED],
-                t_miss_max=test_data["t_miss_max"][EXPECTED],
-                overwrite=test_data["overwrite"][EXPECTED],
-            )
+        mock_update_current_config.update.assert_called_once_with(
+            config=expected_config
+        )
+        mock_otvision_track.start.assert_called_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
+    @patch("track.TrackBuilder.build")
     def test_fail_wrong_types_passed_to_track_cli(
         self,
+        mock_build: Mock,
         track_cli: Callable,
-        track: Callable,
         capsys: pytest.CaptureFixture,
         test_fail_data: dict,
     ) -> None:
-        track = mock.create_autospec(track)
-
-        with patch("OTVision.track"):
-            with pytest.raises(SystemExit) as e:
-                command = [*test_fail_data["passed"].split()]
-                track_cli(argv=list(filter(None, command)))
-            assert e.value.code == 2
-            captured = capsys.readouterr()
-            assert test_fail_data["error_msg_part"] in captured.err
+        with pytest.raises(SystemExit) as e:
+            command = [*test_fail_data["passed"].split()]
+            track_cli(argv=list(filter(None, command)))
+        assert e.value.code == 2
+        captured = capsys.readouterr()
+        assert test_fail_data["error_msg_part"] in captured.err
+        mock_build.assert_not_called()
 
     @pytest.mark.parametrize("passed", argvalues=["--config foo", "--paths foo"])
+    @patch("track.TrackBuilder.build")
     def test_fail_not_existing_path_passed_to_track_cli(
-        self, track: Callable, track_cli: Callable, passed: str
+        self, mock_build: Mock, track_cli: Callable, passed: str
     ) -> None:
-        track = mock.create_autospec(track)
+        with pytest.raises(FileNotFoundError):
+            command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
+            track_cli(argv=list(filter(None, command)))
+        mock_build.assert_not_called()
 
-        with patch("OTVision.track"):
-            with pytest.raises(FileNotFoundError):
-                command = [*passed.split(), LOGFILE_OVERWRITE_CMD]
-                track_cli(argv=list(filter(None, command)))
+    def test_fail_no_paths_passed_to_track_cli(self, track_cli: Callable) -> None:
+        error_msg = (
+            "No paths have been passed as command line args."
+            + "No user config has been passed as command line arg."
+        )
+        with pytest.raises(CliParseError, match=error_msg):
+            track_cli(argv=[LOGFILE_OVERWRITE_CMD])
 
-    def test_fail_no_paths_passed_to_track_cli(
-        self, track: Callable, track_cli: Callable
-    ) -> None:
-        track = mock.create_autospec(track)
 
-        with patch("OTVision.track"):
-            error_msg = (
-                "No paths have been passed as command line args."
-                + "No paths have been defined in the user config."
-            )
-            with pytest.raises(OSError, match=error_msg):
-                track_cli(argv=[LOGFILE_OVERWRITE_CMD])
+def create_expected_config_from_test_data(test_data: dict) -> Config:
+    """
+    Create a Config object from the EXPECTED values of the provided test data
+    dictionary.
+
+    Args:
+        test_data (dict): The dictionary containing EXPECTED values for configuration.
+
+    Returns:
+        Config: A Config object populated with the relevant configuration values.
+    """
+
+    if config_file_arg := test_data["config"].get(PASSED):
+        default_config = CONFIG_PARSER.parse(config_file_arg.split()[1])
+    else:
+        default_config = Config()
+
+    # Map EXPECTED values to TrackConfig's relevant fields
+    paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
+    sigma_l = test_data["sigma_l"].get(EXPECTED, default_config.track.sigma_l)
+    sigma_h = test_data["sigma_h"].get(EXPECTED, default_config.track.sigma_h)
+    sigma_iou = test_data["sigma_iou"].get(EXPECTED, default_config.track.sigma_iou)
+    t_min = test_data["t_min"].get(EXPECTED, default_config.track.t_min)
+    t_miss_max = test_data["t_miss_max"].get(EXPECTED, default_config.track.t_miss_max)
+    overwrite = test_data["overwrite"].get(EXPECTED, default_config.track.overwrite)
+    paths = [str(Path(p).expanduser()) for p in paths]
+
+    iou_config = _TrackIouConfig(
+        sigma_l=sigma_l,
+        sigma_h=sigma_h,
+        sigma_iou=sigma_iou,
+        t_min=t_min,
+        t_miss_max=t_miss_max,
+    )
+
+    track_config = TrackConfig(
+        paths=paths,
+        run_chained=default_config.track.run_chained,
+        iou=iou_config,
+        overwrite=overwrite,
+    )
+
+    return Config(
+        log=default_config.log,
+        search_subdirs=default_config.search_subdirs,
+        default_filetype=default_config.default_filetype,
+        filetypes=default_config.filetypes,
+        last_paths=default_config.last_paths,
+        convert=default_config.convert,
+        detect=default_config.detect,
+        track=track_config,
+        undistort=default_config.undistort,
+        transform=default_config.transform,
+        gui=default_config.gui,
+    )

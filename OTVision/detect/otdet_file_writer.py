@@ -62,7 +62,7 @@ class OtdetFileWriter:
         detect_config = config.detect
 
         actual_frames = len(event.frames)
-        if (expected_duration := detect_config.expected_duration) is not None:
+        if expected_duration := detect_config.expected_duration:
             actual_fps = actual_frames / expected_duration.total_seconds()
         else:
             actual_fps = actual_frames / source_metadata.duration.total_seconds()
@@ -72,7 +72,7 @@ class OtdetFileWriter:
             OtdetBuilderConfig(
                 conf=detect_config.confidence,
                 iou=detect_config.iou,
-                source=source_metadata.source,
+                source=source_metadata.output,
                 video_width=source_metadata.width,
                 video_height=source_metadata.height,
                 expected_duration=expected_duration,
@@ -92,7 +92,8 @@ class OtdetFileWriter:
             )
         ).build(event.frames)
 
-        detections_file = self._save_path_provider.provide(source_metadata.source)
+        detections_file = self._save_path_provider.provide(source_metadata.output)
+        detections_file.parent.mkdir(parents=True, exist_ok=True)
         write_json(
             otdet,
             file=detections_file,

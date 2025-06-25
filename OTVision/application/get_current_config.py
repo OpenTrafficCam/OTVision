@@ -1,4 +1,4 @@
-from OTVision.config import Config
+from OTVision.application.config import Config
 from OTVision.domain.current_config import CurrentConfig
 
 

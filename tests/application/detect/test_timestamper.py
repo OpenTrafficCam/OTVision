@@ -98,6 +98,7 @@ def create_frame_without_occurrence(frame_number: int) -> dict:
         FrameKeys.data: Mock(),
         FrameKeys.frame: frame_number,
         FrameKeys.source: SOURCE,
+        FrameKeys.output: SOURCE,
     }
 
 
@@ -112,5 +113,6 @@ def create_expected_frame(raw_data: dict, occurrence: datetime) -> Frame:
         data=raw_data[FrameKeys.data],
         frame=raw_data[FrameKeys.frame],
         source=raw_data[FrameKeys.source],
+        output=raw_data[FrameKeys.output],
         occurrence=occurrence,
     )

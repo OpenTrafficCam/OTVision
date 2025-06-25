@@ -5,13 +5,13 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import FRAME, INPUT_FILE_PATH, OCCURRENCE
-from OTVision.track.model.detection import FinishedDetection, TrackedDetection
+from OTVision.domain.detection import FinishedDetection, TrackedDetection
+from OTVision.domain.frame import TrackedFrame
 from OTVision.track.model.filebased.frame_chunk import (
     FinishedChunk,
     FrameChunk,
     TrackedChunk,
 )
-from OTVision.track.model.frame import TrackedFrame
 from tests.track.helper.data_builder import DEFAULT_START_DATE
 
 
@@ -71,7 +71,8 @@ class TestTrackedChunk(unittest.TestCase):
         return TrackedFrame(
             no=no,
             occurrence=self._mock_occurrence(no),
-            source=self.mock_file,
+            source=str(self.mock_file),
+            output=str(self.mock_file),
             detections=[self._mock_detection(track_id=i) for i in observed],
             image=None,
             finished_tracks=finished,

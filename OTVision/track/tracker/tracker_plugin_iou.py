@@ -1,14 +1,10 @@
 from dataclasses import dataclass
 
-from OTVision.track.model.detection import Detection, TrackedDetection
-from OTVision.track.model.frame import Frame, TrackedFrame
-from OTVision.track.model.tracking_interfaces import (
-    ID_GENERATOR,
-    FrameNo,
-    S,
-    Tracker,
-    TrackId,
-)
+from OTVision.application.config import TrackConfig
+from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.domain.detection import Detection, TrackedDetection, TrackId
+from OTVision.domain.frame import DetectedFrame, FrameNo, TrackedFrame
+from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 
 
 @dataclass(frozen=True)
@@ -72,7 +68,9 @@ class ActiveIouTrack:
     last_frame: FrameNo
     track_age: int
 
-    def __init__(self, id: TrackId, frame: "Frame", detection: "Detection") -> None:
+    def __init__(
+        self, id: TrackId, frame: "DetectedFrame", detection: "Detection"
+    ) -> None:
         self.id = id
         self.frame_no = [frame.no]
         self.bboxes = [BoundingBox.from_xywh(detection)]
@@ -85,7 +83,7 @@ class ActiveIouTrack:
         self.last_frame = frame.no
         self.track_age = 0
 
-    def add_detection(self, frame: Frame, detection: Detection) -> None:
+    def add_detection(self, frame: DetectedFrame, detection: Detection) -> None:
         self.frame_no.append(frame.no)
         self.bboxes.append(BoundingBox.from_xywh(detection))
         self.center.append(Coordinate.center_of(detection))
@@ -141,36 +139,39 @@ def iou(
     return size_intersection / size_union
 
 
-class IouTracker(Tracker[S]):
+class IouTracker(Tracker):
+    @property
+    def config(self) -> TrackConfig:
+        return self._get_current_config.get().track
 
-    def __init__(self, parameters: IouParameters):
+    def __init__(self, get_current_config: GetCurrentConfig):
         super().__init__()
-        self.parameters = parameters
+        self._get_current_config = get_current_config
         self.active_tracks: list[ActiveIouTrack] = []
 
     @property
     def sigma_l(self) -> float:
-        return self.parameters.sigma_l
+        return self.config.iou.sigma_l
 
     @property
     def sigma_h(self) -> float:
-        return self.parameters.sigma_h
+        return self.config.iou.sigma_h
 
     @property
     def sigma_iou(self) -> float:
-        return self.parameters.sigma_iou
+        return self.config.iou.sigma_iou
 
     @property
     def t_min(self) -> int:
-        return self.parameters.t_min
+        return self.config.iou.t_min
 
     @property
     def t_miss_max(self) -> int:
-        return self.parameters.t_miss_max
+        return self.config.iou.t_miss_max
 
     def track_frame(
-        self, frame: Frame[S], id_generator: ID_GENERATOR
-    ) -> TrackedFrame[S]:
+        self, frame: DetectedFrame, id_generator: IdGenerator
+    ) -> TrackedFrame:
 
         detections = [d for d in frame.detections if d.conf >= self.sigma_l]
         tracked_detections: list[TrackedDetection] = []
@@ -221,6 +222,7 @@ class IouTracker(Tracker[S]):
             no=frame.no,
             occurrence=frame.occurrence,
             source=frame.source,
+            output=frame.output,
             detections=tracked_detections,
             image=frame.image,
             finished_tracks=set(finished_track_ids),

@@ -5,10 +5,10 @@ import pytest
 from torch import Tensor
 from ultralytics.engine.results import Boxes, Results
 
-from OTVision.config import Config, DetectConfig
+from OTVision.application.config import Config, DetectConfig
 from OTVision.detect.yolo import YoloDetectionConverter, YoloDetector
-from OTVision.domain.detection import DetectedFrame, Detection
-from OTVision.domain.frame import Frame, FrameKeys
+from OTVision.domain.detection import Detection
+from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
 from tests.utils.generator import make_generator
 from tests.utils.mocking import create_mocks
 
@@ -178,4 +178,6 @@ class TestYoloDetector:
         if has_data:
             data = Mock()
 
-        return Frame(data=data, frame=frame_no, source=source, occurrence=Mock())
+        return Frame(
+            data=data, frame=frame_no, source=source, output=source, occurrence=Mock()
+        )

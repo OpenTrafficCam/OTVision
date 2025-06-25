@@ -1,4 +1,4 @@
-from OTVision.config import DetectConfig
+from OTVision.application.config import DetectConfig
 from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFactory
 
 

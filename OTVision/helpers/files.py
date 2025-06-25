@@ -24,7 +24,7 @@ import logging
 import shutil
 import time
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Iterable, Sequence, Union
 
 import ijson
 import ujson
@@ -49,8 +49,8 @@ FULL_FILE_NAME_PATTERN = (
 
 
 def get_files(
-    paths: list[Path],
-    filetypes: Union[list[str], None] = None,
+    paths: Sequence[Path | str],
+    filetypes: list[str] | None = None,
     search_subdirs: bool = True,
 ) -> list[Path]:
     """
@@ -58,12 +58,11 @@ def get_files(
     (recursive) content of folders.
 
     Args:
-        paths (list[Path]): where to find the files.
-        filetype (list[str]): ending of files to find. Preceding "_" prevents adding a
-        '.'
-            If no filetype is given, filetypes of file paths given are used and
-            directories are ignored. Defaults to None.
-        search_subdirs (bool): Wheter or not to search subdirs of dirs given as paths.
+        paths (list[Path | str]): where to find the files.
+        filetypes (list[str] | None): ending of files to find. Preceding "_" prevents
+            adding a '.'. If no filetype is given, filetypes of file paths given are
+            used and directories are ignored. Defaults to None.
+        search_subdirs (bool): Whether to search subdirectories of dirs given as paths.
             Defaults to True.
 
     Raises:
@@ -76,9 +75,11 @@ def get_files(
     Returns:
         list[Path]: List of files
     """
+    if type(paths) is str:
+        paths = [paths]
     files = set()
-    if type(paths) is not list:
-        raise TypeError("Paths needs to be a list of pathlib.Path")
+    if not isinstance(paths, Sequence):
+        raise ValueError("Paths needs to be a sequence")
     if filetypes:
         if type(filetypes) is not list:
             raise TypeError("Filetypes needs to be a list of str")
@@ -89,9 +90,7 @@ def get_files(
                 if not filetype.startswith("."):
                     filetype = f".{filetype}"
                 filetypes[idx] = filetype.lower()
-    for path in paths:
-        if not isinstance(path, Path):
-            raise TypeError("Paths needs to be a list of pathlib.Path")
+    for path in map(Path, paths):
         if path.is_file():
             file = path
             if filetypes:
@@ -107,7 +106,7 @@ def get_files(
                         if file.is_file() and file.suffix.lower() == filetype:
                             files.add(file)
         else:
-            raise TypeError("Paths needs to be a list of pathlib.Path")
+            raise ValueError(f"{path} is neither a file nor a dir")
 
     return sorted(list(files))
 

@@ -1,46 +1,40 @@
 from abc import ABC, abstractmethod
 from typing import Generic, Iterator, TypeVar
 
-from OTVision.track.model.frame import (
+from OTVision.domain.detection import TrackId
+from OTVision.domain.frame import (
+    DetectedFrame,
     FinishedFrame,
-    Frame,
     FrameNo,
     IsLastFrame,
     TrackedFrame,
-    TrackId,
 )
 
-S = TypeVar("S")  # Source type (e.g., Path, URL, str, etc.)
-# -> would look nicer in python 3.12
-
-ID_GENERATOR = Iterator[TrackId]
+IdGenerator = Iterator[TrackId]
 
 
-class Tracker(ABC, Generic[S]):
+class Tracker(ABC):
     """Tracker interface for processing a stream of Frames
     to add tracking information, creating a lazy stream (generator)
     of TrackedFrames.
 
     Implementing class can specify template method:
     track_frame for processing a single frame.
-
-    Args:
-        Generic (S): generic type of Frame source (e.g. file path, or stream url)
     """
 
     def track(
-        self, frames: Iterator[Frame[S]], id_generator: ID_GENERATOR
-    ) -> Iterator[TrackedFrame[S]]:
+        self, frames: Iterator[DetectedFrame], id_generator: IdGenerator
+    ) -> Iterator[TrackedFrame]:
         """Process the given stream of Frames,
         yielding TrackedFrames one by one as a lazy stream of TrackedFrames.
 
         Args:
-            frames (Iterator[Frame[S]]): (lazy) stream of Frames
+            frames (Iterator[DetectedFrame]): (lazy) stream of Frames
                 with untracked Detections.
-            id_generator (ID_GENERATOR): provider of new (unique) track ids.
+            id_generator (IdGenerator): provider of new (unique) track ids.
 
         Yields:
-            Iterator[TrackedFrame[S]]: (lazy) stream of TrackedFrames with
+            Iterator[TrackedFrame]: (lazy) stream of TrackedFrames with
                 TrackedDetections
         """
         for frame in frames:
@@ -49,19 +43,19 @@ class Tracker(ABC, Generic[S]):
     @abstractmethod
     def track_frame(
         self,
-        frame: Frame[S],
-        id_generator: ID_GENERATOR,
-    ) -> TrackedFrame[S]:
+        frame: DetectedFrame,
+        id_generator: IdGenerator,
+    ) -> TrackedFrame:
         """Process single Frame with untracked Detections,
         by adding tracking information,
         creating a TrackedFrame with TrackedDetections.
 
         Args:
-            frame (Frame[S]): the Frame (with source S) to be tracked.
-            id_generator (ID_GENERATOR): provider of new (unique) track ids.
+            frame (DetectedFrame): the Frame to be tracked.
+            id_generator (IdGenerator): provider of new (unique) track ids.
 
         Returns:
-            TrackedFrame[S]: TrackedFrame with TrackedDetections
+            TrackedFrame: TrackedFrame with TrackedDetections
         """
         pass
 
@@ -268,42 +262,42 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         return finished_containers
 
 
-class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame[S], FinishedFrame[S]]):
+class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame, FinishedFrame]):
     """UnfinishedTracksBuffer implementation for Frames as Detection container."""
 
-    def __init__(self, tracker: Tracker[S], keep_discarded: bool = False):
+    def __init__(self, tracker: Tracker, keep_discarded: bool = False):
         super().__init__(keep_discarded)
         self._tracker = tracker
 
     def track(
-        self, frames: Iterator[Frame[S]], id_generator: ID_GENERATOR
-    ) -> Iterator[FinishedFrame[S]]:
+        self, frames: Iterator[DetectedFrame], id_generator: IdGenerator
+    ) -> Iterator[FinishedFrame]:
         tracked_frame_stream = self._tracker.track(frames, id_generator)
         return self.track_and_finish(tracked_frame_stream)
 
-    def _get_last_track_frames(self, container: TrackedFrame[S]) -> dict[TrackId, int]:
+    def _get_last_track_frames(self, container: TrackedFrame) -> dict[TrackId, int]:
         return {o: container.no for o in container.observed_tracks}
 
-    def _get_unfinished_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
+    def _get_unfinished_tracks(self, container: TrackedFrame) -> set[TrackId]:
         return container.unfinished_tracks
 
-    def _get_observed_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
+    def _get_observed_tracks(self, container: TrackedFrame) -> set[TrackId]:
         return container.observed_tracks
 
-    def _get_newly_finished_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
+    def _get_newly_finished_tracks(self, container: TrackedFrame) -> set[TrackId]:
         return container.finished_tracks
 
-    def _get_newly_discarded_tracks(self, container: TrackedFrame[S]) -> set[TrackId]:
+    def _get_newly_discarded_tracks(self, container: TrackedFrame) -> set[TrackId]:
         return container.discarded_tracks
 
-    def _get_last_frame_of_container(self, container: TrackedFrame[S]) -> FrameNo:
+    def _get_last_frame_of_container(self, container: TrackedFrame) -> FrameNo:
         return container.no
 
     def _finish(
         self,
-        container: TrackedFrame[S],
+        container: TrackedFrame,
         is_last: IsLastFrame,
         discarded_tracks: set[TrackId],
         keep_discarded: bool,
-    ) -> FinishedFrame[S]:
+    ) -> FinishedFrame:
         return container.finish(is_last, discarded_tracks, keep_discarded)

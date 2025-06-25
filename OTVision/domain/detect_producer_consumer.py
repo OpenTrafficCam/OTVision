@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generator
 
-from OTVision.domain.detection import DetectedFrame
+from OTVision.domain.frame import DetectedFrame
 
 
 class DetectedFrameConsumer(ABC):
