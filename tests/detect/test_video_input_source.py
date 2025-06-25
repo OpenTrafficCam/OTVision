@@ -334,7 +334,8 @@ class TestVideoSource:
         container.streams.video.__getitem__.return_value = video_stream
 
         target = VideoSource(
-            subject=Mock(),
+            subject_flush=Mock(),
+            subject_new_video_start=Mock(),
             get_current_config=Mock(),
             frame_rotator=Mock(),
             timestamper_factory=Mock(),
