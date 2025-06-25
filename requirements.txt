@@ -12,7 +12,7 @@ pandas==2.2.3
 PyYAML==6.0.2
 # Follow instructions at https://pytorch.org to install torch with CUDA
 torch==2.3.1 #  NOTE: Omit if using torch with CUDA and install manually
-torchvision==0.18.1 # NOTE: Omit if using torch with CUDA and install manually
+torchvision==0.22.1 # NOTE: Omit if using torch with CUDA and install manually
 tqdm==4.67.1
 ujson==5.10.0
 ultralytics==8.3.94
