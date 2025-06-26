@@ -25,7 +25,21 @@ log = logging.getLogger(LOGGER_NAME)
 
 
 class VideoCodec(StrEnum):
-    H264 = "libx264"
+    """Enum of possible video codecs to be used with ffmpeg
+
+    Attributes:
+        H264_SOFTWARE: Software-based H.264 encoder.
+        H264_NVENC: NVIDIA GPU-based H.264 encoder.
+        H264_QSV: Intel Quick Sync Video encoder.
+        H264_VAAPI: Intel/AMD GPU-based H.264 encoder.
+        H264_VIDEOTOOLBOX: macOS hardware encoder.
+    """
+
+    H264_SOFTWARE = "libx264"
+    H264_NVENC = "h264_nvenc"
+    H264_QSV = "h264_qsv"
+    H264_VAAPI = "h264_vaapi"
+    H264_VIDEOTOOLBOX = "h264_videotoolbox"
 
 
 class VideoFormat(StrEnum):
@@ -102,7 +116,7 @@ class FfmpegVideoWriter(VideoWriter):
         output_format: VideoFormat = VideoFormat.MP4,
         input_pixel_format: PixelFormat = PixelFormat.RGB24,
         output_pixel_format: PixelFormat = PixelFormat.YUV420P,
-        output_video_codec: VideoCodec = VideoCodec.H264,
+        output_video_codec: VideoCodec = VideoCodec.H264_SOFTWARE,
         constant_rate_factor: ConstantRateFactor = ConstantRateFactor.LOSSLESS,
     ) -> None:
         if ON_WINDOWS:

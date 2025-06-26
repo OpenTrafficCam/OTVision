@@ -231,7 +231,7 @@ def target() -> YieldFixture[FfmpegVideoWriter]:
         output_format=VideoFormat.MP4,
         input_pixel_format=PixelFormat.RGB24,
         output_pixel_format=PixelFormat.YUV420P,
-        output_video_codec=VideoCodec.H264,
+        output_video_codec=VideoCodec.H264_SOFTWARE,
         constant_rate_factor=ConstantRateFactor.DEFAULT,
     )
     yield writer
