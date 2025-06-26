@@ -179,34 +179,36 @@ class FfmpegVideoWriter(VideoWriter):
             # Handle cleanup in background thread
             def cleanup_process() -> None:
                 try:
-                    # This will properly handle stderr and wait for termination
-                    stdout, stderr = process_to_cleanup.communicate(timeout=5.0)
+                    # Just check if it's still running and wait for it
+                    if process_to_cleanup.poll() is None:
+                        # Still running, close stdin and wait
+                        try:
+                            if (
+                                process_to_cleanup.stdin
+                                and not process_to_cleanup.stdin.closed
+                            ):
+                                process_to_cleanup.stdin.close()
+                        except Exception as cause:
+                            log.error(f"Error closing stdin: {cause}")
 
-                    # Log any stderr output for debugging
-                    if stderr:
-                        log.debug(
-                            f"FFmpeg stderr: {stderr.decode('utf-8', errors='ignore')}"
-                        )
+                        # Simple wait with timeout
+                        try:
+                            process_to_cleanup.wait(timeout=5.0)
+                        except TimeoutExpired:
+                            process_to_cleanup.kill()
+                            try:
+                                process_to_cleanup.wait(timeout=1.0)
+                            except TimeoutExpired:
+                                log.error("Could not kill FFmpeg process")
 
-                    # Check return code
+                    # Log return code if we care
                     if process_to_cleanup.returncode != 0:
-                        log.warning(
-                            "FFmpeg process ended with return code: "
-                            f"{process_to_cleanup.returncode}"
+                        log.debug(
+                            f"FFmpeg ended with code: {process_to_cleanup.returncode}"
                         )
 
-                except TimeoutExpired:
-                    log.warning(
-                        "FFmpeg process didn't terminate within timeout, killing it"
-                    )
-                    process_to_cleanup.kill()
-                    try:
-                        # Give it a short time to die after kill
-                        process_to_cleanup.communicate(timeout=10.0)
-                    except TimeoutExpired:
-                        log.error("FFmpeg process couldn't be killed")
-                except Exception as cause:
-                    log.error(f"Error in background cleanup: {cause}")
+                except Exception as e:
+                    log.debug(f"Cleanup completed with minor issues: {e}")
 
             # Start cleanup in daemon thread (won't prevent program exit)
             cleanup_thread = Thread(target=cleanup_process, daemon=True)
