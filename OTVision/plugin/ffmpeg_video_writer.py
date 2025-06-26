@@ -1,8 +1,9 @@
 import logging
 from enum import IntEnum, StrEnum
 from pathlib import Path
-from subprocess import PIPE, Popen
-from typing import Any, Callable, Generator
+from subprocess import PIPE, Popen, TimeoutExpired
+from threading import Thread
+from typing import Callable, Generator
 
 import ffmpeg
 from numpy import ndarray
@@ -80,7 +81,7 @@ class FfmpegVideoWriter(VideoWriter):
         return self.__current_video_metadata
 
     @property
-    def _ffmpeg_process(self) -> Any:
+    def _ffmpeg_process(self) -> Popen:
         if self.__ffmpeg_process is None:
             raise ValueError("FfmpegVideoWriter is not initialized yet.")
         return self.__ffmpeg_process
@@ -115,7 +116,7 @@ class FfmpegVideoWriter(VideoWriter):
         self._input_pixel_format = input_pixel_format
         self._output_pixel_format = output_pixel_format
         self._output_video_codec = output_video_codec
-        self.__ffmpeg_process = None
+        self.__ffmpeg_process: Popen | None = None
         self.__current_video_metadata: NewVideoStartEvent | None = None
         self._constant_rate_factor = constant_rate_factor
 
@@ -129,8 +130,9 @@ class FfmpegVideoWriter(VideoWriter):
 
     def write(self, image: ndarray) -> None:
         try:
-            self._ffmpeg_process.stdin.write(image.tobytes())
-            self._ffmpeg_process.stdin.flush()
+            if self._ffmpeg_process.stdin:
+                self._ffmpeg_process.stdin.write(image.tobytes())
+                self._ffmpeg_process.stdin.flush()
         except BrokenPipeError:
             # Check if the process is still running
             if self._ffmpeg_process.poll() is not None:
@@ -140,6 +142,7 @@ class FfmpegVideoWriter(VideoWriter):
                     if self._ffmpeg_process.stderr
                     else b""
                 )
+                log.info(stderr.decode("utf-8", errors="ignore"))
                 raise RuntimeError(
                     "ffmpeg process terminated unexpectedly: "
                     f"{stderr.decode('utf-8', errors='ignore')}"
@@ -148,10 +151,52 @@ class FfmpegVideoWriter(VideoWriter):
 
     def close(self) -> None:
         if self.__ffmpeg_process is not None:
-            self._ffmpeg_process.stdin.flush()
-            self._ffmpeg_process.stdin.close()
-            self._ffmpeg_process.wait()
-            self.__ffmpeg_process = None
+            process_to_cleanup = self._ffmpeg_process
+            self.__ffmpeg_process = None  # Immediately mark as closed
+
+            # Close stdin synchronously (fast operation)
+            try:
+                if process_to_cleanup.stdin:
+                    process_to_cleanup.stdin.flush()
+                    process_to_cleanup.stdin.close()
+            except Exception as cause:
+                log.debug(f"Error closing stdin: {cause}")
+
+            # Handle cleanup in background thread
+            def cleanup_process() -> None:
+                try:
+                    # This will properly handle stderr and wait for termination
+                    stdout, stderr = process_to_cleanup.communicate(timeout=5.0)
+
+                    # Log any stderr output for debugging
+                    if stderr:
+                        log.debug(
+                            f"FFmpeg stderr: {stderr.decode('utf-8', errors='ignore')}"
+                        )
+
+                    # Check return code
+                    if process_to_cleanup.returncode != 0:
+                        log.warning(
+                            "FFmpeg process ended with return code: "
+                            f"{process_to_cleanup.returncode}"
+                        )
+
+                except TimeoutExpired:
+                    log.warning(
+                        "FFmpeg process didn't terminate within timeout, killing it"
+                    )
+                    process_to_cleanup.kill()
+                    try:
+                        # Give it a short time to die after kill
+                        process_to_cleanup.communicate(timeout=10.0)
+                    except TimeoutExpired:
+                        log.error("FFmpeg process couldn't be killed")
+                except Exception as cause:
+                    log.error(f"Error in background cleanup: {cause}")
+
+            # Start cleanup in daemon thread (won't prevent program exit)
+            cleanup_thread = Thread(target=cleanup_process, daemon=True)
+            cleanup_thread.start()
 
         self.__current_video_metadata = None
 
@@ -164,7 +209,7 @@ class FfmpegVideoWriter(VideoWriter):
 
     def __create_ffmpeg_process(
         self, output_file: str, width: int, height: int, fps: float
-    ) -> Any:
+    ) -> Popen:
         save_file = self._save_location_strategy(output_file)
         cmd = (
             ffmpeg.input(
