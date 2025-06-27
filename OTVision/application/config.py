@@ -2,6 +2,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    VideoCodec,
+)
+
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
 CALIBRATIONS = "CALIBRATIONS"
 COL_WIDTH = "COLWIDTH"
@@ -59,6 +65,9 @@ START_TIME = "START_TIME"
 DETECT_END = "DETECT_END"
 DETECT_START = "DETECT_START"
 WRITE_VIDEO = "WRITE_VIDEO"
+VIDEO_CODEC = "VIDEO_CODEC"
+ENCODING_SPEED = "ENCODING_SPEED"
+CRF = "CRF"
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 DEFAULT_EXPECTED_DURATION: timedelta = timedelta(minutes=15)
 """Default length of a video is 15 minutes."""
@@ -291,6 +300,9 @@ class DetectConfig:
     detect_start: int | None = None
     detect_end: int | None = None
     write_video: bool = False
+    video_codec: VideoCodec = VideoCodec.H264_SOFTWARE
+    encoding_speed: EncodingSpeed = EncodingSpeed.FAST
+    crf: ConstantRateFactor = ConstantRateFactor.DEFAULT
 
     def to_dict(self) -> dict:
         expected_duration = (
@@ -308,6 +320,10 @@ class DetectConfig:
             START_TIME: self.start_time,
             DETECT_START: self.detect_start,
             DETECT_END: self.detect_end,
+            WRITE_VIDEO: self.write_video,
+            VIDEO_CODEC: self.video_codec.value,
+            ENCODING_SPEED: self.encoding_speed.value,
+            CRF: self.crf.name,  # TODO: Should we use value or name for crf
         }
 
 

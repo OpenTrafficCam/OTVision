@@ -89,6 +89,17 @@ class UpdateDetectConfigWithCliArgs:
                 if cli_args.write_video is not None
                 else detect_config.write_video
             ),
+            video_codec=(
+                cli_args.video_codec
+                if cli_args.video_codec is not None
+                else detect_config.video_codec
+            ),
+            encoding_speed=(
+                cli_args.encoding_speed
+                if cli_args.encoding_speed is not None
+                else detect_config.encoding_speed
+            ),
+            crf=cli_args.crf if cli_args.crf is not None else detect_config.crf,
         )
 
     def _update_log_config(self, config: Config, cli_args: DetectCliArgs) -> _LogConfig:
