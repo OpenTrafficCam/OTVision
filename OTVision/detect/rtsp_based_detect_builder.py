@@ -9,11 +9,8 @@ from OTVision.detect.rtsp_input_source import Counter, RtspInputSource
 from OTVision.domain.time import CurrentDatetimeProvider, DatetimeProvider
 from OTVision.domain.video_writer import VideoWriter
 from OTVision.plugin.ffmpeg_video_writer import (
-    ConstantRateFactor,
-    EncodingSpeed,
     FfmpegVideoWriter,
     PixelFormat,
-    VideoCodec,
     VideoFormat,
     keep_original_save_location,
 )
@@ -51,17 +48,17 @@ class RtspBasedDetectBuilder(DetectBuilder):
     def video_file_writer(self) -> VideoWriter:
         return FfmpegVideoWriter(
             save_location_strategy=keep_original_save_location,
-            encoding_speed=EncodingSpeed.FAST,
+            encoding_speed=self.detect_config.encoding_speed,
             input_format=VideoFormat.RAW,
             output_format=VideoFormat.MP4,
             input_pixel_format=PixelFormat.RGB24,
             output_pixel_format=PixelFormat.YUV420P,
-            output_video_codec=VideoCodec.H264_SOFTWARE,
-            constant_rate_factor=ConstantRateFactor.DEFAULT,
+            output_video_codec=self.detect_config.video_codec,
+            constant_rate_factor=self.detect_config.crf,
         )
 
     def register_observers(self) -> None:
-        if self.current_config.get().detect.write_video:
+        if self.detect_config.write_video:
             self.input_source.subject_new_video_start.register(
                 self.video_file_writer.notify_on_new_video_start
             )

@@ -6,6 +6,11 @@ from OTVision.application.config import DATETIME_FORMAT
 from OTVision.domain.cli import CliParseError, DetectCliArgs, DetectCliParser
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    VideoCodec,
+)
 
 
 class ArgparseDetectCliParser(DetectCliParser):
@@ -131,7 +136,29 @@ class ArgparseDetectCliParser(DetectCliParser):
         self._parser.add_argument(
             "--write-video",
             default=None,
+            action="store_true",
             help="Write video to output folder. Not supported on Windows.",
+            required=False,
+        )
+        self._parser.add_argument(
+            "--video-codec",
+            default=None,
+            choices=VideoCodec.as_list(),
+            help="Video codec for video writer. Default is 'libx264'",
+            required=False,
+        )
+        self._parser.add_argument(
+            "--encoding-speed",
+            default=None,
+            choices=EncodingSpeed.as_list(),
+            help="Encoding speed for video writer. Default is 'fast'",
+            required=False,
+        )
+        self._parser.add_argument(
+            "--crf",
+            default=None,
+            choices=ConstantRateFactor.as_list(),
+            help="Constant rate factor for video writer. Default is 'DEFAULT'",
             required=False,
         )
 
@@ -157,14 +184,22 @@ class ArgparseDetectCliParser(DetectCliParser):
             detect_start=(
                 int(args.detect_start) if args.detect_start is not None else None
             ),
-            detect_end=int(args.detect_end) if args.detect_end is not None else None,
+            detect_end=(int(args.detect_end) if args.detect_end is not None else None),
             logfile=Path(args.logfile),
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
-            write_video=(
-                bool(args.write_video) if args.write_video is not None else None
+            write_video=args.write_video,
+            # TODO: Should we go by Enum member names or their actual values?
+            video_codec=(
+                VideoCodec(args.video_codec) if args.video_codec is not None else None
             ),
+            encoding_speed=(
+                EncodingSpeed(args.encoding_speed)
+                if args.encoding_speed is not None
+                else None
+            ),
+            crf=ConstantRateFactor[args.crf] if args.crf is not None else None,
         )
 
     def _parse_start_time(self, start_time: str | None) -> datetime | None:

@@ -41,16 +41,28 @@ class VideoCodec(StrEnum):
     H264_VAAPI = "h264_vaapi"
     H264_VIDEOTOOLBOX = "h264_videotoolbox"
 
+    @staticmethod
+    def as_list() -> list[str]:
+        return list(VideoCodec.__members__.values())
+
 
 class VideoFormat(StrEnum):
     RAW = "rawvideo"
     MP4 = "mp4"
+
+    @staticmethod
+    def as_list() -> list[str]:
+        return list(VideoFormat.__members__.values())
 
 
 class PixelFormat(StrEnum):
     YUV420P = "yuv420p"  # compatible with most players for H.264
     RGB24 = "rgb24"
     BGR24 = "bgr24"
+
+    @staticmethod
+    def as_list() -> list[str]:
+        return list(PixelFormat.__members__.values())
 
 
 class EncodingSpeed(StrEnum):
@@ -63,6 +75,10 @@ class EncodingSpeed(StrEnum):
     SLOW = "slow"
     SLOWER = "slower"
     VERY_SLOW = "veryslow"
+
+    @staticmethod
+    def as_list() -> list[str]:
+        return list(EncodingSpeed.__members__.values())
 
 
 class ConstantRateFactor(IntEnum):
@@ -84,6 +100,10 @@ class ConstantRateFactor(IntEnum):
     COMPACT = 26
     LOW_QUALITY = 28
     WORST_ACCEPTABLE = 35
+
+    @staticmethod
+    def as_list() -> list[str]:
+        return list(ConstantRateFactor.__members__.keys())
 
 
 class FfmpegVideoWriter(VideoWriter):
@@ -133,6 +153,12 @@ class FfmpegVideoWriter(VideoWriter):
         self.__ffmpeg_process: Popen | None = None
         self.__current_video_metadata: NewVideoStartEvent | None = None
         self._constant_rate_factor = constant_rate_factor
+        log.info(
+            "FFmpeg video writer settings: "
+            f"video_codec='{self._output_video_codec.value}', "
+            f"encoding_speed='{self._encoding_speed.value}', "
+            f"crf='{self._constant_rate_factor.value}'"
+        )
 
     def open(self, output: str, width: int, height: int, fps: float) -> None:
         self.__ffmpeg_process = self.__create_ffmpeg_process(
