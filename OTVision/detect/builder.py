@@ -4,7 +4,7 @@ from functools import cached_property
 
 from OTVision.abstraction.observer import Subject
 from OTVision.application.buffer import Buffer
-from OTVision.application.config import Config
+from OTVision.application.config import Config, DetectConfig
 from OTVision.application.config_parser import ConfigParser
 from OTVision.application.configure_logger import ConfigureLogger
 from OTVision.application.detect.current_object_detector import CurrentObjectDetector
@@ -174,6 +174,10 @@ class DetectBuilder(ABC):
     @cached_property
     def yaml_deserializer(self) -> Deserializer:
         return YamlDeserializer()
+
+    @property
+    def detect_config(self) -> DetectConfig:
+        return self.current_config.get().detect
 
     def __init__(self, argv: list[str] | None = None) -> None:
         self.argv = argv

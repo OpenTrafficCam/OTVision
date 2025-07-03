@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from time import sleep
 from typing import Iterator, Optional
 from unittest.mock import Mock, patch
 
@@ -146,6 +147,7 @@ class TestFfmpegVideoFileWriter:
         assert target.is_closed
 
         # Now that the writer is closed, we can check the output file
+        sleep(0.1)
         assert expected_save_location.stat().st_size > 0
 
         # We should have 2 frames in the output video (the first and third frames)
@@ -190,14 +192,21 @@ def get_height(video_capture: VideoCapture) -> int:
 
 
 def get_frames_from(video_file: Path) -> list[ndarray]:
+    sleep(0.1)
     video_capture = VideoCapture(str(video_file))
+    if not video_capture.isOpened():
+        video_capture.release()
+        # The closing file in ffmpeg is started in a background thread.
+        # We need to wait for it to finish.
+        sleep(0.1)
+        video_capture.open(str(video_file))
+
     return list(read_frames_from(video_capture))
 
 
 def read_frames_from(video_capture: VideoCapture) -> Iterator[ndarray]:
     if not video_capture.isOpened():
         video_capture.release()
-        raise ValueError("Cannot open the video file/stream.")
 
     while True:
         successful, frame = video_capture.read()
@@ -206,6 +215,7 @@ def read_frames_from(video_capture: VideoCapture) -> Iterator[ndarray]:
         else:
             video_capture.release()
             break
+    video_capture.release()
 
 
 def create_frames_from(images: Iterator[Optional[ndarray]]) -> list[Frame]:
@@ -231,7 +241,7 @@ def target() -> YieldFixture[FfmpegVideoWriter]:
         output_format=VideoFormat.MP4,
         input_pixel_format=PixelFormat.RGB24,
         output_pixel_format=PixelFormat.YUV420P,
-        output_video_codec=VideoCodec.H264,
+        output_video_codec=VideoCodec.H264_SOFTWARE,
         constant_rate_factor=ConstantRateFactor.DEFAULT,
     )
     yield writer
