@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from shutil import copy2, move, rmtree
@@ -18,6 +19,8 @@ GROUP_CORE = "core"
 GROUP_DIGITS = "digits"
 TEMP_FOLDER = Path.home() / ".yolo_exporter_temp"
 AVAILABLE_EXPORT_TYPES = {".engine", ".onnx", ".mlpackage"}
+NOW = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+DEFAULT_SUBDIRECTORY = f"{NOW}_model_export"
 
 
 class ParseError(Exception):
@@ -101,7 +104,8 @@ class ModelExportSpecification:
             f"{self.model_info.core}{self.__image_size_suffix()}"
             f"{self.__quantization_suffix()}"
         )
-        return self.model_info.original_path.parent / new_name
+        sub_dir_name = retrieve_tensorrt_version()
+        return self.model_info.original_path.parent / sub_dir_name / new_name
 
     def __image_size_suffix(self) -> str:
         if self.imagesize is not None:
@@ -377,6 +381,19 @@ class YoloModelExporter:
         if quantization == "int8":
             return "int8"
         return "half"
+
+
+def retrieve_tensorrt_version() -> str:
+    """Retrieves the TensorRT version from the model name."""
+    try:
+        import tensorrt as trt
+
+        version = trt.__version__
+        return f"tensorrt_{version}"
+    except ModuleNotFoundError:
+        pass
+
+    return DEFAULT_SUBDIRECTORY
 
 
 def main(
