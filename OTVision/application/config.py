@@ -323,7 +323,7 @@ class DetectConfig:
             WRITE_VIDEO: self.write_video,
             VIDEO_CODEC: self.video_codec.value,
             ENCODING_SPEED: self.encoding_speed.value,
-            CRF: self.crf.name,  # TODO: Should we use value or name for crf
+            CRF: self.crf.name,
         }
 
 

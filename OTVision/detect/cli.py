@@ -190,7 +190,6 @@ class ArgparseDetectCliParser(DetectCliParser):
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
             write_video=args.write_video,
-            # TODO: Should we go by Enum member names or their actual values?
             video_codec=(
                 VideoCodec(args.video_codec) if args.video_codec is not None else None
             ),
