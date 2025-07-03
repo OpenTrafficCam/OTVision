@@ -411,8 +411,12 @@ def determine_save_dir(save_dir: str | None) -> Path | None:
         return None
 
     if tensorrt_version := retrieve_tensorrt_version():
-        return Path(save_dir) / tensorrt_version
-    return Path(save_dir) / DEFAULT_SUBDIRECTORY
+        result = Path(save_dir) / tensorrt_version
+    else:
+        result = Path(save_dir) / DEFAULT_SUBDIRECTORY
+
+    result.mkdir(exist_ok=True, parents=True)
+    return result
 
 
 def main(
