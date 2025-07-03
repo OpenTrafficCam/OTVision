@@ -104,8 +104,7 @@ class ModelExportSpecification:
             f"{self.model_info.core}{self.__image_size_suffix()}"
             f"{self.__quantization_suffix()}"
         )
-        sub_dir_name = retrieve_tensorrt_version()
-        return self.model_info.original_path.parent / sub_dir_name / new_name
+        return self.model_info.original_path.parent / new_name
 
     def __image_size_suffix(self) -> str:
         if self.imagesize is not None:
@@ -210,6 +209,9 @@ class PreExportAction:
 
 
 class PostExportAction:
+    def __init__(self, save_dir: Path | None = None) -> None:
+        self._save_dir = save_dir
+
     """Performs post-export actions.
 
     1. Moves exported models to their original location, that is, the parent folder of
@@ -243,7 +245,10 @@ class PostExportAction:
     ) -> None:
         for exported_model in TEMP_FOLDER.iterdir():
             if self.__is_model(exported_model):
-                dst = Path(f"{spec.generate_file_stem()}{exported_model.suffix}")
+                dst = self.__determine_dst(
+                    spec.generate_file_stem(),
+                    exported_model.suffix,
+                )
                 if dst.is_dir():
                     # Replace does not work on existing destinations that are
                     # directories. In our case .mlpackage is a directory.
@@ -266,6 +271,12 @@ class PostExportAction:
 
     def __is_model(self, model_path: Path) -> bool:
         return model_path.suffix in AVAILABLE_EXPORT_TYPES
+
+    def __determine_dst(self, current_dst: Path, exported_model_suffix: str) -> Path:
+        if self._save_dir is not None:
+            return self._save_dir / f"{current_dst.name}{exported_model_suffix}"
+
+        return Path(f"{current_dst}{exported_model_suffix}")
 
 
 @dataclass
@@ -383,7 +394,7 @@ class YoloModelExporter:
         return "half"
 
 
-def retrieve_tensorrt_version() -> str:
+def retrieve_tensorrt_version() -> str | None:
     """Retrieves the TensorRT version from the model name."""
     try:
         import tensorrt as trt
@@ -392,8 +403,16 @@ def retrieve_tensorrt_version() -> str:
         return f"tensorrt_{version}"
     except ModuleNotFoundError:
         pass
+    return None
 
-    return DEFAULT_SUBDIRECTORY
+
+def determine_save_dir(save_dir: str | None) -> Path | None:
+    if save_dir is None:
+        return None
+
+    if tensorrt_version := retrieve_tensorrt_version():
+        return Path(save_dir) / tensorrt_version
+    return Path(save_dir) / DEFAULT_SUBDIRECTORY
 
 
 def main(
@@ -401,6 +420,7 @@ def main(
     model: str | None = None,
     quantization: Literal["int8", "fp16"] | None = None,
     config: str | None = None,
+    savedir: str | None = None,
 ) -> None:
     """CLI Tool for Exporting YOLO Models.
 
@@ -429,6 +449,9 @@ def main(
         --config (Optional):
             Path to a YAML configuration file for batch export of multiple models
             with specific formats and settings.
+        --savedir (Optional):
+            Save directory for exported models. If not specified, the current models
+            are overwritten if they exist.
 
     Examples:
     1. Export a model to ONNX:
@@ -468,8 +491,9 @@ def main(
 
     """
     print(f"CUDA is available: {torch.cuda.is_available()}")
+    save_dir = determine_save_dir(savedir)
     model_export_spec_parser = ModelExportSpecificationParser()
-    exporter = YoloModelExporter(PreExportAction(), PostExportAction())
+    exporter = YoloModelExporter(PreExportAction(), PostExportAction(save_dir=save_dir))
     if config is not None:
         config_parser = ConfigParser(model_export_spec_parser)
         export_config = config_parser.parse(config_file=Path(config))
@@ -486,7 +510,9 @@ def main(
             raise ParseError("--model must be specified.")
 
         spec = model_export_spec_parser.parser(
-            model=Path(model), formats=_formats, quantization=quantization
+            model=Path(model),
+            formats=_formats,
+            quantization=quantization,
         )
         exporter.export(ExportConfig([spec]))
 
