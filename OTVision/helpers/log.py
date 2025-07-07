@@ -131,6 +131,7 @@ class _OTVisionLogger:
             level is not intended to be optional, it has to be provided
             in every case. The default value provided is a safety net.
         """
+        self.logger.setLevel(level)
         console_handler = logging.StreamHandler(sys.stdout)
         self._add_handler(console_handler, level)
 
