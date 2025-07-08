@@ -36,10 +36,10 @@ configurations:
     output_file_name: otvision
     additional_requirements:
       - "--extra-index-url https://pypi.nvidia.com/"
-      - "--extra-index-url https://download.pytorch.org/whl/cu126"
-      - "tensorrt==10.9.0.34"
-      - "tensorrt-cu12-bindings==10.9.0.34"
-      - "tensorrt-cu12-libs==10.9.0.34"
+      - "--extra-index-url https://download.pytorch.org/whl/cu128"
+      - "tensorrt==10.12.0.36"
+      - "tensorrt-cu12-bindings==10.12.0.36"
+      - "tensorrt-cu12-libs==10.12.0.36"
   - package_path: OTVision
     files:
       - source: "install.sh"
@@ -47,7 +47,7 @@ configurations:
     output_file_name: OTVision
     additional_requirements:
       - "--extra-index-url https://pypi.nvidia.com/"
-      - "--extra-index-url https://download.pytorch.org/whl/cu126"
-      - "tensorrt==10.9.0.34"
-      - "tensorrt-cu12-bindings==10.9.0.34"
-      - "tensorrt-cu12-libs==10.9.0.34"
+      - "--extra-index-url https://download.pytorch.org/whl/cu128"
+      - "tensorrt==10.12.0.36"
+      - "tensorrt-cu12-bindings==10.12.0.36"
+      - "tensorrt-cu12-libs==10.12.0.36"
