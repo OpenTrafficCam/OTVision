@@ -3,6 +3,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    VideoCodec,
+)
+
 
 class CliArgs(ABC):
     @abstractmethod
@@ -33,6 +39,9 @@ class DetectCliArgs(CliArgs):
     detect_start: int | None = None
     detect_end: int | None = None
     write_video: bool | None = None
+    video_codec: VideoCodec | None = None
+    encoding_speed: EncodingSpeed | None = None
+    crf: ConstantRateFactor | None = None
 
     def get_config_file(self) -> Path | None:
         return self.config_file
