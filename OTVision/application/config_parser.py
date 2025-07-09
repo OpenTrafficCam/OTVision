@@ -5,12 +5,14 @@ from OTVision.application.config import (
     COL_WIDTH,
     CONF,
     CONVERT,
+    CRF,
     DATETIME_FORMAT,
     DEFAULT_FILETYPE,
     DELETE_INPUT,
     DETECT,
     DETECT_END,
     DETECT_START,
+    ENCODING_SPEED,
     EXPECTED_DURATION,
     FLUSH_BUFFER_SIZE,
     FONT,
@@ -51,6 +53,7 @@ from OTVision.application.config import (
     TRANSFORM,
     UNDISTORT,
     VID,
+    VIDEO_CODEC,
     WEIGHTS,
     WINDOW,
     WRITE_VIDEO,
@@ -192,6 +195,9 @@ class ConfigParser:
             detect_start=data.get(DETECT_START, DetectConfig.detect_start),
             detect_end=data.get(DETECT_END, DetectConfig.detect_end),
             write_video=data.get(WRITE_VIDEO, DetectConfig.write_video),
+            video_codec=data.get(VIDEO_CODEC, DetectConfig.video_codec),
+            encoding_speed=data.get(ENCODING_SPEED, DetectConfig.encoding_speed),
+            crf=data.get(CRF, DetectConfig.crf),
         )
 
     def parse_yolo_config(self, data: dict) -> YoloConfig:
