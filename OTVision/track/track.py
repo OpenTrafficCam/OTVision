@@ -4,10 +4,11 @@ from tqdm import tqdm
 
 from OTVision.application.config import Config
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.helpers.files import get_files
 from OTVision.helpers.input_types import check_types
 from OTVision.helpers.log import LOGGER_NAME
-from OTVision.track.id_generator import StrIdGenerator, tracking_run_uuid_generator
+from OTVision.track.id_generator import tracking_run_uuid_generator
 from OTVision.track.model.track_exporter import FinishedTracksExporter
 from OTVision.track.tracker.filebased_tracking import UnfinishedChunksBuffer
 

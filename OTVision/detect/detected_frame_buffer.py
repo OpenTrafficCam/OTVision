@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from OTVision.abstraction.observer import Observable, Subject
 from OTVision.application.buffer import Buffer
 from OTVision.domain.frame import DetectedFrame
 
@@ -49,7 +50,18 @@ class DetectedFrameBufferEvent:
     frames: list[DetectedFrame]
 
 
-class DetectedFrameBuffer(Buffer[DetectedFrame, DetectedFrameBufferEvent, FlushEvent]):
+class DetectedFrameBuffer(
+    Buffer[DetectedFrame, FlushEvent], Observable[DetectedFrameBufferEvent]
+):
+    def __init__(self, subject: Subject[DetectedFrameBufferEvent]) -> None:
+        Buffer.__init__(self)
+        Observable.__init__(self, subject)
+
+    def on_flush(self, event: FlushEvent) -> None:
+        buffered_elements = self._get_buffered_elements()
+        self._notify_observers(buffered_elements, event)
+        self._reset_buffer()
+
     def _notify_observers(
         self, elements: list[DetectedFrame], event: FlushEvent
     ) -> None:

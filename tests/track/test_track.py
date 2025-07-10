@@ -8,10 +8,10 @@ import pytest
 
 from OTVision import version
 from OTVision.application.config import TrackConfig, _TrackIouConfig
+from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.config import CONFIG
 from OTVision.helpers.files import read_json
 from OTVision.track.builder import TrackBuilder
-from OTVision.track.id_generator import StrIdGenerator
 from OTVision.track.track import OtvisionTrack
 from tests.conftest import YieldFixture
 

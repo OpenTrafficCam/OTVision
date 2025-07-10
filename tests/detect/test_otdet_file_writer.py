@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from OTVision.abstraction.observer import Subject
 from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
@@ -17,7 +18,7 @@ from OTVision.detect.detected_frame_buffer import (
     SourceMetadata,
 )
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
-from OTVision.detect.otdet_file_writer import OtdetFileWriter
+from OTVision.detect.otdet_file_writer import OtdetFileWriter, OtdetFileWrittenEvent
 from OTVision.domain.object_detection import ObjectDetectorMetadata
 
 CLASS_MAPPING = {0: "person", 1: "car"}
@@ -59,8 +60,10 @@ class TestOtdetFileWriter:
             given_object_detector_metadata
         )
         given_save_path_provider = create_save_path_provider()
+        given_subject = create_subject()
 
         target = OtdetFileWriter(
+            subject=given_subject,
             builder=given_otdet_builder,
             get_current_config=given_get_current_config,
             current_object_detector_metadata=given_get_object_detector_metadata,
@@ -145,3 +148,7 @@ def create_save_path_provider() -> Mock:
     mock = Mock(spec=DetectionFileSavePathProvider)
     mock.provide.return_value = SAVE_PATH
     return mock
+
+
+def create_subject() -> Mock:
+    return Mock(spec=Subject[OtdetFileWrittenEvent])

@@ -165,6 +165,18 @@ class TrackedFrame(DetectedFrame):
             discarded_tracks=discarded_tracks,
         )
 
+    def without_image(self) -> "TrackedFrame":
+        return TrackedFrame(
+            no=self.no,
+            occurrence=self.occurrence,
+            source=self.source,
+            output=self.output,
+            image=None,
+            detections=self.detections,
+            finished_tracks=self.finished_tracks,
+            discarded_tracks=self.discarded_tracks,
+        )
+
 
 @dataclass(frozen=True, kw_only=True)
 class FinishedFrame(TrackedFrame):

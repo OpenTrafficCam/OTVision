@@ -7,6 +7,7 @@ from OTVision.application.configure_logger import ConfigureLogger
 from OTVision.application.get_config import GetConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.track.get_track_cli_args import GetTrackCliArgs
+from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.application.track.update_current_track_config import (
     UpdateCurrentTrackConfig,
 )
@@ -20,11 +21,7 @@ from OTVision.domain.serialization import Deserializer
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 from OTVision.track.cli import ArgparseTrackCliParser
 from OTVision.track.exporter.filebased_exporter import FinishedChunkTrackExporter
-from OTVision.track.id_generator import (
-    StrIdGenerator,
-    track_id_generator,
-    tracking_run_uuid_generator,
-)
+from OTVision.track.id_generator import track_id_generator, tracking_run_uuid_generator
 from OTVision.track.model.filebased.frame_chunk import ChunkParser
 from OTVision.track.model.filebased.frame_group import FrameGroupParser
 from OTVision.track.model.track_exporter import FinishedTracksExporter

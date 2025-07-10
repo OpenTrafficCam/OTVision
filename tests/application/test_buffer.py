@@ -11,6 +11,9 @@ IntBuffer = Buffer[int, list[int], None]
 
 
 class MockBuffer(IntBuffer):
+    def on_flush(self, event: OBSERVING_TYPE) -> None:
+        pass
+
     def _notify_observers(self, elements: list[int], _: None) -> None:
         self._subject.notify(elements)
 
