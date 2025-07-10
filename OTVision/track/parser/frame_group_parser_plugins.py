@@ -19,6 +19,7 @@ from OTVision.dataformat import (
     VIDEO,
 )
 from OTVision.detect.otdet import parse_video_length
+from OTVision.helpers.date import parse_datetime
 from OTVision.helpers.files import (
     FULL_FILE_NAME_PATTERN,
     HOSTNAME,
@@ -26,7 +27,6 @@ from OTVision.helpers.files import (
     read_json_bz2_metadata,
 )
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
-from OTVision.track.parser.chunk_parser_plugins import parse_datetime
 
 MISSING_START_DATE = datetime(1900, 1, 1)
 MISSING_EXPECTED_DURATION = timedelta(minutes=15)
