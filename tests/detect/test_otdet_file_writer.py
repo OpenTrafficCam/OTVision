@@ -9,10 +9,8 @@ from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
-from OTVision.application.detect.otvision_save_path_provider import (
-    OtvisionSavePathProvider,
-)
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBufferEvent,
     SourceMetadata,

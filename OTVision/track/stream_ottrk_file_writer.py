@@ -2,10 +2,8 @@ from pathlib import Path
 
 from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, TrackConfig
-from OTVision.application.detect.otvision_save_path_provider import (
-    OtvisionSavePathProvider,
-)
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
 from OTVision.application.track.tracking_run_id import GetCurrentTrackingRunId
 from OTVision.detect.otdet import OtdetBuilderConfig

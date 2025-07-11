@@ -4,11 +4,11 @@ from unittest.mock import Mock, patch
 import pytest
 
 from OTVision.application.config import Config
-from OTVision.application.detect.otvision_save_path_provider import (
+from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import (
     OtvisionSavePathProvider,
     derive_filename,
 )
-from OTVision.application.get_current_config import GetCurrentConfig
 
 CONFIG = Config()
 

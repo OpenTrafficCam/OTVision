@@ -13,15 +13,13 @@ from OTVision.application.detect.current_object_detector_metadata import (
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
 from OTVision.application.detect.factory import ObjectDetectorCachedFactory
 from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
-from OTVision.application.detect.otvision_save_path_provider import (
-    OtvisionSavePathProvider,
-)
 from OTVision.application.detect.update_detect_config_with_cli_args import (
     UpdateDetectConfigWithCliArgs,
 )
 from OTVision.application.frame_count_provider import FrameCountProvider
 from OTVision.application.get_config import GetConfig
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.detect.cli import ArgparseDetectCliParser
 from OTVision.detect.detect import OTVisionVideoDetect
