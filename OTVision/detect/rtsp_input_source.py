@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from time import sleep
-from typing import Generator
+from typing import Any, Iterator
 
 from cv2 import (
     CAP_PROP_FRAME_HEIGHT,
@@ -124,7 +124,7 @@ class RtspInputSource(InputSourceDetect):
         self._current_video_capture = self._init_video_capture(self._current_stream)
         return self._current_video_capture
 
-    def produce(self) -> Generator[Frame, None, None]:
+    def produce(self) -> Iterator[Frame]:
         self._stream_start_time = self._datetime_provider.provide()
         self._current_video_start_time = self._stream_start_time
         while not self.should_stop():
@@ -237,6 +237,9 @@ class RtspInputSource(InputSourceDetect):
             f"_{self._current_video_start_time.strftime(DATETIME_FORMAT)}.mp4"
         )
         return str(self.stream_config.save_dir / output_filename)
+
+    def notify_on_stop_processing(self, _: Any) -> None:
+        self.stop()
 
 
 def convert_frame_to_rgb(frame: ndarray) -> ndarray:

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Generator
+from typing import Iterator
 
 import av
 from av.container.input import InputContainer
@@ -74,7 +74,7 @@ class VideoSource(InputSourceDetect):
         self._save_path_provider = save_path_provider
         self.__should_flush = False
 
-    def produce(self) -> Generator[Frame, None, None]:
+    def produce(self) -> Iterator[Frame]:
         """Generate frames from video files that meet detection requirements.
 
         Yields frames from valid video files while managing rotation, timestamping,

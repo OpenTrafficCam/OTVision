@@ -2,6 +2,7 @@ from pathlib import Path
 
 from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, TrackConfig
+from OTVision.application.configure_logger import logger
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
@@ -53,12 +54,15 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         self._current_tracking_run_id = get_current_tracking_run_id
         self._save_path_provider = save_path_provider
 
-        self._unfinished_tracks: set[TrackId] = set()
         self.__in_writing_state: bool = False
         self._ottrk_unfinished_tracks: set[TrackId] = set()
         self._current_output_file: Path | None = None
 
     def on_flush(self, event: OtdetFileWrittenEvent) -> None:
+        tracked_frames = self._get_buffered_elements()
+        if not tracked_frames:
+            return
+
         self.__in_writing_state = True
         self._current_output_file = self._save_path_provider.provide(
             event.otdet_builder_config.source, self.config.filetypes.track
@@ -67,8 +71,11 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             event.otdet_builder_config, event.number_of_frames
         )
         self._builder.add_config(builder_config)
+        last_frame = tracked_frames[-1]
         self._builder.add_tracked_frames(self._get_buffered_elements())
-        self._ottrk_unfinished_tracks = self._unfinished_tracks
+        self._ottrk_unfinished_tracks = last_frame.unfinished_tracks.difference(
+            last_frame.finished_tracks
+        ).difference(last_frame.discarded_tracks)
         self.reset()
 
     def _create_ottrk_builder_config(
@@ -89,19 +96,10 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         )
 
     def reset(self) -> None:
-        self._reset_unfinished_tracks()
         self._reset_buffer()
-
-    def _reset_unfinished_tracks(self) -> None:
-        self._unfinished_tracks = set()
 
     def buffer(self, to_buffer: TrackedFrame) -> None:
         self._buffer.append(to_buffer.without_image())
-        self._unfinished_tracks.update(
-            to_buffer.unfinished_tracks.difference(
-                to_buffer.discarded_tracks
-            ).difference(to_buffer.finished_tracks)
-        )
 
         if self.__in_writing_state:
             self._builder.finish_tracks(to_buffer.finished_tracks)
@@ -111,6 +109,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
                 .difference(to_buffer.finished_tracks)
                 .difference(to_buffer.discarded_tracks)
             )
+            logger().warning(f"Unfinished tracks: {self._ottrk_unfinished_tracks}")
             if self.build_condition_fulfilled:
                 ottrk_data = self._builder.build()
                 self.write(ottrk_data)
