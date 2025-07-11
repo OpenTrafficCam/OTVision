@@ -10,7 +10,7 @@ from tqdm import tqdm
 from OTVision.abstraction.observer import Subject
 from OTVision.application.config import DATETIME_FORMAT, Config
 from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
+    OtvisionSavePathProvider,
 )
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.event.new_video_start import NewVideoStartEvent
@@ -47,7 +47,7 @@ class VideoSource(InputSourceDetect):
             configuration.
         frame_rotator (AvVideoFrameRotator): Use to rotate video frames.
         timestamper_factory (Timestamper): Factory for creating timestamp generators.
-        save_path_provider (DetectionFileSavePathProvider): Provider for detection
+        save_path_provider (OtvisionSavePathProvider): Provider for detection
             output paths.
     """
 
@@ -66,7 +66,7 @@ class VideoSource(InputSourceDetect):
         get_current_config: GetCurrentConfig,
         frame_rotator: AvVideoFrameRotator,
         timestamper_factory: TimestamperFactory,
-        save_path_provider: DetectionFileSavePathProvider,
+        save_path_provider: OtvisionSavePathProvider,
     ) -> None:
         self.subject_flush = subject_flush
         self.subject_new_video_start = subject_new_video_start
@@ -93,7 +93,9 @@ class VideoSource(InputSourceDetect):
         print(start_msg)
 
         for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-            detections_file = self._save_path_provider.provide(str(video_file))
+            detections_file = self._save_path_provider.provide(
+                str(video_file), self._current_config.filetypes.detect
+            )
 
             if not self.__detection_requirements_are_met(video_file, detections_file):
                 continue

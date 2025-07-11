@@ -10,7 +10,7 @@ from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
 from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
+    OtvisionSavePathProvider,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.detected_frame_buffer import (
@@ -145,7 +145,7 @@ def create_get_object_detector_metadata(object_detector_metadata: Mock) -> Mock:
 
 
 def create_save_path_provider() -> Mock:
-    mock = Mock(spec=DetectionFileSavePathProvider)
+    mock = Mock(spec=OtvisionSavePathProvider)
     mock.provide.return_value = SAVE_PATH
     return mock
 

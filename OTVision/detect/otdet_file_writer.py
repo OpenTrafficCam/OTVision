@@ -6,7 +6,7 @@ from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
 from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
+    OtvisionSavePathProvider,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.detected_frame_buffer import DetectedFrameBufferEvent
@@ -38,7 +38,7 @@ class OtdetFileWriter:
             settings.
         current_object_detector_metadata (CurrentObjectDetectorMetadata): Provides
             metadata about the current object detector.
-        save_path_provider (DetectionFileSavePathProvider): determines the save path for
+        save_path_provider (OtvisionSavePathProvider): determines the save path for
             the otdet file to be written.
 
     """
@@ -49,7 +49,7 @@ class OtdetFileWriter:
         builder: OtdetBuilder,
         get_current_config: GetCurrentConfig,
         current_object_detector_metadata: CurrentObjectDetectorMetadata,
-        save_path_provider: DetectionFileSavePathProvider,
+        save_path_provider: OtvisionSavePathProvider,
     ):
         self._subject = subject
         self._builder = builder
@@ -103,7 +103,9 @@ class OtdetFileWriter:
         )
         otdet = self._builder.add_config(builder_config).build(event.frames)
 
-        detections_file = self._save_path_provider.provide(source_metadata.output)
+        detections_file = self._save_path_provider.provide(
+            source_metadata.output, config.filetypes.detect
+        )
         detections_file.parent.mkdir(parents=True, exist_ok=True)
         write_json(
             otdet,

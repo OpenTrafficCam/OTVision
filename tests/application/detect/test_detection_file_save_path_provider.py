@@ -5,15 +5,17 @@ import pytest
 
 from OTVision.application.config import Config
 from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
+    OtvisionSavePathProvider,
     derive_filename,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
 
 CONFIG = Config()
 
+OTDET_FILE_TYPE = ".otdet"
 
-class TestDetectionFilePathProvider:
+
+class TestOtvisionSavePathProvider:
     @patch(
         "OTVision.application.detect.detection_file_save_path_provider.derive_filename"
     )
@@ -22,15 +24,15 @@ class TestDetectionFilePathProvider:
         mock_derive_filename.return_value = expected_save_path
         given_get_current_config = self.create_get_current_config()
         given_video = "video.mp4"
-        target = DetectionFileSavePathProvider(given_get_current_config)
+        target = OtvisionSavePathProvider(given_get_current_config)
 
-        actual = target.provide(given_video)
+        actual = target.provide(given_video, OTDET_FILE_TYPE)
 
         assert actual == expected_save_path
         given_get_current_config.get.assert_called_once()
         mock_derive_filename.assert_called_once_with(
             video_file=Path(given_video),
-            detect_suffix=CONFIG.filetypes.detect,
+            file_type=OTDET_FILE_TYPE,
             detect_start=CONFIG.detect.detect_start,
             detect_end=CONFIG.detect.detect_end,
         )
@@ -63,7 +65,7 @@ class TestDeriveFilename:
             video_file=Path(video_file),
             detect_start=detect_start,
             detect_end=detect_end,
-            detect_suffix=".otdet",
+            file_type=".otdet",
         )
 
         assert actual == Path(detection_file)

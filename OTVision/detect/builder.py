@@ -12,7 +12,7 @@ from OTVision.application.detect.current_object_detector_metadata import (
 )
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
 from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
+    OtvisionSavePathProvider,
 )
 from OTVision.application.detect.factory import ObjectDetectorCachedFactory
 from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
@@ -115,8 +115,8 @@ class DetectBuilder(ABC):
         return TimestamperFactory(self.frame_count_provider, self.get_current_config)
 
     @cached_property
-    def detection_file_save_path_provider(self) -> DetectionFileSavePathProvider:
-        return DetectionFileSavePathProvider(self.get_current_config)
+    def detection_file_save_path_provider(self) -> OtvisionSavePathProvider:
+        return OtvisionSavePathProvider(self.get_current_config)
 
     @cached_property
     def frame_count_provider(self) -> FrameCountProvider:

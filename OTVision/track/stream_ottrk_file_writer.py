@@ -1,5 +1,10 @@
+from pathlib import Path
+
 from OTVision.application.buffer import Buffer
-from OTVision.application.config import TrackConfig
+from OTVision.application.config import Config, TrackConfig
+from OTVision.application.detect.detection_file_save_path_provider import (
+    OtvisionSavePathProvider,
+)
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
 from OTVision.application.track.tracking_run_id import GetCurrentTrackingRunId
@@ -7,6 +12,7 @@ from OTVision.detect.otdet import OtdetBuilderConfig
 from OTVision.detect.otdet_file_writer import OtdetFileWrittenEvent
 from OTVision.domain.detection import TrackId
 from OTVision.domain.frame import TrackedFrame
+from OTVision.helpers.files import write_json
 
 STREAMING_FRAME_GROUP_ID = 0
 
@@ -18,33 +24,47 @@ STREAMING_FRAME_GROUP_ID = 0
 
 
 class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
+    @property
+    def config(self) -> Config:
+        return self._get_current_config.get()
 
     @property
     def track_config(self) -> TrackConfig:
-        return self._get_current_config.get().track
+        return self.config.track
 
     @property
     def build_condition_fulfilled(self) -> bool:
         return len(self._ottrk_unfinished_tracks) == 0
+
+    @property
+    def current_output_file(self) -> Path:
+        if self._current_output_file is None:
+            raise ValueError("Output file has not been set yet.")
+        return self._current_output_file
 
     def __init__(
         self,
         builder: OttrkBuilder,
         get_current_config: GetCurrentConfig,
         get_current_tracking_run_id: GetCurrentTrackingRunId,
+        save_path_provider: OtvisionSavePathProvider,
     ) -> None:
         Buffer.__init__(self)
         self._builder = builder
         self._get_current_config = get_current_config
         self._current_tracking_run_id = get_current_tracking_run_id
+        self._save_path_provider = save_path_provider
 
         self._unfinished_tracks: set[TrackId] = set()
-        self._notify_tracking_info_observers: bool = False
         self.__in_writing_state: bool = False
         self._ottrk_unfinished_tracks: set[TrackId] = set()
+        self._current_output_file: Path | None = None
 
     def on_flush(self, event: OtdetFileWrittenEvent) -> None:
         self.__in_writing_state = True
+        self._current_output_file = self._save_path_provider.provide(
+            event.otdet_builder_config.source, self.config.filetypes.track
+        )
         builder_config = self._create_ottrk_builder_config(
             event.otdet_builder_config, event.number_of_frames
         )
@@ -94,5 +114,14 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
                 .difference(to_buffer.discarded_tracks)
             )
             if self.build_condition_fulfilled:
-                self._builder.build()
+                ottrk_data = self._builder.build()
+                self.write(ottrk_data)
                 self.__in_writing_state = False
+
+    def write(self, ottrk: dict) -> None:
+        write_json(
+            dict_to_write=ottrk,
+            file=self.current_output_file,
+            filetype=self.config.filetypes.track,
+            overwrite=True,
+        )
