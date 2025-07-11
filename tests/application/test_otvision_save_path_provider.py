@@ -16,9 +16,7 @@ OTDET_FILE_TYPE = ".otdet"
 
 
 class TestOtvisionSavePathProvider:
-    @patch(
-        "OTVision.application.detect.detection_file_save_path_provider.derive_filename"
-    )
+    @patch("OTVision.application.otvision_save_path_provider.derive_filename")
     def test_provide(self, mock_derive_filename: Mock) -> None:
         expected_save_path = Mock()
         mock_derive_filename.return_value = expected_save_path

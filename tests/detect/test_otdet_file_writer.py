@@ -103,7 +103,7 @@ class TestOtdetFileWriter:
         )
         given_otdet_builder.build.assert_called_once_with(given_event.frames)
         given_save_path_provider.provide.assert_called_once_with(
-            expected_source_metadata.output
+            expected_source_metadata.output, config.filetypes.detect
         )
         mock_write_json.assert_called_once_with(
             OTDET,
