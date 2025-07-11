@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Generator
+from typing import Iterator
 
 from OTVision.abstraction.pipes_and_filter import Filter
 
@@ -8,7 +8,7 @@ class Buffer[T, OBSERVING_TYPE](Filter[T, T]):
     def __init__(self) -> None:
         self._buffer: list[T] = []
 
-    def filter(self, pipe: Generator[T, None, None]) -> Generator[T, None, None]:
+    def filter(self, pipe: Iterator[T]) -> Iterator[T]:
         for element in pipe:
             self.buffer(element)
             yield element

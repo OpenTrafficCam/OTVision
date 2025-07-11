@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator
+from typing import Iterator
 
 
 class Filter[IN, OUT](ABC):
@@ -14,14 +14,14 @@ class Filter[IN, OUT](ABC):
     """
 
     @abstractmethod
-    def filter(self, pipe: Generator[IN, None, None]) -> Generator[OUT, None, None]:
+    def filter(self, pipe: Iterator[IN]) -> Iterator[OUT]:
         """Process elements from the input pipe and produce output elements.
 
         Args:
-            pipe (Generator[IN, None, None]): Input stream of elements to be processed.
+            pipe (Iterator[IN]): Input stream of elements to be processed.
 
         Returns:
-            Generator[OUT, None, None]: Output stream of processed elements.
+            Iterator[OUT]: Output stream of processed elements.
 
         """
 

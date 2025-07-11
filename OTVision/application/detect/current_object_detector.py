@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Iterator
 
 from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.get_current_config import GetCurrentConfig
@@ -33,7 +33,5 @@ class CurrentObjectDetector(Filter[Frame, DetectedFrame]):
         detect_config = self._get_current_config.get().detect
         return self._factory.create(detect_config)
 
-    def filter(
-        self, pipe: Generator[Frame, None, None]
-    ) -> Generator[DetectedFrame, None, None]:
+    def filter(self, pipe: Iterator[Frame]) -> Iterator[DetectedFrame]:
         return self.get().detect(pipe)

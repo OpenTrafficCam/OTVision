@@ -22,7 +22,7 @@ OTVision module to detect objects using yolov5
 import logging
 from pathlib import Path
 from time import perf_counter
-from typing import Generator
+from typing import Iterator
 
 import torch
 from tqdm import tqdm
@@ -134,14 +134,10 @@ class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
         self._detection_converter = detection_converter
         self._detected_frame_factory = detected_frame_factory
 
-    def filter(
-        self, pipe: Generator[Frame, None, None]
-    ) -> Generator[DetectedFrame, None, None]:
+    def filter(self, pipe: Iterator[Frame]) -> Iterator[DetectedFrame]:
         return self.detect(pipe)
 
-    def detect(
-        self, frames: Generator[Frame, None, None]
-    ) -> Generator[DetectedFrame, None, None]:
+    def detect(self, frames: Iterator[Frame]) -> Iterator[DetectedFrame]:
         for frame in tqdm(frames, desc="Detected frames", unit=" frames"):
             yield self._predict(frame)
 
