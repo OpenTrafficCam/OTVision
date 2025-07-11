@@ -2,7 +2,7 @@ from pathlib import Path
 
 from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, TrackConfig
-from OTVision.application.detect.detection_file_save_path_provider import (
+from OTVision.application.detect.otvision_save_path_provider import (
     OtvisionSavePathProvider,
 )
 from OTVision.application.get_current_config import GetCurrentConfig

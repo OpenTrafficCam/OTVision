@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
 from OTVision.application.config import DATETIME_FORMAT, Config
-from OTVision.application.detect.detection_file_save_path_provider import (
+from OTVision.application.detect.otvision_save_path_provider import (
     OtvisionSavePathProvider,
 )
 from OTVision.application.detect.timestamper import Timestamper

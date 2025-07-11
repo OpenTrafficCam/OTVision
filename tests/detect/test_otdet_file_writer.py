@@ -9,7 +9,7 @@ from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
-from OTVision.application.detect.detection_file_save_path_provider import (
+from OTVision.application.detect.otvision_save_path_provider import (
     OtvisionSavePathProvider,
 )
 from OTVision.application.get_current_config import GetCurrentConfig
