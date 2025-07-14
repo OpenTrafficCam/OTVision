@@ -1,6 +1,8 @@
+import socket
 from datetime import datetime, timedelta
 from time import sleep
 from typing import Any, Iterator
+from urllib.parse import urlparse
 
 from cv2 import (
     CAP_PROP_FRAME_HEIGHT,
@@ -27,7 +29,7 @@ from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.time import DatetimeProvider
 
 RTSP_URL = "rtsp://127.0.0.1:8554/test"
-RETRY_SECONDS = 1
+RETRY_SECONDS = 5
 DEFAULT_READ_FAIL_THRESHOLD = 5
 
 
@@ -127,41 +129,49 @@ class RtspInputSource(InputSourceDetect):
     def produce(self) -> Iterator[Frame]:
         self._stream_start_time = self._datetime_provider.provide()
         self._current_video_start_time = self._stream_start_time
-        while not self.should_stop():
-            if (frame := self._read_next_frame()) is not None:
-                self._frame_counter.increment()
-                occurrence = self._datetime_provider.provide()
+        try:
+            while not self.should_stop():
+                if (frame := self._read_next_frame()) is not None:
+                    self._frame_counter.increment()
+                    occurrence = self._datetime_provider.provide()
 
-                if self._outdated:
-                    self._current_video_start_time = occurrence
-                    self._outdated = False
-                    self._notify_new_video_start_observers()
+                    if self._outdated:
+                        self._current_video_start_time = occurrence
+                        self._outdated = False
+                        self._notify_new_video_start_observers()
 
-                yield Frame(
-                    data=convert_frame_to_rgb(frame),  # YOLO expects RGB
-                    frame=self.current_frame_number,
-                    source=self.rtsp_url,
-                    output=self.create_output(),
-                    occurrence=occurrence,
-                )
-                if self.flush_condition_met():
-                    self._notify_flush_observers()
-                    self._outdated = True
-                    self._frame_counter.reset()
-
-        self._notify_flush_observers()
+                    yield Frame(
+                        data=convert_frame_to_rgb(frame),  # YOLO expects RGB
+                        frame=self.current_frame_number,
+                        source=self.rtsp_url,
+                        output=self.create_output(),
+                        occurrence=occurrence,
+                    )
+                    if self.flush_condition_met():
+                        self._notify_flush_observers()
+                        self._outdated = True
+                        self._frame_counter.reset()
+            self._notify_flush_observers()
+        except InvalidRtspUrlError as cause:
+            logger().error(cause)
 
     def _init_video_capture(self, source: str) -> VideoCapture:
+        self._wait_for_connection(source)
+
         cap = VideoCapture(source)
         while not self.should_stop() and not cap.isOpened():
-            logger().warning(
-                f"Couldn't open the RTSP stream: {source}. "
+            cap.release()
+            self._wait_for_connection(source)
+            cap = VideoCapture(source)
+        return cap
+
+    def _wait_for_connection(self, connection: str) -> None:
+        while not self.should_stop() and not is_connection_available(connection):
+            logger().debug(
+                f"Couldn't open the RTSP stream: {connection}. "
                 f"Trying again in {RETRY_SECONDS}s..."
             )
             sleep(RETRY_SECONDS)
-            cap.release()
-            cap = VideoCapture(source)
-        return cap
 
     def _read_next_frame(self) -> ndarray | None:
         successful, frame = self._video_capture.read()
@@ -244,3 +254,58 @@ class RtspInputSource(InputSourceDetect):
 
 def convert_frame_to_rgb(frame: ndarray) -> ndarray:
     return cvtColor(frame, COLOR_BGR2RGB)
+
+
+class InvalidRtspUrlError(Exception):
+    """Raised when the RTSP URL is invalid."""
+
+
+def is_connection_available(rtsp_url: str) -> bool:
+    """
+    Check if RTSP connection is available by sending a DESCRIBE request.
+
+    Args:
+        rtsp_url: The RTSP URL to check
+
+    Returns:
+        bool: True if stream is available, False otherwise
+    """
+    try:
+        parsed = urlparse(rtsp_url)
+        if parsed.hostname is None and parsed.port is None:
+            raise InvalidRtspUrlError(
+                f"Invalid RTSP URL: {rtsp_url}. Missing hostname or port."
+            )
+
+        host = parsed.hostname
+        port = parsed.port
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+
+        if sock.connect_ex((host, port)) != 0:
+            sock.close()
+            return False
+
+        # Send RTSP DESCRIBE request to get stream info
+        rtsp_request = (
+            f"DESCRIBE {rtsp_url} RTSP/1.0\r\n"
+            f"CSeq: 1\r\n"
+            f"Accept: application/sdp\r\n\r\n"
+        )
+        sock.send(rtsp_request.encode())
+
+        # Read response
+        response = sock.recv(4096).decode()
+        sock.close()
+
+        # Check if we got a valid RTSP response with SDP content
+        return (
+            response.startswith("RTSP/1.0 200 OK")
+            and "application/sdp" in response
+            and "m=video" in response
+        )
+    except InvalidRtspUrlError:
+        raise
+    except Exception:
+        return False

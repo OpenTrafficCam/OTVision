@@ -138,8 +138,16 @@ class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
         return self.detect(pipe)
 
     def detect(self, frames: Iterator[Frame]) -> Iterator[DetectedFrame]:
-        for frame in tqdm(frames, desc="Detected frames", unit=" frames"):
+        for frame in tqdm(
+            frames,
+            desc="Detected frames",
+            unit=" frames",
+            disable=self.disable_tqdm_logging(),
+        ):
             yield self._predict(frame)
+
+    def disable_tqdm_logging(self) -> bool:
+        return log.level > logging.INFO
 
     def _predict(self, frame: Frame) -> DetectedFrame:
         if frame[FrameKeys.data] is None:
