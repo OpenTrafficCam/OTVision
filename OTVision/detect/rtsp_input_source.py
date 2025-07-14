@@ -129,29 +129,31 @@ class RtspInputSource(InputSourceDetect):
     def produce(self) -> Generator[Frame, None, None]:
         self._stream_start_time = self._datetime_provider.provide()
         self._current_video_start_time = self._stream_start_time
-        while not self.should_stop():
-            if (frame := self._read_next_frame()) is not None:
-                self._frame_counter.increment()
-                occurrence = self._datetime_provider.provide()
+        try:
+            while not self.should_stop():
+                if (frame := self._read_next_frame()) is not None:
+                    self._frame_counter.increment()
+                    occurrence = self._datetime_provider.provide()
 
-                if self._outdated:
-                    self._current_video_start_time = occurrence
-                    self._outdated = False
-                    self._notify_new_video_start_observers()
+                    if self._outdated:
+                        self._current_video_start_time = occurrence
+                        self._outdated = False
+                        self._notify_new_video_start_observers()
 
-                yield Frame(
-                    data=convert_frame_to_rgb(frame),  # YOLO expects RGB
-                    frame=self.current_frame_number,
-                    source=self.rtsp_url,
-                    output=self.create_output(),
-                    occurrence=occurrence,
-                )
-                if self.flush_condition_met():
-                    self._notify_flush_observers()
-                    self._outdated = True
-                    self._frame_counter.reset()
-
-        self._notify_flush_observers()
+                    yield Frame(
+                        data=convert_frame_to_rgb(frame),  # YOLO expects RGB
+                        frame=self.current_frame_number,
+                        source=self.rtsp_url,
+                        output=self.create_output(),
+                        occurrence=occurrence,
+                    )
+                    if self.flush_condition_met():
+                        self._notify_flush_observers()
+                        self._outdated = True
+                        self._frame_counter.reset()
+            self._notify_flush_observers()
+        except InvalidRtspUrlError as cause:
+            logger().error(cause)
 
     def _init_video_capture(self, source: str) -> VideoCapture:
         self._wait_for_connection(source)
@@ -251,6 +253,10 @@ def convert_frame_to_rgb(frame: ndarray) -> ndarray:
     return cvtColor(frame, COLOR_BGR2RGB)
 
 
+class InvalidRtspUrlError(Exception):
+    """Raised when the RTSP URL is invalid."""
+
+
 def is_connection_available(rtsp_url: str) -> bool:
     """
     Check if RTSP connection is available by sending a DESCRIBE request.
@@ -263,8 +269,13 @@ def is_connection_available(rtsp_url: str) -> bool:
     """
     try:
         parsed = urlparse(rtsp_url)
-        host = parsed.hostname or "localhost"
-        port = parsed.port or 554
+        if parsed.hostname is None and parsed.port is None:
+            raise InvalidRtspUrlError(
+                f"Invalid RTSP URL: {rtsp_url}. Missing hostname or port."
+            )
+
+        host = parsed.hostname
+        port = parsed.port
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
@@ -291,6 +302,7 @@ def is_connection_available(rtsp_url: str) -> bool:
             and "application/sdp" in response
             and "m=video" in response
         )
-
+    except InvalidRtspUrlError:
+        raise
     except Exception:
         return False
