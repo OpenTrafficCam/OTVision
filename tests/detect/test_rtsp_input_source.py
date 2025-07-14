@@ -12,6 +12,7 @@ from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.rtsp_input_source import Counter, RtspInputSource
 from OTVision.domain.frame import Frame
 
+RTSP_INPUT_SOURCE_MODULE = "OTVision.detect.rtsp_input_source"
 START_TIME = datetime(2020, 1, 1, 12, 0, 0)
 INIT_TIME = START_TIME - timedelta(seconds=1)
 FIRST_OCCURRENCE = START_TIME + timedelta(seconds=1)
@@ -76,10 +77,14 @@ class Given:
 
 
 class TestRtspInputSource:
-    @patch("OTVision.detect.rtsp_input_source.convert_frame_to_rgb")
-    @patch("OTVision.detect.rtsp_input_source.VideoCapture")
+    @patch(RTSP_INPUT_SOURCE_MODULE + ".is_connection_available", return_value=True)
+    @patch(RTSP_INPUT_SOURCE_MODULE + ".convert_frame_to_rgb")
+    @patch(RTSP_INPUT_SOURCE_MODULE + ".VideoCapture")
     def test_produce(
-        self, mock_video_capture: Mock, mock_convert_frame_to_rgb: Mock
+        self,
+        mock_video_capture: Mock,
+        mock_convert_frame_to_rgb: Mock,
+        mock_is_connection_available: Mock,
     ) -> None:
         given = setup_with(create_given(mock_video_capture, mock_convert_frame_to_rgb))
         target = create_target(given)
@@ -139,17 +144,23 @@ class TestRtspInputSource:
             call(create_expected_new_video_start(FIRST_OUTPUT)),
             call(create_expected_new_video_start(FOURTH_OUTPUT)),
         ]
+        mock_is_connection_available.assert_called_once_with(RTSP_URL)
 
-    @patch("OTVision.detect.rtsp_input_source.convert_frame_to_rgb")
-    @patch("OTVision.detect.rtsp_input_source.VideoCapture")
+    @patch(RTSP_INPUT_SOURCE_MODULE + ".is_connection_available", return_value=True)
+    @patch(RTSP_INPUT_SOURCE_MODULE + ".convert_frame_to_rgb")
+    @patch(RTSP_INPUT_SOURCE_MODULE + ".VideoCapture")
     def test_reconnecting_on_consecutive_read_fails(
-        self, mock_video_capture: Mock, mock_convert_frame_to_rgb: Mock
+        self,
+        mock_video_capture: Mock,
+        mock_convert_frame_to_rgb: Mock,
+        mock_is_connection_available: Mock,
     ) -> None:
         first_vc_instance = Mock()
         second_vc_instance = Mock()
         third_vc_instance = Mock()
 
         given = create_given(mock_video_capture, mock_convert_frame_to_rgb)
+        given = setup_with(given, video_capture_is_opened=False)
 
         # This triggers the reconnecting
         first_vc_instance.read.side_effect = [
@@ -191,6 +202,11 @@ class TestRtspInputSource:
         assert third_vc_instance.read.call_count == 1
 
         assert target._consecutive_read_fails == 0
+        assert mock_is_connection_available.call_args_list == [
+            call(RTSP_URL),
+            call(RTSP_URL),
+            call(RTSP_URL),
+        ]
 
 
 def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
