@@ -1,10 +1,3 @@
-"""Unit tests for OttrkBuilder following stage play principles.
-
-This module contains comprehensive tests for the OttrkBuilder class,
-structured as stage plays with clear Act/Arrange/Assert patterns.
-Each test tells a story about the behavior being tested.
-"""
-
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -34,6 +27,10 @@ TRACK_1 = 1
 TRACK_2 = 2
 FRAME_1 = 1
 FRAME_2 = 2
+FRAME_1_OCCURRENCE = RECORDED_START_DATE
+FRAME_2_OCCURRENCE = FRAME_1_OCCURRENCE + timedelta(seconds=1)
+SOURCE = "test_video.mp4"
+OUTPUT = "my_output"
 
 
 class TestOttrkBuilder:
@@ -66,10 +63,75 @@ class TestOttrkBuilder:
         target = create_target(given)
         target.add_config(given.ottrk_builder_config)
 
-        actual = target.build()
-        expected = create_expected_ottrk(actual_duration, expected_duration)
+        # Create three tracks with different states
+        unfinished_track_id = TrackId(1)
+        discarded_track_id = TrackId(2)
+        finished_track_id = TrackId(3)
 
-        assert actual == expected
+        # Create detections for each track
+        first_unfinished_detection = create_tracked_detection(
+            unfinished_track_id, is_first=True, is_last=False, is_discarded=False
+        )
+        first_discarded_detection = create_tracked_detection(
+            discarded_track_id, is_first=True, is_last=False, is_discarded=False
+        )
+        first_finished_detection = create_tracked_detection(
+            finished_track_id, is_first=True, is_last=True, is_discarded=False
+        )
+        second_finished_detection = create_tracked_detection(
+            finished_track_id, is_first=False, is_last=False, is_discarded=False
+        )
+
+        # Create tracked frame with all detections
+        first_frame = create_tracked_frame(
+            frame_no=FRAME_1,
+            occurrence=RECORDED_START_DATE,
+            detections=[
+                first_unfinished_detection,
+                first_discarded_detection,
+                first_finished_detection,
+            ],
+            discarded_tracks={discarded_track_id},
+            finished_tracks=set(),
+            unfinished_tracks={
+                unfinished_track_id,
+                discarded_track_id,
+                finished_track_id,
+            },
+        )
+
+        second_frame = create_tracked_frame(
+            frame_no=FRAME_2,
+            occurrence=FRAME_2_OCCURRENCE,
+            detections=[second_finished_detection],
+            discarded_tracks=set(),
+            finished_tracks={finished_track_id},
+            unfinished_tracks=set(),
+        )
+        # Add tracked frames to builder
+        target.add_tracked_frames([first_frame, second_frame])
+
+        actual = target.build()
+        expected_unfinished = create_expected_tracked_detection(
+            first_unfinished_detection, FRAME_1, FRAME_1_OCCURRENCE, False
+        )
+        expected_first_finished = create_expected_tracked_detection(
+            first_finished_detection, FRAME_1, FRAME_1_OCCURRENCE, False
+        )
+        expected_second_finished = create_expected_tracked_detection(
+            second_finished_detection, FRAME_2, FRAME_2_OCCURRENCE, True
+        )
+        expected_track_data_block = [
+            expected_unfinished,
+            expected_first_finished,
+            expected_second_finished,
+        ]
+        expected_ottrk = create_expected_ottrk(
+            actual_duration, expected_duration, expected_track_data_block
+        )
+
+        assert actual == expected_ottrk
+        assert not target._tracked_detections
 
     def test_add_config_raises_error_if_config_is_not_set(self) -> None:
         given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
@@ -228,7 +290,7 @@ def create_otdet_builder_config(
     return OtdetBuilderConfig(
         conf=0.5,
         iou=0.4,
-        source="test_video.mp4",
+        source=SOURCE,
         video_width=1920,
         video_height=1080,
         expected_duration=expected_duration,
@@ -304,6 +366,7 @@ def create_tracked_detection(
     result.is_first = is_first
     result.is_last = is_last
     result.is_discarded = is_discarded
+    result.source = SOURCE
 
     result.to_otdet.return_value = {
         dataformat.CLASS: result.label,
@@ -327,8 +390,8 @@ def create_tracked_frame(
     result = Mock()
     result.no = frame_no
     result.occurrence = occurrence
-    result.source = "my_source"
-    result.output = "my_output"
+    result.source = SOURCE
+    result.output = OUTPUT
     result.detections = detections
     result.image = None
     result.discarded_tracks = discarded_tracks
@@ -337,9 +400,34 @@ def create_tracked_frame(
     return result
 
 
+def create_expected_tracked_detection(
+    detection: TrackedDetection,
+    frame_no: FrameNo,
+    occurrence: datetime,
+    is_finished: bool,
+) -> dict:
+    """Create an expected detection dictionary from a TrackedDetection."""
+    return {
+        dataformat.CLASS: detection.label,
+        dataformat.CONFIDENCE: detection.conf,
+        dataformat.X: detection.x,
+        dataformat.Y: detection.y,
+        dataformat.W: detection.w,
+        dataformat.H: detection.h,
+        dataformat.INTERPOLATED_DETECTION: False,
+        dataformat.FIRST: detection.is_first,
+        dataformat.FINISHED: is_finished,
+        dataformat.TRACK_ID: detection.track_id,
+        dataformat.FRAME: frame_no,
+        dataformat.OCCURRENCE: occurrence.timestamp(),
+        dataformat.INPUT_FILE_PATH: SOURCE,
+    }
+
+
 def create_expected_ottrk(
     actual_duration: timedelta,
     expected_duration: timedelta | None,
+    expected_tracked_detections: list[dict],
 ) -> dict:
     otdet_metadata = create_otdet_metadata(actual_duration, expected_duration)
     track_metadata = create_expected_track_metadata(actual_duration, expected_duration)
@@ -356,6 +444,6 @@ def create_expected_ottrk(
     return {
         dataformat.METADATA: combined_metadata,
         dataformat.DATA: {
-            dataformat.DETECTIONS: [],
+            dataformat.DETECTIONS: expected_tracked_detections,
         },
     }
