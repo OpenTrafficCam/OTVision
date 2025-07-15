@@ -16,6 +16,7 @@ from OTVision import dataformat, version
 from OTVision.application.track.ottrk import (
     OttrkBuilder,
     OttrkBuilderConfig,
+    OttrkBuilderError,
     create_tracker_metadata,
 )
 from OTVision.detect.otdet import (
@@ -29,6 +30,10 @@ from OTVision.domain.frame import FrameNo, TrackedFrame
 RECORDED_START_DATE = datetime(2023, 1, 1, 12, 0, 0)
 ACTUAL_DURATION = timedelta(seconds=295)
 EXPECTED_DURATION = timedelta(seconds=300)
+TRACK_1 = 1
+TRACK_2 = 2
+FRAME_1 = 1
+FRAME_2 = 2
 
 
 class TestOttrkBuilder:
@@ -61,25 +66,108 @@ class TestOttrkBuilder:
         target = create_target(given)
         target.add_config(given.ottrk_builder_config)
 
-        actual = target.build()  # noqa
+        actual = target.build()
+        expected = create_expected_ottrk(actual_duration, expected_duration)
+
+        assert actual == expected
 
     def test_add_config_raises_error_if_config_is_not_set(self) -> None:
-        raise NotImplementedError
+        given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
+        target = create_target(given)
+
+        # Don't add config, just try to access it
+        with pytest.raises(OttrkBuilderError, match="Ottrk builder config is not set"):
+            _ = target.config
 
     def test_add_config_sets_build_config(self) -> None:
-        raise NotImplementedError
+        given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
+        target = create_target(given)
+
+        target.add_config(given.ottrk_builder_config)
+
+        assert target.config == given.ottrk_builder_config
 
     def test_finish_track_marks_detection_as_finished(self) -> None:
-        raise NotImplementedError
+        given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
+        target = create_target(given)
+        target.add_config(given.ottrk_builder_config)
+        detection_1 = create_tracked_detection(
+            1, is_first=True, is_last=False, is_discarded=False
+        )
+        detection_2 = create_tracked_detection(
+            1, is_first=True, is_last=False, is_discarded=False
+        )
 
-    def test_finish_tracks_marks_detections_as_finished(self) -> None:
-        raise NotImplementedError
+        frame_1 = create_tracked_frame(
+            frame_no=FRAME_1,
+            occurrence=RECORDED_START_DATE,
+            detections=[detection_1],
+            discarded_tracks=set(),
+            finished_tracks=set(),
+            unfinished_tracks={TRACK_1},
+        )
+        frame_2 = create_tracked_frame(
+            frame_no=FRAME_2,
+            occurrence=RECORDED_START_DATE + timedelta(seconds=1),
+            detections=[detection_2],
+            discarded_tracks=set(),
+            finished_tracks=set(),
+            unfinished_tracks={TRACK_1},
+        )
 
-    def test_discard_tracks_removes(self) -> None:
-        raise NotImplementedError
+        target.add_tracked_frames([frame_2, frame_1])
+        target.finish_track(TRACK_1)
+
+        result = target.build()
+        detections = result[dataformat.DATA][dataformat.DETECTIONS]
+
+        # Find the last detection for this track
+        track_detections = [d for d in detections if d[dataformat.TRACK_ID] == TRACK_1]
+        assert len(track_detections) == 2
+
+        # The last detection should be marked as finished
+        last_detection = max(track_detections, key=lambda d: d[dataformat.OCCURRENCE])
+        assert last_detection[dataformat.FINISHED] is True
+
+        # The first detection should not be marked as finished
+        first_detection = min(track_detections, key=lambda d: d[dataformat.OCCURRENCE])
+        assert first_detection[dataformat.FINISHED] is False
 
     def test_discard_track_removes(self) -> None:
-        raise NotImplementedError
+        given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
+        target = create_target(given)
+        target.add_config(given.ottrk_builder_config)
+
+        # Create test data for two tracks
+        track_id1 = TrackId(1)  # This one will be discarded
+        track_id2 = TrackId(2)  # This one will remain
+
+        detection1 = create_tracked_detection(
+            track_id1, is_first=True, is_last=False, is_discarded=False
+        )
+        detection2 = create_tracked_detection(
+            track_id2, is_first=True, is_last=False, is_discarded=False
+        )
+
+        frame = create_tracked_frame(
+            frame_no=FRAME_1,
+            occurrence=RECORDED_START_DATE,
+            detections=[detection1, detection2],
+            discarded_tracks=set(),
+            finished_tracks=set(),
+            unfinished_tracks={track_id1, track_id2},
+        )
+
+        target.add_tracked_frames([frame])
+        target.discard_track(track_id1)
+
+        result = target.build()
+        detections = result[dataformat.DATA][dataformat.DETECTIONS]
+
+        # Only track 2 should remain
+        track_ids = {d[dataformat.TRACK_ID] for d in detections}
+        assert track_ids == {track_id2}
+        assert len(detections) == 1
 
 
 @dataclass
@@ -255,7 +343,19 @@ def create_expected_ottrk(
 ) -> dict:
     otdet_metadata = create_otdet_metadata(actual_duration, expected_duration)
     track_metadata = create_expected_track_metadata(actual_duration, expected_duration)
+    config = create_ottrk_builder_config(actual_duration, expected_duration)
+
+    # Add the missing fields that OttrkBuilder adds
+    combined_metadata = {
+        **otdet_metadata,
+        **track_metadata,
+        dataformat.TRACKING_RUN_ID: config.tracking_run_id,
+        dataformat.FRAME_GROUP: config.frame_group,
+    }
+
     return {
-        dataformat.METADATA: {**otdet_metadata, **track_metadata},
-        dataformat.DATA: [],
+        dataformat.METADATA: combined_metadata,
+        dataformat.DATA: {
+            dataformat.DETECTIONS: [],
+        },
     }
