@@ -1,7 +1,7 @@
 import socket
 from datetime import datetime, timedelta
 from time import sleep
-from typing import Any, Iterator
+from typing import Iterator
 from urllib.parse import urlparse
 
 from cv2 import (
@@ -21,6 +21,7 @@ from OTVision.application.config import (
     StreamConfig,
 )
 from OTVision.application.configure_logger import logger
+from OTVision.application.event.new_otvision_config import NewOtvisionConfigEvent
 from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.detected_frame_buffer import FlushEvent
@@ -31,6 +32,10 @@ from OTVision.domain.time import DatetimeProvider
 RTSP_URL = "rtsp://127.0.0.1:8554/test"
 RETRY_SECONDS = 5
 DEFAULT_READ_FAIL_THRESHOLD = 5
+
+
+class NoConfigurationFoundError(Exception):
+    """Raised when no configuration is found for the RTSP stream."""
 
 
 class Counter:
@@ -66,7 +71,7 @@ class RtspInputSource(InputSourceDetect):
     def stream_config(self) -> StreamConfig:
         if stream_config := self.config.stream:
             return stream_config
-        raise ValueError("Stream config not found in config")
+        raise NoConfigurationFoundError("Stream config not found in config")
 
     @property
     def rtsp_url(self) -> str:
@@ -248,8 +253,12 @@ class RtspInputSource(InputSourceDetect):
         )
         return str(self.stream_config.save_dir / output_filename)
 
-    def notify_on_stop_processing(self, _: Any) -> None:
-        self.stop()
+    def notify_new_config(self, config: NewOtvisionConfigEvent) -> None:
+        try:
+            logger().debug("New OTVision config detected. Flushing buffers...")
+            self._notify_flush_observers()
+        except NoConfigurationFoundError:
+            logger().info("No configuration found for RTSP stream. Skipping flushing.")
 
 
 def convert_frame_to_rgb(frame: ndarray) -> ndarray:

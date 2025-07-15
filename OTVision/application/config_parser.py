@@ -75,6 +75,10 @@ from OTVision.application.config import (
 from OTVision.domain.serialization import Deserializer
 
 
+class InvalidOtvisionConfigError(Exception):
+    pass
+
+
 class ConfigParser:
 
     def __init__(self, deserializer: Deserializer) -> None:
