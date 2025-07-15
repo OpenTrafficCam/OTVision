@@ -327,9 +327,11 @@ class ConfigParser:
             config.track.t_min < flush_buffer_size
             and config.track.t_miss_max < flush_buffer_size
         ):
-            raise InvalidOtvisionConfigError(
-                f"The flush buffer size ({flush_buffer_size}) must be greater than the "
-                f"t_min ({config.track.t_min}) and t_miss_max "
-                f"({config.track.t_miss_max}) values to allow tracks to complete "
-                "before flushing."
-            )
+            return
+
+        raise InvalidOtvisionConfigError(
+            f"The flush buffer size ({flush_buffer_size}) must be greater than the "
+            f"t_min ({config.track.t_min}) and t_miss_max "
+            f"({config.track.t_miss_max}) values to allow tracks to complete "
+            "before flushing."
+        )
