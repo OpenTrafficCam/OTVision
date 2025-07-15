@@ -15,12 +15,6 @@ from OTVision.helpers.files import write_json
 
 STREAMING_FRAME_GROUP_ID = 0
 
-# Finished -> ✅
-# Unfinished -> Track ids -> Wait -> Id-1 -> Löschen, finished id-2, discarded id,
-# Discarded -> Remove
-# Nebenbedingung config: flush_buffersize > tmin und t_miss_max < flush_buffer_size
-# überprüfe beim Parsen einer Config Datei. Streaming Parser
-
 
 class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
     @property
