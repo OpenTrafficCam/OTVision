@@ -85,8 +85,11 @@ class ConfigParser:
         self._deserialize = deserializer
 
     def parse(self, file: Path) -> Config:
-        data = self._deserialize.deserialize(file)
-        return self.parse_from_dict(data)
+        raw_data = self._deserialize.deserialize(file)
+        config = self.parse_from_dict(raw_data)
+
+        self.validate_config(config)
+        return config
 
     def parse_from_dict(self, d: dict) -> Config:
         log_dict = d.get(LOG)
@@ -290,3 +293,43 @@ class ConfigParser:
             save_dir=save_dir,
             flush_buffer_size=flush_buffer_size,
         )
+
+    def validate_config(self, config: Config) -> None:
+        self.validate_flush_buffer_support_track_lifecycle(config)
+
+    def validate_flush_buffer_support_track_lifecycle(self, config: Config) -> None:
+        """Validate that the flush buffer size supports complete track lifecycle.
+
+        In streaming mode, the flush buffer size must be larger than the tracking
+        parameters t_min and t_miss_max to ensure tracks can complete their full
+        lifecycle before being flushed. This prevents premature flushing of
+        unfinished tracks.
+
+        Args:
+            config (Config): The configuration to validate
+
+        Raises:
+            InvalidOtvisionConfigError: If the flush buffer size is not greater
+                than both t_min and t_miss_max values
+
+        Note:
+            This validation only applies when stream configuration is present.
+            The constraint ensures that:
+            - Tracks have enough frames to reach minimum track length (t_min)
+            - Tracks can handle maximum missing frames (t_miss_max) before completion
+        """
+
+        if config.stream is None:
+            return
+
+        flush_buffer_size = config.stream.flush_buffer_size
+        if (
+            config.track.t_min < flush_buffer_size
+            and config.track.t_miss_max < flush_buffer_size
+        ):
+            raise InvalidOtvisionConfigError(
+                f"The flush buffer size ({flush_buffer_size}) must be greater than the "
+                f"t_min ({config.track.t_min}) and t_miss_max "
+                f"({config.track.t_miss_max}) values to allow tracks to complete "
+                "before flushing."
+            )
