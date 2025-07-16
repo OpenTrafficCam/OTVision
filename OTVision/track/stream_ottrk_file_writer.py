@@ -48,7 +48,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         self._current_tracking_run_id = get_current_tracking_run_id
         self._save_path_provider = save_path_provider
 
-        self.__in_writing_state: bool = False
+        self._in_writing_state: bool = False
         self._ottrk_unfinished_tracks: set[TrackId] = set()
         self._current_output_file: Path | None = None
 
@@ -57,7 +57,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         if not tracked_frames:
             return
 
-        self.__in_writing_state = True
+        self._in_writing_state = True
         self._current_output_file = self._save_path_provider.provide(
             event.otdet_builder_config.source, self.config.filetypes.track
         )
@@ -67,9 +67,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         self._builder.add_config(builder_config)
         last_frame = tracked_frames[-1]
         self._builder.add_tracked_frames(self._get_buffered_elements())
-        self._ottrk_unfinished_tracks = last_frame.unfinished_tracks.difference(
-            last_frame.finished_tracks
-        ).difference(last_frame.discarded_tracks)
+        self._ottrk_unfinished_tracks = last_frame.unfinished_tracks
         self.reset()
 
     def _create_ottrk_builder_config(
@@ -95,7 +93,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
     def buffer(self, to_buffer: TrackedFrame) -> None:
         self._buffer.append(to_buffer.without_image())
 
-        if self.__in_writing_state:
+        if self._in_writing_state:
             self._builder.finish_tracks(to_buffer.finished_tracks)
             self._builder.discard_tracks(to_buffer.discarded_tracks)
             self._ottrk_unfinished_tracks = (
@@ -107,7 +105,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             if self.build_condition_fulfilled:
                 ottrk_data = self._builder.build()
                 self.write(ottrk_data)
-                self.__in_writing_state = False
+                self._in_writing_state = False
 
     def write(self, ottrk: dict) -> None:
         write_json(
