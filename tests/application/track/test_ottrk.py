@@ -76,10 +76,10 @@ class TestOttrkBuilder:
             discarded_track_id, is_first=True, is_last=False, is_discarded=False
         )
         first_finished_detection = create_tracked_detection(
-            finished_track_id, is_first=True, is_last=True, is_discarded=False
+            finished_track_id, is_first=True, is_last=False, is_discarded=False
         )
         second_finished_detection = create_tracked_detection(
-            finished_track_id, is_first=False, is_last=False, is_discarded=False
+            finished_track_id, is_first=False, is_last=True, is_discarded=False
         )
 
         # Create tracked frame with all detections
