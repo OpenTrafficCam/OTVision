@@ -3,7 +3,7 @@ from enum import IntEnum, StrEnum
 from pathlib import Path
 from subprocess import PIPE, Popen, TimeoutExpired
 from threading import Thread
-from typing import Callable, Generator
+from typing import Callable, Iterator
 
 import ffmpeg
 from numpy import ndarray
@@ -282,9 +282,7 @@ class FfmpegVideoWriter(VideoWriter):
         log.info(f"Writing new video file to '{save_file}'.")
         return process
 
-    def filter(
-        self, pipe: Generator[Frame, None, None]
-    ) -> Generator[Frame, None, None]:
+    def filter(self, pipe: Iterator[Frame]) -> Iterator[Frame]:
         for frame in pipe:
             if (image := frame.get(FrameKeys.data)) is not None:
                 self.write(image)

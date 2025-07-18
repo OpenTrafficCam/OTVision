@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 from functools import cached_property
 
 from OTVision.abstraction.observer import Subject
-from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, DetectConfig
 from OTVision.application.config_parser import ConfigParser
 from OTVision.application.configure_logger import ConfigureLogger
@@ -12,9 +11,6 @@ from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
 from OTVision.application.detect.detected_frame_factory import DetectedFrameFactory
-from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
-)
 from OTVision.application.detect.factory import ObjectDetectorCachedFactory
 from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
 from OTVision.application.detect.update_detect_config_with_cli_args import (
@@ -23,20 +19,20 @@ from OTVision.application.detect.update_detect_config_with_cli_args import (
 from OTVision.application.frame_count_provider import FrameCountProvider
 from OTVision.application.get_config import GetConfig
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.detect.cli import ArgparseDetectCliParser
 from OTVision.detect.detect import OTVisionVideoDetect
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBuffer,
     DetectedFrameBufferEvent,
-    FlushEvent,
 )
 from OTVision.detect.detected_frame_producer import (
     DetectedFrameProducerFactory,
     SimpleDetectedFrameProducer,
 )
-from OTVision.detect.otdet import OtdetBuilder
-from OTVision.detect.otdet_file_writer import OtdetFileWriter
+from OTVision.detect.otdet import OtdetBuilder, OtdetMetadataBuilder
+from OTVision.detect.otdet_file_writer import OtdetFileWriter, OtdetFileWrittenEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.detect.pyav_frame_count_provider import PyAVFrameCountProvider
 from OTVision.detect.timestamper import TimestamperFactory
@@ -44,7 +40,6 @@ from OTVision.detect.yolo import YoloDetectionConverter, YoloFactory
 from OTVision.domain.cli import DetectCliParser
 from OTVision.domain.current_config import CurrentConfig
 from OTVision.domain.detect_producer_consumer import DetectedFrameProducer
-from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.input_source_detect import InputSourceDetect
 from OTVision.domain.object_detection import ObjectDetectorFactory
 from OTVision.domain.serialization import Deserializer
@@ -77,7 +72,7 @@ class DetectBuilder(ABC):
 
     @cached_property
     def otdet_builder(self) -> OtdetBuilder:
-        return OtdetBuilder()
+        return OtdetBuilder(OtdetMetadataBuilder())
 
     @cached_property
     def object_detector_factory(self) -> ObjectDetectorFactory:
@@ -118,8 +113,8 @@ class DetectBuilder(ABC):
         return TimestamperFactory(self.frame_count_provider, self.get_current_config)
 
     @cached_property
-    def detection_file_save_path_provider(self) -> DetectionFileSavePathProvider:
-        return DetectionFileSavePathProvider(self.get_current_config)
+    def detection_file_save_path_provider(self) -> OtvisionSavePathProvider:
+        return OtvisionSavePathProvider(self.get_current_config)
 
     @cached_property
     def frame_count_provider(self) -> FrameCountProvider:
@@ -128,6 +123,7 @@ class DetectBuilder(ABC):
     @cached_property
     def otdet_file_writer(self) -> OtdetFileWriter:
         return OtdetFileWriter(
+            subject=Subject[OtdetFileWrittenEvent](),
             builder=self.otdet_builder,
             get_current_config=self.get_current_config,
             current_object_detector_metadata=self.current_object_detector_metadata,
@@ -146,9 +142,7 @@ class DetectBuilder(ABC):
         )
 
     @cached_property
-    def detected_frame_buffer(
-        self,
-    ) -> Buffer[DetectedFrame, DetectedFrameBufferEvent, FlushEvent]:
+    def detected_frame_buffer(self) -> DetectedFrameBuffer:
         return DetectedFrameBuffer(subject=Subject[DetectedFrameBufferEvent]())
 
     @cached_property

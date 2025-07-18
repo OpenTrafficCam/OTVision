@@ -9,6 +9,7 @@ from OTVision.detect.otdet import (
     OtdetBuilder,
     OtdetBuilderConfig,
     OtdetBuilderError,
+    OtdetMetadataBuilder,
     parse_video_length,
     serialize_video_length,
 )
@@ -121,7 +122,7 @@ class TestOtdetBuilder:
     @pytest.fixture
     def builder(self) -> OtdetBuilder:
         """Fixture to provide a new instance of OtdetBuilder for every test."""
-        return OtdetBuilder()
+        return OtdetBuilder(OtdetMetadataBuilder())
 
     @pytest.fixture
     def config(self) -> OtdetBuilderConfig:

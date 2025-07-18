@@ -1,7 +1,5 @@
 import uuid
-from typing import Callable, Iterator
-
-StrIdGenerator = Callable[[], str]
+from typing import Iterator
 
 
 def tracking_run_uuid_generator() -> str:

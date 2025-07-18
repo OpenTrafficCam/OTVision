@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Iterator
 
 from OTVision.detect.detected_frame_producer_factory import DetectedFrameProducerFactory
 from OTVision.domain.detect_producer_consumer import DetectedFrameProducer
@@ -10,5 +10,5 @@ class SimpleDetectedFrameProducer(DetectedFrameProducer):
     def __init__(self, producer_factory: DetectedFrameProducerFactory) -> None:
         self._producer_factory = producer_factory
 
-    def produce(self) -> Generator[DetectedFrame, None, None]:
+    def produce(self) -> Iterator[DetectedFrame]:
         return self._producer_factory.create()

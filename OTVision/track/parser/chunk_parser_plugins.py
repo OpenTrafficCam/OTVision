@@ -8,7 +8,6 @@ from OTVision.dataformat import (
     CLASS,
     CONFIDENCE,
     DATA,
-    DATE_FORMAT,
     DETECTIONS,
     OCCURRENCE,
     H,
@@ -18,10 +17,7 @@ from OTVision.dataformat import (
 )
 from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame
-from OTVision.helpers.date import (
-    parse_date_string_to_utc_datime,
-    parse_timestamp_string_to_utc_datetime,
-)
+from OTVision.helpers.date import parse_datetime
 from OTVision.helpers.files import denormalize_bbox, read_json
 from OTVision.track.model.filebased.frame_chunk import ChunkParser, FrameChunk
 from OTVision.track.model.filebased.frame_group import FrameGroup
@@ -84,17 +80,3 @@ class DetectionParser:
             )
             detections.append(detected_item)
         return detections
-
-
-def parse_datetime(date: str | float) -> datetime:
-    """Parse a date string or timestamp to a datetime with UTC as timezone.
-
-    Args:
-        date (str | float): the date to parse
-
-    Returns:
-        datetime: the parsed datetime object with UTC set as timezone
-    """
-    if isinstance(date, str) and ("-" in date):
-        return parse_date_string_to_utc_datime(date, DATE_FORMAT)
-    return parse_timestamp_string_to_utc_datetime(date)

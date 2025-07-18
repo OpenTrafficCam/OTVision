@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from OTVision.dataformat import DATE_FORMAT
+
 
 def parse_date_string_to_utc_datime(date_string: str, date_format: str) -> datetime:
     """Parse a date string to a datetime object with UTC set as timezone.
@@ -24,3 +26,17 @@ def parse_timestamp_string_to_utc_datetime(timestamp: str | float) -> datetime:
         datetime: the datetime object with UTC as set timezone
     """
     return datetime.fromtimestamp(float(timestamp), timezone.utc)
+
+
+def parse_datetime(date: str | float) -> datetime:
+    """Parse a date string or timestamp to a datetime with UTC as timezone.
+
+    Args:
+        date (str | float): the date to parse
+
+    Returns:
+        datetime: the parsed datetime object with UTC set as timezone
+    """
+    if isinstance(date, str) and ("-" in date):
+        return parse_date_string_to_utc_datime(date, DATE_FORMAT)
+    return parse_timestamp_string_to_utc_datetime(date)

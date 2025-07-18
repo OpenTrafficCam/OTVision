@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator
+from typing import Iterator
 
 from OTVision.application.config import DetectConfig
 from OTVision.domain.frame import DetectedFrame, Frame
@@ -25,16 +25,14 @@ class ObjectDetectorMetadata(ABC):
 class ObjectDetector(ObjectDetectorMetadata):
 
     @abstractmethod
-    def detect(
-        self, frames: Generator[Frame, None, None]
-    ) -> Generator[DetectedFrame, None, None]:
+    def detect(self, frames: Iterator[Frame]) -> Iterator[DetectedFrame]:
         """Runs object detection on a video.
 
         Args:
-            frames (Generator[Frame, None, None]): the source to read frames from.
+            frames (Iterator[Frame]): the source to read frames from.
 
         Returns:
-            Generator[DetectedFrame, None, None]: nested list of detections.
+            Iterator[DetectedFrame]: nested list of detections.
                 First level is frames, second level is detections within frame.
         """
         raise NotImplementedError

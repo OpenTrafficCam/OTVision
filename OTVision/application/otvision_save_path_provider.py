@@ -3,8 +3,9 @@ from pathlib import Path
 from OTVision.application.get_current_config import GetCurrentConfig
 
 
-class DetectionFileSavePathProvider:
-    """Provides a mechanism to generate file save paths for detections.
+class OtvisionSavePathProvider:
+    """Provides a mechanism to generate file save paths for OTVision tasks such as
+    detect and track.
 
     This class is responsible for deriving the appropriate filenames for
     detection files based on the source and current configuration
@@ -19,11 +20,11 @@ class DetectionFileSavePathProvider:
     def __init__(self, get_current_config: GetCurrentConfig) -> None:
         self._get_current_config = get_current_config
 
-    def provide(self, source: str) -> Path:
+    def provide(self, source: str, file_type: str) -> Path:
         config = self._get_current_config.get()
         return derive_filename(
             video_file=Path(source),
-            detect_suffix=config.filetypes.detect,
+            file_type=file_type,
             detect_start=config.detect.detect_start,
             detect_end=config.detect.detect_end,
         )
@@ -31,7 +32,7 @@ class DetectionFileSavePathProvider:
 
 def derive_filename(
     video_file: Path,
-    detect_suffix: str,
+    file_type: str,
     detect_start: int | None = None,
     detect_end: int | None = None,
 ) -> Path:
@@ -45,7 +46,7 @@ def derive_filename(
             If None, no starting marker will be appended.
         detect_end (int | None): The ending marker to append to the filename. If None,
             no ending marker will be appended.
-        detect_suffix (str): The file suffix to apply to the derived filename.
+        file_type (str): The file suffix to apply to the derived filename.
 
     Returns:
         Path: The modified video file path with the updated stem and suffix applied.
@@ -56,4 +57,4 @@ def derive_filename(
     if detect_end is not None:
         cutout += f"_end_{detect_end}"
     new_stem = f"{video_file.stem}{cutout}"
-    return video_file.with_stem(new_stem).with_suffix(detect_suffix)
+    return video_file.with_stem(new_stem).with_suffix(file_type)

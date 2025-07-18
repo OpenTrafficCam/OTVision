@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -6,6 +7,14 @@ from typing import Self
 from OTVision import dataformat, version
 from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame
+from OTVision.helpers.date import parse_datetime
+from OTVision.helpers.files import (
+    FULL_FILE_NAME_PATTERN,
+    HOSTNAME,
+    InproperFormattedFilename,
+)
+
+MISSING_START_DATE = datetime(1900, 1, 1)
 
 
 @dataclass
@@ -35,7 +44,7 @@ class OtdetBuilderError(Exception):
     pass
 
 
-class OtdetBuilder:
+class OtdetMetadataBuilder:
     @property
     def config(self) -> OtdetBuilderConfig:
         if self._config is None:
@@ -45,51 +54,14 @@ class OtdetBuilder:
     def __init__(self) -> None:
         self._config: OtdetBuilderConfig | None = None
 
-    def add_config(self, config: OtdetBuilderConfig) -> Self:
-        self._config = config
-        return self
-
-    def reset(self) -> Self:
-        self._config = None
-        return self
-
-    def build(self, detections: list[DetectedFrame]) -> dict:
-        number_of_frames = len(detections)
+    def build(self, number_of_frames: int) -> dict:
         result = {
-            dataformat.METADATA: self._build_metadata(number_of_frames),
-            dataformat.DATA: self._build_data(detections),
-        }
-        self.reset()
-        return result
-
-    def _build_metadata(self, number_of_frames: int) -> dict:
-        return {
             dataformat.OTDET_VERSION: version.otdet_version(),
             dataformat.VIDEO: self._build_video_config(number_of_frames),
             dataformat.DETECTION: self._build_detection_config(),
         }
-
-    def _build_data(self, frames: list[DetectedFrame]) -> dict:
-        data = {}
-        for frame in frames:
-            converted_detections = [
-                self.__convert_detection(detection) for detection in frame.detections
-            ]
-            data[str(frame.no)] = {
-                dataformat.DETECTIONS: converted_detections,
-                dataformat.OCCURRENCE: frame.occurrence.timestamp(),
-            }
-        return data
-
-    def __convert_detection(self, detection: Detection) -> dict:
-        return {
-            dataformat.CLASS: detection.label,
-            dataformat.CONFIDENCE: detection.conf,
-            dataformat.X: detection.x,
-            dataformat.Y: detection.y,
-            dataformat.W: detection.w,
-            dataformat.H: detection.h,
-        }
+        self.reset()
+        return result
 
     def _build_video_config(self, number_of_frames: int) -> dict:
         source = Path(self.config.source)
@@ -126,6 +98,69 @@ class OtdetBuilder:
             dataformat.NORMALIZED_BBOX: self.config.normalized,
             dataformat.DETECT_START: self.config.detect_start,
             dataformat.DETECT_END: self.config.detect_end,
+        }
+
+    def add_config(self, config: OtdetBuilderConfig) -> Self:
+        self._config = config
+        return self
+
+    def reset(self) -> Self:
+        self._config = None
+        return self
+
+
+class OtdetBuilder:
+    @property
+    def config(self) -> OtdetBuilderConfig:
+        if self._config is None:
+            raise OtdetBuilderError("Otdet builder config is not set")
+        return self._config
+
+    def __init__(self, metadata_builder: OtdetMetadataBuilder) -> None:
+        self._config: OtdetBuilderConfig | None = None
+        self._metadata_builder = metadata_builder
+
+    def add_config(self, config: OtdetBuilderConfig) -> Self:
+        self._config = config
+        self._metadata_builder.add_config(config)
+        return self
+
+    def reset(self) -> Self:
+        self._config = None
+        return self
+
+    def build(self, detections: list[DetectedFrame]) -> dict:
+        number_of_frames = len(detections)
+        result = {
+            dataformat.METADATA: self._build_metadata(number_of_frames),
+            dataformat.DATA: self._build_data(detections),
+        }
+        self.reset()
+        return result
+
+    def _build_metadata(self, number_of_frames: int) -> dict:
+        return self._metadata_builder.build(number_of_frames)
+
+    def _build_data(self, frames: list[DetectedFrame]) -> dict:
+        data = {}
+        for frame in frames:
+            converted_detections = [
+                self.__convert_detection(detection) for detection in frame.detections
+            ]
+            data[str(frame.no)] = {
+                dataformat.DETECTIONS: converted_detections,
+                dataformat.OCCURRENCE: frame.occurrence.timestamp(),
+            }
+        return data
+
+    def __convert_detection(self, detection: Detection) -> dict:
+        return {
+            dataformat.CLASS: detection.label,
+            dataformat.CONFIDENCE: detection.conf,
+            dataformat.X: detection.x,
+            dataformat.Y: detection.y,
+            dataformat.W: detection.w,
+            dataformat.H: detection.h,
         }
 
 
@@ -180,3 +215,36 @@ def parse_video_length(video_length: str) -> timedelta:
             f"Could not parse video length '{video_length}'. "
             "Expected format 'HH:MM:SS'."
         ) from cause
+
+
+def extract_start_date_from_otdet(metadata: dict) -> datetime:
+    if dataformat.RECORDED_START_DATE in metadata[dataformat.VIDEO].keys():
+        recorded_start_date = metadata[dataformat.VIDEO][dataformat.RECORDED_START_DATE]
+        return parse_datetime(recorded_start_date)
+    return MISSING_START_DATE
+
+
+def extract_expected_duration_from_otdet(metadata: dict) -> timedelta:
+    if dataformat.EXPECTED_DURATION in metadata[dataformat.VIDEO].keys():
+        if expected_duration := metadata[dataformat.VIDEO][
+            dataformat.EXPECTED_DURATION
+        ]:
+            return timedelta(seconds=int(expected_duration))
+    return extract_otdet_video_length(metadata)
+
+
+def extract_otdet_video_length(metadata: dict) -> timedelta:
+    video_length = metadata[dataformat.VIDEO][dataformat.LENGTH]
+    return parse_video_length(video_length)
+
+
+def extract_hostname_from_otdet(metadata: dict) -> str:
+    video_name = Path(metadata[dataformat.VIDEO][dataformat.FILENAME]).name
+    match = re.search(
+        FULL_FILE_NAME_PATTERN,
+        video_name,
+    )
+    if match:
+        return match.group(HOSTNAME)
+
+    raise InproperFormattedFilename(f"Could not parse {video_name}.")

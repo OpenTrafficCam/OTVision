@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Generator
+from typing import Iterator
 
 import av
 from av.container.input import InputContainer
@@ -9,12 +9,10 @@ from tqdm import tqdm
 
 from OTVision.abstraction.observer import Subject
 from OTVision.application.config import DATETIME_FORMAT, Config
-from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
-)
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.detect.detected_frame_buffer import FlushEvent
 from OTVision.detect.plugin_av.rotate_frame import AvVideoFrameRotator
 from OTVision.detect.timestamper import TimestamperFactory, parse_start_time_from
@@ -47,7 +45,7 @@ class VideoSource(InputSourceDetect):
             configuration.
         frame_rotator (AvVideoFrameRotator): Use to rotate video frames.
         timestamper_factory (Timestamper): Factory for creating timestamp generators.
-        save_path_provider (DetectionFileSavePathProvider): Provider for detection
+        save_path_provider (OtvisionSavePathProvider): Provider for detection
             output paths.
     """
 
@@ -66,7 +64,7 @@ class VideoSource(InputSourceDetect):
         get_current_config: GetCurrentConfig,
         frame_rotator: AvVideoFrameRotator,
         timestamper_factory: TimestamperFactory,
-        save_path_provider: DetectionFileSavePathProvider,
+        save_path_provider: OtvisionSavePathProvider,
     ) -> None:
         self.subject_flush = subject_flush
         self.subject_new_video_start = subject_new_video_start
@@ -76,7 +74,7 @@ class VideoSource(InputSourceDetect):
         self._save_path_provider = save_path_provider
         self.__should_flush = False
 
-    def produce(self) -> Generator[Frame, None, None]:
+    def produce(self) -> Iterator[Frame]:
         """Generate frames from video files that meet detection requirements.
 
         Yields frames from valid video files while managing rotation, timestamping,
@@ -93,7 +91,9 @@ class VideoSource(InputSourceDetect):
         print(start_msg)
 
         for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
-            detections_file = self._save_path_provider.provide(str(video_file))
+            detections_file = self._save_path_provider.provide(
+                str(video_file), self._current_config.filetypes.detect
+            )
 
             if not self.__detection_requirements_are_met(video_file, detections_file):
                 continue

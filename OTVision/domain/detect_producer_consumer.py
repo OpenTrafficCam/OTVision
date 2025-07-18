@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator
+from typing import Iterator
 
 from OTVision.domain.frame import DetectedFrame
 
@@ -21,10 +21,10 @@ class DetectedFrameProducer(ABC):
     """
 
     @abstractmethod
-    def produce(self) -> Generator[DetectedFrame, None, None]:
+    def produce(self) -> Iterator[DetectedFrame]:
         """Generate a stream of detected frames.
 
         Returns:
-            Generator[DetectedFrame, None, None]: A stream of detected frames.
+            Iterator[DetectedFrame, None, None]: A stream of detected frames.
         """
         raise NotImplementedError

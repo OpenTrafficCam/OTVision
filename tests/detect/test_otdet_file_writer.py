@@ -4,20 +4,19 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from OTVision.abstraction.observer import Subject
 from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
-from OTVision.application.detect.detection_file_save_path_provider import (
-    DetectionFileSavePathProvider,
-)
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBufferEvent,
     SourceMetadata,
 )
 from OTVision.detect.otdet import OtdetBuilder, OtdetBuilderConfig
-from OTVision.detect.otdet_file_writer import OtdetFileWriter
+from OTVision.detect.otdet_file_writer import OtdetFileWriter, OtdetFileWrittenEvent
 from OTVision.domain.object_detection import ObjectDetectorMetadata
 
 CLASS_MAPPING = {0: "person", 1: "car"}
@@ -59,8 +58,10 @@ class TestOtdetFileWriter:
             given_object_detector_metadata
         )
         given_save_path_provider = create_save_path_provider()
+        given_subject = create_subject()
 
         target = OtdetFileWriter(
+            subject=given_subject,
             builder=given_otdet_builder,
             get_current_config=given_get_current_config,
             current_object_detector_metadata=given_get_object_detector_metadata,
@@ -102,7 +103,7 @@ class TestOtdetFileWriter:
         )
         given_otdet_builder.build.assert_called_once_with(given_event.frames)
         given_save_path_provider.provide.assert_called_once_with(
-            expected_source_metadata.output
+            expected_source_metadata.output, config.filetypes.detect
         )
         mock_write_json.assert_called_once_with(
             OTDET,
@@ -142,6 +143,10 @@ def create_get_object_detector_metadata(object_detector_metadata: Mock) -> Mock:
 
 
 def create_save_path_provider() -> Mock:
-    mock = Mock(spec=DetectionFileSavePathProvider)
+    mock = Mock(spec=OtvisionSavePathProvider)
     mock.provide.return_value = SAVE_PATH
     return mock
+
+
+def create_subject() -> Mock:
+    return Mock(spec=Subject[OtdetFileWrittenEvent])
