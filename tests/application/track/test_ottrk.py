@@ -61,7 +61,7 @@ class TestOttrkBuilder:
         given = setup(create_given(actual_duration, expected_duration))
 
         target = create_target(given)
-        target.add_config(given.ottrk_builder_config)
+        target.set_config(given.ottrk_builder_config)
 
         # Create three tracks with different states
         unfinished_track_id = TrackId(1)
@@ -145,14 +145,14 @@ class TestOttrkBuilder:
         given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
         target = create_target(given)
 
-        target.add_config(given.ottrk_builder_config)
+        target.set_config(given.ottrk_builder_config)
 
         assert target.config == given.ottrk_builder_config
 
     def test_finish_track_marks_detection_as_finished(self) -> None:
         given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
         target = create_target(given)
-        target.add_config(given.ottrk_builder_config)
+        target.set_config(given.ottrk_builder_config)
         detection_1 = create_tracked_detection(
             1, is_first=True, is_last=False, is_discarded=False
         )
@@ -198,7 +198,7 @@ class TestOttrkBuilder:
     def test_discard_track_removes(self) -> None:
         given = setup(create_given(ACTUAL_DURATION, EXPECTED_DURATION))
         target = create_target(given)
-        target.add_config(given.ottrk_builder_config)
+        target.set_config(given.ottrk_builder_config)
 
         # Create test data for two tracks
         track_id1 = TrackId(1)  # This one will be discarded

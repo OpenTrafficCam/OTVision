@@ -64,7 +64,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         builder_config = self._create_ottrk_builder_config(
             event.otdet_builder_config, event.number_of_frames
         )
-        self._builder.add_config(builder_config)
+        self._builder.set_config(builder_config)
         last_frame = tracked_frames[-1]
         self._builder.add_tracked_frames(self._get_buffered_elements())
         self._ottrk_unfinished_tracks = last_frame.unfinished_tracks

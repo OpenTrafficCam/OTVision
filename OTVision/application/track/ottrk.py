@@ -93,7 +93,7 @@ class OttrkBuilder:
             ),
         )
 
-    def add_config(self, config: OttrkBuilderConfig) -> Self:
+    def set_config(self, config: OttrkBuilderConfig) -> Self:
         self._config = config
         self._otdet_metadata_builder.add_config(config.otdet_builder_config)
         return self
