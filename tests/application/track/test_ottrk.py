@@ -157,7 +157,7 @@ class TestOttrkBuilder:
             1, is_first=True, is_last=False, is_discarded=False
         )
         detection_2 = create_tracked_detection(
-            1, is_first=True, is_last=False, is_discarded=False
+            1, is_first=False, is_last=False, is_discarded=False
         )
 
         frame_1 = create_tracked_frame(
