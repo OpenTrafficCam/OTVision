@@ -210,7 +210,7 @@ class TestStreamOttrkFileWriter:
 
         # Then: It should return early without processing
         given.save_path_provider.provide.assert_not_called()
-        given.builder.add_config.assert_not_called()
+        given.builder.set_config.assert_not_called()
         given.builder.add_tracked_frames.assert_not_called()
         given.builder.build.assert_not_called()
         assert target._in_writing_state is False
@@ -238,7 +238,7 @@ class TestStreamOttrkFileWriter:
         given.save_path_provider.provide.assert_called_once_with(
             event.otdet_builder_config.source, given.config.filetypes.track
         )
-        given.builder.add_config.assert_called_once_with(
+        given.builder.set_config.assert_called_once_with(
             create_expected_builder_config(
                 track_config=given.config.track,
                 otdet_builder_config=event.otdet_builder_config,
@@ -263,7 +263,7 @@ class TestStreamOttrkFileWriter:
         target.on_flush(event)
 
         # Then: It should create correct builder config
-        call_args = given.builder.add_config.call_args[0][0]
+        call_args = given.builder.set_config.call_args[0][0]
         assert isinstance(call_args, OttrkBuilderConfig)
         assert call_args.otdet_builder_config == event.otdet_builder_config
         assert call_args.number_of_frames == event.number_of_frames
