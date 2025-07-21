@@ -48,6 +48,7 @@ def cli_args() -> TrackCliArgs:
     return TrackCliArgs(
         paths=PATHS,
         config_file=CONFIG_FILE,
+        botsort_config_file=None,
         logfile=LOGFILE,
         logfile_overwrite=LOGFILE_OVERWRITE,
         log_level_file=LOG_LEVEL_FILE,

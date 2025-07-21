@@ -47,16 +47,24 @@ class DetectCliParser(ABC):
 class TrackCliArgs(CliArgs):
     paths: list[str] | None
     config_file: Path | None
+    botsort_config_file: Path | None
     logfile: Path
     logfile_overwrite: bool
     log_level_console: str | None
     log_level_file: str | None
     overwrite: bool | None = None
+    tracker_type: str | None = None
     sigma_l: float | None = None
     sigma_h: float | None = None
     sigma_iou: float | None = None
     t_min: int | None = None
     t_miss_max: int | None = None
+    # BoT-SORT parameters
+    track_high_thresh: float | None = None
+    track_low_thresh: float | None = None
+    new_track_thresh: float | None = None
+    track_buffer: int | None = None
+    match_thresh: float | None = None
 
     def get_config_file(self) -> Path | None:
         return self.config_file

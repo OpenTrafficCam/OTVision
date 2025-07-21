@@ -33,6 +33,12 @@ class ArgparseTrackCliParser(TrackCliParser):
             required=False,
         )
         self._parser.add_argument(
+            "--botsort-config",
+            type=str,
+            help="Path to BoT-SORT configuration yaml file.",
+            required=False,
+        )
+        self._parser.add_argument(
             "-o",
             "--overwrite",
             action=BooleanOptionalAction,
@@ -62,6 +68,38 @@ class ArgparseTrackCliParser(TrackCliParser):
             "--t-miss-max",
             type=int,
             help="Set t_miss_max parameter for tracking",
+        )
+        self._parser.add_argument(
+            "--tracker-type",
+            type=str,
+            choices=["iou", "botsort"],
+            help="Select tracking algorithm: 'iou' or 'botsort'",
+        )
+        # BoT-SORT parameters
+        self._parser.add_argument(
+            "--track-high-thresh",
+            type=float,
+            help="Set track_high_thresh parameter for BoT-SORT tracking",
+        )
+        self._parser.add_argument(
+            "--track-low-thresh",
+            type=float,
+            help="Set track_low_thresh parameter for BoT-SORT tracking",
+        )
+        self._parser.add_argument(
+            "--new-track-thresh",
+            type=float,
+            help="Set new_track_thresh parameter for BoT-SORT tracking",
+        )
+        self._parser.add_argument(
+            "--track-buffer",
+            type=int,
+            help="Set track_buffer parameter for BoT-SORT tracking",
+        )
+        self._parser.add_argument(
+            "--match-thresh",
+            type=float,
+            help="Set match_thresh parameter for BoT-SORT tracking",
         )
         self._parser.add_argument(
             "--log-level-console",
@@ -98,12 +136,37 @@ class ArgparseTrackCliParser(TrackCliParser):
         return TrackCliArgs(
             paths=self._parse_files(args.paths),
             config_file=args.config,
+            botsort_config_file=(
+                Path(args.botsort_config) if args.botsort_config else None
+            ),
             overwrite=args.overwrite,
+            tracker_type=args.tracker_type,
             sigma_l=float(args.sigma_l) if args.sigma_l is not None else None,
             sigma_h=float(args.sigma_h) if args.sigma_h is not None else None,
             sigma_iou=float(args.sigma_iou) if args.sigma_iou is not None else None,
             t_min=int(args.t_min) if args.t_min is not None else None,
             t_miss_max=int(args.t_miss_max) if args.t_miss_max is not None else None,
+            track_high_thresh=(
+                float(args.track_high_thresh)
+                if args.track_high_thresh is not None
+                else None
+            ),
+            track_low_thresh=(
+                float(args.track_low_thresh)
+                if args.track_low_thresh is not None
+                else None
+            ),
+            new_track_thresh=(
+                float(args.new_track_thresh)
+                if args.new_track_thresh is not None
+                else None
+            ),
+            track_buffer=(
+                int(args.track_buffer) if args.track_buffer is not None else None
+            ),
+            match_thresh=(
+                float(args.match_thresh) if args.match_thresh is not None else None
+            ),
             logfile=Path(args.logfile),
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,

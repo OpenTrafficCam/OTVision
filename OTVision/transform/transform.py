@@ -59,6 +59,8 @@ def main(
     paths: list[Path],
     refpts_file: Union[Path, None] = None,
     overwrite: bool = CONFIG[TRANSFORM][OVERWRITE],
+    offset_x: float = 0.5,
+    offset_y: float = 0.5,
 ) -> None:  # sourcery skip: merge-dict-assign
     """Transform tracks files containing trajectories in pixel coordinates to .gpkg
     files with trajectories in utm coordinates using either one single refpts file for
@@ -103,6 +105,7 @@ def main(
         log.info("Successfully read reference points file")
 
     tracks_files = get_files(paths=paths, filetypes=CONFIG[FILETYPES][TRACK])
+    tracks_files = [f for f in tracks_files if not f.name.startswith(".")]
 
     start_msg = f"Start transformation of {len(tracks_files)} video files"
     log.info(start_msg)
@@ -153,6 +156,10 @@ def main(
         # Read tracks
         tracks_px_df, metadata_dict = read_tracks(tracks_file)
         log.debug("Tracks read")
+
+        # Apply offset on trajectories
+        tracks_px_df["x"] = tracks_px_df["x"] + tracks_px_df["w"] * offset_x
+        tracks_px_df["y"] = tracks_px_df["y"] + tracks_px_df["h"] * offset_y
 
         # Actual transformation
         tracks_utm_df = transform(
@@ -332,6 +339,8 @@ def write_tracks(
     if filetype == "gpkg":  # TODO: Extend guard with overwrite parameter
         gpkg_file = tracks_file.with_suffix(".gpkg")
         gpkg_file_already_exists = gpkg_file.is_file()
+        if gpkg_file_already_exists:
+            gpkg_file.unlink()
         if overwrite or not gpkg_file_already_exists:
             log.debug(f"Write {gpkg_file}")
             # Get CRS UTM EPSG number

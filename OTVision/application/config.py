@@ -66,6 +66,14 @@ STREAM_SAVE_DIR = "SAVE_DIR"
 STREAM_NAME = "NAME"
 STREAM_SOURCE = "SOURCE"
 FLUSH_BUFFER_SIZE = "FLUSH_BUFFER_SIZE"
+# BoT-SORT tracker constants
+BOTSORT = "BOTSORT"
+TRACKER_TYPE = "TRACKER_TYPE"
+TRACK_HIGH_THRESH = "TRACK_HIGH_THRESH"
+TRACK_LOW_THRESH = "TRACK_LOW_THRESH"
+NEW_TRACK_THRESH = "NEW_TRACK_THRESH"
+TRACK_BUFFER = "TRACK_BUFFER"
+MATCH_THRESH = "MATCH_THRESH"
 
 
 @dataclass(frozen=True)
@@ -328,6 +336,24 @@ class _TrackIouConfig:
 
 
 @dataclass(frozen=True)
+class _TrackBotSortConfig:
+    track_high_thresh: float = 0.6
+    track_low_thresh: float = 0.1
+    new_track_thresh: float = 0.7
+    track_buffer: int = 30
+    match_thresh: float = 0.8
+
+    def to_dict(self) -> dict:
+        return {
+            TRACK_HIGH_THRESH: self.track_high_thresh,
+            TRACK_LOW_THRESH: self.track_low_thresh,
+            NEW_TRACK_THRESH: self.new_track_thresh,
+            TRACK_BUFFER: self.track_buffer,
+            MATCH_THRESH: self.match_thresh,
+        }
+
+
+@dataclass(frozen=True)
 class TrackConfig:
     @property
     def sigma_l(self) -> float:
@@ -351,14 +377,18 @@ class TrackConfig:
 
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
+    tracker_type: str = "iou"  # "iou" or "botsort"
     iou: _TrackIouConfig = _TrackIouConfig()
+    botsort: _TrackBotSortConfig = _TrackBotSortConfig()
     overwrite: bool = True
 
     def to_dict(self) -> dict:
         return {
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
+            TRACKER_TYPE: self.tracker_type,
             IOU: self.iou.to_dict(),
+            BOTSORT: self.botsort.to_dict(),
             OVERWRITE: self.overwrite,
         }
 

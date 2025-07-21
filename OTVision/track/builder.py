@@ -28,6 +28,7 @@ from OTVision.track.id_generator import (
 from OTVision.track.model.filebased.frame_chunk import ChunkParser
 from OTVision.track.model.filebased.frame_group import FrameGroupParser
 from OTVision.track.model.track_exporter import FinishedTracksExporter
+from OTVision.track.model.tracking_interfaces import Tracker
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 from OTVision.track.parser.frame_group_parser_plugins import (
     TimeThresholdFrameGroupParser,
@@ -37,6 +38,7 @@ from OTVision.track.tracker.filebased_tracking import (
     GroupedFilesTracker,
     UnfinishedChunksBuffer,
 )
+from OTVision.track.tracker.tracker_plugin_botsort import BotSortTracker
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
 
 
@@ -93,7 +95,15 @@ class TrackBuilder:
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker = IouTracker(get_current_config=self.get_current_config)
+        config = self.get_current_config.get()
+        tracker_type = config.track.tracker_type
+
+        tracker: Tracker
+        if tracker_type == "botsort":
+            tracker = BotSortTracker(get_current_config=self.get_current_config)
+        else:  # Default to IOU tracker
+            tracker = IouTracker(get_current_config=self.get_current_config)
+
         return GroupedFilesTracker(
             tracker=tracker,
             chunk_parser=self.chunk_parser,

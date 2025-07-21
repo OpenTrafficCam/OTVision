@@ -22,12 +22,19 @@ DETECT:
 
 TRACK:
   PATHS: []
+  TRACKER_TYPE: iou  # Options: "iou" or "botsort"
   IOU:
     SIGMA_H: 0.42
     SIGMA_IOU: 0.38
     SIGMA_L: 0.27
     T_MIN: 5
     T_MISS_MAX: 51
+  BOTSORT:
+    TRACK_HIGH_THRESH: 0.6
+    TRACK_LOW_THRESH: 0.1
+    NEW_TRACK_THRESH: 0.7
+    TRACK_BUFFER: 30
+    MATCH_THRESH: 0.8
   OVERWRITE: true
 
 LOG:

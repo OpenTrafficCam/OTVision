@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from OTVision.application.config import (
+    BOTSORT,
     COL_WIDTH,
     CONF,
     CONVERT,
@@ -28,6 +29,8 @@ from OTVision.application.config import (
     LOG,
     LOG_LEVEL_CONSOLE,
     LOG_LEVEL_FILE,
+    MATCH_THRESH,
+    NEW_TRACK_THRESH,
     NORMALIZED,
     OUTPUT_FILETYPE,
     OUTPUT_FPS,
@@ -48,6 +51,10 @@ from OTVision.application.config import (
     T_MIN,
     T_MISS_MAX,
     TRACK,
+    TRACK_BUFFER,
+    TRACK_HIGH_THRESH,
+    TRACK_LOW_THRESH,
+    TRACKER_TYPE,
     TRANSFORM,
     UNDISTORT,
     VID,
@@ -64,6 +71,7 @@ from OTVision.application.config import (
     _GuiConfig,
     _GuiWindowConfig,
     _LogConfig,
+    _TrackBotSortConfig,
     _TrackIouConfig,
     _TransformConfig,
     _UndistortConfig,
@@ -214,12 +222,22 @@ class ConfigParser:
             if iou_config_dict
             else TrackConfig.iou
         )
+
+        botsort_config_dict = data.get(BOTSORT)
+        botsort_config = (
+            self.parse_track_botsort_config(botsort_config_dict)
+            if botsort_config_dict
+            else TrackConfig.botsort
+        )
+
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
             sources,
             data.get(RUN_CHAINED, TrackConfig.run_chained),
+            data.get(TRACKER_TYPE, TrackConfig.tracker_type),
             iou_config,
+            botsort_config,
             data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
@@ -230,6 +248,15 @@ class ConfigParser:
             data.get(SIGMA_IOU, _TrackIouConfig.sigma_iou),
             data.get(T_MIN, _TrackIouConfig.t_min),
             data.get(T_MISS_MAX, _TrackIouConfig.t_miss_max),
+        )
+
+    def parse_track_botsort_config(self, data: dict) -> _TrackBotSortConfig:
+        return _TrackBotSortConfig(
+            data.get(TRACK_HIGH_THRESH, _TrackBotSortConfig.track_high_thresh),
+            data.get(TRACK_LOW_THRESH, _TrackBotSortConfig.track_low_thresh),
+            data.get(NEW_TRACK_THRESH, _TrackBotSortConfig.new_track_thresh),
+            data.get(TRACK_BUFFER, _TrackBotSortConfig.track_buffer),
+            data.get(MATCH_THRESH, _TrackBotSortConfig.match_thresh),
         )
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:

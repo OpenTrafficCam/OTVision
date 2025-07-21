@@ -10,7 +10,7 @@ OTVision is a core module of the [OpenTrafficCam framework](https://github.com/O
 
 - **Video Conversion**: Convert video files (h264 to mp4) with options to set frame rate and rotation
 - **Object Detection**: Detect road users in videos using state-of-the-art YOLO models
-- **Object Tracking**: Track detected objects through video frames using IOU-based tracking algorithms
+- **Object Tracking**: Track detected objects through video frames using IOU-based or BoT-SORT tracking algorithms
 - **Coordinate Transformation**: Transform pixel coordinates to real-world UTM coordinates
 
 ## Requirements
@@ -100,11 +100,111 @@ python detect.py --paths /path/to/videos/*.mp4 --weights yolov8s
 
 ### Object Tracking
 
-Track detected objects:
+Track detected objects using either IOU-based tracking (default) or BoT-SORT tracking:
+
+#### Basic Usage
 
 ```bash
 python track.py --paths /path/to/detections/*.otdet
 ```
+
+#### Using BoT-SORT Tracker
+
+To use the BoT-SORT tracker instead of the default IOU tracker:
+
+```bash
+python track.py --paths /path/to/detections/*.otdet --tracker-type botsort
+```
+
+#### BoT-SORT Parameters
+
+You can customize BoT-SORT parameters via command line:
+
+```bash
+python track.py --paths /path/to/detections/*.otdet \
+  --tracker-type botsort \
+  --track-high-thresh 0.6 \
+  --track-low-thresh 0.1 \
+  --new-track-thresh 0.7 \
+  --track-buffer 30 \
+  --match-thresh 0.8
+```
+
+**BoT-SORT Parameter Descriptions:**
+- `--track-high-thresh`: High confidence threshold for track association (default: 0.6)
+- `--track-low-thresh`: Low confidence threshold for track association (default: 0.1)
+- `--new-track-thresh`: Threshold for creating new tracks (default: 0.7)
+- `--track-buffer`: Number of frames to keep lost tracks in buffer (default: 30)
+- `--match-thresh`: Threshold for track matching using appearance features (default: 0.8)
+
+#### YAML Configuration for BoT-SORT
+
+You can configure BoT-SORT parameters using YAML configuration files in two ways:
+
+##### Option 1: Using OTVision Configuration File
+
+Configure BoT-SORT parameters within your main OTVision config file:
+
+```yaml
+TRACK:
+  PATHS: []
+  TRACKER_TYPE: botsort  # Set to "botsort" to use BoT-SORT tracker
+  IOU:
+    SIGMA_H: 0.42
+    SIGMA_IOU: 0.38
+    SIGMA_L: 0.27
+    T_MIN: 5
+    T_MISS_MAX: 51
+  BOTSORT:
+    TRACK_HIGH_THRESH: 0.6
+    TRACK_LOW_THRESH: 0.1
+    NEW_TRACK_THRESH: 0.7
+    TRACK_BUFFER: 30
+    MATCH_THRESH: 0.8
+  OVERWRITE: true
+```
+
+Then run with your custom config:
+
+```bash
+python track.py --config /path/to/your_config.yaml
+```
+
+##### Option 2: Using Dedicated BoT-SORT Configuration File
+
+You can use a separate YAML file specifically for BoT-SORT parameters using the `--botsort-config` parameter:
+
+Create a dedicated BoT-SORT config file (`botsort_config.yaml`):
+
+```yaml
+track_high_thresh: 0.6
+track_low_thresh: 0.1
+new_track_thresh: 0.7
+track_buffer: 30
+match_thresh: 0.8
+```
+
+Then run with the dedicated BoT-SORT config:
+
+```bash
+python track.py --paths /path/to/detections/*.otdet --botsort-config /path/to/botsort_config.yaml
+```
+
+##### Using Both Configuration Files
+
+You can use both the main OTVision config and a dedicated BoT-SORT config file together:
+
+```bash
+python track.py --config /path/to/otvision_config.yaml --botsort-config /path/to/botsort_config.yaml
+```
+
+**Note:** Individual CLI parameters take precedence over values in configuration files. For example:
+
+```bash
+python track.py --botsort-config /path/to/botsort_config.yaml --track-high-thresh 0.9
+```
+
+In this case, `track_high_thresh` will be 0.9, overriding the value in the config file.
 
 ### Coordinate Transformation
 
@@ -116,11 +216,32 @@ python transform.py --paths /path/to/tracks/*.ottrk --refpts-file /path/to/refer
 
 ### Configuration
 
-OTVision can be configured using a YAML configuration file. A default configuration is provided in `user_config.otvision.yaml`. You can specify a custom configuration file using the `--config` option:
+OTVision supports two types of configuration files:
+
+#### OTVision Configuration Files
+
+OTVision can be configured using a YAML configuration file that contains settings for all modules (detection, tracking, transformation, etc.). A default configuration is provided in `user_config.otvision.yaml`. You can specify a custom OTVision configuration file using the `--config` option:
 
 ```bash
 python detect.py --config /path/to/custom_config.yaml
+python track.py --config /path/to/custom_config.yaml
 ```
+
+#### BoT-SORT Configuration Files
+
+For tracking operations, you can also use a dedicated BoT-SORT configuration file that contains only BoT-SORT-specific parameters. This is useful when you want to experiment with different BoT-SORT settings without modifying your main OTVision configuration. Use the `--botsort-config` option:
+
+```bash
+python track.py --botsort-config /path/to/botsort_config.yaml
+```
+
+You can use both configuration types together:
+
+```bash
+python track.py --config /path/to/otvision_config.yaml --botsort-config /path/to/botsort_config.yaml
+```
+
+**Configuration Priority:** Individual CLI parameters > BoT-SORT config file > OTVision config file > Default values
 
 ## Documentation
 
