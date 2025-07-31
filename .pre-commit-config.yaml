@@ -63,6 +63,7 @@ repos:
           - pre-commit==3.8.0
           - pytest-cov==5.0.0
           - pytest==8.3.3
+          - scipy==1.4.1
           - torchvision==0.18.1
           - twine==6.1.0
           - types-PyYAML
@@ -92,4 +93,4 @@ repos:
       - id: shell-fmt-docker
         args:
           - -i
-          - "2"
+          - '2'
