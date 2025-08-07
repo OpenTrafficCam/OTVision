@@ -31,19 +31,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - name: Update Python Package Version
         uses: platomo/update-version-py-action@v1.0.1
         with:
           version: ${{ github.ref_name }}
           file-path: "OTVision"
-      - name: Install pypa/build
-        shell: bash
-        run: |
-          python3 -m pip install build --user
-
       - name: Build a binary wheel and a source tarball
         shell: bash
-        run: python -m build --outdir ${{ env.out_dir }}
+        run: uv build --out-dir ${{ env.out_dir }}
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
