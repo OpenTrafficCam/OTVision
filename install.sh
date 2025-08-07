@@ -15,12 +15,13 @@ echo "$DIR"
 cd "$DIR" || exit
 WORKING_DIR=$(pwd)
 VENV="$WORKING_DIR"/.venv
-PYTHON="$VENV"/bin/python
-PIP="$VENV"/bin/pip
-UV="$VENV"/bin/uv
 
-python3.12 -m venv "$VENV"
+# Check if uv is available globally, if not install it
+if ! command -v uv &> /dev/null; then
+    echo "uv not found globally, installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
 
-$PYTHON -m pip install --upgrade pip
-$PIP install uv
-$UV pip install -r requirements.txt --index-strategy unsafe-best-match --python .venv
+uv venv "$VENV"
+uv sync --project "$WORKING_DIR"
