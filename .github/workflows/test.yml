@@ -3,7 +3,7 @@ name: Test
 
 on:
   # Run tests each time a PR is opened or changed.
-  # Allow other Workflows (e.g. build workflows) to call this workflow.
+  # Allow other Workflows (e.g., build workflows) to call this workflow.
   pull_request:
   workflow_call:
 
@@ -11,15 +11,20 @@ permissions: read-all
 
 jobs:
   test:
-    name: Run Python tests on multiple OS and Python versions
+    name: Execute tests across various operating systems and Python versions.
     strategy:
       fail-fast: True
       matrix:
         os: [ubuntu-latest, windows-latest]
         py: ["3.12"]
-    uses: "platomo/GitHub-workflows/.github/workflows/reusable-python-tests.yml@main"
-    with:
-      os: ${{ matrix.os }}
-      py-version: ${{ matrix.py }}
-      test_path: OTVision
-      ffmpeg-required: True
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Python Tests
+        uses: platomo/test-python-app-action@feature/8426-split-dependencies-of-different-tools
+        timeout-minutes: 60
+        with:
+          py-version: ${{ matrix.py }}
+          package-path: OTVision
+          ffmpeg-required: True
