@@ -17,7 +17,7 @@ WORKING_DIR=$(pwd)
 VENV="$WORKING_DIR"/.venv
 
 # Check if uv is available globally, if not install it
-if ! command -v uv &> /dev/null; then
+if ! command -v uv &>/dev/null; then
   echo "uv not found globally, installing uv..."
   curl -LsSf https://astral.sh/uv/install.sh | sh
   export PATH="$HOME/.cargo/bin:$PATH"
