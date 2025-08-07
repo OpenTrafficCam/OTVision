@@ -11,7 +11,7 @@ permissions: read-all
 
 jobs:
   test:
-    name: Execute tests across various operating systems and Python versions.
+    name: Run Python tests on multiple OS and Python versions
     strategy:
       fail-fast: True
       matrix:
