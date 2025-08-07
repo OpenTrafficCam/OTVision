@@ -24,4 +24,4 @@ if ! command -v uv &> /dev/null; then
 fi
 
 uv venv "$VENV"
-uv sync --project "$WORKING_DIR"
+uv sync --python "$VENV"

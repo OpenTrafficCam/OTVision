@@ -8,5 +8,5 @@ PRE_COMMIT="$VENV"/bin/pre-commit
 
 bash "$WORKING_DIR"/install.sh
 
-uv sync --extra dev
+uv sync --extra dev --python "$VENV"
 $PRE_COMMIT install --install-hooks
