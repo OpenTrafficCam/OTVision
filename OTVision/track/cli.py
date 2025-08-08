@@ -72,8 +72,8 @@ class ArgparseTrackCliParser(TrackCliParser):
         self._parser.add_argument(
             "--tracker-type",
             type=str,
-            choices=["iou", "botsort"],
-            help="Select tracking algorithm: 'iou' or 'botsort'",
+            choices=["iou", "botsort", "smiletrack"],
+            help="Select tracking algorithm: 'iou', 'botsort', or 'smiletrack'",
         )
         # BoT-SORT parameters
         self._parser.add_argument(
@@ -100,6 +100,22 @@ class ArgparseTrackCliParser(TrackCliParser):
             "--match-thresh",
             type=float,
             help="Set match_thresh parameter for BoT-SORT tracking",
+        )
+        # SMILEtrack parameters
+        self._parser.add_argument(
+            "--proximity-thresh",
+            type=float,
+            help="Set proximity_thresh parameter for SMILEtrack tracking",
+        )
+        self._parser.add_argument(
+            "--appearance-thresh",
+            type=float,
+            help="Set appearance_thresh parameter for SMILEtrack tracking",
+        )
+        self._parser.add_argument(
+            "--reid-model-path",
+            type=str,
+            help="Path to re-ID model file for SMILEtrack tracking",
         )
         self._parser.add_argument(
             "--log-level-console",
@@ -167,6 +183,17 @@ class ArgparseTrackCliParser(TrackCliParser):
             match_thresh=(
                 float(args.match_thresh) if args.match_thresh is not None else None
             ),
+            proximity_thresh=(
+                float(args.proximity_thresh)
+                if args.proximity_thresh is not None
+                else None
+            ),
+            appearance_thresh=(
+                float(args.appearance_thresh)
+                if args.appearance_thresh is not None
+                else None
+            ),
+            reid_model_path=args.reid_model_path,
             logfile=Path(args.logfile),
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,

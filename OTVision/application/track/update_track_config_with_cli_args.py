@@ -5,6 +5,7 @@ from OTVision.application.config import (
     _LogConfig,
     _TrackBotSortConfig,
     _TrackIouConfig,
+    _TrackSMILEConfig,
 )
 from OTVision.application.config_parser import ConfigParser
 from OTVision.application.track.get_track_cli_args import GetTrackCliArgs
@@ -75,6 +76,33 @@ class UpdateTrackConfigWithCliArgs:
             ),
         )
 
+        smiletrack_config = _TrackSMILEConfig(
+            track_high_thresh=value_or_default(
+                cli_args.track_high_thresh, track_config.smiletrack.track_high_thresh
+            ),
+            track_low_thresh=value_or_default(
+                cli_args.track_low_thresh, track_config.smiletrack.track_low_thresh
+            ),
+            new_track_thresh=value_or_default(
+                cli_args.new_track_thresh, track_config.smiletrack.new_track_thresh
+            ),
+            track_buffer=value_or_default(
+                cli_args.track_buffer, track_config.smiletrack.track_buffer
+            ),
+            match_thresh=value_or_default(
+                cli_args.match_thresh, track_config.smiletrack.match_thresh
+            ),
+            proximity_thresh=value_or_default(
+                cli_args.proximity_thresh, track_config.smiletrack.proximity_thresh
+            ),
+            appearance_thresh=value_or_default(
+                cli_args.appearance_thresh, track_config.smiletrack.appearance_thresh
+            ),
+            reid_model_path=value_or_default(
+                cli_args.reid_model_path, track_config.smiletrack.reid_model_path
+            ),
+        )
+
         return TrackConfig(
             paths=value_or_default(cli_args.paths, track_config.paths),
             run_chained=track_config.run_chained,
@@ -83,6 +111,7 @@ class UpdateTrackConfigWithCliArgs:
             ),
             iou=iou_config,
             botsort=botsort_config,
+            smiletrack=smiletrack_config,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
         )
 

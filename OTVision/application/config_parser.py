@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from OTVision.application.config import (
+    APPEARANCE_THRESH,
     BOTSORT,
     COL_WIDTH,
     CONF,
@@ -36,13 +37,16 @@ from OTVision.application.config import (
     OUTPUT_FPS,
     OVERWRITE,
     PATHS,
+    PROXIMITY_THRESH,
     REFPTS,
+    REID_MODEL_PATH,
     ROTATION,
     RUN_CHAINED,
     SEARCH_SUBDIRS,
     SIGMA_H,
     SIGMA_IOU,
     SIGMA_L,
+    SMILETRACK,
     START_TIME,
     STREAM,
     STREAM_NAME,
@@ -73,6 +77,7 @@ from OTVision.application.config import (
     _LogConfig,
     _TrackBotSortConfig,
     _TrackIouConfig,
+    _TrackSMILEConfig,
     _TransformConfig,
     _UndistortConfig,
 )
@@ -230,6 +235,13 @@ class ConfigParser:
             else TrackConfig.botsort
         )
 
+        smiletrack_config_dict = data.get(SMILETRACK)
+        smiletrack_config = (
+            self.parse_track_smiletrack_config(smiletrack_config_dict)
+            if smiletrack_config_dict
+            else TrackConfig.smiletrack
+        )
+
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
@@ -238,6 +250,7 @@ class ConfigParser:
             data.get(TRACKER_TYPE, TrackConfig.tracker_type),
             iou_config,
             botsort_config,
+            smiletrack_config,
             data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
@@ -257,6 +270,19 @@ class ConfigParser:
             data.get(NEW_TRACK_THRESH, _TrackBotSortConfig.new_track_thresh),
             data.get(TRACK_BUFFER, _TrackBotSortConfig.track_buffer),
             data.get(MATCH_THRESH, _TrackBotSortConfig.match_thresh),
+            data.get(REID_MODEL_PATH, _TrackBotSortConfig.reid_model_path),
+        )
+
+    def parse_track_smiletrack_config(self, data: dict) -> _TrackSMILEConfig:
+        return _TrackSMILEConfig(
+            data.get(TRACK_HIGH_THRESH, _TrackSMILEConfig.track_high_thresh),
+            data.get(TRACK_LOW_THRESH, _TrackSMILEConfig.track_low_thresh),
+            data.get(NEW_TRACK_THRESH, _TrackSMILEConfig.new_track_thresh),
+            data.get(TRACK_BUFFER, _TrackSMILEConfig.track_buffer),
+            data.get(MATCH_THRESH, _TrackSMILEConfig.match_thresh),
+            data.get(PROXIMITY_THRESH, _TrackSMILEConfig.proximity_thresh),
+            data.get(APPEARANCE_THRESH, _TrackSMILEConfig.appearance_thresh),
+            data.get(REID_MODEL_PATH, _TrackSMILEConfig.reid_model_path),
         )
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:

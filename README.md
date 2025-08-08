@@ -10,7 +10,7 @@ OTVision is a core module of the [OpenTrafficCam framework](https://github.com/O
 
 - **Video Conversion**: Convert video files (h264 to mp4) with options to set frame rate and rotation
 - **Object Detection**: Detect road users in videos using state-of-the-art YOLO models
-- **Object Tracking**: Track detected objects through video frames using IOU-based or BoT-SORT tracking algorithms
+- **Object Tracking**: Track detected objects through video frames using IOU-based, BoT-SORT, or SMILEtrack tracking algorithms
 - **Coordinate Transformation**: Transform pixel coordinates to real-world UTM coordinates
 
 ## Requirements
@@ -100,7 +100,7 @@ python detect.py --paths /path/to/videos/*.mp4 --weights yolov8s
 
 ### Object Tracking
 
-Track detected objects using either IOU-based tracking (default) or BoT-SORT tracking:
+Track detected objects using IOU-based tracking (default), BoT-SORT tracking, or SMILEtrack:
 
 #### Basic Usage
 
@@ -127,7 +127,8 @@ python track.py --paths /path/to/detections/*.otdet \
   --track-low-thresh 0.1 \
   --new-track-thresh 0.7 \
   --track-buffer 30 \
-  --match-thresh 0.8
+  --match-thresh 0.8 \
+  --reid-model-path /path/to/reid_model.pth
 ```
 
 **BoT-SORT Parameter Descriptions:**
@@ -136,6 +137,18 @@ python track.py --paths /path/to/detections/*.otdet \
 - `--new-track-thresh`: Threshold for creating new tracks (default: 0.7)
 - `--track-buffer`: Number of frames to keep lost tracks in buffer (default: 30)
 - `--match-thresh`: Threshold for track matching using appearance features (default: 0.8)
+- `--reid-model-path`: Path to re-identification model file for enhanced tracking through occlusions (optional)
+
+#### BoT-SORT Re-Identification (Re-ID) Functionality
+
+BoT-SORT now supports re-identification models to improve tracking performance, especially in challenging scenarios with occlusions, crowded scenes, or long-term disappearances. When a re-ID model is provided via the `--reid-model-path` parameter, BoT-SORT will:
+
+- Extract appearance features from detected objects using the re-ID model
+- Use appearance similarity in addition to motion and IoU for track association
+- Better handle identity switches and track fragmentation
+- Improve tracking accuracy in crowded scenes
+
+**Re-ID Model Compatibility:** BoT-SORT uses the same re-ID model format as SMILEtrack, allowing you to use the same model file for both trackers.
 
 #### YAML Configuration for BoT-SORT
 
@@ -161,6 +174,7 @@ TRACK:
     NEW_TRACK_THRESH: 0.7
     TRACK_BUFFER: 30
     MATCH_THRESH: 0.8
+    REID_MODEL_PATH: "/path/to/reid_model.pth"  # Optional: Path to re-ID model for enhanced tracking
   OVERWRITE: true
 ```
 
@@ -182,6 +196,7 @@ track_low_thresh: 0.1
 new_track_thresh: 0.7
 track_buffer: 30
 match_thresh: 0.8
+reid_model_path: "/path/to/reid_model.pth"  # Optional: Path to re-ID model for enhanced tracking
 ```
 
 Then run with the dedicated BoT-SORT config:
@@ -205,6 +220,94 @@ python track.py --botsort-config /path/to/botsort_config.yaml --track-high-thres
 ```
 
 In this case, `track_high_thresh` will be 0.9, overriding the value in the config file.
+
+#### Using SMILEtrack Tracker
+
+SMILEtrack (SiMIlarity LEarning for Occlusion-Aware Multiple Object Tracking) is an advanced tracker that provides enhanced re-identification capabilities for better tracking through occlusions and long-term disappearances.
+
+##### Basic SMILEtrack Usage
+
+```bash
+python track.py --paths /path/to/detections/*.otdet --tracker-type smiletrack
+```
+
+##### SMILEtrack Parameters
+
+You can customize SMILEtrack parameters via command line:
+
+```bash
+python track.py --paths /path/to/detections/*.otdet \
+  --tracker-type smiletrack \
+  --track-high-thresh 0.6 \
+  --track-low-thresh 0.1 \
+  --new-track-thresh 0.7 \
+  --track-buffer 30 \
+  --match-thresh 0.8 \
+  --proximity-thresh 0.5 \
+  --appearance-thresh 0.25 \
+  --reid-model-path /path/to/reid_model.pth
+```
+
+**SMILEtrack Parameter Descriptions:**
+- `--track-high-thresh`: High confidence threshold for track association (default: 0.6)
+- `--track-low-thresh`: Low confidence threshold for track association (default: 0.1)
+- `--new-track-thresh`: Threshold for creating new tracks (default: 0.7)
+- `--track-buffer`: Number of frames to keep lost tracks in buffer (default: 30)
+- `--match-thresh`: IoU threshold for spatial matching (default: 0.8)
+- `--proximity-thresh`: Proximity threshold for re-identification matching (default: 0.5)
+- `--appearance-thresh`: Appearance threshold for re-ID feature matching (default: 0.25)
+- `--reid-model-path`: Path to trained re-ID model file (optional, uses simple features if not provided)
+
+##### YAML Configuration for SMILEtrack
+
+Configure SMILEtrack parameters within your main OTVision config file:
+
+```yaml
+TRACK:
+  PATHS: []
+  TRACKER_TYPE: smiletrack  # Set to "smiletrack" to use SMILEtrack tracker
+  IOU:
+    SIGMA_H: 0.42
+    SIGMA_IOU: 0.38
+    SIGMA_L: 0.27
+    T_MIN: 5
+    T_MISS_MAX: 51
+  SMILETRACK:
+    TRACK_HIGH_THRESH: 0.6
+    TRACK_LOW_THRESH: 0.1
+    NEW_TRACK_THRESH: 0.7
+    TRACK_BUFFER: 30
+    MATCH_THRESH: 0.8
+    PROXIMITY_THRESH: 0.5
+    APPEARANCE_THRESH: 0.25
+    REID_MODEL_PATH: "/path/to/reid_model.pth"
+  OVERWRITE: true
+```
+
+##### SMILEtrack Re-ID Features
+
+SMILEtrack includes advanced re-identification capabilities:
+
+1. **Automatic Feature Extraction**: Extracts appearance features from detected objects
+2. **Feature Smoothing**: Uses exponential moving average for stable feature representation
+3. **Similarity Matching**: Employs cosine similarity for appearance-based matching
+4. **Occlusion Handling**: Can re-associate tracks after long-term occlusions
+5. **Configurable Re-ID Model**: Supports custom trained re-ID models or uses built-in simple features
+
+##### Using Custom Re-ID Models
+
+To use a trained re-ID model with SMILEtrack:
+
+1. Place your trained PyTorch re-ID model file in an accessible location
+2. Specify the model path in your configuration or command line:
+
+```bash
+python track.py --paths /path/to/detections/*.otdet \
+  --tracker-type smiletrack \
+  --reid-model-path /path/to/your_reid_model.pth
+```
+
+**Note**: If no re-ID model path is provided or the model file doesn't exist, SMILEtrack will use a built-in simple feature extractor based on color histograms and texture features.
 
 ### Coordinate Transformation
 

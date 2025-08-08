@@ -40,6 +40,7 @@ from OTVision.track.tracker.filebased_tracking import (
 )
 from OTVision.track.tracker.tracker_plugin_botsort import BotSortTracker
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
+from OTVision.track.tracker.tracker_plugin_smiletrack import SMILETracker
 
 
 class TrackBuilder:
@@ -101,6 +102,8 @@ class TrackBuilder:
         tracker: Tracker
         if tracker_type == "botsort":
             tracker = BotSortTracker(get_current_config=self.get_current_config)
+        elif tracker_type == "smiletrack":
+            tracker = SMILETracker(get_current_config=self.get_current_config)
         else:  # Default to IOU tracker
             tracker = IouTracker(get_current_config=self.get_current_config)
 

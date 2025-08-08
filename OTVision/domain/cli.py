@@ -65,6 +65,10 @@ class TrackCliArgs(CliArgs):
     new_track_thresh: float | None = None
     track_buffer: int | None = None
     match_thresh: float | None = None
+    # SMILEtrack parameters
+    proximity_thresh: float | None = None
+    appearance_thresh: float | None = None
+    reid_model_path: str | None = None
 
     def get_config_file(self) -> Path | None:
         return self.config_file

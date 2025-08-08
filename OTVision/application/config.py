@@ -74,6 +74,11 @@ TRACK_LOW_THRESH = "TRACK_LOW_THRESH"
 NEW_TRACK_THRESH = "NEW_TRACK_THRESH"
 TRACK_BUFFER = "TRACK_BUFFER"
 MATCH_THRESH = "MATCH_THRESH"
+# SMILEtrack tracker constants
+SMILETRACK = "SMILETRACK"
+PROXIMITY_THRESH = "PROXIMITY_THRESH"
+APPEARANCE_THRESH = "APPEARANCE_THRESH"
+REID_MODEL_PATH = "REID_MODEL_PATH"
 
 
 @dataclass(frozen=True)
@@ -342,6 +347,7 @@ class _TrackBotSortConfig:
     new_track_thresh: float = 0.7
     track_buffer: int = 30
     match_thresh: float = 0.8
+    reid_model_path: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -350,6 +356,31 @@ class _TrackBotSortConfig:
             NEW_TRACK_THRESH: self.new_track_thresh,
             TRACK_BUFFER: self.track_buffer,
             MATCH_THRESH: self.match_thresh,
+            REID_MODEL_PATH: self.reid_model_path,
+        }
+
+
+@dataclass(frozen=True)
+class _TrackSMILEConfig:
+    track_high_thresh: float = 0.6
+    track_low_thresh: float = 0.1
+    new_track_thresh: float = 0.7
+    track_buffer: int = 30
+    match_thresh: float = 0.8
+    proximity_thresh: float = 0.5
+    appearance_thresh: float = 0.25
+    reid_model_path: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            TRACK_HIGH_THRESH: self.track_high_thresh,
+            TRACK_LOW_THRESH: self.track_low_thresh,
+            NEW_TRACK_THRESH: self.new_track_thresh,
+            TRACK_BUFFER: self.track_buffer,
+            MATCH_THRESH: self.match_thresh,
+            PROXIMITY_THRESH: self.proximity_thresh,
+            APPEARANCE_THRESH: self.appearance_thresh,
+            REID_MODEL_PATH: self.reid_model_path,
         }
 
 
@@ -377,9 +408,10 @@ class TrackConfig:
 
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
-    tracker_type: str = "iou"  # "iou" or "botsort"
+    tracker_type: str = "iou"  # "iou", "botsort", or "smiletrack"
     iou: _TrackIouConfig = _TrackIouConfig()
     botsort: _TrackBotSortConfig = _TrackBotSortConfig()
+    smiletrack: _TrackSMILEConfig = _TrackSMILEConfig()
     overwrite: bool = True
 
     def to_dict(self) -> dict:
@@ -389,6 +421,7 @@ class TrackConfig:
             TRACKER_TYPE: self.tracker_type,
             IOU: self.iou.to_dict(),
             BOTSORT: self.botsort.to_dict(),
+            SMILETRACK: self.smiletrack.to_dict(),
             OVERWRITE: self.overwrite,
         }
 

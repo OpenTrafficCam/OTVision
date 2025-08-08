@@ -258,28 +258,34 @@ class BotSortTracker(Tracker):
                 new_track = BotSortTrack(track_id, detection, frame.no)
                 self.tracks.append(new_track)
         
-        # Remove old tracks
-        self.tracks = [t for t in self.tracks if t.time_since_update <= self.track_buffer]
-        
-        # Mark tracks for deletion/finishing
-        finished_track_ids = []
-        discarded_track_ids = []
-        
+        # Determine finished/discarded tracks BEFORE removing them
+        finished_track_ids: list[TrackId] = []
+        discarded_track_ids: list[TrackId] = []
+
+        tracks_to_keep: list[BotSortTrack] = []
         for track in self.tracks:
             if track.time_since_update > self.track_buffer:
+                # Track exceeded buffer: decide whether finished or discarded
                 if track.state == 'Confirmed' and track.hits >= 5:
                     finished_track_ids.append(track.track_id)
                 else:
                     discarded_track_ids.append(track.track_id)
-        
-        # Create tracked detections
-        tracked_detections = []
+            else:
+                tracks_to_keep.append(track)
+
+        # Remove old tracks (keep only those within buffer)
+        self.tracks = tracks_to_keep
+
+        # Create tracked detections (for tracks updated in this frame)
+        tracked_detections: list[TrackedDetection] = []
         for track in self.tracks:
             if track.time_since_update == 0:  # Track was updated this frame
                 latest_detection = track.detections[-1]
                 is_new = track.hits == 1
-                tracked_detections.append(latest_detection.of_track(track.track_id, is_new))
-        
+                tracked_detections.append(
+                    latest_detection.of_track(track.track_id, is_new)
+                )
+
         return TrackedFrame(
             no=frame.no,
             occurrence=frame.occurrence,
