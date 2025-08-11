@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
     "sys_platform == 'win32'",
@@ -1021,6 +1021,8 @@ cuda = [
     { name = "torchvision", version = "0.22.1", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
     { name = "torchvision", version = "0.22.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or sys_platform == 'win32'" },
 ]
+
+[package.dev-dependencies]
 dev = [
     { name = "black", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
     { name = "flake8", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
@@ -1039,27 +1041,17 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "av", specifier = "==13.0.0" },
-    { name = "black", marker = "extra == 'dev'", specifier = "==25.1.0" },
     { name = "coremltools", marker = "sys_platform == 'darwin'", specifier = "==8.2" },
     { name = "ffmpeg-python", specifier = "==0.2.0" },
     { name = "fire", specifier = "==0.7.0" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = "==7.1.1" },
     { name = "geopandas", specifier = "==1.0.1" },
     { name = "ijson", specifier = "==3.3.0" },
-    { name = "interrogate", marker = "extra == 'dev'", specifier = "==1.5.0" },
-    { name = "isort", marker = "extra == 'dev'", specifier = "==5.13.2" },
-    { name = "jsonschema", marker = "extra == 'dev'", specifier = "==4.23.0" },
     { name = "more-itertools", specifier = "==10.7.0" },
     { name = "moviepy", specifier = "==1.0.3" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = "==1.15.0" },
     { name = "numpy", marker = "sys_platform != 'win32'", specifier = "==2.1.1" },
     { name = "numpy", marker = "sys_platform == 'win32'", specifier = "==1.26.4" },
     { name = "opencv-python", specifier = "==4.10.0.84" },
     { name = "pandas", specifier = "==2.2.3" },
-    { name = "pandas-stubs", marker = "extra == 'dev'", specifier = "==2.2.3.250308" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = "==3.8.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = "==8.3.3" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==5.0.0" },
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "tensorrt", marker = "sys_platform != 'darwin' and extra == 'cuda'", specifier = "==10.12.0.36", index = "https://pypi.nvidia.com/", conflict = { package = "otvision", extra = "cuda" } },
     { name = "tensorrt-cu12-bindings", marker = "sys_platform != 'darwin' and extra == 'cuda'", specifier = "==10.12.0.36", index = "https://pypi.nvidia.com/", conflict = { package = "otvision", extra = "cuda" } },
@@ -1073,12 +1065,26 @@ requires-dist = [
     { name = "torchvision", marker = "sys_platform == 'darwin' and extra == 'cuda'", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torchvision", marker = "sys_platform != 'darwin' and extra == 'cuda'", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "otvision", extra = "cuda" } },
     { name = "tqdm", specifier = "==4.67.1" },
-    { name = "twine", marker = "extra == 'dev'", specifier = "==6.1.0" },
     { name = "ujson", specifier = "==5.10.0" },
     { name = "ultralytics", specifier = "==8.3.159" },
-    { name = "yamllint", marker = "extra == 'dev'", specifier = "==1.35.1" },
 ]
-provides-extras = ["cuda", "dev"]
+provides-extras = ["cuda"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "black", specifier = "==25.1.0" },
+    { name = "flake8", specifier = "==7.1.1" },
+    { name = "interrogate", specifier = "==1.5.0" },
+    { name = "isort", specifier = "==5.13.2" },
+    { name = "jsonschema", specifier = "==4.23.0" },
+    { name = "mypy", specifier = "==1.15.0" },
+    { name = "pandas-stubs", specifier = "==2.2.3.250308" },
+    { name = "pre-commit", specifier = "==3.8.0" },
+    { name = "pytest", specifier = "==8.3.3" },
+    { name = "pytest-cov", specifier = "==5.0.0" },
+    { name = "twine", specifier = "==6.1.0" },
+    { name = "yamllint", specifier = "==1.35.1" },
+]
 
 [[package]]
 name = "packaging"
