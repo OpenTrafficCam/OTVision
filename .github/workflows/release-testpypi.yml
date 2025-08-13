@@ -35,6 +35,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Get latest tag and create new version
         id: get_version
         run: |
@@ -58,14 +63,9 @@ jobs:
         with:
           version: ${{ steps.get_version.outputs.new_version }}
           file-path: "OTVision"
-      - name: Install pypa/build
-        shell: bash
-        run: |
-          python3 -m pip install build --user
-
       - name: Build a binary wheel and a source tarball
         shell: bash
-        run: python -m build --outdir ${{ env.out_dir }}
+        run: uv build --out-dir ${{ env.out_dir }}
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
