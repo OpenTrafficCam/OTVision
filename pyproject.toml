@@ -60,9 +60,13 @@ dev = [
 ]
 
 [project.optional-dependencies]
+cpu = [
+    "torch>=2.7.0",
+    "torchvision>=0.22.0",
+]
 cuda = [
-    "torch",
-    "torchvision",
+    "torch>=2.7.0",
+    "torchvision>=0.22.0",
     "tensorrt==10.12.0.36; sys_platform != 'darwin'",
     "tensorrt-cu12-bindings==10.12.0.36; sys_platform != 'darwin'",
     "tensorrt-cu12-libs==10.12.0.36; sys_platform != 'darwin'",
@@ -127,15 +131,24 @@ environments = [
     "sys_platform == 'darwin'",
     "sys_platform == 'linux'",
 ]
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "cuda" },
+    ],
+]
+
 
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
-  { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "cuda" }
+    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "cuda" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="cpu" }
 ]
 torchvision = [
-  { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
-  { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "cuda" }
+    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "cuda" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="cpu" }
 ]
 tensorrt = { index = "tensorrt", extra = "cuda" }
 tensorrt-cu12-bindings = { index = "tensorrt", extra = "cuda" }
