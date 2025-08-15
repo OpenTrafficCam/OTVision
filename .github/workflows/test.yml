@@ -22,7 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Run Python Tests
-        uses: platomo/test-python-app-action@v2
+        uses: platomo/test-python-app-action@v3
         timeout-minutes: 60
         with:
           py-version: ${{ matrix.py }}
