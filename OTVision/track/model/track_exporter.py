@@ -79,6 +79,10 @@ class FinishedTracksExporter(ABC, Generic[F]):
 
     @staticmethod
     def reindex(det_dicts: list[dict]) -> list[dict]:
+        # If there are no detections, nothing to reindex.
+        if not det_dicts:
+            return []
+
         min_frame_no = min(det[FRAME] for det in det_dicts)
 
         det_dicts_progress = tqdm(
