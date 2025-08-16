@@ -24,4 +24,4 @@ if ! command -v uv &>/dev/null; then
 fi
 
 uv venv "$VENV"
-uv sync --python "$VENV"
+uv sync --python "$VENV" --extra cpu
