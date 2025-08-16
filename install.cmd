@@ -16,4 +16,4 @@ if errorlevel neq 0 (
 )
 
 uv venv .venv
-uv sync --extra cpu --python .venv%
+uv sync --extra inference_cpu --python .venv%
