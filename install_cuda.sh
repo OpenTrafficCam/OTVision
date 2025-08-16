@@ -24,4 +24,4 @@ if ! command -v uv &>/dev/null; then
 fi
 
 uv venv "$VENV"
-uv sync --extra cuda --python "$VENV"
+uv sync --extra inference_cuda --python "$VENV"
