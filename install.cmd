@@ -9,11 +9,11 @@ if "x%PYTHON_VERSION:3.12=%"=="x%PYTHON_VERSION%" (
 
 REM Check if uv is available globally, if not install it
 where uv >nul 2>nul
-if errorlevel neq 0 (
+if %errorlevel% neq 0 (
     echo uv not found globally, installing uv...
     powershell -ExecutionPolicy Bypass -Command "& {irm https://astral.sh/uv/install.ps1 | iex}"
     set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
 )
 
 uv venv .venv
-uv sync --extra inference_cpu --python .venv%
+uv sync --extra inference_cpu --python .venv
