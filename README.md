@@ -4,22 +4,25 @@
 [![Tests](https://github.com/OpenTrafficCam/OTVision/actions/workflows/test.yml/badge.svg?tag=latest)](https://github.com/OpenTrafficCam/OTVision/actions/workflows/test.yml?query=tag%3Alatest)
 [![Tests](https://github.com/OpenTrafficCam/OTVision/actions/workflows/build-release.yml/badge.svg)](https://github.com/OpenTrafficCam/OTVision/actions/workflows/build-release.yml)
 
-OTVision is a core module of the [OpenTrafficCam framework](https://github.com/OpenTrafficCam) designed to detect and track objects (road users) in videos recorded by [OTCamera](https://github.com/OpenTrafficCam/OTCamera) or other camera systems. The resulting trajectories can be used for traffic analysis using [OTAnalytics](https://github.com/OpenTrafficCam/OTAnalytics).
+OTVision is a core module of the [OpenTrafficCam framework](https://github.com/OpenTrafficCam)
+designed to detect and track objects (road users) in videos recorded by
+[OTCamera](https://github.com/OpenTrafficCam/OTCamera) or other camera systems.
+The resulting trajectories can be used for traffic analysis using [OTAnalytics](https://github.com/OpenTrafficCam/OTAnalytics).
 
 ## Features
 
 - **Video Conversion**: Convert video files (h264 to mp4) with options to set frame rate and rotation
 - **Object Detection**: Detect road users in videos using state-of-the-art YOLO models
 - **Object Tracking**: Track detected objects through video frames using IOU-based tracking algorithms
-- **Coordinate Transformation**: Transform pixel coordinates to real-world UTM coordinates
 
 ## Requirements
 
 ### System Requirements
 
-- Python 3.12 or higher
+- Python 3.12
+- [uv for dependency management](https://docs.astral.sh/uv/)
 - CUDA-capable GPU (recommended for faster processing)
-- Dependencies listed in [requirements.txt](requirements.txt)
+- ffmpeg (optional for video conversion)
 
 ## Installation
 
@@ -29,9 +32,9 @@ Pre-built releases are available on GitHub for easy installation:
 
 1. Go to the [OTVision Releases page](https://github.com/OpenTrafficCam/OTVision/releases) on GitHub
 2. Download the appropriate release for your platform:
-   - **Windows**: Choose between `otvision-win.zip` (standard) or `otvision-win-cuda.zip` (with CUDA support)
-   - **Linux**: Choose between `otvision-linux.zip` (standard) or `otvision-linux-cuda.zip` (with CUDA support)
-   - **macOS**: Choose `OTVision-macos.zip`
+   - **Windows**: Choose between `OTVision-win-{vX.Y.Z}.zip` (standard) or `OTVision-win-cuda-{vX.Y.Z}.zip` (with CUDA support)
+   - **Linux**: Choose between `OTVision-linux-{vX.Y.Z}.zip` (standard) or `OTVision-linux-cuda-{vX.Y.Z}.zip` (with CUDA support)
+   - **macOS**: Choose `OTVision-macos-{vX.Y.Z}.zip`
 3. Extract the downloaded ZIP file
 4. Run the installation script:
    - On Windows: Double-click `install.cmd`
@@ -87,7 +90,7 @@ OTVision provides several command-line scripts for different functionalities:
 Convert video files (e.g., h264 to mp4):
 
 ```bash
-python convert.py --paths /path/to/videos/*.h264 --input-fps 20.0 --rotation 0
+uv run convert.py --paths /path/to/videos/*.h264 --input-fps 20.0 --rotation 0
 ```
 
 ### Object Detection
@@ -95,7 +98,7 @@ python convert.py --paths /path/to/videos/*.h264 --input-fps 20.0 --rotation 0
 Detect objects in videos:
 
 ```bash
-python detect.py --paths /path/to/videos/*.mp4 --weights yolov8s
+uv run detect.py --paths /path/to/videos/*.mp4 --weights yolov8s
 ```
 
 ### Object Tracking
@@ -103,7 +106,7 @@ python detect.py --paths /path/to/videos/*.mp4 --weights yolov8s
 Track detected objects:
 
 ```bash
-python track.py --paths /path/to/detections/*.otdet
+uv run track.py --paths /path/to/detections/*.otdet
 ```
 
 ### Coordinate Transformation
@@ -111,7 +114,7 @@ python track.py --paths /path/to/detections/*.otdet
 Transform pixel coordinates to UTM coordinates:
 
 ```bash
-python transform.py --paths /path/to/tracks/*.ottrk --refpts-file /path/to/reference_points.json
+uv run transform.py --paths /path/to/tracks/*.ottrk --refpts-file /path/to/reference_points.json
 ```
 
 ### Configuration
@@ -119,7 +122,7 @@ python transform.py --paths /path/to/tracks/*.ottrk --refpts-file /path/to/refer
 OTVision can be configured using a YAML configuration file. A default configuration is provided in `user_config.otvision.yaml`. You can specify a custom configuration file using the `--config` option:
 
 ```bash
-python detect.py --config /path/to/custom_config.yaml
+uv run detect.py --config /path/to/custom_config.yaml
 ```
 
 ## Documentation

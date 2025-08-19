@@ -36,11 +36,8 @@ dependencies = [
     "opencv-python==4.10.0.84",
     "pandas==2.2.3",
     "PyYAML==6.0.2",
-    "torch==2.7.1",
-    "torchvision==0.22.1",
     "tqdm==4.67.1",
     "ujson==5.10.0",
-    "ultralytics==8.3.159",
 ]
 
 [dependency-groups]
@@ -60,16 +57,18 @@ dev = [
 ]
 
 [project.optional-dependencies]
-cpu = [
+inference_cpu = [
     "torch==2.7.1",
     "torchvision==0.22.1",
+    "ultralytics==8.3.159",
 ]
-cuda = [
+inference_cuda = [
     "torch==2.7.1",
     "torchvision==0.22.1",
     "tensorrt==10.12.0.36; sys_platform != 'darwin'",
     "tensorrt-cu12-bindings==10.12.0.36; sys_platform != 'darwin'",
     "tensorrt-cu12-libs==10.12.0.36; sys_platform != 'darwin'",
+    "ultralytics==8.3.159",
 ]
 [project.urls]
 Homepage = "https://opentrafficcam.org/"
@@ -125,7 +124,6 @@ name = "tensorrt-cu12-bindings"
 name = "tensorrt-cu12-libs"
 
 [tool.uv]
-default-groups = []
 environments = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
@@ -133,26 +131,28 @@ environments = [
 ]
 conflicts = [
     [
-        { extra = "cpu" },
-        { extra = "cuda" },
+        { extra = "inference_cpu" },
+        { extra = "inference_cuda" },
     ],
 ]
 
 
 [tool.uv.sources]
 torch = [
-    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "cuda" },
+    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "inference_cuda" },
     { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
-    { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="cpu" }
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="inference_cpu" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'win32'", extra="inference_cpu" }
 ]
 torchvision = [
-    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "cuda" },
+    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "inference_cuda" },
     { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
-    { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="cpu" }
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="inference_cpu" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'win32'", extra="inference_cpu" }
 ]
-tensorrt = { index = "tensorrt", extra = "cuda" }
-tensorrt-cu12-bindings = { index = "tensorrt", extra = "cuda" }
-tensorrt-cu12-libs = { index = "tensorrt", extra = "cuda" }
+tensorrt = { index = "tensorrt", extra = "inference_cuda" }
+tensorrt-cu12-bindings = { index = "tensorrt", extra = "inference_cuda" }
+tensorrt-cu12-libs = { index = "tensorrt", extra = "inference_cuda" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

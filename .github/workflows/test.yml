@@ -28,4 +28,4 @@ jobs:
           py-version: ${{ matrix.py }}
           package-path: OTVision
           ffmpeg-required: True
-          uv-sync-args: "--extra cpu"
+          uv-sync-args: "--extra inference_cpu"

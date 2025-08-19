@@ -13,8 +13,6 @@ echo "Install OTVision."
 
 echo "$DIR"
 cd "$DIR" || exit
-WORKING_DIR=$(pwd)
-VENV="$WORKING_DIR"/.venv
 
 # Check if uv is available globally, if not install it
 if ! command -v uv &>/dev/null; then
@@ -23,5 +21,4 @@ if ! command -v uv &>/dev/null; then
   export PATH="$HOME/.cargo/bin:$PATH"
 fi
 
-uv venv "$VENV"
-uv sync --python "$VENV"
+uv sync --extra inference_cpu --no-dev
