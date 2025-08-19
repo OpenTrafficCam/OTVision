@@ -14,6 +14,10 @@ repos:
       - id: requirements-txt-fixer
       - id: check-executables-have-shebangs
       - id: detect-private-key
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.11
+    hooks:
+      - id: uv-lock
   - repo: local
     hooks:
       - id: update-type-stubs
