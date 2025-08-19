@@ -20,7 +20,7 @@ The resulting trajectories can be used for traffic analysis using [OTAnalytics](
 ### System Requirements
 
 - Python 3.12
-- (uv for dependency management)[https://docs.astral.sh/uv/]
+- [uv for dependency management](https://docs.astral.sh/uv/)
 - CUDA-capable GPU (recommended for faster processing)
 - ffmpeg (optional for video conversion)
 
