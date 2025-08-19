@@ -15,5 +15,4 @@ if %errorlevel% neq 0 (
     set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
 )
 
-uv venv .venv
-uv sync --extra inference_cpu --python .venv
+uv sync --extra inference_cpu --no-dev
