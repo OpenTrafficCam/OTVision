@@ -1015,8 +1015,8 @@ name = "opencv-python"
 version = "4.10.0.84"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4a/e7/b70a2d9ab205110d715906fc8ec83fbb00404aeb3a37a0654fdb68eb0c8c/opencv-python-4.10.0.84.tar.gz", hash = "sha256:72d234e4582e9658ffea8e9cae5b63d488ad06994ef12d81dc303b17472f3526", size = 95103981, upload-time = "2024-06-17T18:29:56.757Z" }
 wheels = [
@@ -1026,6 +1026,24 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/a4/d2537f47fd7fcfba966bd806e3ec18e7ee1681056d4b0a9c8d983983e4d5/opencv_python-4.10.0.84-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9ace140fc6d647fbe1c692bcb2abce768973491222c067c131d80957c595b71f", size = 62548253, upload-time = "2024-06-17T18:29:43.659Z" },
     { url = "https://files.pythonhosted.org/packages/1e/39/bbf57e7b9dab623e8773f6ff36385456b7ae7fa9357a5e53db732c347eac/opencv_python-4.10.0.84-cp37-abi3-win32.whl", hash = "sha256:2db02bb7e50b703f0a2d50c50ced72e95c574e1e5a0bb35a8a86d0b35c98c236", size = 28737688, upload-time = "2024-06-17T18:28:13.177Z" },
     { url = "https://files.pythonhosted.org/packages/ec/6c/fab8113424af5049f85717e8e527ca3773299a3c6b02506e66436e19874f/opencv_python-4.10.0.84-cp37-abi3-win_amd64.whl", hash = "sha256:32dbbd94c26f611dc5cc6979e6b7aa1f55a64d6b463cc1dcd3c95505a63e48fe", size = 38842521, upload-time = "2024-06-17T18:28:21.813Z" },
+]
+
+[[package]]
+name = "opencv-python-headless"
+version = "4.10.0.84"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/7e/d20f68a5f1487adf19d74378d349932a386b1ece3be9be9915e5986db468/opencv-python-headless-4.10.0.84.tar.gz", hash = "sha256:f2017c6101d7c2ef8d7bc3b414c37ff7f54d64413a1847d89970b6b7069b4e1a", size = 95117755, upload-time = "2024-06-17T18:32:15.606Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1c/9b/583c8d9259f6fc19413f83fd18dd8e6cbc8eefb0b4dc6da52dd151fe3272/opencv_python_headless-4.10.0.84-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:a4f4bcb07d8f8a7704d9c8564c224c8b064c63f430e95b61ac0bffaa374d330e", size = 54835657, upload-time = "2024-06-18T04:58:12.904Z" },
+    { url = "https://files.pythonhosted.org/packages/c0/7b/b4c67f5dad7a9a61c47f7a39e4050e8a4628bd64b3c3daaeb755d759f928/opencv_python_headless-4.10.0.84-cp37-abi3-macosx_12_0_x86_64.whl", hash = "sha256:5ae454ebac0eb0a0b932e3406370aaf4212e6a3fdb5038cc86c7aea15a6851da", size = 56475470, upload-time = "2024-06-17T19:34:39.604Z" },
+    { url = "https://files.pythonhosted.org/packages/91/61/f838ce2046f3ec3591ea59ea3549085e399525d3b4558c4ed60b55ed88c0/opencv_python_headless-4.10.0.84-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:46071015ff9ab40fccd8a163da0ee14ce9846349f06c6c8c0f2870856ffa45db", size = 29329705, upload-time = "2024-06-17T20:00:49.406Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/09/248f86a404567303cdf120e4a301f389b68e3b18e5c0cc428de327da609c/opencv_python_headless-4.10.0.84-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:377d08a7e48a1405b5e84afcbe4798464ce7ee17081c1c23619c8b398ff18295", size = 49858781, upload-time = "2024-06-17T18:31:49.495Z" },
+    { url = "https://files.pythonhosted.org/packages/30/c0/66f88d58500e990a9a0a5c06f98862edf1d0a3a430781218a8c193948438/opencv_python_headless-4.10.0.84-cp37-abi3-win32.whl", hash = "sha256:9092404b65458ed87ce932f613ffbb1106ed2c843577501e5768912360fc50ec", size = 28675298, upload-time = "2024-06-17T18:28:56.897Z" },
+    { url = "https://files.pythonhosted.org/packages/26/d0/22f68eb23eea053a31655960f133c0be9726c6a881547e6e9e7e2a946c4f/opencv_python_headless-4.10.0.84-cp37-abi3-win_amd64.whl", hash = "sha256:afcf28bd1209dd58810d33defb622b325d3cbe49dcd7a43a902982c33e5fad05", size = 38754031, upload-time = "2024-06-17T18:29:04.871Z" },
 ]
 
 [[package]]
@@ -1042,7 +1060,7 @@ dependencies = [
     { name = "moviepy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "opencv-python", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "opencv-python-headless", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "pandas", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "tqdm", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
@@ -1097,7 +1115,7 @@ requires-dist = [
     { name = "moviepy", specifier = "==1.0.3" },
     { name = "numpy", marker = "sys_platform != 'win32'", specifier = "==2.1.1" },
     { name = "numpy", marker = "sys_platform == 'win32'", specifier = "==1.26.4" },
-    { name = "opencv-python", specifier = "==4.10.0.84" },
+    { name = "opencv-python-headless", specifier = "==4.10.0.84" },
     { name = "pandas", specifier = "==2.2.3" },
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "tensorrt", marker = "sys_platform != 'darwin' and extra == 'inference-cuda'", specifier = "==10.12.0.36", index = "https://pypi.nvidia.com/", conflict = { package = "otvision", extra = "inference-cuda" } },

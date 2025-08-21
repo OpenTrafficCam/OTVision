@@ -33,7 +33,7 @@ dependencies = [
     "moviepy==1.0.3",
     "numpy==2.1.1; sys_platform != 'win32'",
     "numpy==1.26.4; sys_platform == 'win32'",
-    "opencv-python==4.10.0.84",
+    "opencv-python-headless==4.10.0.84",
     "pandas==2.2.3",
     "PyYAML==6.0.2",
     "tqdm==4.67.1",
