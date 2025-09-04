@@ -76,8 +76,9 @@ class OttrkBuilder:
             t_min=self.config.t_min,
             t_miss_max=self.config.t_miss_max,
         )
-        result[dataformat.TRACKING_RUN_ID] = self.config.tracking_run_id
-        result[dataformat.FRAME_GROUP] = self.config.frame_group
+        tracking_metadata = result[dataformat.TRACKING]
+        tracking_metadata[dataformat.TRACKING_RUN_ID] = self.config.tracking_run_id
+        tracking_metadata[dataformat.FRAME_GROUP] = self.config.frame_group
         return result
 
     def _build_data(self) -> list[dict]:
