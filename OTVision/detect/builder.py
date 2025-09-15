@@ -68,6 +68,8 @@ class DetectBuilder(ABC):
 
     @cached_property
     def configure_logger(self) -> ConfigureLogger:
+        if self._configure_logger is not None:
+            return self._configure_logger
         return ConfigureLogger()
 
     @cached_property
@@ -94,6 +96,8 @@ class DetectBuilder(ABC):
 
     @cached_property
     def current_config(self) -> CurrentConfig:
+        if self.__current_config is not None:
+            return self.__current_config
         return CurrentConfig(Config())
 
     @cached_property
@@ -173,8 +177,15 @@ class DetectBuilder(ABC):
     def detect_config(self) -> DetectConfig:
         return self.current_config.get().detect
 
-    def __init__(self, argv: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        argv: list[str] | None = None,
+        current_config: CurrentConfig | None = None,
+        configure_logger: ConfigureLogger | None = None,
+    ) -> None:
         self.argv = argv
+        self.__current_config = current_config
+        self._configure_logger = configure_logger
 
     @property
     @abstractmethod

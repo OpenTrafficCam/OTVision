@@ -348,6 +348,8 @@ def create_expected_track_metadata(
                 config.t_min,
                 config.t_miss_max,
             ),
+            dataformat.TRACKING_RUN_ID: config.tracking_run_id,
+            dataformat.FRAME_GROUP: config.frame_group,
         },
     }
 
@@ -431,14 +433,11 @@ def create_expected_ottrk(
 ) -> dict:
     otdet_metadata = create_otdet_metadata(actual_duration, expected_duration)
     track_metadata = create_expected_track_metadata(actual_duration, expected_duration)
-    config = create_ottrk_builder_config(actual_duration, expected_duration)
 
     # Add the missing fields that OttrkBuilder adds
     combined_metadata = {
         **otdet_metadata,
         **track_metadata,
-        dataformat.TRACKING_RUN_ID: config.tracking_run_id,
-        dataformat.FRAME_GROUP: config.frame_group,
     }
 
     return {

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, TrackConfig
@@ -66,7 +67,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         )
         self._builder.set_config(builder_config)
         last_frame = tracked_frames[-1]
-        self._builder.add_tracked_frames(self._get_buffered_elements())
+        self._builder.add_tracked_frames(tracked_frames)
         self._ottrk_unfinished_tracks = last_frame.unfinished_tracks
         self.reset()
 
@@ -103,9 +104,18 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             )
             logger().warning(f"Unfinished tracks: {self._ottrk_unfinished_tracks}")
             if self.build_condition_fulfilled:
-                ottrk_data = self._builder.build()
-                self.write(ottrk_data)
-                self._in_writing_state = False
+                self._create_ottrk()
+
+    def _create_ottrk(self) -> None:
+        ottrk_data = self._builder.build()
+        self.write(ottrk_data)
+        self.full_reset()
+
+    def full_reset(self) -> None:
+        self._in_writing_state = False
+        self._builder.reset()
+        self._ottrk_unfinished_tracks = set()
+        self._current_output_file = None
 
     def write(self, ottrk: dict) -> None:
         write_json(
@@ -114,3 +124,6 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             filetype=self.config.filetypes.track,
             overwrite=True,
         )
+
+    def force_flush(self, _: Any) -> None:
+        self._create_ottrk()
