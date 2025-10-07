@@ -111,6 +111,12 @@ class GroupedFilesTracker(ChunkBasedTracker):
             is_last = file_stream.peek(default=None) is None
 
             chunk = self._chunk_parser.parse(file, group, frame_offset)
+
+            # Handle empty detection files gracefully: skip files with no frames
+            if not chunk.frames:
+                log.warning(f"No frames found in detection file {file}. Skipping.")
+                continue
+
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
 
             tracked_chunk = self.track_chunk(chunk, is_last, id_generator)
