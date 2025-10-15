@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -5,11 +6,88 @@ import pytest
 
 from OTVision.application.config import (
     Config,
+    DetectConfig,
     StreamConfig,
     TrackConfig,
+    YoloConfig,
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    VideoCodec,
+)
+
+
+class TestConfigParser:
+    @pytest.fixture
+    def given_deserializer(self) -> Mock:
+        return Mock()
+
+    @pytest.fixture
+    def given_config_parser(self, given_deserializer: Mock) -> ConfigParser:
+        return ConfigParser(given_deserializer)
+
+    def test_parse_detect_config_with_fully_specified_config(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        detect_dict = {
+            "PATHS": ["/path/to/video1.mp4", "/path/to/video2.mp4"],
+            "RUN_CHAINED": False,
+            "YOLO": {
+                "WEIGHTS": "yolov8m.pt",
+                "CONF": 0.35,
+                "IOU": 0.5,
+                "IMGSIZE": 1280,
+                "NORMALIZED": False,
+            },
+            "EXPECTED_DURATION": 3600,
+            "OVERWRITE": False,
+            "HALF_PRECISION": True,
+            "START_TIME": "2025-10-15_14-30-00",
+            "DETECT_START": 10,
+            "DETECT_END": 100,
+            "WRITE_VIDEO": True,
+            "VIDEO_CODEC": "h264_nvenc",
+            "ENCODING_SPEED": "medium",
+            "CRF": "HIGH_QUALITY",
+        }
+
+        result = given_config_parser.parse_detect_config(detect_dict)
+
+        expected = DetectConfig(
+            paths=["/path/to/video1.mp4", "/path/to/video2.mp4"],
+            run_chained=False,
+            yolo_config=YoloConfig(
+                weights="yolov8m.pt",
+                conf=0.35,
+                iou=0.5,
+                img_size=1280,
+                normalized=False,
+            ),
+            expected_duration=timedelta(seconds=3600),
+            overwrite=False,
+            half_precision=True,
+            start_time=datetime(2025, 10, 15, 14, 30, 0),
+            detect_start=10,
+            detect_end=100,
+            write_video=True,
+            video_codec=VideoCodec.H264_NVENC,
+            encoding_speed=EncodingSpeed.MEDIUM,
+            crf=ConstantRateFactor.HIGH_QUALITY,
+        )
+        assert result == expected
+
+    def test_parse_detect_config_with_empty_config(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        detect_dict: dict = {}
+
+        result = given_config_parser.parse_detect_config(detect_dict)
+
+        expected = DetectConfig()
+        assert result == expected
 
 
 class TestConfigParserValidateFlushBufferSupportTrackLifecycle:
