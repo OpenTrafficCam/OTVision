@@ -19,6 +19,10 @@ from OTVision.plugin.ffmpeg_video_writer import (
     VideoCodec,
 )
 
+# Ensure paths are translated to the respective platform (unix, windows)
+VIDEO_1 = str(Path("tests/data/video1.mp4"))
+VIDEO_2 = str(Path("tests/data/video2.mp4"))
+
 
 class TestConfigParser:
     @pytest.fixture
@@ -33,7 +37,7 @@ class TestConfigParser:
         self, given_config_parser: ConfigParser
     ) -> None:
         detect_dict = {
-            "PATHS": ["/path/to/video1.mp4", "/path/to/video2.mp4"],
+            "PATHS": [VIDEO_1, VIDEO_2],
             "RUN_CHAINED": False,
             "YOLO": {
                 "WEIGHTS": "yolov8m.pt",
@@ -57,7 +61,7 @@ class TestConfigParser:
         result = given_config_parser.parse_detect_config(detect_dict)
 
         expected = DetectConfig(
-            paths=["/path/to/video1.mp4", "/path/to/video2.mp4"],
+            paths=[VIDEO_1, VIDEO_2],
             run_chained=False,
             yolo_config=YoloConfig(
                 weights="yolov8m.pt",
