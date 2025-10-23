@@ -73,6 +73,11 @@ from OTVision.application.config import (
     _UndistortConfig,
 )
 from OTVision.domain.serialization import Deserializer
+from OTVision.plugin.ffmpeg_video_writer import (
+    ConstantRateFactor,
+    EncodingSpeed,
+    VideoCodec,
+)
 
 
 class InvalidOtvisionConfigError(Exception):
@@ -190,6 +195,21 @@ class ConfigParser:
         if expected_duration is not None:
             expected_duration = timedelta(seconds=int(expected_duration))
 
+        if video_codec := data.get(VIDEO_CODEC, None):
+            video_codec = VideoCodec(video_codec)
+        else:
+            video_codec = DetectConfig.video_codec
+
+        if encoding_speed := data.get(ENCODING_SPEED, None):
+            encoding_speed = EncodingSpeed(encoding_speed)
+        else:
+            encoding_speed = DetectConfig.encoding_speed
+
+        if data.get(CRF, None) is not None:
+            crf = ConstantRateFactor[data[CRF]]
+        else:
+            crf = DetectConfig.crf
+
         start_time = self._parse_start_time(data)
         return DetectConfig(
             paths=sources,
@@ -202,9 +222,9 @@ class ConfigParser:
             detect_start=data.get(DETECT_START, DetectConfig.detect_start),
             detect_end=data.get(DETECT_END, DetectConfig.detect_end),
             write_video=data.get(WRITE_VIDEO, DetectConfig.write_video),
-            video_codec=data.get(VIDEO_CODEC, DetectConfig.video_codec),
-            encoding_speed=data.get(ENCODING_SPEED, DetectConfig.encoding_speed),
-            crf=data.get(CRF, DetectConfig.crf),
+            video_codec=video_codec,
+            encoding_speed=encoding_speed,
+            crf=crf,
         )
 
     def parse_yolo_config(self, data: dict) -> YoloConfig:
