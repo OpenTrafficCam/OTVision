@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
+from typing import Iterable, Iterator
 
 import av
 from av.container.input import InputContainer
@@ -84,11 +84,9 @@ class VideoSource(InputSourceDetect):
             Frame: Processed video frames ready for detection.
         """
 
-        video_files = self.__collect_files_to_detect()
+        video_files = self._collect_files_to_detect()
 
-        start_msg = f"Start detection of {len(video_files)} video files"
-        log.info(start_msg)
-        print(start_msg)
+        log.info("Start detection of video files")
 
         for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
             detections_file = self._save_path_provider.provide(
@@ -151,7 +149,7 @@ class VideoSource(InputSourceDetect):
             )
             return {}
 
-    def __collect_files_to_detect(self) -> list[Path]:
+    def _collect_files_to_detect(self) -> Iterable[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
         video_files = get_files(
             paths=self._current_config.detect.paths, filetypes=filetypes
