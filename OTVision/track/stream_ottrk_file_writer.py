@@ -1,6 +1,8 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from OTVision.abstraction.observer import Observer, Subject
 from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, TrackConfig
 from OTVision.application.configure_logger import logger
@@ -15,6 +17,11 @@ from OTVision.domain.frame import TrackedFrame
 from OTVision.helpers.files import write_json
 
 STREAMING_FRAME_GROUP_ID = 0
+
+
+@dataclass(frozen=True)
+class OttrkFileWrittenEvent:
+    save_location: Path
 
 
 class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
@@ -38,12 +45,14 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
 
     def __init__(
         self,
+        subject: Subject[OttrkFileWrittenEvent],
         builder: OttrkBuilder,
         get_current_config: GetCurrentConfig,
         get_current_tracking_run_id: GetCurrentTrackingRunId,
         save_path_provider: OtvisionSavePathProvider,
     ) -> None:
         Buffer.__init__(self)
+        self._subject = subject
         self._builder = builder
         self._get_current_config = get_current_config
         self._current_tracking_run_id = get_current_tracking_run_id
@@ -118,12 +127,20 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         self._current_output_file = None
 
     def write(self, ottrk: dict) -> None:
+        current_output_file = self.current_output_file
         write_json(
             dict_to_write=ottrk,
-            file=self.current_output_file,
+            file=current_output_file,
             filetype=self.config.filetypes.track,
             overwrite=True,
         )
+        self._notify_ottrk_file_written(save_location=current_output_file)
 
     def force_flush(self, _: Any) -> None:
         self._create_ottrk()
+
+    def register_observers(self, observer: Observer[OttrkFileWrittenEvent]) -> None:
+        self._subject.register(observer)
+
+    def _notify_ottrk_file_written(self, save_location: Path) -> None:
+        self._subject.notify(OttrkFileWrittenEvent(save_location=save_location))
