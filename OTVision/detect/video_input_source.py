@@ -136,8 +136,13 @@ class VideoSource(InputSourceDetect):
                             )
                         counter += 1
                 self.notify_flush_event_observers(video_file, video_fps)
+                self._on_video_finished(video_file)
             except Exception as e:
                 log.error(f"Error processing {video_file}", exc_info=e)
+
+    def _on_video_finished(self, video_file: Path) -> None:
+        """Hook for handling video processing completion."""
+        pass
 
     def _extract_side_data(self, container: InputContainer) -> dict:
         try:
