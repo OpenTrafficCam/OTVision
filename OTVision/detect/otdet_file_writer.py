@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 from OTVision.abstraction.observer import Observer, Subject
 from OTVision.application.detect.current_object_detector_metadata import (
@@ -21,6 +22,7 @@ class OtdetFileWrittenEvent:
 
     otdet_builder_config: OtdetBuilderConfig
     number_of_frames: int
+    save_location: Path
 
 
 class OtdetFileWriter:
@@ -116,12 +118,20 @@ class OtdetFileWriter:
 
         finished_msg = "Finished detection"
         log.info(finished_msg)
-        self.__notify(num_frames=actual_frames, builder_config=builder_config)
+        self.__notify(
+            num_frames=actual_frames,
+            builder_config=builder_config,
+            save_location=detections_file,
+        )
 
-    def __notify(self, num_frames: int, builder_config: OtdetBuilderConfig) -> None:
+    def __notify(
+        self, num_frames: int, builder_config: OtdetBuilderConfig, save_location: Path
+    ) -> None:
         self._subject.notify(
             OtdetFileWrittenEvent(
-                number_of_frames=num_frames, otdet_builder_config=builder_config
+                number_of_frames=num_frames,
+                otdet_builder_config=builder_config,
+                save_location=save_location,
             )
         )
 
