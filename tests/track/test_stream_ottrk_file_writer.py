@@ -17,6 +17,7 @@ from OTVision.domain.detection import TrackId
 from OTVision.domain.frame import TrackedFrame
 from OTVision.track.stream_ottrk_file_writer import (
     STREAMING_FRAME_GROUP_ID,
+    OttrkFileWrittenEvent,
     StreamOttrkFileWriter,
 )
 
@@ -310,6 +311,9 @@ class TestStreamOttrkFileWriter:
             filetype=given.config.filetypes.track,
             overwrite=True,
         )
+        given.subject.notify.assert_called_once_with(
+            OttrkFileWrittenEvent(save_location=TEST_OUTPUT_PATH)
+        )
 
 
 @dataclass
@@ -322,6 +326,7 @@ class Given:
     get_current_tracking_run_id: Mock
     save_path_provider: Mock
     config: Mock
+    subject: Mock
 
 
 def create_given() -> Given:
@@ -358,6 +363,7 @@ def create_given() -> Given:
         get_current_tracking_run_id=get_current_tracking_run_id,
         save_path_provider=save_path_provider,
         config=config,
+        subject=Mock(),
     )
 
 
@@ -368,6 +374,7 @@ def create_target(given: Given) -> StreamOttrkFileWriter:
         get_current_config=given.get_current_config,
         get_current_tracking_run_id=given.get_current_tracking_run_id,
         save_path_provider=given.save_path_provider,
+        subject=given.subject,
     )
 
 
