@@ -317,7 +317,7 @@ class ByteTrackTracker(_BaseUltralyticsTrackerAdapter):
             # misc
             fuse_score=False,
         )
-        return BYTETracker(args=args, frame_rate=30)
+        return BYTETracker(args=args, frame_rate=20)
 
 
 # --------------------------------
@@ -336,17 +336,17 @@ class BoTSORTTracker(_BaseUltralyticsTrackerAdapter):
     def _create_ul_tracker(self):
         args = SimpleNamespace(
             # ByteTrack-like thresholds
-            track_high_thresh=0.2,
-            track_low_thresh=0.05,
+            track_high_thresh=0.25,
+            track_low_thresh=0.1,
             new_track_thresh=0.25,
-            track_buffer=120,
-            match_thresh=0.99,
+            track_buffer=30,
+            match_thresh=0.80,
             fuse_score=True,
             # BoT-SORT specifics
             proximity_thresh=0.1,  # IoU gating
             appearance_thresh=0.25,  # ReID gating
-            with_reid=True,  # default off
+            with_reid=False,  # default off
             model="auto",  # used only if with_reid=True
-            gmc_method="sparseOptFlow",  # 'sparseOptFlow' | 'orb' | 'sift' | 'ecc'
+            gmc_method=None,  # "sparseOptFlow",  # 'sparseOptFlow' | 'orb' | 'sift' | 'ecc'
         )
         return BOTSORT(args=args, frame_rate=20)
