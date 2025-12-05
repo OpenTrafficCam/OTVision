@@ -1,10 +1,5 @@
-# ultralytics_trackers_plugin.py
-
-from __future__ import annotations
-
-from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -14,14 +9,8 @@ from OTVision.domain.detection import Detection, TrackedDetection, TrackId
 from OTVision.domain.frame import DetectedFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 
-# Ultralytics trackers
-try:
-    from ultralytics.trackers.byte_tracker import BYTETracker
-    from ultralytics.trackers.bot_sort import BOTSORT
-except Exception:  # Fallback for older package structures
-    from ultralytics.tracker.byte_tracker import BYTETracker  # type: ignore
-    from ultralytics.tracker.bot_sort import BOTSORT  # type: ignore
-
+from ultralytics.trackers.byte_tracker import BYTETracker
+from ultralytics.trackers.bot_sort import BOTSORT
 
 # -------------------------------
 # Helpers: geometry and adapters
@@ -190,6 +179,11 @@ class _BaseUltralyticsTrackerAdapter(Tracker):
             for st in getattr(self._ul_tracker, "tracked_stracks", []):
                 if getattr(st, "is_activated", False):
                     active_ids.add(int(st.track_id))
+            # OTVision considers buffered (lost) tracks as active until they expire.
+            # Ultralytics stores these in 'lost_stracks'.
+            for st in getattr(self._ul_tracker, "lost_stracks", []):
+                active_ids.add(int(st.track_id))
+
         except Exception:
             # Fallback: parse from returned results if needed
             pass
@@ -271,9 +265,14 @@ class _BaseUltralyticsTrackerAdapter(Tracker):
         # Compute finished tracks (those active previously but not now)
         current_active = self._current_active_ul_ids()
         finished_ul = self._prev_active_ul_ids - current_active
-        finished_tracks: set[TrackId] = {
-            self._ul_to_ot[ul] for ul in finished_ul if ul in self._ul_to_ot
-        }
+        finished_tracks: set[TrackId] = set()
+
+        for ul in finished_ul:
+            if ul in self._ul_to_ot:
+                finished_tracks.add(self._ul_to_ot[ul])
+                # Cleanup mapping to prevent memory leak
+                del self._ul_to_ot[ul]
+
         self._prev_active_ul_ids = current_active
 
         # Discarded tracks: not tracked here; leave empty
