@@ -228,3 +228,11 @@ class IouTracker(Tracker):
             finished_tracks=set(finished_track_ids),
             discarded_tracks=set(discarded_track_ids),
         )
+
+    def reset(self) -> None:
+        """Reset tracker state.
+
+        Clears all active tracks. Should be called between tracking
+        different videos/sequences.
+        """
+        self.active_tracks.clear()

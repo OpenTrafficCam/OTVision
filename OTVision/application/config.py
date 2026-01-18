@@ -48,6 +48,13 @@ SIGMA_L = "SIGMA_L"
 T_MIN = "T_MIN"
 T_MISS_MAX = "T_MISS_MAX"
 TRACK = "TRACK"
+TRACKER_TYPE = "TRACKER_TYPE"
+BOXMOT = "BOXMOT"
+BOXMOT_ENABLED = "ENABLED"
+BOXMOT_TRACKER_TYPE = "TRACKER_TYPE"
+BOXMOT_REID_WEIGHTS = "REID_WEIGHTS"
+BOXMOT_DEVICE = "DEVICE"
+BOXMOT_HALF_PRECISION = "HALF_PRECISION"
 TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
@@ -346,6 +353,35 @@ class _TrackIouConfig:
 
 
 @dataclass(frozen=True)
+class _TrackBoxmotConfig:
+    """Configuration for BOXMOT multi-object tracking.
+
+    Attributes:
+        enabled: Whether to use BOXMOT instead of IOU tracker
+        tracker_type: Type of BOXMOT tracker
+            ('bytetrack', 'botsort', 'ocsort', etc.)
+        reid_weights: Optional path to ReID model weights for appearance-based trackers
+        device: Device to run tracker on ('cpu', 'cuda:0', etc.)
+        half_precision: Whether to use FP16 precision
+    """
+
+    enabled: bool = False
+    tracker_type: str = "bytetrack"
+    reid_weights: str | None = None
+    device: str = "cpu"
+    half_precision: bool = False
+
+    def to_dict(self) -> dict:
+        return {
+            BOXMOT_ENABLED: self.enabled,
+            BOXMOT_TRACKER_TYPE: self.tracker_type,
+            BOXMOT_REID_WEIGHTS: self.reid_weights,
+            BOXMOT_DEVICE: self.device,
+            BOXMOT_HALF_PRECISION: self.half_precision,
+        }
+
+
+@dataclass(frozen=True)
 class TrackConfig:
     @property
     def sigma_l(self) -> float:
@@ -370,6 +406,7 @@ class TrackConfig:
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
+    boxmot: _TrackBoxmotConfig = _TrackBoxmotConfig()
     overwrite: bool = True
 
     def to_dict(self) -> dict:
@@ -377,6 +414,7 @@ class TrackConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
+            BOXMOT: self.boxmot.to_dict(),
             OVERWRITE: self.overwrite,
         }
 

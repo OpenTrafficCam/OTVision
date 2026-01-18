@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from functools import cached_property
 
@@ -35,6 +36,18 @@ from OTVision.track.tracker.filebased_tracking import (
     UnfinishedChunksBuffer,
 )
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
+
+# Optional BOXMOT support
+try:
+    from pathlib import Path
+
+    from OTVision.track.tracker.tracker_plugin_boxmot import BoxmotTrackerAdapter
+
+    BOXMOT_AVAILABLE = True
+except ImportError:
+    BOXMOT_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
 
 
 class TrackBuilder:
@@ -90,9 +103,39 @@ class TrackBuilder:
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker = IouTracker(get_current_config=self.get_current_config)
+        config = self.get_current_config.get().track
+
+        # Check if BOXMOT is enabled in configuration
+        if config.boxmot.enabled:
+            if not BOXMOT_AVAILABLE:
+                raise ImportError(
+                    "BOXMOT is enabled in configuration but not installed. "
+                    "Install with: uv pip install -e .[tracking_boxmot]"
+                )
+
+            logger.info(
+                f"Using BOXMOT tracker: {config.boxmot.tracker_type} "
+                f"on device: {config.boxmot.device}"
+            )
+
+            # Prepare ReID weights path if specified
+            reid_weights = None
+            if config.boxmot.reid_weights:
+                reid_weights = Path(config.boxmot.reid_weights)
+
+            base_tracker: IouTracker | BoxmotTrackerAdapter = BoxmotTrackerAdapter(
+                tracker_type=config.boxmot.tracker_type,
+                reid_weights=reid_weights,
+                device=config.boxmot.device,
+                half=config.boxmot.half_precision,
+                get_current_config=self.get_current_config,
+            )
+        else:
+            logger.info("Using IOU tracker")
+            base_tracker = IouTracker(get_current_config=self.get_current_config)
+
         return GroupedFilesTracker(
-            tracker=tracker,
+            tracker=base_tracker,
             chunk_parser=self.chunk_parser,
             frame_group_parser=self.frame_group_parser,
             id_generator_factory=lambda _: track_id_generator(),

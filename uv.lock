@@ -60,6 +60,19 @@ wheels = [
 ]
 
 [[package]]
+name = "beautifulsoup4"
+version = "4.14.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "soupsieve", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c3/b0/1c6a16426d389813b48d95e26898aff79abbde42ad353958ad95cc8c9b21/beautifulsoup4-4.14.3.tar.gz", hash = "sha256:6292b1c5186d356bba669ef9f7f051757099565ad9ada5dd630bd9de5fa7fb86", size = 627737, upload-time = "2025-11-30T15:08:26.084Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/39/47f9197bdd44df24d67ac8893641e16f386c984a0619ef2ee4c51fbbc019/beautifulsoup4-4.14.3-py3-none-any.whl", hash = "sha256:0918bfe44902e6ad8d57732ba310582e98da931428d231a5ecb9e7c703a735bb", size = 107721, upload-time = "2025-11-30T15:08:24.087Z" },
+]
+
+[[package]]
 name = "black"
 version = "25.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -77,6 +90,39 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/22/b99efca33f1f3a1d2552c714b1e1b5ae92efac6c43e790ad539a163d1754/black-25.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3b48735872ec535027d979e8dcb20bf4f70b5ac75a8ea99f127c106a7d7aba9f", size = 1783816, upload-time = "2025-01-29T04:18:33.823Z" },
     { url = "https://files.pythonhosted.org/packages/18/7e/a27c3ad3822b6f2e0e00d63d58ff6299a99a5b3aee69fa77cd4b0076b261/black-25.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:ea0213189960bda9cf99be5b8c8ce66bb054af5e9e861249cd23471bd7b0b3ba", size = 1440860, upload-time = "2025-01-29T04:19:12.944Z" },
     { url = "https://files.pythonhosted.org/packages/09/71/54e999902aed72baf26bca0d50781b01838251a462612966e9fc4891eadd/black-25.1.0-py3-none-any.whl", hash = "sha256:95e8176dae143ba9097f351d174fdaf0ccd29efb414b362ae3fd72bf0f710717", size = 207646, upload-time = "2025-01-29T04:15:38.082Z" },
+]
+
+[[package]]
+name = "boxmot"
+version = "16.0.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "filterpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "ftfy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "gdown", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "lapx", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "loguru", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "opencv-python", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "pandas", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "regex", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "scikit-learn", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torch", version = "2.7.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torch", version = "2.7.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torch", version = "2.7.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torchvision", version = "0.22.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or sys_platform == 'darwin' or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torchvision", version = "0.22.1", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torchvision", version = "0.22.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torchvision", version = "0.22.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torchvision", version = "0.22.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "yacs", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/6e/2c3a0eb42aafb7dc3ac59ef9f20deb7194f59a9270ab05ad4e14d5b77961/boxmot-16.0.8.tar.gz", hash = "sha256:a6974e9b9ad297f682d81fcf251bdc9560a99f95544e934490b60d5a98bc9f9a", size = 4818459, upload-time = "2026-01-06T01:23:27.092Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/52/d450d30f44caad8831d1824bf21527338ad400f2db20ddfea842de03acdf/boxmot-16.0.8-py3-none-any.whl", hash = "sha256:075ead11b9894bb2c43cf3ee3dbc8ba63bf2368a290ebb685360c6caa60d959e", size = 1653403, upload-time = "2026-01-06T01:23:24.864Z" },
 ]
 
 [[package]]
@@ -180,8 +226,8 @@ name = "contourpy"
 version = "1.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/58/01/1253e6698a07380cd31a736d248a3f2a50a7c88779a1813da27503cadc2a/contourpy-1.3.3.tar.gz", hash = "sha256:083e12155b210502d0bca491432bb04d56dc3432f95a979b429f2848c3dbe880", size = 13466174, upload-time = "2025-07-26T12:03:12.549Z" }
 wheels = [
@@ -332,6 +378,18 @@ wheels = [
 ]
 
 [[package]]
+name = "filterpy"
+version = "1.4.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "scipy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f6/1d/ac8914360460fafa1990890259b7fa5ef7ba4cd59014e782e4ab3ab144d8/filterpy-1.4.5.zip", hash = "sha256:4f2a4d39e4ea601b9ab42b2db08b5918a9538c168cff1c6895ae26646f3d73b1", size = 177985, upload-time = "2018-10-10T22:38:24.63Z" }
+
+[[package]]
 name = "fire"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -381,12 +439,39 @@ wheels = [
 ]
 
 [[package]]
+name = "ftfy"
+version = "6.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wcwidth", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a5/d3/8650919bc3c7c6e90ee3fa7fd618bf373cbbe55dff043bd67353dbb20cd8/ftfy-6.3.1.tar.gz", hash = "sha256:9b3c3d90f84fb267fe64d375a07b7f8912d817cf86009ae134aa03e1819506ec", size = 308927, upload-time = "2024-10-26T00:50:35.149Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/6e/81d47999aebc1b155f81eca4477a616a70f238a2549848c38983f3c22a82/ftfy-6.3.1-py3-none-any.whl", hash = "sha256:7c70eb532015cd2f9adb53f101fb6c7945988d023a085d127d1573dc49dd0083", size = 44821, upload-time = "2024-10-26T00:50:33.425Z" },
+]
+
+[[package]]
 name = "future"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a7/b2/4140c69c6a66432916b26158687e821ba631a4c9273c474343badf84d3ba/future-1.0.0.tar.gz", hash = "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05", size = 1228490, upload-time = "2024-02-21T11:52:38.461Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/71/ae30dadffc90b9006d77af76b393cb9dfbfc9629f339fc1574a1c52e6806/future-1.0.0-py3-none-any.whl", hash = "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216", size = 491326, upload-time = "2024-02-21T11:52:35.956Z" },
+]
+
+[[package]]
+name = "gdown"
+version = "5.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "filelock", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "requests", extra = ["socks"], marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "tqdm", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f4/cf/919a9fa16faf8e4572a24d941353edaf4d54e3ddcd048e6c1aeb8c7a9903/gdown-5.2.1.tar.gz", hash = "sha256:247c2ad1f579db5b66b54c04e6a871995fc8fd7021708b950b8ba7b32cf90323", size = 284743, upload-time = "2026-01-11T09:34:01.037Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/21/35dd0a0b7428bd67b12b358d7b4277f693493a3839b071d540a4c8357b78/gdown-5.2.1-py3-none-any.whl", hash = "sha256:391f0480d495fb87644d1a1ee3ddfeb2144e1de31408fbc74f7e3b3ba927052b", size = 18241, upload-time = "2026-01-11T09:34:02.637Z" },
 ]
 
 [[package]]
@@ -566,11 +651,20 @@ name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markupsafe", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "markupsafe", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
+]
+
+[[package]]
+name = "joblib"
+version = "1.5.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/f2/d34e8b3a08a9cc79a50b2208a93dce981fe615b64d5a4d4abee421d898df/joblib-1.5.3.tar.gz", hash = "sha256:8561a3269e6801106863fd0d6d84bb737be9e7631e33aaed3fb9ce5953688da3", size = 331603, upload-time = "2025-12-15T08:41:46.427Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/91/984aca2ec129e2757d1e4e3c81c3fcda9d0f85b74670a094cc443d9ee949/joblib-1.5.3-py3-none-any.whl", hash = "sha256:5fc3c5039fc5ca8c0276333a188bbd59d6b7ab37fe6632daa76bc7f9ec18e713", size = 309071, upload-time = "2025-12-15T08:41:44.973Z" },
 ]
 
 [[package]]
@@ -639,6 +733,41 @@ wheels = [
 ]
 
 [[package]]
+name = "lapx"
+version = "0.9.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/ca/d1b3863d3438e55e275e9fd1ea2f47a16cf92120bef41e542c5caacb98fa/lapx-0.9.4.tar.gz", hash = "sha256:234c6b1cb211482fa5b99d0f321bd9e391bd843e76c6e7bf8ed3ec754a2f99a1", size = 268446, upload-time = "2026-01-07T14:19:00.428Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c5/0b/2da4384c203219c409b729ccfc3cbd34e0e48e4c2964c4233faba8397a23/lapx-0.9.4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:b5d24254f17f0ae004cdef6fbf50f4a19ab3aee5570acd7ad51742c09adfc813", size = 231385, upload-time = "2026-01-07T14:17:22.465Z" },
+    { url = "https://files.pythonhosted.org/packages/05/d9/b2f752fa64cf5b7c070736273c9e8c3a1d5f97ccc4f5b5c893a04401965c/lapx-0.9.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:5b0209c87e8bc734df0685f3b0b48259ff2543ba68a47fe65499ac5c228d0619", size = 218997, upload-time = "2026-01-07T14:17:23.803Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/8a/8f7dd37ac5c9e181023c5b80e8512a30390d8459cf8e14a89aed2e7d15a3/lapx-0.9.4-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:40c46972050169892bb48d473c2edb2ba696ddae48addb42e85fd8e547c663ca", size = 1881371, upload-time = "2026-01-07T14:17:25.363Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/ff/a3b10fb05400e52961f377f141140ee0e8b62761fa3c9ca8439f74bf2f5a/lapx-0.9.4-cp312-cp312-manylinux_2_24_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:5493bf31d9b37935062a36bda9cd5ecbb3d63bbe7115f77eaefd2495c60c17e1", size = 2044700, upload-time = "2026-01-07T14:17:27.438Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/ff/bb7e8a130022677783adeba9785ee19251730ed7ce3b5f00d4b5b2b10bdc/lapx-0.9.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:47ec596f771093b5d04b31d5381caefe6020021c163eac280aae243262b407e2", size = 1951393, upload-time = "2026-01-07T14:17:29.492Z" },
+    { url = "https://files.pythonhosted.org/packages/da/7c/abd3467d1ceec601545eb0e7a61c97bcc9061fabc10bcb8c43cb726f21ef/lapx-0.9.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:d68910527cc1b55a91bd6e59ed0104ec6dad537806a086b6474c1a1de2543be6", size = 2836439, upload-time = "2026-01-07T14:17:31.083Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/2a/5353dcab1fa0a1d6315c5a7ce39f669afad50c733d280d2f20e4062ed05d/lapx-0.9.4-cp312-cp312-musllinux_1_2_armv7l.whl", hash = "sha256:46f5de36559cc7abc9a5fba7d071f82707f21aaa2722ec8bf3b85347794b7730", size = 2660879, upload-time = "2026-01-07T14:17:33.209Z" },
+    { url = "https://files.pythonhosted.org/packages/12/45/44011e9b856eca4d3d71bd00a37aa4323d18ade6c6b407a8b725f7d58d17/lapx-0.9.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:f7a0086989d4fb1e525bf2699483bbcd52ce9e64349b05dc6d8caed9a5e8e342", size = 2978828, upload-time = "2026-01-07T14:17:35.238Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/b7/d9acf9274ad0df3dd9de86f593772b42f99de8d690411a382d97deb93cc3/lapx-0.9.4-cp312-cp312-win_amd64.whl", hash = "sha256:dc1e277c3c92e47d59318b1f1e0b0030e6db54232b6cd40db8727971c62e1823", size = 224626, upload-time = "2026-01-07T14:17:37.074Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/8e/fc9766424d00feebd798f1da6a669d068e83476ed32e91e55ef12a2f314b/lapx-0.9.4-cp312-cp312-win_arm64.whl", hash = "sha256:2f587cbacf3b586249e0cb4e40eaf9e5acf486debdfb48c1dac2d40be48072f5", size = 192368, upload-time = "2026-01-07T14:17:38.78Z" },
+]
+
+[[package]]
+name = "loguru"
+version = "0.7.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559, upload-time = "2024-12-06T11:20:56.608Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl", hash = "sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c", size = 61595, upload-time = "2024-12-06T11:20:54.538Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -673,16 +802,16 @@ name = "matplotlib"
 version = "3.10.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "contourpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "cycler", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "fonttools", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "kiwisolver", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "packaging", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "pillow", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "pyparsing", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "python-dateutil", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "contourpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "cycler", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "fonttools", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "kiwisolver", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "packaging", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "pillow", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "pyparsing", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "python-dateutil", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/43/91/f2939bb60b7ebf12478b030e0d7f340247390f402b3b189616aad790c366/matplotlib-3.10.5.tar.gz", hash = "sha256:352ed6ccfb7998a00881692f38b4ca083c691d3e275b4145423704c34c909076", size = 34804044, upload-time = "2025-07-31T18:09:33.805Z" }
 wheels = [
@@ -860,8 +989,24 @@ wheels = [
 
 [[package]]
 name = "nvidia-cublas-cu12"
+version = "12.6.4.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/eb/ff4b8c503fa1f1796679dce648854d58751982426e4e4b37d6fce49d259c/nvidia_cublas_cu12-12.6.4.1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08ed2686e9875d01b58e3cb379c6896df8e76c75e0d4a7f7dace3d7b6d9ef8eb", size = 393138322, upload-time = "2024-11-20T17:40:25.65Z" },
+    { url = "https://files.pythonhosted.org/packages/97/0d/f1f0cadbf69d5b9ef2e4f744c9466cb0a850741d08350736dfdb4aa89569/nvidia_cublas_cu12-12.6.4.1-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:235f728d6e2a409eddf1df58d5b0921cf80cfa9e72b9f2775ccb7b4a87984668", size = 390794615, upload-time = "2024-11-20T17:39:52.715Z" },
+    { url = "https://files.pythonhosted.org/packages/84/f7/985e9bdbe3e0ac9298fcc8cfa51a392862a46a0ffaccbbd56939b62a9c83/nvidia_cublas_cu12-12.6.4.1-py3-none-win_amd64.whl", hash = "sha256:9e4fa264f4d8a4eb0cdbd34beadc029f453b3bafae02401e999cf3d5a5af75f8", size = 434535301, upload-time = "2024-11-20T17:50:41.681Z" },
+]
+
+[[package]]
+name = "nvidia-cublas-cu12"
 version = "12.8.3.14"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ed/63/684a6f72f52671ea222c12ecde9bdf748a0ba025e2ad3ec374e466c26eb6/nvidia_cublas_cu12-12.8.3.14-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:93a4e0e386cc7f6e56c822531396de8170ed17068a1e18f987574895044cd8c3", size = 604900717, upload-time = "2025-01-23T17:52:55.486Z" },
     { url = "https://files.pythonhosted.org/packages/82/df/4b01f10069e23c641f116c62fc31e31e8dc361a153175d81561d15c8143b/nvidia_cublas_cu12-12.8.3.14-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:3f0e05e7293598cf61933258b73e66a160c27d59c4422670bf0b79348c04be44", size = 609620630, upload-time = "2025-01-23T17:55:00.753Z" },
@@ -870,8 +1015,26 @@ wheels = [
 
 [[package]]
 name = "nvidia-cuda-cupti-cu12"
+version = "12.6.80"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e6/8b/2f6230cb715646c3a9425636e513227ce5c93c4d65823a734f4bb86d43c3/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:166ee35a3ff1587f2490364f90eeeb8da06cd867bd5b701bf7f9a02b78bc63fc", size = 8236764, upload-time = "2024-11-20T17:35:41.03Z" },
+    { url = "https://files.pythonhosted.org/packages/25/0f/acb326ac8fd26e13c799e0b4f3b2751543e1834f04d62e729485872198d4/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_aarch64.whl", hash = "sha256:358b4a1d35370353d52e12f0a7d1769fc01ff74a191689d3870b2123156184c4", size = 8236756, upload-time = "2024-10-01T16:57:45.507Z" },
+    { url = "https://files.pythonhosted.org/packages/49/60/7b6497946d74bcf1de852a21824d63baad12cd417db4195fc1bfe59db953/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:6768bad6cab4f19e8292125e5f1ac8aa7d1718704012a0e3272a6f61c4bce132", size = 8917980, upload-time = "2024-11-20T17:36:04.019Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/24/120ee57b218d9952c379d1e026c4479c9ece9997a4fb46303611ee48f038/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a3eff6cdfcc6a4c35db968a06fcadb061cbc7d6dde548609a941ff8701b98b73", size = 8917972, upload-time = "2024-10-01T16:58:06.036Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/81/7796f096afaf726796b1b648f3bc80cafc61fe7f77f44a483c89e6c5ef34/nvidia_cuda_cupti_cu12-12.6.80-py3-none-win_amd64.whl", hash = "sha256:bbe6ae76e83ce5251b56e8c8e61a964f757175682bbad058b170b136266ab00a", size = 5724175, upload-time = "2024-10-01T17:09:47.955Z" },
+]
+
+[[package]]
+name = "nvidia-cuda-cupti-cu12"
 version = "12.8.57"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/53/458956a65283c55c22ba40a65745bbe9ff20c10b68ea241bc575e20c0465/nvidia_cuda_cupti_cu12-12.8.57-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:ff154211724fd824e758ce176b66007b558eea19c9a5135fc991827ee147e317", size = 9526469, upload-time = "2025-01-23T17:47:33.104Z" },
     { url = "https://files.pythonhosted.org/packages/39/6f/3683ecf4e38931971946777d231c2df00dd5c1c4c2c914c42ad8f9f4dca6/nvidia_cuda_cupti_cu12-12.8.57-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:8e0b2eb847de260739bee4a3f66fac31378f4ff49538ff527a38a01a9a39f950", size = 10237547, upload-time = "2025-01-23T17:47:56.863Z" },
@@ -880,8 +1043,24 @@ wheels = [
 
 [[package]]
 name = "nvidia-cuda-nvrtc-cu12"
+version = "12.6.77"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/2f/72df534873235983cc0a5371c3661bebef7c4682760c275590b972c7b0f9/nvidia_cuda_nvrtc_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5847f1d6e5b757f1d2b3991a01082a44aad6f10ab3c5c0213fa3e25bddc25a13", size = 23162955, upload-time = "2024-10-01T16:59:50.922Z" },
+    { url = "https://files.pythonhosted.org/packages/75/2e/46030320b5a80661e88039f59060d1790298b4718944a65a7f2aeda3d9e9/nvidia_cuda_nvrtc_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:35b0cc6ee3a9636d5409133e79273ce1f3fd087abb0532d2d2e8fff1fe9efc53", size = 23650380, upload-time = "2024-10-01T17:00:14.643Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/46/d3a1cdda8bb113c80f43a0a6f3a853356d487b830f3483f92d49ce87fa55/nvidia_cuda_nvrtc_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:f7007dbd914c56bd80ea31bc43e8e149da38f68158f423ba845fc3292684e45a", size = 39026742, upload-time = "2024-10-01T17:10:49.058Z" },
+]
+
+[[package]]
+name = "nvidia-cuda-nvrtc-cu12"
 version = "12.8.61"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d4/22/32029d4583f7b19cfe75c84399cbcfd23f2aaf41c66fc8db4da460104fff/nvidia_cuda_nvrtc_cu12-12.8.61-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:a0fa9c2a21583105550ebd871bd76e2037205d56f33f128e69f6d2a55e0af9ed", size = 88024585, upload-time = "2025-01-23T17:50:10.722Z" },
     { url = "https://files.pythonhosted.org/packages/f1/98/29f98d57fc40d6646337e942d37509c6d5f8abe29012671f7a6eb9978ebe/nvidia_cuda_nvrtc_cu12-12.8.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:b1f376bf58111ca73dde4fd4df89a462b164602e074a76a2c29c121ca478dcd4", size = 43097015, upload-time = "2025-01-23T17:49:44.331Z" },
@@ -890,8 +1069,28 @@ wheels = [
 
 [[package]]
 name = "nvidia-cuda-runtime-cu12"
+version = "12.6.77"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/ea/590b2ac00d772a8abd1c387a92b46486d2679ca6622fd25c18ff76265663/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:6116fad3e049e04791c0256a9778c16237837c08b27ed8c8401e2e45de8d60cd", size = 908052, upload-time = "2024-11-20T17:35:19.905Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/3d/159023799677126e20c8fd580cca09eeb28d5c5a624adc7f793b9aa8bbfa/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d461264ecb429c84c8879a7153499ddc7b19b5f8d84c204307491989a365588e", size = 908040, upload-time = "2024-10-01T16:57:22.221Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/23/e717c5ac26d26cf39a27fbc076240fad2e3b817e5889d671b67f4f9f49c5/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ba3b56a4f896141e25e19ab287cd71e52a6a0f4b29d0d31609f60e3b4d5219b7", size = 897690, upload-time = "2024-11-20T17:35:30.697Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/62/65c05e161eeddbafeca24dc461f47de550d9fa8a7e04eb213e32b55cfd99/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a84d15d5e1da416dd4774cb42edf5e954a3e60cc945698dc1d5be02321c44dc8", size = 897678, upload-time = "2024-10-01T16:57:33.821Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/76/4c80fa138333cc975743fd0687a745fccb30d167f906f13c1c7f9a85e5ea/nvidia_cuda_runtime_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:86c58044c824bf3c173c49a2dbc7a6c8b53cb4e4dca50068be0bf64e9dab3f7f", size = 891773, upload-time = "2024-10-01T17:09:26.362Z" },
+]
+
+[[package]]
+name = "nvidia-cuda-runtime-cu12"
 version = "12.8.57"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform == 'win32'",
+    "platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cd/9d/e77ec4227e70c6006195bdf410370f2d0e5abfa2dc0d1d315cacd57c5c88/nvidia_cuda_runtime_cu12-12.8.57-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:534ccebd967b6a44292678fa5da4f00666029cb2ed07a79515ea41ef31fe3ec7", size = 965264, upload-time = "2025-01-23T17:47:11.759Z" },
     { url = "https://files.pythonhosted.org/packages/16/f6/0e1ef31f4753a44084310ba1a7f0abaf977ccd810a604035abb43421c057/nvidia_cuda_runtime_cu12-12.8.57-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:75342e28567340b7428ce79a5d6bb6ca5ff9d07b69e7ce00d2c7b4dc23eff0be", size = 954762, upload-time = "2025-01-23T17:47:22.21Z" },
@@ -900,10 +1099,29 @@ wheels = [
 
 [[package]]
 name = "nvidia-cudnn-cu12"
+version = "9.5.1.17"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "nvidia-cublas-cu12", version = "12.6.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/93/a201a12d3ec1caa8c6ac34c1c2f9eeb696b886f0c36ff23c638b46603bd0/nvidia_cudnn_cu12-9.5.1.17-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:9fd4584468533c61873e5fda8ca41bac3a38bcb2d12350830c69b0a96a7e4def", size = 570523509, upload-time = "2024-10-25T19:53:03.148Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/78/4535c9c7f859a64781e43c969a3a7e84c54634e319a996d43ef32ce46f83/nvidia_cudnn_cu12-9.5.1.17-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:30ac3869f6db17d170e0e556dd6cc5eee02647abc31ca856634d5a40f82c15b2", size = 570988386, upload-time = "2024-10-25T19:54:26.39Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/b2/3f60d15f037fa5419d9d7f788b100ef33ea913ae5315c87ca6d6fa606c35/nvidia_cudnn_cu12-9.5.1.17-py3-none-win_amd64.whl", hash = "sha256:d7af0f8a4f3b4b9dbb3122f2ef553b45694ed9c384d5a75bab197b8eefb79ab8", size = 565440743, upload-time = "2024-10-25T19:55:49.74Z" },
+]
+
+[[package]]
+name = "nvidia-cudnn-cu12"
 version = "9.7.1.26"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cublas-cu12", version = "12.8.3.14", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/2e/ec5dda717eeb1de3afbbbb611ca556f9d6d057470759c6abd36d72f0063b/nvidia_cudnn_cu12-9.7.1.26-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:848a61d40ef3b32bd4e1fadb599f0cf04a4b942fbe5fb3be572ad75f9b8c53ef", size = 725862213, upload-time = "2025-02-06T22:14:57.169Z" },
@@ -913,10 +1131,31 @@ wheels = [
 
 [[package]]
 name = "nvidia-cufft-cu12"
+version = "11.3.0.4"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1f/37/c50d2b2f2c07e146776389e3080f4faf70bcc4fa6e19d65bb54ca174ebc3/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d16079550df460376455cba121db6564089176d9bac9e4f360493ca4741b22a6", size = 200164144, upload-time = "2024-11-20T17:40:58.288Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/f5/188566814b7339e893f8d210d3a5332352b1409815908dad6a363dcceac1/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:8510990de9f96c803a051822618d42bf6cb8f069ff3f48d93a8486efdacb48fb", size = 200164135, upload-time = "2024-10-01T17:03:24.212Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/16/73727675941ab8e6ffd86ca3a4b7b47065edcca7a997920b831f8147c99d/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ccba62eb9cef5559abd5e0d54ceed2d9934030f51163df018532142a8ec533e5", size = 200221632, upload-time = "2024-11-20T17:41:32.357Z" },
+    { url = "https://files.pythonhosted.org/packages/60/de/99ec247a07ea40c969d904fc14f3a356b3e2a704121675b75c366b694ee1/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_x86_64.whl", hash = "sha256:768160ac89f6f7b459bee747e8d175dbf53619cfe74b2a5636264163138013ca", size = 200221622, upload-time = "2024-10-01T17:03:58.79Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/38/36fd800cec8f6e89b7c1576edaaf8076e69ec631644cdbc1b5f2e2b5a9df/nvidia_cufft_cu12-11.3.0.4-py3-none-win_amd64.whl", hash = "sha256:6048ebddfb90d09d2707efb1fd78d4e3a77cb3ae4dc60e19aab6be0ece2ae464", size = 199356881, upload-time = "2024-10-01T17:13:01.861Z" },
+]
+
+[[package]]
+name = "nvidia-cufft-cu12"
 version = "11.3.3.41"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvjitlink-cu12", version = "12.8.61", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/72/95/6157cb45a49f5090a470de42353a22a0ed5b13077886dca891b4b0e350fe/nvidia_cufft_cu12-11.3.3.41-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:68509dcd7e3306e69d0e2d8a6d21c8b25ed62e6df8aac192ce752f17677398b5", size = 193108626, upload-time = "2025-01-23T17:55:49.192Z" },
@@ -926,8 +1165,23 @@ wheels = [
 
 [[package]]
 name = "nvidia-cufile-cu12"
+version = "1.11.1.6"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b2/66/cc9876340ac68ae71b15c743ddb13f8b30d5244af344ec8322b449e35426/nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:cc23469d1c7e52ce6c1d55253273d32c565dd22068647f3aa59b3c6b005bf159", size = 1142103, upload-time = "2024-11-20T17:42:11.83Z" },
+    { url = "https://files.pythonhosted.org/packages/17/bf/cc834147263b929229ce4aadd62869f0b195e98569d4c28b23edc72b85d9/nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:8f57a0051dcf2543f6dc2b98a98cb2719c37d3cee1baba8965d57f3bbc90d4db", size = 1066155, upload-time = "2024-11-20T17:41:49.376Z" },
+]
+
+[[package]]
+name = "nvidia-cufile-cu12"
 version = "1.13.0.11"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/9c/1f3264d0a84c8a031487fb7f59780fc78fa6f1c97776233956780e3dc3ac/nvidia_cufile_cu12-1.13.0.11-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:483f434c541806936b98366f6d33caef5440572de8ddf38d453213729da3e7d4", size = 1197801, upload-time = "2025-01-23T17:57:07.247Z" },
     { url = "https://files.pythonhosted.org/packages/35/80/f6a0fc90ab6fa4ac916f3643e5b620fd19724626c59ae83b74f5efef0349/nvidia_cufile_cu12-1.13.0.11-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:2acbee65dc2eaf58331f0798c5e6bcdd790c4acb26347530297e63528c9eba5d", size = 1120660, upload-time = "2025-01-23T17:56:56.608Z" },
@@ -935,8 +1189,26 @@ wheels = [
 
 [[package]]
 name = "nvidia-curand-cu12"
+version = "10.3.7.77"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/42/ac/36543605358a355632f1a6faa3e2d5dfb91eab1e4bc7d552040e0383c335/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:6e82df077060ea28e37f48a3ec442a8f47690c7499bff392a5938614b56c98d8", size = 56289881, upload-time = "2024-10-01T17:04:18.981Z" },
+    { url = "https://files.pythonhosted.org/packages/73/1b/44a01c4e70933637c93e6e1a8063d1e998b50213a6b65ac5a9169c47e98e/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:a42cd1344297f70b9e39a1e4f467a4e1c10f1da54ff7a85c12197f6c652c8bdf", size = 56279010, upload-time = "2024-11-20T17:42:50.958Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/aa/2c7ff0b5ee02eaef890c0ce7d4f74bc30901871c5e45dee1ae6d0083cd80/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:99f1a32f1ac2bd134897fc7a203f779303261268a65762a623bf30cc9fe79117", size = 56279000, upload-time = "2024-10-01T17:04:45.274Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/02/5362a9396f23f7de1dd8a64369e87c85ffff8216fc8194ace0fa45ba27a5/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:7b2ed8e95595c3591d984ea3603dd66fe6ce6812b886d59049988a712ed06b6e", size = 56289882, upload-time = "2024-11-20T17:42:25.222Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/a8/0cd0cec757bd4b4b4ef150fca62ec064db7d08a291dced835a0be7d2c147/nvidia_curand_cu12-10.3.7.77-py3-none-win_amd64.whl", hash = "sha256:6d6d935ffba0f3d439b7cd968192ff068fafd9018dbf1b85b37261b13cfc9905", size = 55783873, upload-time = "2024-10-01T17:13:30.377Z" },
+]
+
+[[package]]
+name = "nvidia-curand-cu12"
 version = "10.3.9.55"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/13/bbcf48e2f8a6a9adef58f130bc968810528a4e66bbbe62fad335241e699f/nvidia_curand_cu12-10.3.9.55-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b6bb90c044fa9b07cedae2ef29077c4cf851fb6fdd6d862102321f359dca81e9", size = 63623836, upload-time = "2025-01-23T17:57:22.319Z" },
     { url = "https://files.pythonhosted.org/packages/bd/fc/7be5d0082507269bb04ac07cc614c84b78749efb96e8cf4100a8a1178e98/nvidia_curand_cu12-10.3.9.55-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:8387d974240c91f6a60b761b83d4b2f9b938b7e0b9617bae0f0dafe4f5c36b86", size = 63618038, upload-time = "2025-01-23T17:57:41.838Z" },
@@ -945,12 +1217,35 @@ wheels = [
 
 [[package]]
 name = "nvidia-cusolver-cu12"
+version = "11.7.1.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "nvidia-cublas-cu12", version = "12.6.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusparse-cu12", version = "12.5.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/17/dbe1aa865e4fdc7b6d4d0dd308fdd5aaab60f939abfc0ea1954eac4fb113/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0ce237ef60acde1efc457335a2ddadfd7610b892d94efee7b776c64bb1cac9e0", size = 157833628, upload-time = "2024-10-01T17:05:05.591Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/6e/c2cf12c9ff8b872e92b4a5740701e51ff17689c4d726fca91875b07f655d/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:e9e49843a7707e42022babb9bcfa33c29857a93b88020c4e4434656a655b698c", size = 158229790, upload-time = "2024-11-20T17:43:43.211Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/81/baba53585da791d043c10084cf9553e074548408e04ae884cfe9193bd484/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:6cf28f17f64107a0c4d7802be5ff5537b2130bfc112f25d5a30df227058ca0e6", size = 158229780, upload-time = "2024-10-01T17:05:39.875Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/5f/07d0ba3b7f19be5a5ec32a8679fc9384cfd9fc6c869825e93be9f28d6690/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:dbbe4fc38ec1289c7e5230e16248365e375c3673c9c8bac5796e2e20db07f56e", size = 157833630, upload-time = "2024-11-20T17:43:16.77Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/53/fff50a0808df7113d77e3bbc7c2b7eaed6f57d5eb80fbe93ead2aea1e09a/nvidia_cusolver_cu12-11.7.1.2-py3-none-win_amd64.whl", hash = "sha256:6813f9d8073f555444a8705f3ab0296d3e1cb37a16d694c5fc8b862a0d8706d7", size = 149287877, upload-time = "2024-10-01T17:13:49.804Z" },
+]
+
+[[package]]
+name = "nvidia-cusolver-cu12"
 version = "11.7.2.55"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cusparse-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cublas-cu12", version = "12.8.3.14", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusparse-cu12", version = "12.5.7.53", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvjitlink-cu12", version = "12.8.61", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8c/ce/4214a892e804b20bf66d04f04a473006fc2d3dac158160ef85f1bc906639/nvidia_cusolver_cu12-11.7.2.55-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:0fd9e98246f43c15bee5561147ad235dfdf2d037f5d07c9d41af3f7f72feb7cc", size = 260094827, upload-time = "2025-01-23T17:58:17.586Z" },
@@ -960,10 +1255,31 @@ wheels = [
 
 [[package]]
 name = "nvidia-cusparse-cu12"
+version = "12.5.4.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/eb/6681efd0aa7df96b4f8067b3ce7246833dd36830bb4cec8896182773db7d/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d25b62fb18751758fe3c93a4a08eff08effedfe4edf1c6bb5afd0890fe88f887", size = 216451147, upload-time = "2024-11-20T17:44:18.055Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/56/3af21e43014eb40134dea004e8d0f1ef19d9596a39e4d497d5a7de01669f/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7aa32fa5470cf754f72d1116c7cbc300b4e638d3ae5304cfa4a638a5b87161b1", size = 216451135, upload-time = "2024-10-01T17:06:03.826Z" },
+    { url = "https://files.pythonhosted.org/packages/06/1e/b8b7c2f4099a37b96af5c9bb158632ea9e5d9d27d7391d7eb8fc45236674/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:7556d9eca156e18184b94947ade0fba5bb47d69cec46bf8660fd2c71a4b48b73", size = 216561367, upload-time = "2024-11-20T17:44:54.824Z" },
+    { url = "https://files.pythonhosted.org/packages/43/ac/64c4316ba163e8217a99680c7605f779accffc6a4bcd0c778c12948d3707/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:23749a6571191a215cb74d1cdbff4a86e7b19f1200c071b3fcf844a5bea23a2f", size = 216561357, upload-time = "2024-10-01T17:06:29.861Z" },
+    { url = "https://files.pythonhosted.org/packages/45/ef/876ad8e4260e1128e6d4aac803d9d51baf3791ebdb4a9b8d9b8db032b4b0/nvidia_cusparse_cu12-12.5.4.2-py3-none-win_amd64.whl", hash = "sha256:4acb8c08855a26d737398cba8fb6f8f5045d93f82612b4cfd84645a2332ccf20", size = 213712630, upload-time = "2024-10-01T17:14:23.779Z" },
+]
+
+[[package]]
+name = "nvidia-cusparse-cu12"
 version = "12.5.7.53"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvjitlink-cu12", version = "12.8.61", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2e/a2/313db0453087f5324a5900380ca2e57e050c8de76f407b5e11383dc762ae/nvidia_cusparse_cu12-12.5.7.53-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d869c6146ca80f4305b62e02d924b4aaced936f8173e3cef536a67eed2a91af1", size = 291963692, upload-time = "2025-01-23T17:59:40.325Z" },
@@ -992,8 +1308,24 @@ wheels = [
 
 [[package]]
 name = "nvidia-nvjitlink-cu12"
+version = "12.6.85"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/d7/c5383e47c7e9bf1c99d5bd2a8c935af2b6d705ad831a7ec5c97db4d82f4f/nvidia_nvjitlink_cu12-12.6.85-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:eedc36df9e88b682efe4309aa16b5b4e78c2407eac59e8c10a6a47535164369a", size = 19744971, upload-time = "2024-11-20T17:46:53.366Z" },
+    { url = "https://files.pythonhosted.org/packages/31/db/dc71113d441f208cdfe7ae10d4983884e13f464a6252450693365e166dcf/nvidia_nvjitlink_cu12-12.6.85-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:cf4eaa7d4b6b543ffd69d6abfb11efdeb2db48270d94dfd3a452c24150829e41", size = 19270338, upload-time = "2024-11-20T17:46:29.758Z" },
+    { url = "https://files.pythonhosted.org/packages/89/76/93c1467b1387387440a4d25102d86b7794535449b689f8e2dc22c1c8ff7f/nvidia_nvjitlink_cu12-12.6.85-py3-none-win_amd64.whl", hash = "sha256:e61120e52ed675747825cdd16febc6a0730537451d867ee58bee3853b1b13d1c", size = 161908572, upload-time = "2024-11-20T17:52:40.124Z" },
+]
+
+[[package]]
+name = "nvidia-nvjitlink-cu12"
 version = "12.8.61"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/f8/9d85593582bd99b8d7c65634d2304780aefade049b2b94d96e44084be90b/nvidia_nvjitlink_cu12-12.8.61-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:45fd79f2ae20bd67e8bc411055939049873bfd8fac70ff13bd4865e0b9bdab17", size = 39243473, upload-time = "2025-01-23T18:03:03.509Z" },
     { url = "https://files.pythonhosted.org/packages/af/53/698f3758f48c5fcb1112721e40cc6714da3980d3c7e93bae5b29dafa9857/nvidia_nvjitlink_cu12-12.8.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9b80ecab31085dda3ce3b41d043be0ec739216c3fc633b8abe212d5a30026df0", size = 38374634, upload-time = "2025-01-23T18:02:35.812Z" },
@@ -1002,8 +1334,26 @@ wheels = [
 
 [[package]]
 name = "nvidia-nvtx-cu12"
+version = "12.6.77"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/93/80f8a520375af9d7ee44571a6544653a176e53c2b8ccce85b97b83c2491b/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:f44f8d86bb7d5629988d61c8d3ae61dddb2015dee142740536bc7481b022fe4b", size = 90549, upload-time = "2024-11-20T17:38:17.387Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/53/36e2fd6c7068997169b49ffc8c12d5af5e5ff209df6e1a2c4d373b3a638f/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:adcaabb9d436c9761fca2b13959a2d237c5f9fd406c8e4b723c695409ff88059", size = 90539, upload-time = "2024-10-01T17:00:27.179Z" },
+    { url = "https://files.pythonhosted.org/packages/56/9a/fff8376f8e3d084cd1530e1ef7b879bb7d6d265620c95c1b322725c694f4/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b90bed3df379fa79afbd21be8e04a0314336b8ae16768b58f2d34cb1d04cd7d2", size = 89276, upload-time = "2024-11-20T17:38:27.621Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/4e/0d0c945463719429b7bd21dece907ad0bde437a2ff12b9b12fee94722ab0/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:6574241a3ec5fdc9334353ab8c479fe75841dbe8f4532a8fc97ce63503330ba1", size = 89265, upload-time = "2024-10-01T17:00:38.172Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/cd/98a447919d4ed14d407ac82b14b0a0c9c1dbfe81099934b1fc3bfd1e6316/nvidia_nvtx_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:2fb11a4af04a5e6c84073e6404d26588a34afd35379f0855a99797897efa75c0", size = 56434, upload-time = "2024-10-01T17:11:13.124Z" },
+]
+
+[[package]]
+name = "nvidia-nvtx-cu12"
 version = "12.8.55"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/e8/ae6ecbdade8bb9174d75db2b302c57c1c27d9277d6531c62aafde5fb32a3/nvidia_nvtx_cu12-12.8.55-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:c38405335fbc0f0bf363eaeaeb476e8dfa8bae82fada41d25ace458b9ba9f3db", size = 91103, upload-time = "2025-01-23T17:50:24.664Z" },
     { url = "https://files.pythonhosted.org/packages/8d/cd/0e8c51b2ae3a58f054f2e7fe91b82d201abfb30167f2431e9bd92d532f42/nvidia_nvtx_cu12-12.8.55-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2dd0780f1a55c21d8e06a743de5bd95653de630decfff40621dbde78cc307102", size = 89896, upload-time = "2025-01-23T17:50:44.487Z" },
@@ -1015,8 +1365,8 @@ name = "opencv-python"
 version = "4.10.0.84"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4a/e7/b70a2d9ab205110d715906fc8ec83fbb00404aeb3a37a0654fdb68eb0c8c/opencv-python-4.10.0.84.tar.gz", hash = "sha256:72d234e4582e9658ffea8e9cae5b63d488ad06994ef12d81dc303b17472f3526", size = 95103981, upload-time = "2024-06-17T18:29:56.757Z" }
 wheels = [
@@ -1086,6 +1436,12 @@ inference-cuda = [
     { name = "torchvision", version = "0.22.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine == 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "ultralytics", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
+tracking-boxmot = [
+    { name = "boxmot", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "filterpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "lapx", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "scikit-learn", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1106,11 +1462,14 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "av", specifier = "==13.0.0" },
+    { name = "boxmot", marker = "extra == 'tracking-boxmot'", specifier = ">=11.0" },
     { name = "coremltools", marker = "sys_platform == 'darwin'", specifier = "==8.2" },
     { name = "ffmpeg-python", specifier = "==0.2.0" },
+    { name = "filterpy", marker = "extra == 'tracking-boxmot'", specifier = ">=1.4.5,<2.0.0" },
     { name = "fire", specifier = "==0.7.0" },
     { name = "geopandas", specifier = "==1.0.1" },
     { name = "ijson", specifier = "==3.3.0" },
+    { name = "lapx", marker = "extra == 'tracking-boxmot'", specifier = ">=0.5.5,<1.0.0" },
     { name = "more-itertools", specifier = "==10.7.0" },
     { name = "moviepy", specifier = "==1.0.3" },
     { name = "numpy", marker = "sys_platform != 'win32'", specifier = "==2.1.1" },
@@ -1118,6 +1477,7 @@ requires-dist = [
     { name = "opencv-python-headless", specifier = "==4.10.0.84" },
     { name = "pandas", specifier = "==2.3.3" },
     { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "scikit-learn", marker = "extra == 'tracking-boxmot'", specifier = ">=1.3.0,<2.0.0" },
     { name = "tensorrt", marker = "sys_platform != 'darwin' and extra == 'inference-cuda'", specifier = "==10.12.0.36", index = "https://pypi.nvidia.com/", conflict = { package = "otvision", extra = "inference-cuda" } },
     { name = "tensorrt-cu12-bindings", marker = "sys_platform != 'darwin' and extra == 'inference-cuda'", specifier = "==10.12.0.36", index = "https://pypi.nvidia.com/", conflict = { package = "otvision", extra = "inference-cuda" } },
     { name = "tensorrt-cu12-libs", marker = "sys_platform != 'darwin' and extra == 'inference-cuda'", specifier = "==10.12.0.36", index = "https://pypi.nvidia.com/", conflict = { package = "otvision", extra = "inference-cuda" } },
@@ -1138,7 +1498,7 @@ requires-dist = [
     { name = "ultralytics", marker = "extra == 'inference-cpu'", specifier = "==8.3.159" },
     { name = "ultralytics", marker = "extra == 'inference-cuda'", specifier = "==8.3.159" },
 ]
-provides-extras = ["inference-cpu", "inference-cuda"]
+provides-extras = ["inference-cpu", "inference-cuda", "tracking-boxmot"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1419,6 +1779,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pysocks"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/11/293dd436aea955d45fc4e8a35b6ae7270f5b8e00b53cf6c024c83b657a11/PySocks-1.7.1.tar.gz", hash = "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0", size = 284429, upload-time = "2019-09-20T02:07:35.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/59/b4572118e098ac8e46e399a1dd0f2d85403ce8bbaad9ec79373ed6badaf9/PySocks-1.7.1-py3-none-any.whl", hash = "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5", size = 16725, upload-time = "2019-09-20T02:06:22.938Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "8.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1522,6 +1891,29 @@ wheels = [
 ]
 
 [[package]]
+name = "regex"
+version = "2024.11.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/5f/bd69653fbfb76cf8604468d3b4ec4c403197144c7bfe0e6a5fc9e02a07cb/regex-2024.11.6.tar.gz", hash = "sha256:7ab159b063c52a0333c884e4679f8d7a85112ee3078fe3d9004b2dd875585519", size = 399494, upload-time = "2024-11-06T20:12:31.635Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ba/30/9a87ce8336b172cc232a0db89a3af97929d06c11ceaa19d97d84fa90a8f8/regex-2024.11.6-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:52fb28f528778f184f870b7cf8f225f5eef0a8f6e3778529bdd40c7b3920796a", size = 483781, upload-time = "2024-11-06T20:10:07.07Z" },
+    { url = "https://files.pythonhosted.org/packages/01/e8/00008ad4ff4be8b1844786ba6636035f7ef926db5686e4c0f98093612add/regex-2024.11.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:fdd6028445d2460f33136c55eeb1f601ab06d74cb3347132e1c24250187500d9", size = 288455, upload-time = "2024-11-06T20:10:09.117Z" },
+    { url = "https://files.pythonhosted.org/packages/60/85/cebcc0aff603ea0a201667b203f13ba75d9fc8668fab917ac5b2de3967bc/regex-2024.11.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:805e6b60c54bf766b251e94526ebad60b7de0c70f70a4e6210ee2891acb70bf2", size = 284759, upload-time = "2024-11-06T20:10:11.155Z" },
+    { url = "https://files.pythonhosted.org/packages/94/2b/701a4b0585cb05472a4da28ee28fdfe155f3638f5e1ec92306d924e5faf0/regex-2024.11.6-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b85c2530be953a890eaffde05485238f07029600e8f098cdf1848d414a8b45e4", size = 794976, upload-time = "2024-11-06T20:10:13.24Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/bf/fa87e563bf5fee75db8915f7352e1887b1249126a1be4813837f5dbec965/regex-2024.11.6-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:bb26437975da7dc36b7efad18aa9dd4ea569d2357ae6b783bf1118dabd9ea577", size = 833077, upload-time = "2024-11-06T20:10:15.37Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/56/7295e6bad94b047f4d0834e4779491b81216583c00c288252ef625c01d23/regex-2024.11.6-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:abfa5080c374a76a251ba60683242bc17eeb2c9818d0d30117b4486be10c59d3", size = 823160, upload-time = "2024-11-06T20:10:19.027Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/13/e3b075031a738c9598c51cfbc4c7879e26729c53aa9cca59211c44235314/regex-2024.11.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:70b7fa6606c2881c1db9479b0eaa11ed5dfa11c8d60a474ff0e095099f39d98e", size = 796896, upload-time = "2024-11-06T20:10:21.85Z" },
+    { url = "https://files.pythonhosted.org/packages/24/56/0b3f1b66d592be6efec23a795b37732682520b47c53da5a32c33ed7d84e3/regex-2024.11.6-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0c32f75920cf99fe6b6c539c399a4a128452eaf1af27f39bce8909c9a3fd8cbe", size = 783997, upload-time = "2024-11-06T20:10:24.329Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/a1/eb378dada8b91c0e4c5f08ffb56f25fcae47bf52ad18f9b2f33b83e6d498/regex-2024.11.6-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:982e6d21414e78e1f51cf595d7f321dcd14de1f2881c5dc6a6e23bbbbd68435e", size = 781725, upload-time = "2024-11-06T20:10:28.067Z" },
+    { url = "https://files.pythonhosted.org/packages/83/f2/033e7dec0cfd6dda93390089864732a3409246ffe8b042e9554afa9bff4e/regex-2024.11.6-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:a7c2155f790e2fb448faed6dd241386719802296ec588a8b9051c1f5c481bc29", size = 789481, upload-time = "2024-11-06T20:10:31.612Z" },
+    { url = "https://files.pythonhosted.org/packages/83/23/15d4552ea28990a74e7696780c438aadd73a20318c47e527b47a4a5a596d/regex-2024.11.6-cp312-cp312-musllinux_1_2_ppc64le.whl", hash = "sha256:149f5008d286636e48cd0b1dd65018548944e495b0265b45e1bffecce1ef7f39", size = 852896, upload-time = "2024-11-06T20:10:34.054Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/39/ed4416bc90deedbfdada2568b2cb0bc1fdb98efe11f5378d9892b2a88f8f/regex-2024.11.6-cp312-cp312-musllinux_1_2_s390x.whl", hash = "sha256:e5364a4502efca094731680e80009632ad6624084aff9a23ce8c8c6820de3e51", size = 860138, upload-time = "2024-11-06T20:10:36.142Z" },
+    { url = "https://files.pythonhosted.org/packages/93/2d/dd56bb76bd8e95bbce684326302f287455b56242a4f9c61f1bc76e28360e/regex-2024.11.6-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:0a86e7eeca091c09e021db8eb72d54751e527fa47b8d5787caf96d9831bd02ad", size = 787692, upload-time = "2024-11-06T20:10:38.394Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/55/31877a249ab7a5156758246b9c59539abbeba22461b7d8adc9e8475ff73e/regex-2024.11.6-cp312-cp312-win32.whl", hash = "sha256:32f9a4c643baad4efa81d549c2aadefaeba12249b2adc5af541759237eee1c54", size = 262135, upload-time = "2024-11-06T20:10:40.367Z" },
+    { url = "https://files.pythonhosted.org/packages/38/ec/ad2d7de49a600cdb8dd78434a1aeffe28b9d6fc42eb36afab4a27ad23384/regex-2024.11.6-cp312-cp312-win_amd64.whl", hash = "sha256:a93c194e2df18f7d264092dc8539b8ffb86b45b899ab976aa15d48214138e81b", size = 273567, upload-time = "2024-11-06T20:10:43.467Z" },
+]
+
+[[package]]
 name = "requests"
 version = "2.32.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1534,6 +1926,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e1/0a/929373653770d8a0d7ea76c37de6e41f11eb07559b103b1c02cafb3f7cf8/requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422", size = 135258, upload-time = "2025-06-09T16:43:07.34Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/e4/56027c4a6b4ae70ca9de302488c5ca95ad4a39e190093d6c1a8ace08341b/requests-2.32.4-py3-none-any.whl", hash = "sha256:27babd3cda2a6d50b30443204ee89830707d396671944c998b5975b031ac2b2c", size = 64847, upload-time = "2025-06-09T16:43:05.728Z" },
+]
+
+[package.optional-dependencies]
+socks = [
+    { name = "pysocks", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 
 [[package]]
@@ -1594,12 +1991,33 @@ wheels = [
 ]
 
 [[package]]
+name = "scikit-learn"
+version = "1.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "joblib", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "scipy", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "threadpoolctl", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/d4/40988bf3b8e34feec1d0e6a051446b1f66225f8529b9309becaeef62b6c4/scikit_learn-1.8.0.tar.gz", hash = "sha256:9bccbb3b40e3de10351f8f5068e105d0f4083b1a65fa07b6634fbc401a6287fd", size = 7335585, upload-time = "2025-12-10T07:08:53.618Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/74/e6a7cc4b820e95cc38cf36cd74d5aa2b42e8ffc2d21fe5a9a9c45c1c7630/scikit_learn-1.8.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:5fb63362b5a7ddab88e52b6dbb47dac3fd7dafeee740dc6c8d8a446ddedade8e", size = 8548242, upload-time = "2025-12-10T07:07:51.568Z" },
+    { url = "https://files.pythonhosted.org/packages/49/d8/9be608c6024d021041c7f0b3928d4749a706f4e2c3832bbede4fb4f58c95/scikit_learn-1.8.0-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:5025ce924beccb28298246e589c691fe1b8c1c96507e6d27d12c5fadd85bfd76", size = 8079075, upload-time = "2025-12-10T07:07:53.697Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/47/f187b4636ff80cc63f21cd40b7b2d177134acaa10f6bb73746130ee8c2e5/scikit_learn-1.8.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4496bb2cf7a43ce1a2d7524a79e40bc5da45cf598dbf9545b7e8316ccba47bb4", size = 8660492, upload-time = "2025-12-10T07:07:55.574Z" },
+    { url = "https://files.pythonhosted.org/packages/97/74/b7a304feb2b49df9fafa9382d4d09061a96ee9a9449a7cbea7988dda0828/scikit_learn-1.8.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a0bcfe4d0d14aec44921545fd2af2338c7471de9cb701f1da4c9d85906ab847a", size = 8931904, upload-time = "2025-12-10T07:07:57.666Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/c4/0ab22726a04ede56f689476b760f98f8f46607caecff993017ac1b64aa5d/scikit_learn-1.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:35c007dedb2ffe38fe3ee7d201ebac4a2deccd2408e8621d53067733e3c74809", size = 8019359, upload-time = "2025-12-10T07:07:59.838Z" },
+    { url = "https://files.pythonhosted.org/packages/24/90/344a67811cfd561d7335c1b96ca21455e7e472d281c3c279c4d3f2300236/scikit_learn-1.8.0-cp312-cp312-win_arm64.whl", hash = "sha256:8c497fff237d7b4e07e9ef1a640887fa4fb765647f86fbe00f969ff6280ce2bb", size = 7641898, upload-time = "2025-12-10T07:08:01.36Z" },
+]
+
+[[package]]
 name = "scipy"
 version = "1.16.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f5/4a/b927028464795439faec8eaf0b03b011005c487bb2d07409f28bf30879c4/scipy-1.16.1.tar.gz", hash = "sha256:44c76f9e8b6e8e488a586190ab38016e4ed2f8a038af7cd3defa903c0a2238b3", size = 30580861, upload-time = "2025-07-27T16:33:30.834Z" }
 wheels = [
@@ -1666,11 +2084,20 @@ wheels = [
 ]
 
 [[package]]
+name = "soupsieve"
+version = "2.8.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/f2/21d6ca70c3cf35d01ae9e01be534bf6b6b103c157a728082a5028350c310/soupsieve-2.8.2.tar.gz", hash = "sha256:78a66b0fdee2ab40b7199dc3e747ee6c6e231899feeaae0b9b98a353afd48fd8", size = 118601, upload-time = "2026-01-18T16:21:31.09Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/9a/b4450ccce353e2430621b3bb571899ffe1033d5cd72c9e065110f95b1a63/soupsieve-2.8.2-py3-none-any.whl", hash = "sha256:0f4c2f6b5a5fb97a641cf69c0bd163670a0e45e6d6c01a2107f93a6a6f93c51a", size = 37016, upload-time = "2026-01-18T16:21:29.7Z" },
+]
+
+[[package]]
 name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mpmath", marker = "sys_platform == 'darwin' or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "mpmath", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
@@ -1720,7 +2147,7 @@ name = "tensorrt-cu12-libs"
 version = "10.12.0.36"
 source = { registry = "https://pypi.nvidia.com/" }
 dependencies = [
-    { name = "nvidia-cuda-runtime-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "nvidia-cuda-runtime-cu12", version = "12.8.57", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 wheels = [
     { url = "https://pypi.nvidia.com/tensorrt-cu12-libs/tensorrt_cu12_libs-10.12.0.36-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:3910039e1d49de0edfdc8bf273e40ad4b85a9d57c7c383fe0e22f75417df9610" },
@@ -1735,6 +2162,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ca/6c/3d75c196ac07ac8749600b60b03f4f6094d54e132c4d94ebac6ee0e0add0/termcolor-3.1.0.tar.gz", hash = "sha256:6a6dd7fbee581909eeec6a756cff1d7f7c376063b14e4a298dc4980309e55970", size = 14324, upload-time = "2025-04-30T11:37:53.791Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/bd/de8d508070629b6d84a30d01d57e4a65c69aa7f5abe7560b8fad3b50ea59/termcolor-3.1.0-py3-none-any.whl", hash = "sha256:591dd26b5c2ce03b9e43f391264626557873ce1d379019786f99b0c2bee140aa", size = 7684, upload-time = "2025-04-30T11:37:52.382Z" },
+]
+
+[[package]]
+name = "threadpoolctl"
+version = "3.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/4d/08c89e34946fce2aec4fbb45c9016efd5f4d7f24af8e5d93296e935631d8/threadpoolctl-3.6.0.tar.gz", hash = "sha256:8ab8b4aa3491d812b623328249fab5302a68d2d71745c8a4c719a2fcaba9f44e", size = 21274, upload-time = "2025-03-13T13:49:23.031Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl", hash = "sha256:43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb", size = 18638, upload-time = "2025-03-13T13:49:21.846Z" },
 ]
 
 [[package]]
@@ -1754,16 +2190,56 @@ resolution-markers = [
     "sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "sys_platform == 'darwin'" },
-    { name = "fsspec", marker = "sys_platform == 'darwin'" },
-    { name = "jinja2", marker = "sys_platform == 'darwin'" },
-    { name = "networkx", marker = "sys_platform == 'darwin'" },
-    { name = "setuptools", marker = "sys_platform == 'darwin'" },
-    { name = "sympy", marker = "sys_platform == 'darwin'" },
-    { name = "typing-extensions", marker = "sys_platform == 'darwin'" },
+    { name = "filelock", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "fsspec", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "jinja2", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "networkx", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "setuptools", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "sympy", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "typing-extensions", marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/cpu/torch-2.7.1-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:7b4f8b2b83bd08f7d399025a9a7b323bdbb53d20566f1e0d584689bb92d82f9a" },
+]
+
+[[package]]
+name = "torch"
+version = "2.7.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform == 'win32'",
+    "platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "filelock", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "fsspec", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "jinja2", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "networkx", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cublas-cu12", version = "12.6.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cuda-cupti-cu12", version = "12.6.80", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cuda-nvrtc-cu12", version = "12.6.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cuda-runtime-cu12", version = "12.6.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cudnn-cu12", version = "9.5.1.17", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cufft-cu12", version = "11.3.0.4", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cufile-cu12", version = "1.11.1.6", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-curand-cu12", version = "10.3.7.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusolver-cu12", version = "11.7.1.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusparse-cu12", version = "12.5.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusparselt-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nccl-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvtx-cu12", version = "12.6.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "setuptools", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "sympy", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "triton", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "typing-extensions", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/93/fb505a5022a2e908d81fe9a5e0aa84c86c0d5f408173be71c6018836f34e/torch-2.7.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:27ea1e518df4c9de73af7e8a720770f3628e7f667280bce2be7a16292697e3fa", size = 98948276, upload-time = "2025-06-04T17:39:12.852Z" },
+    { url = "https://files.pythonhosted.org/packages/56/7e/67c3fe2b8c33f40af06326a3d6ae7776b3e3a01daa8f71d125d78594d874/torch-2.7.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:c33360cfc2edd976c2633b3b66c769bdcbbf0e0b6550606d188431c81e7dd1fc", size = 821025792, upload-time = "2025-06-04T17:34:58.747Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/37/a37495502bc7a23bf34f89584fa5a78e25bae7b8da513bc1b8f97afb7009/torch-2.7.1-cp312-cp312-win_amd64.whl", hash = "sha256:d8bf6e1856ddd1807e79dc57e54d3335f2b62e6f316ed13ed3ecfe1fc1df3d8b", size = 216050349, upload-time = "2025-06-04T17:38:59.709Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/60/04b77281c730bb13460628e518c52721257814ac6c298acd25757f6a175c/torch-2.7.1-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:787687087412c4bd68d315e39bc1223f08aae1d16a9e9771d95eabbb04ae98fb", size = 68645146, upload-time = "2025-06-04T17:38:52.97Z" },
 ]
 
 [[package]]
@@ -1805,20 +2281,20 @@ dependencies = [
     { name = "fsspec", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "jinja2", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "networkx", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cuda-cupti-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cudnn-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cufft-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cufile-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-curand-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cusolver-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-cusparse-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cublas-cu12", version = "12.8.3.14", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cuda-cupti-cu12", version = "12.8.57", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cuda-nvrtc-cu12", version = "12.8.61", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cuda-runtime-cu12", version = "12.8.57", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cudnn-cu12", version = "9.7.1.26", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cufft-cu12", version = "11.3.3.41", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cufile-cu12", version = "1.13.0.11", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-curand-cu12", version = "10.3.9.55", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusolver-cu12", version = "11.7.2.55", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-cusparse-cu12", version = "12.5.7.53", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "nvidia-cusparselt-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "nvidia-nccl-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "nvidia-nvtx-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvjitlink-cu12", version = "12.8.61", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "nvidia-nvtx-cu12", version = "12.8.55", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'x86_64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "setuptools", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "sympy", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "triton", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
@@ -1839,9 +2315,9 @@ resolution-markers = [
     "platform_machine == 'aarch64' and sys_platform == 'linux'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "pillow", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
-    { name = "torch", version = "2.7.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cpu') or (sys_platform == 'darwin' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or sys_platform == 'darwin' or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "pillow", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or sys_platform == 'darwin' or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torch", version = "2.7.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
     { name = "torch", version = "2.7.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cpu') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
@@ -1863,6 +2339,28 @@ dependencies = [
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/cu128/torchvision-0.22.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:2ad7fe412b821333fc05b4046263d77c14ba86f3965366adbada8dc397ea45b4" },
+]
+
+[[package]]
+name = "torchvision"
+version = "0.22.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform == 'win32'",
+    "platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "platform_machine != 'aarch64' and sys_platform == 'linux'",
+]
+dependencies = [
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "numpy", version = "2.1.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "pillow", marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (sys_platform == 'win32' and extra != 'extra-8-otvision-inference-cpu' and extra != 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/02/90/f4e99a5112dc221cf68a485e853cc3d9f3f1787cb950b895f3ea26d1ea98/torchvision-0.22.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:153f1790e505bd6da123e21eee6e83e2e155df05c0fe7d56347303067d8543c5", size = 1947827, upload-time = "2025-06-04T17:43:11.945Z" },
+    { url = "https://files.pythonhosted.org/packages/25/f6/53e65384cdbbe732cc2106bb04f7fb908487e4fb02ae4a1613ce6904a122/torchvision-0.22.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:964414eef19459d55a10e886e2fca50677550e243586d1678f65e3f6f6bac47a", size = 2514576, upload-time = "2025-06-04T17:43:02.707Z" },
+    { url = "https://files.pythonhosted.org/packages/17/8b/155f99042f9319bd7759536779b2a5b67cbd4f89c380854670850f89a2f4/torchvision-0.22.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:699c2d70d33951187f6ed910ea05720b9b4aaac1dcc1135f53162ce7d42481d3", size = 7485962, upload-time = "2025-06-04T17:42:43.606Z" },
+    { url = "https://files.pythonhosted.org/packages/05/17/e45d5cd3627efdb47587a0634179a3533593436219de3f20c743672d2a79/torchvision-0.22.1-cp312-cp312-win_amd64.whl", hash = "sha256:75e0897da7a8e43d78632f66f2bdc4f6e26da8d3f021a7c0fa83746073c2597b", size = 1707992, upload-time = "2025-06-04T17:42:53.207Z" },
 ]
 
 [[package]]
@@ -1920,7 +2418,7 @@ name = "triton"
 version = "3.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "setuptools", marker = "(sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+    { name = "setuptools", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-otvision-inference-cpu') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'extra-8-otvision-inference-cuda') or (platform_machine != 'aarch64' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda') or (sys_platform != 'linux' and extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/5f/950fb373bf9c01ad4eb5a8cd5eaf32cdf9e238c02f9293557a2129b9c4ac/triton-3.3.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9999e83aba21e1a78c1f36f21bce621b77bcaa530277a50484a7cb4a822f6e43", size = 155669138, upload-time = "2025-05-29T23:39:51.771Z" },
@@ -2059,6 +2557,36 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8b/60/4f20960df6c7b363a18a55ab034c8f2bcd5d9770d1f94f9370ec104c1855/virtualenv-20.33.1.tar.gz", hash = "sha256:1b44478d9e261b3fb8baa5e74a0ca3bc0e05f21aa36167bf9cbf850e542765b8", size = 6082160, upload-time = "2025-08-05T16:10:55.605Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ca/ff/ded57ac5ff40a09e6e198550bab075d780941e0b0f83cbeabd087c59383a/virtualenv-20.33.1-py3-none-any.whl", hash = "sha256:07c19bc66c11acab6a5958b815cbcee30891cd1c2ccf53785a28651a0d8d8a67", size = 6060362, upload-time = "2025-08-05T16:10:52.81Z" },
+]
+
+[[package]]
+name = "wcwidth"
+version = "0.2.14"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/24/30/6b0809f4510673dc723187aeaf24c7f5459922d01e2f794277a3dfb90345/wcwidth-0.2.14.tar.gz", hash = "sha256:4d478375d31bc5395a3c55c40ccdf3354688364cd61c4f6adacaa9215d0b3605", size = 102293, upload-time = "2025-09-22T16:29:53.023Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/b5/123f13c975e9f27ab9c0770f514345bd406d0e8d3b7a0723af9d43f710af/wcwidth-0.2.14-py2.py3-none-any.whl", hash = "sha256:a7bb560c8aee30f9957e5f9895805edd20602f2d7f720186dfd906e82b4982e1", size = 37286, upload-time = "2025-09-22T16:29:51.641Z" },
+]
+
+[[package]]
+name = "win32-setctime"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/8f/705086c9d734d3b663af0e9bb3d4de6578d08f46b1b101c2442fd9aecaa2/win32_setctime-1.2.0.tar.gz", hash = "sha256:ae1fdf948f5640aae05c511ade119313fb6a30d7eabe25fef9764dca5873c4c0", size = 4867, upload-time = "2024-12-07T15:28:28.314Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/07/c6fe3ad3e685340704d314d765b7912993bcb8dc198f0e7a89382d37974b/win32_setctime-1.2.0-py3-none-any.whl", hash = "sha256:95d644c4e708aba81dc3704a116d8cbc974d70b3bdb8be1d150e36be6e9d1390", size = 4083, upload-time = "2024-12-07T15:28:26.465Z" },
+]
+
+[[package]]
+name = "yacs"
+version = "0.1.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-8-otvision-inference-cpu' and extra == 'extra-8-otvision-inference-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/44/3e/4a45cb0738da6565f134c01d82ba291c746551b5bc82e781ec876eb20909/yacs-0.1.8.tar.gz", hash = "sha256:efc4c732942b3103bea904ee89af98bcd27d01f0ac12d8d4d369f1e7a2914384", size = 11100, upload-time = "2020-08-10T16:37:47.755Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/4f/fe9a4d472aa867878ce3bb7efb16654c5d63672b86dc0e6e953a67018433/yacs-0.1.8-py3-none-any.whl", hash = "sha256:99f893e30497a4b66842821bac316386f7bd5c4f47ad35c9073ef089aa33af32", size = 14747, upload-time = "2020-08-10T16:37:46.4Z" },
 ]
 
 [[package]]
