@@ -1,0 +1,179 @@
+# ==============================================================================
+# BOXMOT Tracking Configuration Example for OTVision
+# ==============================================================================
+#
+# This is a complete configuration example showing all BOXMOT tracking options.
+# Copy this file to user_config.otvision.yaml and customize for your use case.
+#
+# Documentation: BOXMOT_INTEGRATION.md
+# Installation: ./scripts/install_boxmot.sh (Linux/macOS)
+#               scripts\install_boxmot.cmd  (Windows)
+#
+# ==============================================================================
+
+---
+# ==============================================================================
+# LOGGING CONFIGURATION
+# ==============================================================================
+LOG:
+  LOG_LEVEL_CONSOLE: INFO       # Logging level for console output
+  LOG_LEVEL_FILE: DEBUG         # Logging level for file output
+
+# ==============================================================================
+# DETECTION CONFIGURATION
+# ==============================================================================
+DETECT:
+  PATHS: []                     # List of video files or directories to process
+  HALF_PRECISION: false         # Use FP16 for faster GPU inference
+  OVERWRITE: true               # Overwrite existing detection files
+
+  # YOLO model configuration
+  YOLO:
+    WEIGHTS: yolov8s            # Model: yolov8n, yolov8s, yolov8m, yolov8l, yolov8x
+    CONF: 0.25                  # Minimum detection confidence threshold
+    IOU: 0.45                   # NMS IoU threshold
+    IMGSIZE: 640                # Input image size
+
+# ==============================================================================
+# TRACKING CONFIGURATION
+# ==============================================================================
+TRACK:
+  PATHS: []                     # List of .otdet files to process
+  OVERWRITE: true               # Overwrite existing tracking files
+
+  # --------------------------------------------------------------------------
+  # IOU Tracker Configuration (used when BOXMOT is disabled)
+  # --------------------------------------------------------------------------
+  # The IOU tracker is a simple, fast tracker based on intersection-over-union
+  # matching. It's the default tracker and requires no additional dependencies.
+  IOU:
+    SIGMA_L: 0.0                # Low confidence threshold
+    SIGMA_H: 0.5                # High confidence threshold
+    SIGMA_IOU: 0.5              # IOU threshold for matching
+    T_MIN: 3                    # Minimum track length (frames)
+    T_MISS_MAX: 5               # Maximum frames a track can be missing
+
+  # --------------------------------------------------------------------------
+  # BOXMOT Tracker Configuration
+  # --------------------------------------------------------------------------
+  # BOXMOT provides state-of-the-art multi-object tracking algorithms.
+  # Install with: uv pip install -e .[tracking_boxmot]
+  BOXMOT:
+    # Enable/disable BOXMOT tracking
+    # When false, the IOU tracker above will be used
+    ENABLED: true
+
+    # Tracker algorithm to use
+    # Motion-only trackers (fast, no ReID weights needed):
+    #   - "bytetrack"  : Recommended for CPU, very fast (~1265 FPS on MOT17)
+    #   - "ocsort"     : Alternative motion-only tracker (~1483 FPS on MOT17)
+    #
+    # Appearance-based trackers (higher accuracy, requires REID_WEIGHTS):
+    #   - "botsort"    : Best overall accuracy (HOTA: 69.418)
+    #   - "boosttrack" : Highest identity consistency (IDF1: 83.205)
+    #   - "strongsort" : Balanced performance
+    #   - "deepocsort" : Enhanced OcSORT with ReID
+    #   - "hybridsort" : Hybrid motion-appearance approach
+    TRACKER_TYPE: "bytetrack"
+
+    # Compute device for tracking
+    # Options:
+    #   - "cpu"    : CPU processing (default, works everywhere)
+    #   - "cuda:0" : First GPU
+    #   - "cuda:1" : Second GPU
+    #   - etc.
+    DEVICE: "cpu"
+
+    # Use FP16 half-precision for faster GPU inference
+    # Only effective when using a GPU device
+    # Set to true for ~2x speedup on compatible GPUs
+    HALF_PRECISION: false
+
+    # Path to ReID (Re-Identification) model weights
+    # Required for appearance-based trackers (botsort, boosttrack, etc.)
+    # Not needed for motion-only trackers (bytetrack, ocsort)
+    #
+    # Download weights:
+    #   ./scripts/install_boxmot.sh --with-reid
+    #
+    # Or manually download from:
+    #   https://github.com/mikel-brostrom/yolo_tracking/releases
+    #
+    # Common ReID models:
+    #   - osnet_x0_25_msmt17.pt  : Lightweight, fast
+    #   - osnet_x1_0_msmt17.pt   : Larger, more accurate
+    #   - clip_market1501.pt     : CLIP-based ReID
+    #
+    # Example: REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+    REID_WEIGHTS: null
+
+
+# ==============================================================================
+# CONFIGURATION EXAMPLES
+# ==============================================================================
+# Below are example configurations for common use cases.
+# Copy the relevant BOXMOT section to replace the one above.
+#
+# ------------------------------------------------------------------------------
+# Example 1: Fast CPU Tracking (ByteTrack)
+# Best for: Quick processing, CPU-only systems, real-time applications
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "bytetrack"
+#     DEVICE: "cpu"
+#     HALF_PRECISION: false
+#     REID_WEIGHTS: null
+#
+# ------------------------------------------------------------------------------
+# Example 2: GPU Tracking with FP16 (ByteTrack)
+# Best for: Fast GPU processing, moderate accuracy
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "bytetrack"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: null
+#
+# ------------------------------------------------------------------------------
+# Example 3: High Accuracy Tracking (BotSORT with ReID)
+# Best for: Research, evaluation, occlusion-heavy scenes
+# Requires: ReID weights downloaded
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "botsort"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+#
+# ------------------------------------------------------------------------------
+# Example 4: Best Identity Consistency (BoostTrack)
+# Best for: Long-term tracking, re-identification scenarios
+# Requires: ReID weights downloaded
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "boosttrack"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+#
+# ------------------------------------------------------------------------------
+# Example 5: Alternative Motion-Only (OcSORT)
+# Best for: When ByteTrack doesn't perform well on specific data
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "ocsort"
+#     DEVICE: "cpu"
+#     HALF_PRECISION: false
+#     REID_WEIGHTS: null
+#
+# ------------------------------------------------------------------------------
+# Example 6: Disable BOXMOT (Use IOU Tracker)
+# Best for: Simple scenarios, backward compatibility
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: false
