@@ -22,10 +22,7 @@ class TestBoxmotTrackerAdapterWithRealBoxmot:
     @pytest.fixture
     def id_generator(self) -> Iterator[TrackId]:
         """Create an ID generator for testing."""
-        track_id = 0
-        while True:
-            yield track_id
-            track_id += 1
+        return iter(range(10000))
 
     def test_init_bytetrack(self) -> None:
         """Test initialization of ByteTrack tracker."""
@@ -44,6 +41,18 @@ class TestBoxmotTrackerAdapterWithRealBoxmot:
             BoxmotTrackerAdapter(
                 tracker_type="invalidtracker", device="cpu", half=False
             )
+
+    def test_init_with_tracker_params(self) -> None:
+        """Test initialization with custom tracker_params."""
+        from OTVision.track.tracker.tracker_plugin_boxmot import BoxmotTrackerAdapter
+
+        adapter = BoxmotTrackerAdapter(
+            tracker_type="bytetrack",
+            device="cpu",
+            half=False,
+            tracker_params={"track_buffer": 60, "track_thresh": 0.5},
+        )
+        assert adapter is not None
 
     def test_appearance_tracker_requires_reid_weights(self) -> None:
         """Test that appearance trackers require reid_weights."""
