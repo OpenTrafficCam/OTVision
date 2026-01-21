@@ -2,6 +2,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from OTVision.application.config import (
+    BOXMOT,
+    BOXMOT_DEVICE,
+    BOXMOT_ENABLED,
+    BOXMOT_HALF_PRECISION,
+    BOXMOT_REID_WEIGHTS,
+    BOXMOT_TRACKER_PARAMS,
+    BOXMOT_TRACKER_TYPE,
     COL_WIDTH,
     CONF,
     CONVERT,
@@ -68,6 +75,7 @@ from OTVision.application.config import (
     _GuiConfig,
     _GuiWindowConfig,
     _LogConfig,
+    _TrackBoxmotConfig,
     _TrackIouConfig,
     _TransformConfig,
     _UndistortConfig,
@@ -249,12 +257,19 @@ class ConfigParser:
             if iou_config_dict
             else TrackConfig.iou
         )
+        boxmot_config_dict = data.get(BOXMOT)
+        boxmot_config = (
+            self.parse_track_boxmot_config(boxmot_config_dict)
+            if boxmot_config_dict
+            else TrackConfig.boxmot
+        )
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
             sources,
             data.get(RUN_CHAINED, TrackConfig.run_chained),
             iou_config,
+            boxmot_config,
             data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
@@ -265,6 +280,22 @@ class ConfigParser:
             data.get(SIGMA_IOU, _TrackIouConfig.sigma_iou),
             data.get(T_MIN, _TrackIouConfig.t_min),
             data.get(T_MISS_MAX, _TrackIouConfig.t_miss_max),
+        )
+
+    def parse_track_boxmot_config(self, data: dict) -> _TrackBoxmotConfig:
+        tracker_params = data.get(BOXMOT_TRACKER_PARAMS, {})
+        if tracker_params is None:
+            tracker_params = {}
+
+        return _TrackBoxmotConfig(
+            enabled=data.get(BOXMOT_ENABLED, _TrackBoxmotConfig.enabled),
+            tracker_type=data.get(BOXMOT_TRACKER_TYPE, _TrackBoxmotConfig.tracker_type),
+            reid_weights=data.get(BOXMOT_REID_WEIGHTS, _TrackBoxmotConfig.reid_weights),
+            device=data.get(BOXMOT_DEVICE, _TrackBoxmotConfig.device),
+            half_precision=data.get(
+                BOXMOT_HALF_PRECISION, _TrackBoxmotConfig.half_precision
+            ),
+            tracker_params=tracker_params,
         )
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:

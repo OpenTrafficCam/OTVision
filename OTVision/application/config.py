@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
@@ -55,6 +56,7 @@ BOXMOT_TRACKER_TYPE = "TRACKER_TYPE"
 BOXMOT_REID_WEIGHTS = "REID_WEIGHTS"
 BOXMOT_DEVICE = "DEVICE"
 BOXMOT_HALF_PRECISION = "HALF_PRECISION"
+BOXMOT_TRACKER_PARAMS = "TRACKER_PARAMS"
 TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
@@ -363,6 +365,10 @@ class _TrackBoxmotConfig:
         reid_weights: Optional path to ReID model weights for appearance-based trackers
         device: Device to run tracker on ('cpu', 'cuda:0', etc.)
         half_precision: Whether to use FP16 precision
+        tracker_params: Additional parameters to pass directly to BOXMOT tracker.
+            Can include frame_rate, track_buffer, track_thresh, match_thresh,
+            etc. If frame_rate is not specified, it will be auto-detected from
+            OTDET metadata.
     """
 
     enabled: bool = False
@@ -370,14 +376,16 @@ class _TrackBoxmotConfig:
     reid_weights: str | None = None
     device: str = "cpu"
     half_precision: bool = False
+    tracker_params: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             BOXMOT_ENABLED: self.enabled,
             BOXMOT_TRACKER_TYPE: self.tracker_type,
             BOXMOT_REID_WEIGHTS: self.reid_weights,
             BOXMOT_DEVICE: self.device,
             BOXMOT_HALF_PRECISION: self.half_precision,
+            BOXMOT_TRACKER_PARAMS: self.tracker_params,
         }
 
 

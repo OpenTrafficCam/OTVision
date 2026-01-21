@@ -10,6 +10,7 @@ from OTVision.application.config import (
     StreamConfig,
     TrackConfig,
     YoloConfig,
+    _TrackBoxmotConfig,
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
@@ -216,3 +217,114 @@ class TestConfigParserValidateFlushBufferSupportTrackLifecycle:
             stream=stream_config,
             track=track_config or TrackConfig(),
         )
+
+
+class TestParseTrackBoxmotConfig:
+    """Test suite for parse_track_boxmot_config method."""
+
+    @pytest.fixture
+    def given_deserializer(self) -> Mock:
+        return Mock()
+
+    @pytest.fixture
+    def given_config_parser(self, given_deserializer: Mock) -> ConfigParser:
+        return ConfigParser(given_deserializer)
+
+    def test_parse_boxmot_config_with_tracker_params(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        """Test parsing BOXMOT config with tracker_params dict."""
+        boxmot_dict = {
+            "ENABLED": True,
+            "TRACKER_TYPE": "bytetrack",
+            "DEVICE": "cuda:0",
+            "HALF_PRECISION": True,
+            "TRACKER_PARAMS": {
+                "frame_rate": 25,
+                "track_buffer": 60,
+                "track_thresh": 0.5,
+                "match_thresh": 0.85,
+            },
+        }
+
+        result = given_config_parser.parse_track_boxmot_config(boxmot_dict)
+
+        expected = _TrackBoxmotConfig(
+            enabled=True,
+            tracker_type="bytetrack",
+            device="cuda:0",
+            half_precision=True,
+            tracker_params={
+                "frame_rate": 25,
+                "track_buffer": 60,
+                "track_thresh": 0.5,
+                "match_thresh": 0.85,
+            },
+        )
+        assert result == expected
+
+    def test_parse_boxmot_config_without_tracker_params(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        """Test parsing BOXMOT config without tracker_params defaults to empty dict."""
+        boxmot_dict = {
+            "ENABLED": True,
+            "TRACKER_TYPE": "ocsort",
+        }
+
+        result = given_config_parser.parse_track_boxmot_config(boxmot_dict)
+
+        assert result.enabled is True
+        assert result.tracker_type == "ocsort"
+        assert result.tracker_params == {}
+
+    def test_parse_boxmot_config_with_none_tracker_params(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        """Test that None tracker_params is converted to empty dict."""
+        boxmot_dict = {
+            "ENABLED": True,
+            "TRACKER_PARAMS": None,
+        }
+
+        result = given_config_parser.parse_track_boxmot_config(boxmot_dict)
+
+        assert result.tracker_params == {}
+
+    def test_parse_boxmot_config_with_empty_tracker_params(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        """Test parsing BOXMOT config with empty tracker_params dict."""
+        boxmot_dict = {
+            "ENABLED": True,
+            "TRACKER_PARAMS": {},
+        }
+
+        result = given_config_parser.parse_track_boxmot_config(boxmot_dict)
+
+        assert result.tracker_params == {}
+
+    def test_parse_boxmot_config_defaults(
+        self, given_config_parser: ConfigParser
+    ) -> None:
+        """Test that empty dict uses all defaults."""
+        boxmot_dict: dict = {}
+
+        result = given_config_parser.parse_track_boxmot_config(boxmot_dict)
+
+        expected = _TrackBoxmotConfig()
+        assert result == expected
+        assert result.tracker_params == {}
+
+    def test_tracker_params_preserved_in_to_dict(self) -> None:
+        """Test that tracker_params is included in to_dict output."""
+        config = _TrackBoxmotConfig(
+            enabled=True,
+            tracker_type="bytetrack",
+            tracker_params={"frame_rate": 25, "track_buffer": 60},
+        )
+
+        result = config.to_dict()
+
+        assert "TRACKER_PARAMS" in result
+        assert result["TRACKER_PARAMS"] == {"frame_rate": 25, "track_buffer": 60}

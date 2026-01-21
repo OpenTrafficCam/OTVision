@@ -113,6 +113,236 @@ TRACK:
 | `deepocsort` | Appearance | Yes | Medium | OcSORT + ReID |
 | `hybridsort` | Appearance | Yes | Medium | Hybrid approach |
 
+## Tracker Comparison & Selection Guide
+
+### Performance Benchmarks (MOT17)
+
+| Tracker | HOTA↑ | MOTA↑ | IDF1↑ | FPS | Type |
+|---------|-------|-------|-------|-----|------|
+| BotSort | 69.418 | 78.232 | 81.812 | 46 | Appearance |
+| BoostTrack | 69.254 | 75.921 | 83.205 | 25 | Appearance |
+| StrongSort | 68.05 | 76.185 | 80.763 | 17 | Appearance |
+| DeepOcSort | 67.796 | 75.868 | 80.514 | 12 | Appearance |
+| ByteTrack | 67.68 | 78.039 | 79.157 | 1265 | Motion |
+| HybridSort | 67.39 | 74.127 | 79.105 | 25 | Appearance |
+| OcSort | 66.441 | 74.548 | 77.899 | 1483 | Motion |
+
+### Star Ratings
+
+| Tracker | Speed | Accuracy | ID Consistency | Ease of Use |
+|---------|-------|----------|----------------|-------------|
+| ByteTrack | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★★★★ |
+| OcSort | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★★★★ |
+| BotSort | ★★★☆☆ | ★★★★★ | ★★★★☆ | ★★★☆☆ |
+| BoostTrack | ★★☆☆☆ | ★★★★★ | ★★★★★ | ★★☆☆☆ |
+| StrongSort | ★★☆☆☆ | ★★★★☆ | ★★★★☆ | ★★★☆☆ |
+| DeepOcSort | ★☆☆☆☆ | ★★★★☆ | ★★★★☆ | ★★☆☆☆ |
+| HybridSort | ★★☆☆☆ | ★★★★☆ | ★★★★☆ | ★★☆☆☆ |
+
+**Rating Legend:**
+- **Speed**: Processing throughput (★★★★★ = >1000 FPS, ★☆☆☆☆ = <20 FPS)
+- **Accuracy**: HOTA/MOTA metrics (★★★★★ = HOTA >69, ★★★☆☆ = HOTA <68)
+- **ID Consistency**: IDF1 score (★★★★★ = IDF1 >83, ★★★☆☆ = IDF1 <80)
+- **Ease of Use**: Configuration complexity (★★★★★ = no ReID weights needed)
+
+### Tracker Approaches
+
+**Motion-Only Trackers:**
+
+- **ByteTrack**: Two-stage association - first matches high-confidence detections, then recovers low-confidence ones. Pure motion-based, extremely fast (~1265 FPS). Best for real-time applications.
+
+- **OcSort**: Observation-Centric SORT with virtual trajectories and momentum-based association. Better occlusion handling than ByteTrack (~1483 FPS). Good when objects frequently leave and re-enter frame.
+
+**Appearance-Based Trackers:**
+
+- **BotSort**: Combines ByteTrack with ReID features and camera motion compensation (CMC). Best overall accuracy (HOTA 69.4). Recommended when accuracy is priority.
+
+- **BoostTrack**: Boosted association with multiple cost terms (IoU, Mahalanobis, shape). Highest identity consistency (IDF1 83.2). Best for maintaining consistent track IDs across occlusions.
+
+- **StrongSort**: Deep association with appearance features, EMA updates, and NSA Kalman filter. Balanced performance. Good general-purpose appearance tracker.
+
+- **DeepOcSort**: OcSort enhanced with ReID embeddings and adaptive weighting. Slowest but combines motion and appearance effectively.
+
+- **HybridSort**: Fuses short-term motion with long-term appearance gallery. Good for re-identification after long occlusions.
+
+### Which Tracker Should I Use?
+
+| Use Case | Recommended | Alternative |
+|----------|-------------|-------------|
+| CPU-only, real-time | ByteTrack | OcSort |
+| GPU available, best accuracy | BotSort | BoostTrack |
+| Long-term tracking, ID consistency | BoostTrack | StrongSort |
+| Simple scenes, low complexity | ByteTrack | OcSort |
+| Crowded scenes, many occlusions | BotSort | BoostTrack |
+| Re-identification after long gaps | HybridSort | BoostTrack |
+| Balanced performance | StrongSort | BotSort |
+
+## Tracker Parameters Reference
+
+Each tracker accepts specific parameters that can be configured via `TRACKER_PARAMS` in your YAML configuration. If `frame_rate` is not explicitly set, it is auto-detected from OTDET metadata.
+
+### Motion-Only Trackers
+
+#### ByteTrack Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `min_conf` | float | 0.1 | Minimum confidence threshold; detections below are discarded |
+| `track_thresh` | float | 0.45 | High-confidence threshold for first association |
+| `match_thresh` | float | 0.8 | IoU matching threshold for first association |
+| `track_buffer` | int | 25 | Base buffer size for track persistence (scaled by frame_rate) |
+| `frame_rate` | int | 30 | Video frame rate for buffer scaling |
+
+#### OcSort Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `min_conf` | float | 0.1 | Minimum confidence threshold |
+| `delta_t` | int | 3 | Time delta for velocity estimation |
+| `inertia` | float | 0.2 | Inertia weight for motion model smoothing |
+| `use_byte` | bool | False | Use ByteTrack-style two-stage association |
+| `Q_xy_scaling` | float | 0.01 | Process noise scaling for position in Kalman filter |
+| `Q_s_scaling` | float | 0.0001 | Process noise scaling for scale in Kalman filter |
+
+### Appearance-Based Trackers
+
+#### BotSort Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `track_high_thresh` | float | 0.5 | High confidence detection threshold for first association |
+| `track_low_thresh` | float | 0.1 | Low confidence detection threshold for second association |
+| `new_track_thresh` | float | 0.6 | Confidence threshold for initializing new tracks |
+| `track_buffer` | int | 30 | Buffer frames before removing lost tracks |
+| `match_thresh` | float | 0.8 | IoU matching threshold |
+| `proximity_thresh` | float | 0.5 | Spatial proximity threshold for appearance gating |
+| `appearance_thresh` | float | 0.25 | Appearance similarity threshold (rejects poor matches) |
+| `cmc_method` | str | "ecc" | Camera motion compensation method ("ecc", "orb", "sift") |
+| `frame_rate` | int | 30 | Video frame rate |
+| `fuse_first_associate` | bool | False | Fuse appearance features in first association stage |
+| `with_reid` | bool | True | Enable ReID appearance features |
+
+#### StrongSort Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `min_conf` | float | 0.1 | Minimum confidence threshold |
+| `max_cos_dist` | float | 0.2 | Maximum cosine distance for ReID matching |
+| `max_iou_dist` | float | 0.7 | Maximum IoU distance for matching |
+| `n_init` | int | 3 | Frames required before track is confirmed |
+| `nn_budget` | int | 100 | Maximum samples in appearance gallery per track |
+| `mc_lambda` | float | 0.98 | Motion cost weight in combined cost |
+| `ema_alpha` | float | 0.9 | EMA alpha for appearance feature update |
+
+#### DeepOcSort Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `delta_t` | int | 3 | Time delta for velocity estimation |
+| `inertia` | float | 0.2 | Inertia weight for motion model |
+| `w_association_emb` | float | 0.5 | Weight for embedding-based association cost |
+| `alpha_fixed_emb` | float | 0.95 | Fixed alpha for embedding EMA update |
+| `aw_param` | float | 0.5 | Adaptive weighting parameter |
+| `embedding_off` | bool | False | Disable embedding features (motion-only mode) |
+| `cmc_off` | bool | False | Disable camera motion compensation |
+| `aw_off` | bool | False | Disable adaptive weighting |
+| `Q_xy_scaling` | float | 0.01 | Process noise scaling for position |
+| `Q_s_scaling` | float | 0.0001 | Process noise scaling for scale |
+
+#### BoostTrack Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `use_ecc` | bool | True | Enable ECC for camera motion compensation |
+| `min_box_area` | int | 10 | Minimum bounding box area to track |
+| `aspect_ratio_thresh` | float | 1.6 | Maximum aspect ratio change threshold |
+| `cmc_method` | str | "ecc" | Camera motion compensation method |
+| `lambda_iou` | float | 0.5 | Weight for IoU cost in combined cost |
+| `lambda_mhd` | float | 0.25 | Weight for Mahalanobis distance cost |
+| `lambda_shape` | float | 0.25 | Weight for shape similarity cost |
+| `use_dlo_boost` | bool | True | Enable Detection-Level Observation boosting |
+| `use_duo_boost` | bool | True | Enable Detection-Update-Observation boosting |
+| `dlo_boost_coef` | float | 0.65 | DLO boost coefficient |
+
+#### HybridSort Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `cmc_method` | str | "ecc" | Camera motion compensation method |
+| `with_reid` | bool | True | Enable ReID appearance features |
+| `low_thresh` | float | 0.1 | Low confidence threshold for second association |
+| `delta_t` | int | 3 | Time delta for velocity estimation |
+| `inertia` | float | 0.05 | Inertia weight for motion model |
+| `use_byte` | bool | True | Use ByteTrack-style two-stage association |
+| `use_custom_kf` | bool | True | Use custom Kalman filter implementation |
+| `longterm_bank_length` | int | 30 | Long-term appearance gallery size |
+| `alpha` | float | 0.9 | Smoothing factor for appearance update |
+
+## TRACKER_PARAMS Configuration
+
+The `TRACKER_PARAMS` field allows you to pass tracker-specific parameters directly to the BOXMOT tracker. These override the tracker's default values.
+
+### Basic Usage
+
+```yaml
+TRACK:
+  BOXMOT:
+    ENABLED: true
+    TRACKER_TYPE: "bytetrack"
+    DEVICE: "cpu"
+    TRACKER_PARAMS:
+      track_thresh: 0.5
+      match_thresh: 0.85
+      track_buffer: 60
+```
+
+### Frame Rate Auto-Detection
+
+If `frame_rate` is not specified in `TRACKER_PARAMS`, it is automatically detected from the OTDET file metadata. This ensures trackers use the correct frame rate for buffer scaling and motion estimation.
+
+```yaml
+# frame_rate will be auto-detected from OTDET metadata
+TRACKER_PARAMS:
+  track_buffer: 30  # Will be scaled by auto-detected frame_rate
+```
+
+### Tracker-Specific Examples
+
+**ByteTrack with Higher Confidence Thresholds:**
+```yaml
+TRACKER_PARAMS:
+  track_thresh: 0.6        # Stricter first-pass threshold
+  match_thresh: 0.9        # Higher IoU requirement
+  track_buffer: 50         # Longer track persistence
+```
+
+**BotSORT with Custom Appearance Settings:**
+```yaml
+TRACKER_PARAMS:
+  track_high_thresh: 0.6
+  proximity_thresh: 0.4    # Stricter spatial gating
+  appearance_thresh: 0.3   # Stricter appearance matching
+  cmc_method: "orb"        # Faster CMC than ECC
+```
+
+**BoostTrack with Adjusted Cost Weights:**
+```yaml
+TRACKER_PARAMS:
+  lambda_iou: 0.6          # Higher IoU weight
+  lambda_mhd: 0.2          # Lower Mahalanobis weight
+  lambda_shape: 0.2        # Lower shape weight
+  dlo_boost_coef: 0.7      # Stronger DLO boosting
+```
+
+**StrongSort for Dense Scenes:**
+```yaml
+TRACKER_PARAMS:
+  max_cos_dist: 0.15       # Stricter ReID matching
+  max_iou_dist: 0.6        # Stricter IoU matching
+  nn_budget: 150           # Larger appearance gallery
+  n_init: 5                # More frames to confirm track
+```
+
 ## Usage Examples
 
 ### Example 1: Fast CPU Tracking (ByteTrack)

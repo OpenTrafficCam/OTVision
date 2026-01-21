@@ -6,7 +6,7 @@ using BOXMOT's state-of-the-art multi-object tracking algorithms.
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -25,12 +25,12 @@ from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 try:
     from boxmot import (
         BoostTrack,
-        BotSORT,
+        BotSort,
         ByteTrack,
-        DeepOcSORT,
-        HybridSORT,
-        OcSORT,
-        StrongSORT,
+        DeepOcSort,
+        HybridSort,
+        OcSort,
+        StrongSort,
     )
 
     BOXMOT_AVAILABLE = True
@@ -39,12 +39,12 @@ try:
     # Only defined when BOXMOT is available
     TRACKER_CLASSES = {
         "bytetrack": ByteTrack,
-        "botsort": BotSORT,
+        "botsort": BotSort,
         "boosttrack": BoostTrack,
-        "strongsort": StrongSORT,
-        "ocsort": OcSORT,
-        "deepocsort": DeepOcSORT,
-        "hybridsort": HybridSORT,
+        "strongsort": StrongSort,
+        "ocsort": OcSort,
+        "deepocsort": DeepOcSort,
+        "hybridsort": HybridSort,
     }
 except ImportError:
     BOXMOT_AVAILABLE = False
@@ -77,6 +77,8 @@ class BoxmotTrackerAdapter(Tracker):
         _track_id_mapping: Maps BOXMOT track IDs to OTVision TrackIds
         _previous_track_ids: Set of BOXMOT track IDs from previous frame
         _get_current_config: Function to get current configuration
+        _frame_width: Width of video frame (captured from first frame with image)
+        _frame_height: Height of video frame (captured from first frame with image)
     """
 
     def __init__(
@@ -86,6 +88,7 @@ class BoxmotTrackerAdapter(Tracker):
         device: str = "cpu",
         half: bool = False,
         get_current_config: Optional[GetCurrentConfig] = None,
+        tracker_params: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the BOXMOT tracker adapter.
 
@@ -97,6 +100,9 @@ class BoxmotTrackerAdapter(Tracker):
             device: Device to run tracker on ('cpu', 'cuda:0', etc.)
             half: Whether to use FP16 precision
             get_current_config: Optional config getter for OTVision settings
+            tracker_params: Additional parameters to pass to BOXMOT tracker.
+                Can include frame_rate, track_buffer, track_thresh, match_thresh, etc.
+                These parameters override the defaults.
 
         Raises:
             ImportError: If BOXMOT is not installed
@@ -127,19 +133,22 @@ class BoxmotTrackerAdapter(Tracker):
 
         tracker_class = TRACKER_CLASSES[tracker_type_lower]
 
+        # Build kwargs for BOXMOT tracker
+        kwargs: dict[str, Any] = {"device": device, "half": half}
+        if reid_weights is not None:
+            kwargs["reid_weights"] = reid_weights
+
+        # Merge user-provided tracker_params (override defaults)
+        if tracker_params:
+            kwargs.update(tracker_params)
+
+        logger.info(
+            f"Initializing BOXMOT tracker '{tracker_type}' with params: {kwargs}"
+        )
+
         # Initialize BOXMOT tracker with error handling
         try:
-            if reid_weights is not None:
-                self._boxmot_tracker = tracker_class(
-                    reid_weights=reid_weights,
-                    device=device,
-                    half=half,
-                )
-            else:
-                self._boxmot_tracker = tracker_class(
-                    device=device,
-                    half=half,
-                )
+            self._boxmot_tracker = tracker_class(**kwargs)
         except Exception as e:
             raise RuntimeError(
                 f"Failed to initialize BOXMOT tracker '{tracker_type}' "
@@ -152,6 +161,8 @@ class BoxmotTrackerAdapter(Tracker):
         self._track_id_mapping: dict[int, TrackId] = {}
         self._previous_track_ids: set[int] = set()
         self._get_current_config = get_current_config
+        self._frame_width: int | None = None
+        self._frame_height: int | None = None
 
     def track_frame(
         self, frame: DetectedFrame, id_generator: IdGenerator
@@ -198,6 +209,9 @@ class BoxmotTrackerAdapter(Tracker):
         # Prepare image (use empty array if not available for motion-only trackers)
         if frame.image is not None:
             image = frame.image
+            # Capture frame dimensions from first frame with image
+            if self._frame_width is None:
+                self._frame_height, self._frame_width = image.shape[:2]
         else:
             # Create dummy image for motion-only trackers
             image = np.zeros((1, 1, 3), dtype=np.uint8)
@@ -217,6 +231,8 @@ class BoxmotTrackerAdapter(Tracker):
                 self._track_id_mapping,
                 id_generator,
                 self._previous_track_ids,
+                frame_width=self._frame_width,
+                frame_height=self._frame_height,
             )
         )
         self._track_id_mapping = updated_mapping
@@ -275,3 +291,5 @@ class BoxmotTrackerAdapter(Tracker):
         self._track_id_mapping.clear()
         self._previous_track_ids.clear()
         self._class_mapper = ClassLabelMapper()  # Reset class mapping for new video
+        self._frame_width = None
+        self._frame_height = None

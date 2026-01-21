@@ -107,6 +107,14 @@ TRACK:
     # Example: REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
     REID_WEIGHTS: null
 
+    # Tracker-specific parameters (optional)
+    # These are passed directly to the BOXMOT tracker and override defaults.
+    # If frame_rate is not set, it's auto-detected from OTDET metadata.
+    # See BOXMOT_INTEGRATION.md for full parameter reference.
+    TRACKER_PARAMS:
+      # frame_rate: 30      # Auto-detected if omitted
+      track_buffer: 30      # Buffer size for track persistence
+
 
 # ==============================================================================
 # CONFIGURATION EXAMPLES
@@ -177,3 +185,103 @@ TRACK:
 # ------------------------------------------------------------------------------
 #   BOXMOT:
 #     ENABLED: false
+#
+# ------------------------------------------------------------------------------
+# Example 7: ByteTrack with Custom Parameters
+# Best for: Fine-tuning motion-only tracking
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "bytetrack"
+#     DEVICE: "cpu"
+#     HALF_PRECISION: false
+#     REID_WEIGHTS: null
+#     TRACKER_PARAMS:
+#       track_thresh: 0.5      # Higher threshold for first-pass association
+#       match_thresh: 0.85     # Stricter IoU matching
+#       track_buffer: 60       # Longer track persistence
+#       min_conf: 0.15         # Slightly higher minimum confidence
+#
+# ------------------------------------------------------------------------------
+# Example 8: BotSORT with Custom Appearance Settings
+# Best for: Optimizing appearance-based tracking
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "botsort"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+#     TRACKER_PARAMS:
+#       track_high_thresh: 0.6      # Higher confidence for first association
+#       track_low_thresh: 0.1       # Low confidence for second association
+#       proximity_thresh: 0.4       # Stricter spatial gating
+#       appearance_thresh: 0.3      # Stricter appearance matching
+#       cmc_method: "orb"           # Faster CMC than ECC
+#       track_buffer: 40            # Extended track buffer
+#
+# ------------------------------------------------------------------------------
+# Example 9: BoostTrack with Tuned Cost Weights
+# Best for: Maximum identity consistency
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "boosttrack"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+#     TRACKER_PARAMS:
+#       lambda_iou: 0.6             # Higher IoU weight
+#       lambda_mhd: 0.2             # Lower Mahalanobis weight
+#       lambda_shape: 0.2           # Lower shape weight
+#       dlo_boost_coef: 0.7         # Stronger DLO boosting
+#       use_ecc: true               # Enable camera motion compensation
+#
+# ------------------------------------------------------------------------------
+# Example 10: StrongSort for Dense Scenes
+# Best for: Crowded scenes with many overlapping objects
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "strongsort"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+#     TRACKER_PARAMS:
+#       max_cos_dist: 0.15          # Stricter ReID matching
+#       max_iou_dist: 0.6           # Stricter IoU matching
+#       nn_budget: 150              # Larger appearance gallery
+#       n_init: 5                   # More frames to confirm track
+#       mc_lambda: 0.95             # Higher motion cost weight
+#
+# ------------------------------------------------------------------------------
+# Example 11: OcSort with Custom Motion Settings
+# Best for: Scenes with frequent occlusions
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "ocsort"
+#     DEVICE: "cpu"
+#     HALF_PRECISION: false
+#     REID_WEIGHTS: null
+#     TRACKER_PARAMS:
+#       delta_t: 5                  # Longer time delta for velocity
+#       inertia: 0.3                # Higher inertia for smoother motion
+#       use_byte: true              # Enable ByteTrack-style association
+#       Q_xy_scaling: 0.02          # Slightly higher position noise
+#
+# ------------------------------------------------------------------------------
+# Example 12: HybridSort for Long-Term Tracking
+# Best for: Re-identification after long occlusions
+# ------------------------------------------------------------------------------
+#   BOXMOT:
+#     ENABLED: true
+#     TRACKER_TYPE: "hybridsort"
+#     DEVICE: "cuda:0"
+#     HALF_PRECISION: true
+#     REID_WEIGHTS: "/path/to/weights/osnet_x0_25_msmt17.pt"
+#     TRACKER_PARAMS:
+#       longterm_bank_length: 50    # Larger long-term appearance gallery
+#       alpha: 0.85                 # Slightly faster appearance update
+#       delta_t: 3                  # Standard velocity estimation
+#       inertia: 0.05               # Low inertia for quick adaptation

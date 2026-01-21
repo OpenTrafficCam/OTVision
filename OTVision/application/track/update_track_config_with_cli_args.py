@@ -38,6 +38,7 @@ class UpdateTrackConfigWithCliArgs:
             paths=value_or_default(cli_args.paths, track_config.paths),
             run_chained=track_config.run_chained,
             iou=iou_config,
+            boxmot=track_config.boxmot,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
         )
 

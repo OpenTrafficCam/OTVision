@@ -74,27 +74,106 @@ class ChunkBasedTracker(Tracker):
 IdGeneratorFactory = Callable[[FrameGroup], IdGenerator]
 
 
+# Type alias for tracker factory (receives first file's metadata)
+TrackerFactory = Callable[[dict], Tracker]
+
+
 class GroupedFilesTracker(ChunkBasedTracker):
+    """Tracker that processes files grouped by FrameGroup.
+
+    Supports two initialization modes:
+    1. Direct tracker: Pass a Tracker instance directly
+    2. Factory-based: Pass a TrackerFactory that receives the first file's metadata.
+       This enables deferred initialization for features like FPS auto-detection.
+    """
 
     def __init__(
         self,
-        tracker: Tracker,
-        chunk_parser: ChunkParser,
-        frame_group_parser: FrameGroupParser,
-        id_generator_factory: IdGeneratorFactory,
+        tracker: Tracker | None = None,
+        tracker_factory: TrackerFactory | None = None,
+        chunk_parser: ChunkParser | None = None,
+        frame_group_parser: FrameGroupParser | None = None,
+        id_generator_factory: IdGeneratorFactory | None = None,
         overwrite: bool = CONFIG[TRACK][OVERWRITE],
         file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK],
     ) -> None:
-        super().__init__(tracker, chunk_parser)
+        """Initialize GroupedFilesTracker.
+
+        Args:
+            tracker: Direct Tracker instance (mutually exclusive with tracker_factory)
+            tracker_factory: Factory function that creates a Tracker from metadata
+                (mutually exclusive with tracker)
+            chunk_parser: Parser for file chunks
+            frame_group_parser: Parser for frame groups
+            id_generator_factory: Factory for track ID generators
+            overwrite: Whether to overwrite existing output files
+            file_type: Output file type extension
+
+        Raises:
+            ValueError: If neither or both of tracker/tracker_factory are provided
+        """
+        # Validate: exactly one of tracker or tracker_factory must be provided
+        if tracker is None and tracker_factory is None:
+            raise ValueError("Either tracker or tracker_factory must be provided")
+        if tracker is not None and tracker_factory is not None:
+            raise ValueError("Provide only one of tracker or tracker_factory")
+
+        if chunk_parser is None:
+            raise ValueError("chunk_parser is required")
+        if frame_group_parser is None:
+            raise ValueError("frame_group_parser is required")
+        if id_generator_factory is None:
+            raise ValueError("id_generator_factory is required")
+
+        # Store chunk parser directly - we'll handle tracker initialization separately
+        self._chunk_parser = chunk_parser
+        # Type ignore: _tracker can be None here, initialized lazily via factory
+        self._tracker: Tracker | None = tracker  # type: ignore[assignment]
+        self._tracker_factory = tracker_factory
+        self._tracker_initialized = tracker is not None
+
         self._group_parser = frame_group_parser
         self._id_generator_of = id_generator_factory
         self._overwrite = overwrite
         self._file_type = file_type
 
+    def _ensure_tracker_initialized(self, metadata: dict) -> None:
+        """Initialize tracker from factory if not already done.
+
+        Args:
+            metadata: OTDET metadata from the first file
+
+        Raises:
+            RuntimeError: If no tracker or factory is available
+        """
+        if self._tracker_initialized:
+            return
+
+        if self._tracker_factory is None:
+            raise RuntimeError("No tracker or factory available")
+
+        self._tracker = self._tracker_factory(metadata)
+        self._tracker_initialized = True
+
+    def track_frame(
+        self,
+        frame: DetectedFrame,
+        id_generator: IdGenerator,
+    ) -> TrackedFrame:
+        """Track a single frame.
+
+        Raises:
+            RuntimeError: If tracker is not initialized
+        """
+        if self._tracker is None:
+            raise RuntimeError("Tracker not initialized")
+        return self._tracker.track_frame(frame, id_generator)
+
     def track_group(self, group: FrameGroup) -> Iterator[TrackedChunk]:
         if self.check_skip_due_to_existing_output_files(group):
             log.warning(f"Skip FrameGroup {group.id}")
             yield from []  # TODO how to create empty generator stream?
+            return
 
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group
@@ -107,8 +186,16 @@ class GroupedFilesTracker(ChunkBasedTracker):
             )
         )
 
+        first_file_in_session = not self._tracker_initialized
+
         for file in file_stream:
             is_last = file_stream.peek(default=None) is None
+            metadata = group.metadata_by_file.get(file, {})
+
+            # Lazy tracker initialization on first file
+            if first_file_in_session:
+                self._ensure_tracker_initialized(metadata)
+                first_file_in_session = False
 
             chunk = self._chunk_parser.parse(file, group, frame_offset)
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
