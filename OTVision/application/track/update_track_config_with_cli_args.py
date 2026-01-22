@@ -1,5 +1,11 @@
 from OTVision.abstraction.defaults import value_or_default
-from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
+from OTVision.application.config import (
+    Config,
+    TrackConfig,
+    _LogConfig,
+    _TrackBoxmotConfig,
+    _TrackIouConfig,
+)
 from OTVision.application.track.get_track_cli_args import GetTrackCliArgs
 from OTVision.domain.cli import TrackCliArgs
 
@@ -34,12 +40,51 @@ class UpdateTrackConfigWithCliArgs:
             t_min=value_or_default(cli_args.t_min, track_config.t_min),
             t_miss_max=value_or_default(cli_args.t_miss_max, track_config.t_miss_max),
         )
+        boxmot_config = self._update_boxmot_config(track_config.boxmot, cli_args)
         return TrackConfig(
             paths=value_or_default(cli_args.paths, track_config.paths),
             run_chained=track_config.run_chained,
             iou=iou_config,
-            boxmot=track_config.boxmot,
+            boxmot=boxmot_config,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
+        )
+
+    def _update_boxmot_config(
+        self, boxmot_config: _TrackBoxmotConfig, cli_args: TrackCliArgs
+    ) -> _TrackBoxmotConfig:
+        """Update BOXMOT config with CLI arguments.
+
+        If --tracker is specified:
+        - 'iou' disables BOXMOT
+        - Any other value enables BOXMOT with that tracker type
+
+        Args:
+            boxmot_config: The existing BOXMOT configuration
+            cli_args: CLI arguments to apply
+
+        Returns:
+            Updated BOXMOT configuration
+        """
+        if cli_args.tracker is not None:
+            enabled = cli_args.tracker.lower() != "iou"
+            tracker_type = cli_args.tracker
+        else:
+            enabled = boxmot_config.enabled
+            tracker_type = boxmot_config.tracker_type
+
+        return _TrackBoxmotConfig(
+            enabled=enabled,
+            tracker_type=tracker_type,
+            device=value_or_default(cli_args.tracker_device, boxmot_config.device),
+            half_precision=value_or_default(
+                cli_args.tracker_half_precision, boxmot_config.half_precision
+            ),
+            reid_weights=value_or_default(
+                cli_args.tracker_reid_weights, boxmot_config.reid_weights
+            ),
+            tracker_params=value_or_default(
+                cli_args.tracker_params, boxmot_config.tracker_params
+            ),
         )
 
     def _update_log_config(self, config: Config, cli_args: TrackCliArgs) -> _LogConfig:

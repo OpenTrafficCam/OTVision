@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
@@ -67,6 +68,11 @@ class TrackCliArgs(CliArgs):
     sigma_iou: float | None = None
     t_min: int | None = None
     t_miss_max: int | None = None
+    tracker: str | None = None
+    tracker_device: str | None = None
+    tracker_half_precision: bool | None = None
+    tracker_reid_weights: str | None = None
+    tracker_params: dict[str, Any] | None = None
 
     def get_config_file(self) -> Path | None:
         return self.config_file

@@ -1,7 +1,13 @@
 from pathlib import Path
 from unittest.mock import Mock
 
-from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
+from OTVision.application.config import (
+    Config,
+    TrackConfig,
+    _LogConfig,
+    _TrackBoxmotConfig,
+    _TrackIouConfig,
+)
 from OTVision.application.track.update_track_config_with_cli_args import (
     UpdateTrackConfigWithCliArgs,
 )
@@ -94,3 +100,117 @@ def expected_config() -> Config:
         transform=config.transform,
         gui=config.gui,
     )
+
+
+class TestUpdateBoxmotConfig:
+    """Tests for BOXMOT config updates via CLI arguments."""
+
+    def test_tracker_bytetrack_auto_enables_boxmot(self) -> None:
+        """Test that --tracker bytetrack enables BOXMOT automatically."""
+        cli_args = TrackCliArgs(
+            paths=None,
+            config_file=None,
+            logfile=LOGFILE,
+            logfile_overwrite=False,
+            log_level_console=None,
+            log_level_file=None,
+            tracker="bytetrack",
+        )
+        get_cli_args = Mock()
+        get_cli_args.get.return_value = cli_args
+        config = Config(track=TrackConfig(boxmot=_TrackBoxmotConfig(enabled=False)))
+
+        target = UpdateTrackConfigWithCliArgs(get_cli_args)
+        result = target.update(config)
+
+        assert result.track.boxmot.enabled is True
+        assert result.track.boxmot.tracker_type == "bytetrack"
+
+    def test_tracker_iou_disables_boxmot(self) -> None:
+        """Test that --tracker iou disables BOXMOT."""
+        cli_args = TrackCliArgs(
+            paths=None,
+            config_file=None,
+            logfile=LOGFILE,
+            logfile_overwrite=False,
+            log_level_console=None,
+            log_level_file=None,
+            tracker="iou",
+        )
+        get_cli_args = Mock()
+        get_cli_args.get.return_value = cli_args
+        config = Config(track=TrackConfig(boxmot=_TrackBoxmotConfig(enabled=True)))
+
+        target = UpdateTrackConfigWithCliArgs(get_cli_args)
+        result = target.update(config)
+
+        assert result.track.boxmot.enabled is False
+
+    def test_cli_overrides_yaml_boxmot_config(self) -> None:
+        """Test that CLI arguments override YAML config for BOXMOT."""
+        cli_args = TrackCliArgs(
+            paths=None,
+            config_file=None,
+            logfile=LOGFILE,
+            logfile_overwrite=False,
+            log_level_console=None,
+            log_level_file=None,
+            tracker="botsort",
+            tracker_device="cuda:0",
+            tracker_half_precision=True,
+            tracker_reid_weights="/path/to/reid.pt",
+            tracker_params={"track_buffer": 60},
+        )
+        get_cli_args = Mock()
+        get_cli_args.get.return_value = cli_args
+        yaml_boxmot = _TrackBoxmotConfig(
+            enabled=False,
+            tracker_type="bytetrack",
+            device="cpu",
+            half_precision=False,
+            reid_weights=None,
+            tracker_params={"other_param": 10},
+        )
+        config = Config(track=TrackConfig(boxmot=yaml_boxmot))
+
+        target = UpdateTrackConfigWithCliArgs(get_cli_args)
+        result = target.update(config)
+
+        assert result.track.boxmot.enabled is True
+        assert result.track.boxmot.tracker_type == "botsort"
+        assert result.track.boxmot.device == "cuda:0"
+        assert result.track.boxmot.half_precision is True
+        assert result.track.boxmot.reid_weights == "/path/to/reid.pt"
+        assert result.track.boxmot.tracker_params == {"track_buffer": 60}
+
+    def test_no_cli_tracker_preserves_yaml_config(self) -> None:
+        """Test that without --tracker, YAML config is preserved."""
+        cli_args = TrackCliArgs(
+            paths=None,
+            config_file=None,
+            logfile=LOGFILE,
+            logfile_overwrite=False,
+            log_level_console=None,
+            log_level_file=None,
+        )
+        get_cli_args = Mock()
+        get_cli_args.get.return_value = cli_args
+        yaml_boxmot = _TrackBoxmotConfig(
+            enabled=True,
+            tracker_type="botsort",
+            device="cuda:0",
+            half_precision=True,
+            reid_weights="/yaml/reid.pt",
+            tracker_params={"yaml_param": 5},
+        )
+        config = Config(track=TrackConfig(boxmot=yaml_boxmot))
+
+        target = UpdateTrackConfigWithCliArgs(get_cli_args)
+        result = target.update(config)
+
+        assert result.track.boxmot.enabled is True
+        assert result.track.boxmot.tracker_type == "botsort"
+        assert result.track.boxmot.device == "cuda:0"
+        assert result.track.boxmot.half_precision is True
+        assert result.track.boxmot.reid_weights == "/yaml/reid.pt"
+        assert result.track.boxmot.tracker_params == {"yaml_param": 5}
