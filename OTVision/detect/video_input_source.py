@@ -88,7 +88,9 @@ class VideoSource(InputSourceDetect):
 
         log.info("Start detection of video files")
 
-        for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
+        async for video_file in tqdm(
+            video_files, desc="Detected video files", unit=" files"
+        ):
             detections_file = self._save_path_provider.provide(
                 str(video_file), self._current_config.filetypes.detect
             )
