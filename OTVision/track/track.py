@@ -1,6 +1,6 @@
 import logging
 
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
 from OTVision.application.config import Config
 from OTVision.application.get_current_config import GetCurrentConfig
@@ -32,7 +32,7 @@ class OtvisionTrack:
         self._buffer = unfinished_chunks_buffer
         self._tracking_run_id_generator = tracking_run_id_generator
 
-    def start(self) -> None:
+    async def start(self) -> None:
         check_types(
             self.config.track.sigma_l,
             self.config.track.sigma_h,
@@ -61,6 +61,6 @@ class OtvisionTrack:
         finished_chunk_progress = tqdm(
             finished_chunk_stream, desc="export FrameChunk", total=len(detections_files)
         )
-        self._track_exporter.export(
-            tracking_run_id, iter(finished_chunk_progress), self.config.track.overwrite
+        await self._track_exporter.export(
+            tracking_run_id, finished_chunk_progress, self.config.track.overwrite
         )
