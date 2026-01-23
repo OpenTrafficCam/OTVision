@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import AsyncIterator
 
 import pytest
 
@@ -24,14 +24,17 @@ class TestBuffer:
 
         assert target._get_buffered_elements() == [given_element]
 
-    def test_filter_yields_and_buffers_frames(self, target: IntBuffer) -> None:
+    @pytest.mark.asyncio
+    async def test_filter_yields_and_buffers_frames(self, target: IntBuffer) -> None:
         expected = [1, 2, 3]
 
-        def element_generator() -> Generator[int, None, None]:
+        async def element_generator() -> AsyncIterator[int]:
             for element in expected:
                 yield element
 
-        actual = list(target.filter(element_generator()))
+        actual = []
+        async for item in target.filter(element_generator()):
+            actual.append(item)
 
         assert actual == expected
         assert target._get_buffered_elements() == expected
@@ -45,11 +48,16 @@ class TestBuffer:
         target._reset_buffer()
         assert target._get_buffered_elements() == []
 
-    def test_filter_empty_generator(self, target: IntBuffer) -> None:
-        def empty_generator() -> Generator[int, None, None]:
-            yield from ()
+    @pytest.mark.asyncio
+    async def test_filter_empty_generator(self, target: IntBuffer) -> None:
+        async def empty_generator() -> AsyncIterator[int]:
+            empty: list[int] = []
+            for elem in empty:
+                yield elem
 
-        result = list(target.filter(empty_generator()))
+        result = []
+        async for item in target.filter(empty_generator()):
+            result.append(item)
 
         assert result == []
         assert target._get_buffered_elements() == []

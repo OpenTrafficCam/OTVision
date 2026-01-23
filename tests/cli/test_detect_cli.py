@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -211,6 +211,7 @@ class TestDetectCLI:
         detect_cli: Callable,
     ) -> None:
         mock_otvision_detect = Mock()
+        mock_otvision_detect.start = AsyncMock()
         mock_build.return_value = mock_otvision_detect
 
         command = [

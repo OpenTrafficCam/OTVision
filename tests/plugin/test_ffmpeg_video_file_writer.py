@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import Iterator, Optional
+from typing import AsyncIterator, Iterator, Optional
 from unittest.mock import Mock, patch
 
 import pytest
@@ -93,7 +93,8 @@ class TestFfmpegVideoFileWriter:
             given_event.output, given_event.width, given_event.height, given_event.fps
         )
 
-    def test_filter(
+    @pytest.mark.asyncio
+    async def test_filter(
         self,
         target: FfmpegVideoWriter,
         cyclist_mp4: Path,
@@ -105,7 +106,9 @@ class TestFfmpegVideoFileWriter:
         given_frames = create_frames_from(given_video.images)
 
         target.notify_on_new_video_start(given_event)
-        actual = list(target.filter(frame for frame in given_frames))
+        actual = []
+        async for frame in target.filter(async_frame_generator(given_frames)):
+            actual.append(frame)
 
         assert actual == given_frames
         assert expected_save_location.exists()
@@ -120,7 +123,8 @@ class TestFfmpegVideoFileWriter:
         actual_frames = get_frames_from(expected_save_location)
         assert len(actual_frames) == len(given_frames)
 
-    def test_filter_drops_frame_without_data(
+    @pytest.mark.asyncio
+    async def test_filter_drops_frame_without_data(
         self,
         target: FfmpegVideoWriter,
         cyclist_mp4: Path,
@@ -136,7 +140,9 @@ class TestFfmpegVideoFileWriter:
         )
 
         target.notify_on_new_video_start(given_event)
-        actual = list(target.filter(frame for frame in given_frames))
+        actual = []
+        async for frame in target.filter(async_frame_generator(given_frames)):
+            actual.append(frame)
 
         assert actual == given_frames
         assert expected_save_location.exists()
@@ -230,6 +236,11 @@ def create_frames_from(images: Iterator[Optional[ndarray]]) -> list[Frame]:
         }
         frame_objects.append(frame_obj)
     return frame_objects
+
+
+async def async_frame_generator(frames: list[Frame]) -> AsyncIterator[Frame]:
+    for frame in frames:
+        yield frame
 
 
 @pytest.fixture

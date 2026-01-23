@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import AsyncIterator, Iterable
 
 import av
 from av.container.input import InputContainer
@@ -74,7 +74,7 @@ class VideoSource(InputSourceDetect):
         self._save_path_provider = save_path_provider
         self.__should_flush = False
 
-    def produce(self) -> Iterator[Frame]:
+    async def produce(self) -> AsyncIterator[Frame]:
         """Generate frames from video files that meet detection requirements.
 
         Yields frames from valid video files while managing rotation, timestamping,
@@ -84,7 +84,7 @@ class VideoSource(InputSourceDetect):
             Frame: Processed video frames ready for detection.
         """
 
-        video_files = self._collect_files_to_detect()
+        video_files = await self._collect_files_to_detect()
 
         log.info("Start detection of video files")
 
@@ -154,7 +154,7 @@ class VideoSource(InputSourceDetect):
             )
             return {}
 
-    def _collect_files_to_detect(self) -> Iterable[Path]:
+    async def _collect_files_to_detect(self) -> Iterable[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
         video_files = get_files(
             paths=self._current_config.detect.paths, filetypes=filetypes

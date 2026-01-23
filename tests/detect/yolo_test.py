@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, AsyncGenerator
 from unittest.mock import Mock, call, patch
 
 import pytest
@@ -9,7 +9,7 @@ from OTVision.application.config import Config, DetectConfig
 from OTVision.detect.yolo import YoloDetectionConverter, YoloDetector
 from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame, Frame, FrameKeys
-from tests.utils.generator import make_generator
+from tests.utils.asynchronous.iterator import get_elements_of
 from tests.utils.mocking import create_mocks
 
 FPS = 20
@@ -55,8 +55,9 @@ class TestYoloDetectionConverter:
 
 
 class TestYoloDetector:
+    @pytest.mark.asyncio
     @patch("OTVision.detect.yolo.torch")
-    def test_detect(self, mock_torch: Mock) -> None:
+    async def test_detect(self, mock_torch: Mock) -> None:
         mock_torch.cuda.is_available.return_value = False
         expected_model_predictions: list[Results] = create_mocks(2)
         expected_detections: list[Detection] = create_mocks(2)
@@ -77,7 +78,9 @@ class TestYoloDetector:
             detected_frame_factory=given_detected_frame_factory,
         )
         given_input_frames = self.creat_input_frames()
-        actual = list(target.detect(make_generator(given_input_frames)))
+        actual = await get_elements_of(
+            target.detect(async_frame_generator(given_input_frames))
+        )
 
         assert actual == expected_detected_frames
         self.assert_model_called(given_model, given_input_frames, config.detect)
@@ -181,3 +184,8 @@ class TestYoloDetector:
         return Frame(
             data=data, frame=frame_no, source=source, output=source, occurrence=Mock()
         )
+
+
+async def async_frame_generator(frames: list[Frame]) -> AsyncGenerator[Frame, None]:
+    for frame in frames:
+        yield frame

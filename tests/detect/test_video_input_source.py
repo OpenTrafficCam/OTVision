@@ -12,6 +12,7 @@ from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.detect.video_input_source import VideoSource
 from OTVision.domain.frame import Frame, FrameKeys
+from tests.utils.asynchronous.iterator import get_elements_of
 from tests.utils.mocking import create_mocks
 
 FPS = 20
@@ -59,9 +60,10 @@ class Given:
 
 
 class TestVideoSource:
+    @pytest.mark.asyncio
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
-    def test_produce_with_real_video_file(
+    async def test_produce_with_real_video_file(
         self,
         mock_get_files: Mock,
         mock_get_fps: Mock,
@@ -72,7 +74,7 @@ class TestVideoSource:
             mock_get_files, mock_get_fps, [cyclist_mp4], True, amount_of_frames
         )
         target = setup(given)
-        actual = list(target.produce())
+        actual = await get_elements_of(target.produce())
 
         assert actual == given.all_timestamped_frames
         given.get_files.assert_called_once_with(
@@ -108,6 +110,7 @@ class TestVideoSource:
             create_new_video_start_event(cyclist_mp4)
         )
 
+    @pytest.mark.asyncio
     @patch(
         "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
     )
@@ -115,7 +118,7 @@ class TestVideoSource:
     @patch("OTVision.detect.video_input_source.get_video_dimensions")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
-    def test_produce_with_multiple_video_files(
+    async def test_produce_with_multiple_video_files(
         self,
         mock_get_files: Mock,
         mock_get_fps: Mock,
@@ -138,7 +141,7 @@ class TestVideoSource:
             mock_get_video_dimensions=mock_get_video_dimensions,
         )
         target = setup(given)
-        actual = list(target.produce())
+        actual = await get_elements_of(target.produce())
 
         assert actual == given.all_timestamped_frames
         assert_get_files_called(given)
@@ -170,6 +173,7 @@ class TestVideoSource:
             call(create_new_video_start_event(input_file)) for input_file in input_files
         ]
 
+    @pytest.mark.asyncio
     @patch("OTVision.detect.video_input_source.log")
     @patch(
         "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
@@ -177,7 +181,7 @@ class TestVideoSource:
     @patch("OTVision.detect.video_input_source.av")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
-    def test_produce_video_skipped_when_no_start_date_found_in_file_name(
+    async def test_produce_video_skipped_when_no_start_date_found_in_file_name(
         self,
         mock_get_files: Mock,
         mock_get_fps: Mock,
@@ -197,7 +201,7 @@ class TestVideoSource:
         )
 
         target = setup(given)
-        actual = list(target.produce())
+        actual = await get_elements_of(target.produce())
         assert actual == []
         mock_log.warning.assert_called_once_with(
             f"Video file name of '{input_file}' "
@@ -212,6 +216,7 @@ class TestVideoSource:
         mock_notify_flush_event_observers.assert_not_called()
         given.subject_new_video_start.notify.assert_not_called()
 
+    @pytest.mark.asyncio
     @patch("OTVision.detect.video_input_source.log")
     @patch(
         "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
@@ -219,7 +224,7 @@ class TestVideoSource:
     @patch("OTVision.detect.video_input_source.av")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
-    def test_produce_skip_video_when_overwrite_not_allowed(
+    async def test_produce_skip_video_when_overwrite_not_allowed(
         self,
         mock_get_files: Mock,
         mock_get_fps: Mock,
@@ -239,7 +244,7 @@ class TestVideoSource:
         )
 
         target = setup(given)
-        actual = list(target.produce())
+        actual = await get_elements_of(target.produce())
         assert actual == []
         mock_log.warning.assert_called_once_with(
             f"{cyclist_mp4.with_suffix(".otdet")} already exists. "
@@ -254,6 +259,7 @@ class TestVideoSource:
         mock_notify_flush_event_observers.assert_not_called()
         given.subject_new_video_start.notify.assert_not_called()
 
+    @pytest.mark.asyncio
     @patch(
         "OTVision.detect.video_input_source.VideoSource.notify_flush_event_observers"
     )
@@ -261,7 +267,7 @@ class TestVideoSource:
     @patch("OTVision.detect.video_input_source.av")
     @patch("OTVision.detect.video_input_source.get_fps")
     @patch("OTVision.detect.video_input_source.get_files")
-    def test_detection_start_and_end_are_considered(
+    async def test_detection_start_and_end_are_considered(
         self,
         mock_get_files: Mock,
         mock_get_fps: Mock,
@@ -288,7 +294,7 @@ class TestVideoSource:
         )
 
         target = setup(given)
-        actual = list(target.produce())
+        actual = await get_elements_of(target.produce())
 
         assert actual == given.all_timestamped_frames
         assert_get_files_called(given)

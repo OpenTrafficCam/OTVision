@@ -1,7 +1,7 @@
 import socket
 from datetime import datetime, timedelta
 from time import sleep
-from typing import Iterator
+from typing import AsyncIterator
 from urllib.parse import urlparse
 
 from cv2 import (
@@ -131,7 +131,7 @@ class RtspInputSource(InputSourceDetect):
         self._current_video_capture = self._init_video_capture(self._current_stream)
         return self._current_video_capture
 
-    def produce(self) -> Iterator[Frame]:
+    async def produce(self) -> AsyncIterator[Frame]:
         self._stream_start_time = self._datetime_provider.provide()
         self._current_video_start_time = self._stream_start_time
         try:
