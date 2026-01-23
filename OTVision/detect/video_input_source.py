@@ -5,7 +5,7 @@ from typing import AsyncIterator, Iterable
 
 import av
 from av.container.input import InputContainer
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
 from OTVision.abstraction.observer import Subject
 from OTVision.application.config import DATETIME_FORMAT, Config
