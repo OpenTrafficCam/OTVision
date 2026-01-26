@@ -65,7 +65,8 @@ class TestFfmpegVideoFileWriter:
         target.close()
         assert target.is_closed
 
-    def test_notify_on_flush_event(
+    @pytest.mark.asyncio
+    async def test_notify_on_flush_event(
         self, target: FfmpegVideoWriter, cyclist_mp4: Path, save_location: Path
     ) -> None:
         given = create_given_video(cyclist_mp4, save_location)
@@ -74,7 +75,7 @@ class TestFfmpegVideoFileWriter:
             given.save_location, width=given.width, height=given.height, fps=FPS
         )
         assert not target.is_closed
-        target.notify_on_flush_event(Mock())
+        await target.notify_on_flush_event(Mock())
         assert target.is_closed
 
     @patch("OTVision.plugin.ffmpeg_video_writer.FfmpegVideoWriter.open")
@@ -116,7 +117,7 @@ class TestFfmpegVideoFileWriter:
         assert target.is_closed is False  # Writer should still be open
 
         # Close the writer to finalize the video file
-        target.notify_on_flush_event(Mock())
+        await target.notify_on_flush_event(Mock())
         assert target.is_closed
 
         # Now that the writer is closed, we can read frames from the output file
@@ -149,7 +150,7 @@ class TestFfmpegVideoFileWriter:
         assert target.is_closed is False  # Writer should still be open
 
         # Close the writer to finalize the video file
-        target.notify_on_flush_event(Mock())
+        await target.notify_on_flush_event(Mock())
         assert target.is_closed
 
         # Now that the writer is closed, we can check the output file

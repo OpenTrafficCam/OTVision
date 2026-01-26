@@ -1,9 +1,9 @@
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject
 from OTVision.detect.detected_frame_buffer import (
     DetectedFrameBuffer,
     DetectedFrameBufferEvent,
@@ -16,21 +16,22 @@ from tests.utils.mocking import create_mocks
 
 class TestDetectedFrameBuffer:
     @pytest.fixture
-    def subject_mock(self) -> Mock:
-        return Mock(spec=Subject)
+    def subject_mock(self) -> AsyncMock:
+        return AsyncMock(spec=AsyncSubject)
 
     @pytest.fixture
-    def target(self, subject_mock: Mock) -> DetectedFrameBuffer:
+    def target(self, subject_mock: AsyncMock) -> DetectedFrameBuffer:
         return DetectedFrameBuffer(subject=subject_mock)
 
-    def test_on_flush_notifies_subject_with_buffer_event(
-        self, target: DetectedFrameBuffer, subject_mock: Mock
+    @pytest.mark.asyncio
+    async def test_on_flush_notifies_subject_with_buffer_event(
+        self, target: DetectedFrameBuffer, subject_mock: AsyncMock
     ) -> None:
         frames: list[DetectedFrame] = create_mocks(2)
         source_metadata = Mock()
         flush_event = FlushEvent(source_metadata=source_metadata)
 
-        target._notify_observers(frames, flush_event)
+        await target._notify_observers(frames, flush_event)
 
         expected_event: DetectedFrameBufferEvent = DetectedFrameBufferEvent(
             source_metadata=source_metadata, frames=frames
@@ -38,7 +39,8 @@ class TestDetectedFrameBuffer:
         subject_mock.notify.assert_called_once_with(expected_event)
         assert target._get_buffered_elements() == []
 
-    def test_frames_are_buffered_without_image_data(
+    @pytest.mark.asyncio
+    async def test_frames_are_buffered_without_image_data(
         self, target: DetectedFrameBuffer
     ) -> None:
         """
@@ -59,7 +61,7 @@ class TestDetectedFrameBuffer:
             detections=detections,
             image=image,
         )
-        target.buffer(given_frame)
+        await target.buffer(given_frame)
         actual = target._get_buffered_elements()[0]
 
         expected = DetectedFrame(

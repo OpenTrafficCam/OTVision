@@ -8,7 +8,7 @@ IntBuffer = Buffer[int, list[int]]
 
 
 class MockBuffer(IntBuffer):
-    def on_flush(self, event: list[int]) -> None:
+    async def on_flush(self, event: list[int]) -> None:
         pass
 
 
@@ -17,10 +17,11 @@ class TestBuffer:
     def target(self) -> IntBuffer:
         return MockBuffer()
 
-    def test_buffer_element(self, target: IntBuffer) -> None:
+    @pytest.mark.asyncio
+    async def test_buffer_element(self, target: IntBuffer) -> None:
         given_element = 1
 
-        target.buffer(given_element)
+        await target.buffer(given_element)
 
         assert target._get_buffered_elements() == [given_element]
 
@@ -39,10 +40,11 @@ class TestBuffer:
         assert actual == expected
         assert target._get_buffered_elements() == expected
 
-    def test_reset_buffer_clears_elements(self, target: IntBuffer) -> None:
+    @pytest.mark.asyncio
+    async def test_reset_buffer_clears_elements(self, target: IntBuffer) -> None:
         elements = [1, 2, 3]
         for element in elements:
-            target.buffer(element)
+            await target.buffer(element)
 
         assert target._get_buffered_elements() == elements
         target._reset_buffer()

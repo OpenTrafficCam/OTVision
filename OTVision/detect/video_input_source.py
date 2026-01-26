@@ -7,7 +7,7 @@ import av
 from av.container.input import InputContainer
 from tqdm.asyncio import tqdm
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject, Subject
 from OTVision.application.config import DATETIME_FORMAT, Config
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.event.new_video_start import NewVideoStartEvent
@@ -59,7 +59,7 @@ class VideoSource(InputSourceDetect):
 
     def __init__(
         self,
-        subject_flush: Subject[FlushEvent],
+        subject_flush: AsyncSubject[FlushEvent],
         subject_new_video_start: Subject[NewVideoStartEvent],
         get_current_config: GetCurrentConfig,
         frame_rotator: AvVideoFrameRotator,
@@ -137,7 +137,7 @@ class VideoSource(InputSourceDetect):
                                 }
                             )
                         counter += 1
-                self.notify_flush_event_observers(video_file, video_fps)
+                await self.notify_flush_event_observers(video_file, video_fps)
                 self._on_video_finished(video_file)
             except Exception as e:
                 log.error(f"Error processing {video_file}", exc_info=e)
@@ -192,7 +192,7 @@ class VideoSource(InputSourceDetect):
             return False
         return True
 
-    def notify_flush_event_observers(
+    async def notify_flush_event_observers(
         self, current_video_file: Path, video_fps: float
     ) -> None:
         if expected_duration := self._current_config.detect.expected_duration:
@@ -205,7 +205,7 @@ class VideoSource(InputSourceDetect):
             current_video_file, start_time=self._start_time
         )
 
-        self.subject_flush.notify(
+        await self.subject_flush.notify(
             FlushEvent.create(
                 source=str(current_video_file),
                 output=str(current_video_file),

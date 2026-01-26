@@ -242,7 +242,7 @@ class FfmpegVideoWriter(VideoWriter):
 
         self.__current_video_metadata = None
 
-    def notify_on_flush_event(self, event: FlushEvent) -> None:
+    async def notify_on_flush_event(self, event: FlushEvent) -> None:
         self.close()
 
     def notify_on_new_video_start(self, event: NewVideoStartEvent) -> None:

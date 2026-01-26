@@ -1,3 +1,4 @@
+import asyncio
 import socket
 from datetime import datetime, timedelta
 from time import sleep
@@ -13,7 +14,7 @@ from cv2 import (
 )
 from numpy import ndarray
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject, Subject
 from OTVision.application.config import (
     DATETIME_FORMAT,
     Config,
@@ -87,7 +88,7 @@ class RtspInputSource(InputSourceDetect):
 
     def __init__(
         self,
-        subject_flush: Subject[FlushEvent],
+        subject_flush: AsyncSubject[FlushEvent],
         subject_new_video_start: Subject[NewVideoStartEvent],
         datetime_provider: DatetimeProvider,
         frame_counter: Counter,
@@ -153,10 +154,10 @@ class RtspInputSource(InputSourceDetect):
                         occurrence=occurrence,
                     )
                     if self.flush_condition_met():
-                        self._notify_flush_observers()
+                        await self._notify_flush_observers()
                         self._outdated = True
                         self._frame_counter.reset()
-            self._notify_flush_observers()
+            await self._notify_flush_observers()
         except InvalidRtspUrlError as cause:
             logger().error(cause)
 
@@ -209,7 +210,7 @@ class RtspInputSource(InputSourceDetect):
     def flush_condition_met(self) -> bool:
         return self.current_frame_number % self.flush_buffer_size == 0
 
-    def _notify_flush_observers(self) -> None:
+    async def _notify_flush_observers(self) -> None:
         frame_width = self._get_width()
         frame_height = self._get_height()
         frames = (
@@ -219,7 +220,7 @@ class RtspInputSource(InputSourceDetect):
         )
         duration = timedelta(seconds=round(frames / self.fps))
         output = self.create_output()
-        self.subject_flush.notify(
+        await self.subject_flush.notify(
             FlushEvent.create(
                 source=self.rtsp_url,
                 output=output,
@@ -256,7 +257,9 @@ class RtspInputSource(InputSourceDetect):
     def notify_new_config(self, config: NewOtvisionConfigEvent) -> None:
         try:
             logger().debug("New OTVision config detected. Flushing buffers...")
-            self._notify_flush_observers()
+
+            # Create task to handle async flush notification
+            asyncio.create_task(self._notify_flush_observers())
         except NoConfigurationFoundError:
             logger().info("No configuration found for RTSP stream. Skipping flushing.")
 

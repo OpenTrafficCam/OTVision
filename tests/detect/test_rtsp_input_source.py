@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, call, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
@@ -212,7 +212,7 @@ class TestRtspInputSource:
 
 def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
     return Given(
-        subject_flush_event=Mock(),
+        subject_flush_event=AsyncMock(),
         subject_new_video_start=Mock(),
         datetime_provider=Mock(),
         frame_counter=Counter(),
