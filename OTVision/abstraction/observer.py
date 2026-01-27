@@ -1,5 +1,8 @@
 import asyncio
+import logging
 from typing import Awaitable, Callable, TypeVar
+
+from OTVision.helpers.log import LOGGER_NAME
 
 VALUE = TypeVar("VALUE")
 type Observer[T] = Callable[[T], None]
@@ -49,13 +52,15 @@ class AsyncSubject[T]:
     """Generic async subject class to handle and notify async observers.
 
     This class ensures that no duplicate observers can be registered.
-    The order that registered observers are notified is dictated by the order they have
-    been registered. Meaning, first to be registered is first to be notified.
-    All observers are awaited concurrently using asyncio.gather().
+    The order that registered observers are notified is dictated by the order
+    they have been registered. Meaning, first to be registered is first to be
+    notified. Observers are executed as fire-and-forget background tasks for
+    non-blocking notifications.
     """
 
     def __init__(self) -> None:
         self._observers: list[AsyncObserver[T]] = []
+        self._pending_tasks: set[asyncio.Task[None]] = set()
 
     def register(self, observer: AsyncObserver[T]) -> None:
         """Listen to changes of subject.
@@ -71,13 +76,45 @@ class AsyncSubject[T]:
     async def notify(self, value: T) -> None:
         """Notifies observers about the value asynchronously.
 
-        All observers are notified concurrently using asyncio.gather().
+        All observers are notified as fire-and-forget background tasks,
+        allowing the event loop to continue processing while observers execute.
+        Each observer runs independently; exceptions are caught and logged
+        without affecting other observers or blocking the caller.
 
         Args:
             value (T): value to notify the observer with.
         """
-        if self._observers:
-            await asyncio.gather(*[observer(value) for observer in self._observers])
+        log = logging.getLogger(LOGGER_NAME)
+
+        async def _safe_observer_call(observer: AsyncObserver[T], value: T) -> None:
+            """Wrapper to safely call an observer and log any exceptions."""
+            try:
+                await observer(value)
+            except Exception as e:
+                observer_name = (
+                    observer.__name__
+                    if hasattr(observer, "__name__")
+                    else repr(observer)
+                )
+                log.error(
+                    f"Exception in async observer {observer_name}: {e}",
+                    exc_info=True,
+                )
+
+        for observer in self._observers:
+            task = asyncio.create_task(_safe_observer_call(observer, value))
+            self._pending_tasks.add(task)
+            task.add_done_callback(self._pending_tasks.discard)
+
+    async def wait_for_all_observers(self) -> None:
+        """Wait for all pending observer tasks to complete.
+
+        This method can be used when you need to ensure all observers have
+        finished processing before proceeding. Useful in tests or when
+        synchronization is required.
+        """
+        if self._pending_tasks:
+            await asyncio.gather(*self._pending_tasks, return_exceptions=True)
 
 
 class AsyncObservable[T]:
@@ -86,3 +123,10 @@ class AsyncObservable[T]:
 
     def register(self, observer: AsyncObserver[T]) -> None:
         self._subject.register(observer)
+
+    async def wait_for_all_observers(self) -> None:
+        """Wait for all pending observer tasks to complete.
+
+        This method delegates to the subject's wait_for_all_observers method.
+        """
+        await self._subject.wait_for_all_observers()

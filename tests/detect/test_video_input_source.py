@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 from av import VideoFrame
@@ -444,9 +444,13 @@ def setup_args(
     if mock_get_video_dimensions is not None:
         mock_get_video_dimensions.return_value = (WIDTH, HEIGHT)
 
+    # Create AsyncMock for subject_flush since it now has async methods
+    subject_flush = AsyncMock()
+    subject_flush.wait_for_all_observers = AsyncMock()
+
     return Given(
         config=config,
-        subject_flush=Mock(),
+        subject_flush=subject_flush,
         subject_new_video_start=Mock(),
         get_current_config=create_get_current_config(config),
         frame_rotator=create_frame_rotator(total_rotated_frames),

@@ -142,6 +142,10 @@ class VideoSource(InputSourceDetect):
             except Exception as e:
                 log.error(f"Error processing {video_file}", exc_info=e)
 
+        # Wait for all flush event observers to complete their work
+        # (e.g., file writing) before this method returns
+        await self.subject_flush.wait_for_all_observers()
+
     def _on_video_finished(self, video_file: Path) -> None:
         """Hook for handling video processing completion."""
         pass
