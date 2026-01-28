@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import AsyncIterator
 
 from OTVision.domain.frame import DetectedFrame
 
@@ -8,7 +8,7 @@ class DetectedFrameConsumer(ABC):
     """Interface for components that consume detected frames."""
 
     @abstractmethod
-    def consume(self) -> None:
+    async def consume(self) -> None:
         """Consume detected frames."""
         raise NotImplementedError
 
@@ -21,10 +21,10 @@ class DetectedFrameProducer(ABC):
     """
 
     @abstractmethod
-    def produce(self) -> Iterator[DetectedFrame]:
+    def produce(self) -> AsyncIterator[DetectedFrame]:
         """Generate a stream of detected frames.
 
         Returns:
-            Iterator[DetectedFrame, None, None]: A stream of detected frames.
+            AsyncIterator[DetectedFrame ]: A stream of detected frames.
         """
-        raise NotImplementedError
+        ...

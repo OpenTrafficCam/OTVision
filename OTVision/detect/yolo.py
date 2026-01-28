@@ -22,10 +22,10 @@ OTVision module to detect objects using yolov5
 import logging
 from pathlib import Path
 from time import perf_counter
-from typing import Iterator
+from typing import AsyncIterator
 
 import torch
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 from ultralytics import YOLO
 from ultralytics.engine.results import Boxes
 
@@ -134,11 +134,14 @@ class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
         self._detection_converter = detection_converter
         self._detected_frame_factory = detected_frame_factory
 
-    def filter(self, pipe: Iterator[Frame]) -> Iterator[DetectedFrame]:
-        return self.detect(pipe)
+    async def filter(self, pipe: AsyncIterator[Frame]) -> AsyncIterator[DetectedFrame]:
+        async for detected_frame in self.detect(pipe):
+            yield detected_frame
 
-    def detect(self, frames: Iterator[Frame]) -> Iterator[DetectedFrame]:
-        for frame in tqdm(
+    async def detect(
+        self, frames: AsyncIterator[Frame]
+    ) -> AsyncIterator[DetectedFrame]:
+        async for frame in tqdm(
             frames,
             desc="Detected frames",
             unit=" frames",

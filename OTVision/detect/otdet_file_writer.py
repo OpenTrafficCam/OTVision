@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from OTVision.abstraction.observer import Observer, Subject
+from OTVision.abstraction.observer import AsyncObserver, AsyncSubject
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
 )
@@ -45,7 +45,7 @@ class OtdetFileWriter:
 
     def __init__(
         self,
-        subject: Subject[OtdetFileWrittenEvent],
+        subject: AsyncSubject[OtdetFileWrittenEvent],
         builder: OtdetBuilder,
         get_current_config: GetCurrentConfig,
         current_object_detector_metadata: CurrentObjectDetectorMetadata,
@@ -57,7 +57,7 @@ class OtdetFileWriter:
         self._current_object_detector_metadata = current_object_detector_metadata
         self._save_path_provider = save_path_provider
 
-    def write(self, event: DetectedFrameBufferEvent) -> None:
+    async def write(self, event: DetectedFrameBufferEvent) -> None:
         """Writes detection results to a file in OTDET format.
 
         Processes the detected frames and associated metadata, builds the OTDET
@@ -118,16 +118,16 @@ class OtdetFileWriter:
 
         finished_msg = "Finished detection"
         log.info(finished_msg)
-        self.__notify(
+        await self.__notify(
             num_frames=actual_frames,
             builder_config=builder_config,
             save_location=detections_file,
         )
 
-    def __notify(
+    async def __notify(
         self, num_frames: int, builder_config: OtdetBuilderConfig, save_location: Path
     ) -> None:
-        self._subject.notify(
+        await self._subject.notify(
             OtdetFileWrittenEvent(
                 number_of_frames=num_frames,
                 otdet_builder_config=builder_config,
@@ -135,6 +135,6 @@ class OtdetFileWriter:
             )
         )
 
-    def register_observer(self, observer: Observer[OtdetFileWrittenEvent]) -> None:
+    def register_observer(self, observer: AsyncObserver[OtdetFileWrittenEvent]) -> None:
         """Register an observer to receive notifications about otdet file writes.."""
         self._subject.register(observer)

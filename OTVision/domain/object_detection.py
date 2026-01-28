@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import AsyncIterator
 
 from OTVision.application.config import DetectConfig
 from OTVision.domain.frame import DetectedFrame, Frame
@@ -25,17 +25,17 @@ class ObjectDetectorMetadata(ABC):
 class ObjectDetector(ObjectDetectorMetadata):
 
     @abstractmethod
-    def detect(self, frames: Iterator[Frame]) -> Iterator[DetectedFrame]:
+    def detect(self, frames: AsyncIterator[Frame]) -> AsyncIterator[DetectedFrame]:
         """Runs object detection on a video.
 
         Args:
-            frames (Iterator[Frame]): the source to read frames from.
+            frames (AsyncIterator[Frame]): the source to read frames from.
 
         Returns:
-            Iterator[DetectedFrame]: nested list of detections.
+            AsyncIterator[DetectedFrame]: nested list of detections.
                 First level is frames, second level is detections within frame.
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def preload(self) -> None:

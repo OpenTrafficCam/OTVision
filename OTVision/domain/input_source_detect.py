@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import AsyncIterator
 
 from OTVision.domain.frame import Frame
 
@@ -14,7 +14,7 @@ class InputSourceDetect(ABC):
     """
 
     @abstractmethod
-    def produce(self) -> Iterator[Frame]:
+    def produce(self) -> AsyncIterator[Frame]:
         """Generate a stream of frames from the input source.
 
         Implementations should yield Frame objects one at a time from the source,
@@ -22,7 +22,7 @@ class InputSourceDetect(ABC):
         at appropriate points (e.g., end of video segments or buffer boundaries).
 
         Returns:
-            Iterator [Frame]: A generator yielding Frame objects
+            AsyncIterator[Frame]: A generator yielding Frame objects
                 sequentially from the input source.
         """
 

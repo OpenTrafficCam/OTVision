@@ -10,6 +10,6 @@ class GenerateVideo:
         self._input_source = input_source
         self._video_writer = video_writer
 
-    def generate(self) -> None:
-        for frame in self._video_writer.filter(self._input_source.produce()):
+    async def generate(self) -> None:
+        async for frame in self._video_writer.filter(self._input_source.produce()):
             pass

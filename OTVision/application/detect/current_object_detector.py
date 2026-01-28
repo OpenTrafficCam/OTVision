@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import AsyncIterator
 
 from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.get_current_config import GetCurrentConfig
@@ -33,5 +33,6 @@ class CurrentObjectDetector(Filter[Frame, DetectedFrame]):
         detect_config = self._get_current_config.get().detect
         return self._factory.create(detect_config)
 
-    def filter(self, pipe: Iterator[Frame]) -> Iterator[DetectedFrame]:
-        return self.get().detect(pipe)
+    async def filter(self, pipe: AsyncIterator[Frame]) -> AsyncIterator[DetectedFrame]:
+        async for detected_frame in self.get().detect(pipe):
+            yield detected_frame
