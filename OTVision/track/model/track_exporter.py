@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Generic, Iterator, TypeVar
+from typing import AsyncIterator, Generic, TypeVar
 
 from tqdm import tqdm
 
@@ -48,10 +48,10 @@ class FinishedTracksExporter(ABC, Generic[F]):
     def get_frame_group_id(self, container: F) -> int:
         pass
 
-    def export(
-        self, tracking_run_id: str, stream: Iterator[F], overwrite: bool
+    async def export(
+        self, tracking_run_id: str, stream: AsyncIterator[F], overwrite: bool
     ) -> None:
-        for container in stream:
+        async for container in stream:
             self.export_frames(container, tracking_run_id, overwrite)
 
     def export_frames(

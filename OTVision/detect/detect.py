@@ -30,10 +30,10 @@ class OTVisionVideoDetect(DetectedFrameConsumer):
     def __init__(self, producer: DetectedFrameProducer) -> None:
         self._producer = producer
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """Starts the detection of objects in multiple videos and/or images."""
-        self.consume()
+        await self.consume()
 
-    def consume(self) -> None:
-        for _ in self._producer.produce():
+    async def consume(self) -> None:
+        async for _ in self._producer.produce():
             pass

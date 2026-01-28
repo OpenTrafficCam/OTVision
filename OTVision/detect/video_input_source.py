@@ -1,13 +1,13 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import AsyncIterator, Iterable
 
 import av
 from av.container.input import InputContainer
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject, Subject
 from OTVision.application.config import DATETIME_FORMAT, Config
 from OTVision.application.detect.timestamper import Timestamper
 from OTVision.application.event.new_video_start import NewVideoStartEvent
@@ -59,7 +59,7 @@ class VideoSource(InputSourceDetect):
 
     def __init__(
         self,
-        subject_flush: Subject[FlushEvent],
+        subject_flush: AsyncSubject[FlushEvent],
         subject_new_video_start: Subject[NewVideoStartEvent],
         get_current_config: GetCurrentConfig,
         frame_rotator: AvVideoFrameRotator,
@@ -74,7 +74,7 @@ class VideoSource(InputSourceDetect):
         self._save_path_provider = save_path_provider
         self.__should_flush = False
 
-    def produce(self) -> Iterator[Frame]:
+    async def produce(self) -> AsyncIterator[Frame]:
         """Generate frames from video files that meet detection requirements.
 
         Yields frames from valid video files while managing rotation, timestamping,
@@ -84,11 +84,13 @@ class VideoSource(InputSourceDetect):
             Frame: Processed video frames ready for detection.
         """
 
-        video_files = self._collect_files_to_detect()
+        video_files = await self._collect_files_to_detect()
 
         log.info("Start detection of video files")
 
-        for video_file in tqdm(video_files, desc="Detected video files", unit=" files"):
+        async for video_file in tqdm(
+            video_files, desc="Detected video files", unit=" files"
+        ):
             detections_file = self._save_path_provider.provide(
                 str(video_file), self._current_config.filetypes.detect
             )
@@ -135,10 +137,14 @@ class VideoSource(InputSourceDetect):
                                 }
                             )
                         counter += 1
-                self.notify_flush_event_observers(video_file, video_fps)
+                await self.notify_flush_event_observers(video_file, video_fps)
                 self._on_video_finished(video_file)
             except Exception as e:
                 log.error(f"Error processing {video_file}", exc_info=e)
+
+        # Wait for all flush event observers to complete their work
+        # (e.g., file writing) before this method returns
+        await self.subject_flush.wait_for_all_observers()
 
     def _on_video_finished(self, video_file: Path) -> None:
         """Hook for handling video processing completion."""
@@ -154,7 +160,7 @@ class VideoSource(InputSourceDetect):
             )
             return {}
 
-    def _collect_files_to_detect(self) -> Iterable[Path]:
+    async def _collect_files_to_detect(self) -> Iterable[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
         video_files = get_files(
             paths=self._current_config.detect.paths, filetypes=filetypes
@@ -190,7 +196,7 @@ class VideoSource(InputSourceDetect):
             return False
         return True
 
-    def notify_flush_event_observers(
+    async def notify_flush_event_observers(
         self, current_video_file: Path, video_fps: float
     ) -> None:
         if expected_duration := self._current_config.detect.expected_duration:
@@ -203,7 +209,7 @@ class VideoSource(InputSourceDetect):
             current_video_file, start_time=self._start_time
         )
 
-        self.subject_flush.notify(
+        await self.subject_flush.notify(
             FlushEvent.create(
                 source=str(current_video_file),
                 output=str(current_video_file),

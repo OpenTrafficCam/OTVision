@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -211,6 +211,7 @@ class TestDetectCLI:
         detect_cli: Callable,
     ) -> None:
         mock_otvision_detect = Mock()
+        mock_otvision_detect.start = AsyncMock()
         mock_build.return_value = mock_otvision_detect
 
         command = [
@@ -232,7 +233,7 @@ class TestDetectCLI:
         expected_config = create_expected_config_from_test_data(test_data)
 
         mock_update_current_config.update.assert_called_once_with(expected_config)
-        mock_otvision_detect.start.assert_called_once()
+        mock_otvision_detect.start.assert_awaited_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Iterator, TypeVar
+from typing import AsyncIterator, Generic, Iterator, TypeVar
 
 from OTVision.domain.detection import TrackId
 from OTVision.domain.frame import (
@@ -22,22 +22,22 @@ class Tracker(ABC):
     track_frame for processing a single frame.
     """
 
-    def track(
-        self, frames: Iterator[DetectedFrame], id_generator: IdGenerator
-    ) -> Iterator[TrackedFrame]:
+    async def track(
+        self, frames: AsyncIterator[DetectedFrame], id_generator: IdGenerator
+    ) -> AsyncIterator[TrackedFrame]:
         """Process the given stream of Frames,
         yielding TrackedFrames one by one as a lazy stream of TrackedFrames.
 
         Args:
-            frames (Iterator[DetectedFrame]): (lazy) stream of Frames
+            frames (AsyncIterator[DetectedFrame]): (lazy) stream of Frames
                 with untracked Detections.
             id_generator (IdGenerator): provider of new (unique) track ids.
 
         Yields:
-            Iterator[TrackedFrame]: (lazy) stream of TrackedFrames with
+            AsyncIterator[TrackedFrame]: (lazy) stream of TrackedFrames with
                 TrackedDetections
         """
-        for frame in frames:
+        async for frame in frames:
             yield self.track_frame(frame, id_generator)
 
     @abstractmethod
@@ -182,10 +182,10 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         """
         pass
 
-    def track_and_finish(self, containers: Iterator[C]) -> Iterator[F]:
+    async def track_and_finish(self, containers: AsyncIterator[C]) -> AsyncIterator[F]:
         # TODO template method to obtain containers?
 
-        for container in containers:
+        async for container in containers:
 
             # if track is observed in current iteration, update its last observed frame
             new_last_track_frames = self._get_last_track_frames(container)
@@ -215,7 +215,8 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             ]
 
             finished_containers: list[F] = self._finish_containers(ready_containers)
-            yield from finished_containers
+            for finished_container in finished_containers:
+                yield finished_container
 
         # finish remaining containers with pending tracks
         remaining_containers = [c for c, _ in self._unfinished_containers]
@@ -223,7 +224,8 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
 
         finished_containers = self._finish_containers(remaining_containers)
         self._merged_last_track_frame = dict()
-        yield from finished_containers
+        for finished_container in finished_containers:
+            yield finished_container
 
     def _finish_containers(self, containers: list[C]) -> list[F]:
         if len(containers) == 0:
@@ -269,11 +271,12 @@ class UnfinishedFramesBuffer(UnfinishedTracksBuffer[TrackedFrame, FinishedFrame]
         super().__init__(keep_discarded)
         self._tracker = tracker
 
-    def track(
-        self, frames: Iterator[DetectedFrame], id_generator: IdGenerator
-    ) -> Iterator[FinishedFrame]:
+    async def track(
+        self, frames: AsyncIterator[DetectedFrame], id_generator: IdGenerator
+    ) -> AsyncIterator[FinishedFrame]:
         tracked_frame_stream = self._tracker.track(frames, id_generator)
-        return self.track_and_finish(tracked_frame_stream)
+        async for finished_frame in self.track_and_finish(tracked_frame_stream):
+            yield finished_frame
 
     def _get_last_track_frames(self, container: TrackedFrame) -> dict[TrackId, int]:
         return {o: container.no for o in container.observed_tracks}

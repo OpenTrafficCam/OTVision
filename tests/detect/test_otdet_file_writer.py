@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject
 from OTVision.application.config import Config, DetectConfig
 from OTVision.application.detect.current_object_detector_metadata import (
     CurrentObjectDetectorMetadata,
@@ -43,8 +43,9 @@ class TestOtdetFileWriter:
         )
 
     @pytest.mark.parametrize("expected_duration", [EXPECTED_DURATION, None])
+    @pytest.mark.asyncio
     @patch("OTVision.detect.otdet_file_writer.write_json")
-    def test_write_with_expected_duration(
+    async def test_write_with_expected_duration(
         self,
         mock_write_json: Mock,
         expected_duration: timedelta | None,
@@ -68,7 +69,7 @@ class TestOtdetFileWriter:
             save_path_provider=given_save_path_provider,
         )
 
-        target.write(given_event)
+        await target.write(given_event)
 
         expected_detect_config = config.detect
         expected_source_metadata = given_event.source_metadata
@@ -148,5 +149,5 @@ def create_save_path_provider() -> Mock:
     return mock
 
 
-def create_subject() -> Mock:
-    return Mock(spec=Subject[OtdetFileWrittenEvent])
+def create_subject() -> AsyncMock:
+    return AsyncMock(spec=AsyncSubject[OtdetFileWrittenEvent])

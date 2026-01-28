@@ -70,7 +70,8 @@ def test_track_tmp_dir(
     ],
 )
 @pytest.mark.skip(reason="Only used to update test data when tracking changes")
-def test_update_test_data(
+@pytest.mark.asyncio
+async def test_update_test_data(
     test_track_dir: Path,
     test_track_tmp_dir: Path,
     test_case: str,
@@ -91,7 +92,7 @@ def test_update_test_data(
         t_miss_max=t_miss_max,
         overwrite=True,
     )
-    otvision_track.start()
+    await otvision_track.start()
     shutil.copytree(
         test_track_tmp_dir / test_case, test_track_dir / test_case, dirs_exist_ok=True
     )
@@ -113,7 +114,8 @@ def test_update_test_data(
         ("t_miss_max_75", SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75),
     ],
 )
-def test_track_pass(
+@pytest.mark.asyncio
+async def test_track_pass(
     test_track_dir: Path,
     test_track_tmp_dir: Path,
     test_case: str,
@@ -139,7 +141,7 @@ def test_track_pass(
         t_miss_max=t_miss_max,
         overwrite=True,
     )
-    otvision_track.start()
+    await otvision_track.start()
 
     # Get reference tracks file names
     extension = CONFIG["DEFAULT_FILETYPE"]["TRACK"]
@@ -175,7 +177,8 @@ def test_track_pass(
 
 
 @pytest.mark.parametrize("overwrite", [(True), (False)])
-def test_track_overwrite(test_track_tmp_dir: Path, overwrite: bool) -> None:
+@pytest.mark.asyncio
+async def test_track_overwrite(test_track_tmp_dir: Path, overwrite: bool) -> None:
     """Tests if the main function of OTVision/track/track.py properly overwrites
     existing files or not based on the overwrite parameter"""
 
@@ -188,14 +191,14 @@ def test_track_overwrite(test_track_tmp_dir: Path, overwrite: bool) -> None:
     otvision_track = create_otvision_track(
         paths=[test_track_tmp_dir / test_case], overwrite=overwrite
     )
-    otvision_track.start()
+    await otvision_track.start()
     pre_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
 
     # Track all test detections files for a second time and get file statistics
     otvision_track = create_otvision_track(
         paths=[test_track_tmp_dir / test_case], overwrite=overwrite
     )
-    otvision_track.start()
+    await otvision_track.start()
     post_test_file_stats = [file.stat().st_mtime_ns for file in test_tracks_files]
 
     # Check if file statistics are different
@@ -218,13 +221,14 @@ def test_track_overwrite(test_track_tmp_dir: Path, overwrite: bool) -> None:
         ),
     ],
 )
-def test_track_fail_wrong_paths(paths, message) -> None:  # type: ignore
+@pytest.mark.asyncio
+async def test_track_fail_wrong_paths(paths, message) -> None:  # type: ignore
     """Tests if the main function of OTVision/track/track.py raises errors when wrong
     paths are given"""
 
     with pytest.raises(ValueError, match=message):
         otvision_track = create_otvision_track(paths=paths)
-        otvision_track.start()
+        await otvision_track.start()
 
 
 @pytest.mark.parametrize(
@@ -244,7 +248,8 @@ def test_track_fail_wrong_paths(paths, message) -> None:  # type: ignore
         (SIGMA_L, SIGMA_H, SIGMA_IOU, T_MIN, 75.5),
     ],
 )
-def test_track_fail_wrong_parameters(
+@pytest.mark.asyncio
+async def test_track_fail_wrong_parameters(
     test_track_tmp_dir: Path,
     sigma_l: float,
     sigma_h: float,
@@ -267,15 +272,16 @@ def test_track_fail_wrong_parameters(
             t_min=t_min,
             t_miss_max=t_miss_max,
         )
-        otvision_track.start()
+        await otvision_track.start()
 
 
-def test_track_emptyDirAsParam(test_track_tmp_dir: Path) -> None:
+@pytest.mark.asyncio
+async def test_track_emptyDirAsParam(test_track_tmp_dir: Path) -> None:
     empty_dir = test_track_tmp_dir / "empty"
     empty_dir.mkdir()
 
     otvision_track = create_otvision_track(paths=[empty_dir])
-    otvision_track.start()
+    await otvision_track.start()
 
     assert os.listdir(empty_dir) == []
 
