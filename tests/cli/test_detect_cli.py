@@ -233,7 +233,7 @@ class TestDetectCLI:
         expected_config = create_expected_config_from_test_data(test_data)
 
         mock_update_current_config.update.assert_called_once_with(expected_config)
-        mock_otvision_detect.start.assert_called_once()
+        mock_otvision_detect.start.assert_awaited_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     def test_fail_wrong_types_passed_to_detect_cli(
