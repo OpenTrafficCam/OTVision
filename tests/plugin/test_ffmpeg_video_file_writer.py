@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import AsyncIterator, Iterator, Optional
+from typing import Iterator, Optional
 from unittest.mock import Mock, patch
 
 import pytest
@@ -23,6 +23,7 @@ from OTVision.plugin.ffmpeg_video_writer import (
     keep_original_save_location,
 )
 from tests.conftest import YieldFixture
+from tests.utils.asynchronous.iterator import async_frame_generator
 
 FPS = 20
 
@@ -237,11 +238,6 @@ def create_frames_from(images: Iterator[Optional[ndarray]]) -> list[Frame]:
         }
         frame_objects.append(frame_obj)
     return frame_objects
-
-
-async def async_frame_generator(frames: list[Frame]) -> AsyncIterator[Frame]:
-    for frame in frames:
-        yield frame
 
 
 @pytest.fixture
