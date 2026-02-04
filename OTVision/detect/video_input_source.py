@@ -220,6 +220,7 @@ class VideoSource(InputSourceDetect):
                 start_time=start_time,
             )
         )
+        await self.subject_flush.wait_for_all_observers()
 
     def notify_new_video_start_observers(
         self, current_video_file: Path, video_fps: float
