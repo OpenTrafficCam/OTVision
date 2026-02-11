@@ -18,15 +18,10 @@ repos:
     rev: 0.8.11
     hooks:
       - id: uv-lock
-  - repo: local
+  - repo: https://github.com/OpenTrafficCam/dependency-update-pre-commit
+    rev: v0.1.0
     hooks:
-      - id: update-type-stubs
-        name: Check for Type Stubs and Update Config
-        entry: ./update_precommit.py
-        language: system
-        files: ^requirements.*\.txt$
-        stages:
-          - commit
+      - id: update-mypy-dependencies
   - repo: https://github.com/PyCQA/flake8
     rev: 7.1.1
     hooks:
