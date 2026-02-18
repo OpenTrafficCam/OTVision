@@ -22,7 +22,7 @@ class VideoWriter(Filter[Frame, Frame], ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def notify_on_flush_event(self, event: FlushEvent) -> None:
+    async def notify_on_flush_event(self, event: FlushEvent) -> None:
         raise NotImplementedError
 
     @abstractmethod

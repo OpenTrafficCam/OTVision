@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import AsyncIterator
 
 from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.get_current_config import GetCurrentConfig
@@ -21,17 +21,17 @@ class DetectedFrameProducerFactory:
         self._detected_frame_buffer = detected_frame_buffer
         self._get_current_config = get_current_config
 
-    def create(self) -> Iterator[DetectedFrame]:
+    def create(self) -> AsyncIterator[DetectedFrame]:
         if self._get_current_config.get().detect.write_video:
             return self.__create_with_video_writer()
         return self.__create_without_video_writer()
 
-    def __create_without_video_writer(self) -> Iterator[DetectedFrame]:
+    def __create_without_video_writer(self) -> AsyncIterator[DetectedFrame]:
         return self._detected_frame_buffer.filter(
             self._detection_filter.filter(self._input_source.produce())
         )
 
-    def __create_with_video_writer(self) -> Iterator[DetectedFrame]:
+    def __create_with_video_writer(self) -> AsyncIterator[DetectedFrame]:
         return self._detected_frame_buffer.filter(
             self._detection_filter.filter(
                 self._video_writer_filter.filter(self._input_source.produce())

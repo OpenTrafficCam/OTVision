@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from OTVision.abstraction.observer import Observer, Subject
+from OTVision.abstraction.observer import AsyncObserver, AsyncSubject
 from OTVision.application.buffer import Buffer
 from OTVision.application.config import Config, TrackConfig
 from OTVision.application.configure_logger import logger
@@ -45,7 +45,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
 
     def __init__(
         self,
-        subject: Subject[OttrkFileWrittenEvent],
+        subject: AsyncSubject[OttrkFileWrittenEvent],
         builder: OttrkBuilder,
         get_current_config: GetCurrentConfig,
         get_current_tracking_run_id: GetCurrentTrackingRunId,
@@ -62,7 +62,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         self._ottrk_unfinished_tracks: set[TrackId] = set()
         self._current_output_file: Path | None = None
 
-    def on_flush(self, event: OtdetFileWrittenEvent) -> None:
+    async def on_flush(self, event: OtdetFileWrittenEvent) -> None:
         tracked_frames = self._get_buffered_elements()
         if not tracked_frames:
             return
@@ -100,7 +100,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
     def reset(self) -> None:
         self._reset_buffer()
 
-    def buffer(self, to_buffer: TrackedFrame) -> None:
+    async def buffer(self, to_buffer: TrackedFrame) -> None:
         self._buffer.append(to_buffer.without_image())
 
         if self._in_writing_state:
@@ -113,11 +113,11 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             )
             logger().warning(f"Unfinished tracks: {self._ottrk_unfinished_tracks}")
             if self.build_condition_fulfilled:
-                self._create_ottrk()
+                await self._create_ottrk()
 
-    def _create_ottrk(self) -> None:
+    async def _create_ottrk(self) -> None:
         ottrk_data = self._builder.build()
-        self.write(ottrk_data)
+        await self.write(ottrk_data)
         self.full_reset()
 
     def full_reset(self) -> None:
@@ -126,7 +126,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         self._ottrk_unfinished_tracks = set()
         self._current_output_file = None
 
-    def write(self, ottrk: dict) -> None:
+    async def write(self, ottrk: dict) -> None:
         current_output_file = self.current_output_file
         write_json(
             dict_to_write=ottrk,
@@ -134,13 +134,15 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             filetype=self.config.filetypes.track,
             overwrite=True,
         )
-        self._notify_ottrk_file_written(save_location=current_output_file)
+        await self._notify_ottrk_file_written(save_location=current_output_file)
 
-    def force_flush(self, _: Any) -> None:
-        self._create_ottrk()
+    async def force_flush(self, _: Any) -> None:
+        await self._create_ottrk()
 
-    def register_observers(self, observer: Observer[OttrkFileWrittenEvent]) -> None:
+    def register_observers(
+        self, observer: AsyncObserver[OttrkFileWrittenEvent]
+    ) -> None:
         self._subject.register(observer)
 
-    def _notify_ottrk_file_written(self, save_location: Path) -> None:
-        self._subject.notify(OttrkFileWrittenEvent(save_location=save_location))
+    async def _notify_ottrk_file_written(self, save_location: Path) -> None:
+        await self._subject.notify(OttrkFileWrittenEvent(save_location=save_location))

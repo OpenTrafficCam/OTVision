@@ -3,7 +3,7 @@ from enum import IntEnum, StrEnum
 from pathlib import Path
 from subprocess import PIPE, Popen, TimeoutExpired
 from threading import Thread
-from typing import Callable, Iterator
+from typing import AsyncIterator, Callable
 
 import ffmpeg
 from numpy import ndarray
@@ -242,7 +242,7 @@ class FfmpegVideoWriter(VideoWriter):
 
         self.__current_video_metadata = None
 
-    def notify_on_flush_event(self, event: FlushEvent) -> None:
+    async def notify_on_flush_event(self, event: FlushEvent) -> None:
         self.close()
 
     def notify_on_new_video_start(self, event: NewVideoStartEvent) -> None:
@@ -282,8 +282,8 @@ class FfmpegVideoWriter(VideoWriter):
         log.info(f"Writing new video file to '{save_file}'.")
         return process
 
-    def filter(self, pipe: Iterator[Frame]) -> Iterator[Frame]:
-        for frame in pipe:
+    async def filter(self, pipe: AsyncIterator[Frame]) -> AsyncIterator[Frame]:
+        async for frame in pipe:
             if (image := frame.get(FrameKeys.data)) is not None:
                 self.write(image)
             yield frame

@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject, Subject
 from OTVision.application.config import StreamConfig
 from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.builder import DetectBuilder
@@ -33,7 +33,7 @@ class RtspBasedDetectBuilder(DetectBuilder):
     @cached_property
     def input_source(self) -> RtspInputSource:
         return RtspInputSource(
-            subject_flush=Subject[FlushEvent](),
+            subject_flush=AsyncSubject[FlushEvent](),
             subject_new_video_start=Subject[NewVideoStartEvent](),
             datetime_provider=self.datetime_provider,
             frame_counter=Counter(),

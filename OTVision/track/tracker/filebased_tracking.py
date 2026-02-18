@@ -1,9 +1,9 @@
 import logging
 from pathlib import Path
-from typing import Callable, Iterator
+from typing import AsyncIterator, Callable
 
 from more_itertools import peekable
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
 from OTVision.application.config import DEFAULT_FILETYPE, OVERWRITE, TRACK
 from OTVision.config import CONFIG
@@ -40,7 +40,7 @@ class ChunkBasedTracker(Tracker):
     ) -> TrackedFrame:
         return self._tracker.track_frame(frames, id_generator)
 
-    def track_chunk(
+    async def track_chunk(
         self,
         chunk: FrameChunk,
         is_last_chunk: bool,
@@ -50,16 +50,16 @@ class ChunkBasedTracker(Tracker):
             chunk.frames, desc="track Frame", total=len(chunk.frames), leave=False
         )
 
-        tracked_frames = self.track(iter(frames_progress), id_generator)
+        tracked_frames = self.track(frames_progress, id_generator)
         return TrackedChunk(
             file=chunk.file,
-            frames=list(tracked_frames),
+            frames=[frame async for frame in tracked_frames],
             metadata=chunk.metadata,
             is_last_chunk=is_last_chunk,
             frame_group_id=chunk.frame_group_id,
         )
 
-    def track_file(
+    async def track_file(
         self,
         file: Path,
         frame_group: FrameGroup,
@@ -68,7 +68,7 @@ class ChunkBasedTracker(Tracker):
         frame_offset: int = 0,
     ) -> TrackedChunk:
         chunk = self._chunk_parser.parse(file, frame_group, frame_offset)
-        return self.track_chunk(chunk, is_last_file, id_generator)
+        return await self.track_chunk(chunk, is_last_file, id_generator)
 
 
 IdGeneratorFactory = Callable[[FrameGroup], IdGenerator]
@@ -91,10 +91,12 @@ class GroupedFilesTracker(ChunkBasedTracker):
         self._overwrite = overwrite
         self._file_type = file_type
 
-    def track_group(self, group: FrameGroup) -> Iterator[TrackedChunk]:
+    async def track_group(self, group: FrameGroup) -> AsyncIterator[TrackedChunk]:
         if self.check_skip_due_to_existing_output_files(group):
             log.warning(f"Skip FrameGroup {group.id}")
-            yield from []  # TODO how to create empty generator stream?
+            empty: list[TrackedChunk] = []
+            for item in empty:
+                yield item
 
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group
@@ -113,17 +115,20 @@ class GroupedFilesTracker(ChunkBasedTracker):
             chunk = self._chunk_parser.parse(file, group, frame_offset)
             frame_offset = chunk.frames[-1].no + 1  # assuming frames are sorted by no
 
-            tracked_chunk = self.track_chunk(chunk, is_last, id_generator)
+            tracked_chunk = await self.track_chunk(chunk, is_last, id_generator)
             yield tracked_chunk
 
-    def group_and_track_files(self, files: list[Path]) -> Iterator[TrackedChunk]:
+    async def group_and_track_files(
+        self, files: list[Path]
+    ) -> AsyncIterator[TrackedChunk]:
         processed = self._group_parser.process_all(files)
 
         processed_progress = tqdm(
             processed, desc="track FrameGroup", total=len(processed), leave=False
         )
         for group in processed_progress:
-            yield from self.track_group(group)
+            async for tracked_chunk in self.track_group(group):
+                yield tracked_chunk
 
     def check_skip_due_to_existing_output_files(self, group: FrameGroup) -> bool:
         if not self._overwrite and group.check_any_output_file_exists(self._file_type):
@@ -151,18 +156,20 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
         super().__init__(keep_discarded)
         self.tracker = tracker
 
-    def group_and_track(self, files: list[Path]) -> Iterator[FinishedChunk]:
+    async def group_and_track(self, files: list[Path]) -> AsyncIterator[FinishedChunk]:
         processed = self.tracker._group_parser.process_all(files)
 
         processed_progress = tqdm(
             processed, desc="track FrameGroup", total=len(processed), leave=False
         )
         for group in processed_progress:
-            yield from self.track_group(group)
+            async for finished_chunk in self.track_group(group):
+                yield finished_chunk
 
-    def track_group(self, group: FrameGroup) -> Iterator[FinishedChunk]:
+    async def track_group(self, group: FrameGroup) -> AsyncIterator[FinishedChunk]:
         tracked_chunk_stream = self.tracker.track_group(group)
-        return self.track_and_finish(tracked_chunk_stream)
+        async for finished_chunk in self.track_and_finish(tracked_chunk_stream):
+            yield finished_chunk
 
     def _get_last_track_frames(self, container: TrackedChunk) -> dict[TrackId, FrameNo]:
         return container.last_track_frame

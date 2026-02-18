@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from OTVision.abstraction.observer import Observable, Subject
+from OTVision.abstraction.observer import AsyncObservable, AsyncSubject
 from OTVision.application.buffer import Buffer
 from OTVision.domain.frame import DetectedFrame
 
@@ -51,25 +51,25 @@ class DetectedFrameBufferEvent:
 
 
 class DetectedFrameBuffer(
-    Buffer[DetectedFrame, FlushEvent], Observable[DetectedFrameBufferEvent]
+    Buffer[DetectedFrame, FlushEvent], AsyncObservable[DetectedFrameBufferEvent]
 ):
-    def __init__(self, subject: Subject[DetectedFrameBufferEvent]) -> None:
+    def __init__(self, subject: AsyncSubject[DetectedFrameBufferEvent]) -> None:
         Buffer.__init__(self)
-        Observable.__init__(self, subject)
+        AsyncObservable.__init__(self, subject)
 
-    def on_flush(self, event: FlushEvent) -> None:
+    async def on_flush(self, event: FlushEvent) -> None:
         buffered_elements = self._get_buffered_elements()
-        self._notify_observers(buffered_elements, event)
+        await self._notify_observers(buffered_elements, event)
         self._reset_buffer()
 
-    def _notify_observers(
+    async def _notify_observers(
         self, elements: list[DetectedFrame], event: FlushEvent
     ) -> None:
-        self._subject.notify(
+        await self._subject.notify(
             DetectedFrameBufferEvent(
                 source_metadata=event.source_metadata, frames=elements
             )
         )
 
-    def buffer(self, to_buffer: DetectedFrame) -> None:
+    async def buffer(self, to_buffer: DetectedFrame) -> None:
         self._buffer.append(to_buffer.without_image())

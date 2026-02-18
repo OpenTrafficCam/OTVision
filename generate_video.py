@@ -19,6 +19,7 @@ OTVision script to call the detect main with arguments parsed from command line
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 
 from OTVision.plugin.generate_video import GenerateVideoBuilder
 
@@ -41,7 +42,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     try:
         builder.update_current_config.update(config)
         generate_video = builder.build_generate_video()
-        generate_video.generate()
+        asyncio.run(generate_video.generate())
 
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")

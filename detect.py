@@ -20,6 +20,7 @@ OTVision script to call the detect main with arguments parsed from command line
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import asyncio
 from pathlib import Path
 
 from OTVision.application.config import Config
@@ -27,7 +28,9 @@ from OTVision.detect.file_based_detect_builder import FileBasedDetectBuilder
 from OTVision.helpers.files import check_if_all_paths_exist
 
 
-def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
+async def async_main(
+    argv: list[str] | None = None,
+) -> None:  # sourcery skip: assign-if-exp
     builder = FileBasedDetectBuilder(argv=argv)
     cli_args = builder.detect_cli_parser.parse()
     config = builder.update_detect_config_with_ci_args.update(
@@ -45,7 +48,7 @@ def main(argv: list[str] | None = None) -> None:  # sourcery skip: assign-if-exp
     try:
         builder.update_current_config.update(config)
         detect = builder.build()
-        detect.start()
+        await detect.start()
 
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")
@@ -65,6 +68,10 @@ def _extract_paths(config: Config) -> list[Path]:
         "No paths have been passed as command line args."
         "No paths have been defined in the user config."
     )
+
+
+def main(argv: list[str] | None = None) -> None:
+    asyncio.run(async_main(argv))
 
 
 if __name__ == "__main__":

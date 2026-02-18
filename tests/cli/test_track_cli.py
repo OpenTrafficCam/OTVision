@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Callable
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -162,6 +162,7 @@ class TestTrackCLI:
         track_cli: Callable,
     ) -> None:
         mock_otvision_track = Mock()
+        mock_otvision_track.start = AsyncMock()
         mock_build.return_value = mock_otvision_track
 
         command = [
@@ -182,7 +183,7 @@ class TestTrackCLI:
         mock_update_current_config.update.assert_called_once_with(
             config=expected_config
         )
-        mock_otvision_track.start.assert_called_once()
+        mock_otvision_track.start.assert_awaited_once()
 
     @pytest.mark.parametrize(argnames="test_fail_data", argvalues=TEST_FAIL_DATA)
     @patch("track.TrackBuilder.build")

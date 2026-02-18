@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import AsyncIterator
 
 
 class Filter[IN, OUT](ABC):
@@ -14,14 +14,14 @@ class Filter[IN, OUT](ABC):
     """
 
     @abstractmethod
-    def filter(self, pipe: Iterator[IN]) -> Iterator[OUT]:
+    def filter(self, pipe: AsyncIterator[IN]) -> AsyncIterator[OUT]:
         """Process elements from the input pipe and produce output elements.
 
         Args:
-            pipe (Iterator[IN]): Input stream of elements to be processed.
+            pipe (AsyncIterator[IN]): Input stream of elements to be processed.
 
         Returns:
-            Iterator[OUT]: Output stream of processed elements.
+            AsyncIterator[OUT]: Output stream of processed elements.
 
         """
 

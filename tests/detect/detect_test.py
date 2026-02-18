@@ -8,6 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 from jsonschema import validate
 
 from OTVision import dataformat
@@ -236,8 +237,8 @@ class TestDetect:
     def otvision_detect(self, detect_builder: DetectBuilder) -> OTVisionVideoDetect:
         return detect_builder.build()
 
-    @pytest.fixture(scope="class")
-    def result_cyclist_otdet(
+    @pytest_asyncio.fixture(scope="class", loop_scope="class")
+    async def result_cyclist_otdet(
         self,
         otvision_detect: OTVisionVideoDetect,
         cyclist_mp4: Path,
@@ -251,11 +252,12 @@ class TestDetect:
                 expected_duration=EXPECTED_DURATION,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
 
         return detect_test_tmp_dir / f"{cyclist_mp4.stem}.otdet"
 
-    def test_detect_emptyDirAsParam(
+    @pytest.mark.asyncio
+    async def test_detect_emptyDirAsParam(
         self,
         otvision_detect: OTVisionVideoDetect,
         detect_test_tmp_dir: Path,
@@ -270,24 +272,30 @@ class TestDetect:
                 expected_duration=EXPECTED_DURATION,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
 
         assert os.listdir(empty_dir) == []
 
-    def test_detect_create_otdet(self, result_cyclist_otdet: Path) -> None:
+    @pytest.mark.asyncio(loop_scope="class")
+    async def test_detect_create_otdet(self, result_cyclist_otdet: Path) -> None:
         assert result_cyclist_otdet.exists()
 
-    def test_detect_otdet_valid_json(self, result_cyclist_otdet: Path) -> None:
+    @pytest.mark.asyncio(loop_scope="class")
+    async def test_detect_otdet_valid_json(self, result_cyclist_otdet: Path) -> None:
         read_bz2_otdet(result_cyclist_otdet)
 
-    def test_detect_otdet_matches_schema(self, result_cyclist_otdet: Path) -> None:
+    @pytest.mark.asyncio(loop_scope="class")
+    async def test_detect_otdet_matches_schema(
+        self, result_cyclist_otdet: Path
+    ) -> None:
         assert result_cyclist_otdet.exists()
 
         result_cyclist_otdet_json = read_bz2_otdet(result_cyclist_otdet)
         assert result_cyclist_otdet
         validate(result_cyclist_otdet_json, otdet_schema)
 
-    def test_detect_metadata_matches(
+    @pytest.mark.asyncio(loop_scope="class")
+    async def test_detect_metadata_matches(
         self, result_cyclist_otdet: Path, default_cyclist_otdet: Path
     ) -> None:
         result_cyclist_metadata = remove_ignored_metadata(
@@ -320,7 +328,8 @@ class TestDetect:
         ] = expected_model
         return actual_cyclist_metadata
 
-    def test_detect_error_raised_on_wrong_filetype(
+    @pytest.mark.asyncio
+    async def test_detect_error_raised_on_wrong_filetype(
         self,
         otvision_detect: OTVisionVideoDetect,
         detect_test_tmp_dir: Path,
@@ -338,11 +347,12 @@ class TestDetect:
                 expected_duration=EXPECTED_DURATION,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
 
         assert os.listdir(detect_error_wrong_filetype_dir) == [video_file_name]
 
-    def test_detect_bboxes_normalized(
+    @pytest.mark.asyncio
+    async def test_detect_bboxes_normalized(
         self,
         otvision_detect: OTVisionVideoDetect,
         truck_mp4: Path,
@@ -359,7 +369,7 @@ class TestDetect:
                 expected_duration=EXPECTED_DURATION,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
 
         otdet_dict = read_bz2_otdet(otdet_file)
 
@@ -373,7 +383,8 @@ class TestDetect:
                 assert bbox.conf >= self.conf
         otdet_file.unlink()
 
-    def test_detect_bboxes_denormalized(
+    @pytest.mark.asyncio
+    async def test_detect_bboxes_denormalized(
         self,
         otvision_detect: OTVisionVideoDetect,
         truck_mp4: Path,
@@ -389,7 +400,7 @@ class TestDetect:
                 normalized=False,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         frames = [
@@ -406,8 +417,9 @@ class TestDetect:
         assert denormalized_bbox_found
         otdet_file.unlink()
 
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("conf", [0.0, 0.1, 0.5, 0.9, 1.0])
-    def test_detect_conf_bbox_above_thresh(
+    async def test_detect_conf_bbox_above_thresh(
         self,
         otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
@@ -424,7 +436,7 @@ class TestDetect:
                 confidence=conf,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
         otdet_dict = read_bz2_otdet(otdet_file)
 
         detections = [
@@ -436,8 +448,9 @@ class TestDetect:
                 assert bbox.conf >= conf
         otdet_file.unlink()
 
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("overwrite", [True, False])
-    def test_detect_overwrite(
+    async def test_detect_overwrite(
         self,
         otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
@@ -454,7 +467,7 @@ class TestDetect:
                 overwrite=True,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
 
         first_mtime = otdet_file.stat().st_mtime_ns
         update_current_config.update(
@@ -465,7 +478,7 @@ class TestDetect:
                 overwrite=overwrite,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
         second_mtime = otdet_file.stat().st_mtime_ns
 
         if overwrite:
@@ -474,13 +487,14 @@ class TestDetect:
             assert first_mtime == second_mtime
         otdet_file.unlink()
 
-    def test_detect_fulfill_minimum_detection_requirements(
+    @pytest.mark.asyncio
+    async def test_detect_fulfill_minimum_detection_requirements(
         self,
         otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
         cyclist_mp4: Path,
     ) -> None:
-        class_counts = self._get_detection_counts_for(
+        class_counts = await self._get_detection_counts_for(
             otvision_detect, update_current_config, cyclist_mp4, CYCLIST_VIDEO_LENGTH
         )
 
@@ -491,7 +505,8 @@ class TestDetect:
         assert class_counts[PERSON] <= PERSON_UPPER_LIMIT
         assert class_counts[BICYCLE] <= BICYCLE_UPPER_LIMIT
 
-    def test_detection_in_rotated_video(
+    @pytest.mark.asyncio
+    async def test_detection_in_rotated_video(
         self,
         otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
@@ -500,7 +515,7 @@ class TestDetect:
         test_data_dir: Path,
         test_data_tmp_dir: Path,
     ) -> None:
-        rotated_counts = self._get_detection_counts_for(
+        rotated_counts = await self._get_detection_counts_for(
             otvision_detect,
             update_current_config,
             rotated_cyclist_mp4,
@@ -514,7 +529,7 @@ class TestDetect:
         assert rotated_counts[PERSON] <= PERSON_UPPER_LIMIT
         assert rotated_counts[BICYCLE] <= BICYCLE_UPPER_LIMIT
 
-    def _get_detection_counts_for(
+    async def _get_detection_counts_for(
         self,
         otvision_detect: OTVisionVideoDetect,
         update_current_config: UpdateCurrentConfig,
@@ -530,7 +545,7 @@ class TestDetect:
                 overwrite=True,
             )
         )
-        otvision_detect.start()
+        await otvision_detect.start()
         result_otdet = converted_video.parent / converted_video.with_suffix(".otdet")
         otdet_dict = read_bz2_otdet(result_otdet)
         frames = [

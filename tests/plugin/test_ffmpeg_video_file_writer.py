@@ -23,6 +23,7 @@ from OTVision.plugin.ffmpeg_video_writer import (
     keep_original_save_location,
 )
 from tests.conftest import YieldFixture
+from tests.utils.asynchronous.iterator import async_frame_generator
 
 FPS = 20
 
@@ -65,7 +66,8 @@ class TestFfmpegVideoFileWriter:
         target.close()
         assert target.is_closed
 
-    def test_notify_on_flush_event(
+    @pytest.mark.asyncio
+    async def test_notify_on_flush_event(
         self, target: FfmpegVideoWriter, cyclist_mp4: Path, save_location: Path
     ) -> None:
         given = create_given_video(cyclist_mp4, save_location)
@@ -74,7 +76,7 @@ class TestFfmpegVideoFileWriter:
             given.save_location, width=given.width, height=given.height, fps=FPS
         )
         assert not target.is_closed
-        target.notify_on_flush_event(Mock())
+        await target.notify_on_flush_event(Mock())
         assert target.is_closed
 
     @patch("OTVision.plugin.ffmpeg_video_writer.FfmpegVideoWriter.open")
@@ -93,7 +95,8 @@ class TestFfmpegVideoFileWriter:
             given_event.output, given_event.width, given_event.height, given_event.fps
         )
 
-    def test_filter(
+    @pytest.mark.asyncio
+    async def test_filter(
         self,
         target: FfmpegVideoWriter,
         cyclist_mp4: Path,
@@ -105,7 +108,9 @@ class TestFfmpegVideoFileWriter:
         given_frames = create_frames_from(given_video.images)
 
         target.notify_on_new_video_start(given_event)
-        actual = list(target.filter(frame for frame in given_frames))
+        actual = []
+        async for frame in target.filter(async_frame_generator(given_frames)):
+            actual.append(frame)
 
         assert actual == given_frames
         assert expected_save_location.exists()
@@ -113,14 +118,15 @@ class TestFfmpegVideoFileWriter:
         assert target.is_closed is False  # Writer should still be open
 
         # Close the writer to finalize the video file
-        target.notify_on_flush_event(Mock())
+        await target.notify_on_flush_event(Mock())
         assert target.is_closed
 
         # Now that the writer is closed, we can read frames from the output file
         actual_frames = get_frames_from(expected_save_location)
         assert len(actual_frames) == len(given_frames)
 
-    def test_filter_drops_frame_without_data(
+    @pytest.mark.asyncio
+    async def test_filter_drops_frame_without_data(
         self,
         target: FfmpegVideoWriter,
         cyclist_mp4: Path,
@@ -136,14 +142,16 @@ class TestFfmpegVideoFileWriter:
         )
 
         target.notify_on_new_video_start(given_event)
-        actual = list(target.filter(frame for frame in given_frames))
+        actual = []
+        async for frame in target.filter(async_frame_generator(given_frames)):
+            actual.append(frame)
 
         assert actual == given_frames
         assert expected_save_location.exists()
         assert target.is_closed is False  # Writer should still be open
 
         # Close the writer to finalize the video file
-        target.notify_on_flush_event(Mock())
+        await target.notify_on_flush_event(Mock())
         assert target.is_closed
 
         # Now that the writer is closed, we can check the output file

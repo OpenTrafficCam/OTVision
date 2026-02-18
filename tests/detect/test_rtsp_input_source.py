@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, call, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
@@ -77,10 +77,11 @@ class Given:
 
 
 class TestRtspInputSource:
+    @pytest.mark.asyncio
     @patch(RTSP_INPUT_SOURCE_MODULE + ".is_connection_available", return_value=True)
     @patch(RTSP_INPUT_SOURCE_MODULE + ".convert_frame_to_rgb")
     @patch(RTSP_INPUT_SOURCE_MODULE + ".VideoCapture")
-    def test_produce(
+    async def test_produce(
         self,
         mock_video_capture: Mock,
         mock_convert_frame_to_rgb: Mock,
@@ -90,13 +91,13 @@ class TestRtspInputSource:
         target = create_target(given)
         generator = target.produce()
         actual = list()
-        actual.append(next(generator))
-        actual.append(next(generator))
-        actual.append(next(generator))
-        actual.append(next(generator))
+        actual.append(await anext(generator))
+        actual.append(await anext(generator))
+        actual.append(await anext(generator))
+        actual.append(await anext(generator))
         target.stop()
-        with pytest.raises(StopIteration):
-            next(generator)
+        with pytest.raises(StopAsyncIteration):
+            await anext(generator)
 
         assert actual == [
             Frame(
@@ -211,7 +212,7 @@ class TestRtspInputSource:
 
 def create_given(video_capture: Mock, convert_frame_to_rgb: Mock) -> Given:
     return Given(
-        subject_flush_event=Mock(),
+        subject_flush_event=AsyncMock(),
         subject_new_video_start=Mock(),
         datetime_provider=Mock(),
         frame_counter=Counter(),

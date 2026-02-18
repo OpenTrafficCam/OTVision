@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject, Subject
 from OTVision.application.event.new_video_start import NewVideoStartEvent
 from OTVision.detect.builder import DetectBuilder
 from OTVision.detect.detected_frame_buffer import FlushEvent
@@ -19,7 +19,7 @@ class FileBasedDetectBuilder(DetectBuilder):
     @cached_property
     def input_source(self) -> VideoSource:
         return VideoSource(
-            subject_flush=Subject[FlushEvent](),
+            subject_flush=AsyncSubject[FlushEvent](),
             subject_new_video_start=Subject[NewVideoStartEvent](),
             get_current_config=self.get_current_config,
             frame_rotator=self.frame_rotator,

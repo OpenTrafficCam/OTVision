@@ -19,6 +19,7 @@ OTVision script to call the track main with arguments parsed from command line
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 
 from OTVision.track.builder import TrackBuilder
 
@@ -41,7 +42,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         builder.update_current_config.update(config=config)
         track = builder.build()
-        track.start()
+        asyncio.run(track.start())
 
     except FileNotFoundError:
         log.exception(f"One of the following files cannot be found: {cli_args.paths}")

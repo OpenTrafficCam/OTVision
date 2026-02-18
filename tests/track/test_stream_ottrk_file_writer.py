@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -118,14 +118,15 @@ class TestStreamOttrkFileWriter:
         # Then: It should return the set path
         assert actual_path == TEST_OUTPUT_PATH
 
-    def test_buffer_adds_frame_without_image(self) -> None:
+    @pytest.mark.asyncio
+    async def test_buffer_adds_frame_without_image(self) -> None:
         # Given: A StreamOttrkFileWriter and a tracked frame
         given = create_given()
         target = create_target(given)
         tracked_frame = create_tracked_frame()
 
         # When: Buffering the tracked frame
-        target.buffer(tracked_frame)
+        await target.buffer(tracked_frame)
 
         # Then: The frame should be added to buffer without image
         buffered_elements = target._get_buffered_elements()
@@ -133,7 +134,8 @@ class TestStreamOttrkFileWriter:
         tracked_frame.without_image.assert_called_once()
 
     @patch("OTVision.track.stream_ottrk_file_writer.write_json")
-    def test_buffer_processes_tracks_when_in_writing_state(
+    @pytest.mark.asyncio
+    async def test_buffer_processes_tracks_when_in_writing_state(
         self, mock_write_json: Mock
     ) -> None:
         # Given: A StreamOttrkFileWriter in writing state with unfinished tracks
@@ -151,7 +153,7 @@ class TestStreamOttrkFileWriter:
         )
 
         # When: Buffering a tracked frame
-        target.buffer(tracked_frame)
+        await target.buffer(tracked_frame)
 
         # Then: It should process finished and discarded tracks
         given.builder.finish_tracks.assert_called_once_with(
@@ -165,7 +167,8 @@ class TestStreamOttrkFileWriter:
         mock_write_json.assert_not_called()
 
     @patch("OTVision.track.stream_ottrk_file_writer.write_json")
-    def test_buffer_builds_and_writes_when_condition_fulfilled(
+    @pytest.mark.asyncio
+    async def test_buffer_builds_and_writes_when_condition_fulfilled(
         self, mock_write_json: Mock
     ) -> None:
         # Given: A StreamOttrkFileWriter in writing state with unfinished tracks
@@ -181,7 +184,7 @@ class TestStreamOttrkFileWriter:
         )
 
         # When: Buffering a tracked frame
-        target.buffer(tracked_frame)
+        await target.buffer(tracked_frame)
 
         # Then: It should process finished and discarded tracks
         given.builder.finish_tracks.assert_called_once_with(
@@ -200,14 +203,15 @@ class TestStreamOttrkFileWriter:
         )
         assert target._in_writing_state is False
 
-    def test_on_flush_returns_early_when_no_tracked_frames(self) -> None:
+    @pytest.mark.asyncio
+    async def test_on_flush_returns_early_when_no_tracked_frames(self) -> None:
         # Given: A StreamOttrkFileWriter with no buffered frames
         given = create_given()
         target = create_target(given)
         event = create_otdet_file_written_event()
 
         # When: Calling on_flush
-        target.on_flush(event)
+        await target.on_flush(event)
 
         # Then: It should return early without processing
         given.save_path_provider.provide.assert_not_called()
@@ -216,7 +220,8 @@ class TestStreamOttrkFileWriter:
         given.builder.build.assert_not_called()
         assert target._in_writing_state is False
 
-    def test_on_flush_sets_writing_state_and_configures_builder(self) -> None:
+    @pytest.mark.asyncio
+    async def test_on_flush_sets_writing_state_and_configures_builder(self) -> None:
         # Given: A StreamOttrkFileWriter with buffered frames
         given = create_given()
         target = create_target(given)
@@ -227,12 +232,12 @@ class TestStreamOttrkFileWriter:
             discarded_tracks={TRACK_ID_3},
             finished_tracks={TRACK_ID_4},
         )
-        target.buffer(first_tracked_frame)
-        target.buffer(last_tracked_frame)
+        await target.buffer(first_tracked_frame)
+        await target.buffer(last_tracked_frame)
         event = create_otdet_file_written_event()
 
         # When: Calling on_flush
-        target.on_flush(event)
+        await target.on_flush(event)
 
         # Then: It should set up writing state and configure builder
         assert target._in_writing_state is True
@@ -252,16 +257,17 @@ class TestStreamOttrkFileWriter:
         )
         assert target._ottrk_unfinished_tracks == {TRACK_ID_2}
 
-    def test_on_flush_creates_correct_ottrk_builder_config(self) -> None:
+    @pytest.mark.asyncio
+    async def test_on_flush_creates_correct_ottrk_builder_config(self) -> None:
         # Given: A StreamOttrkFileWriter with buffered frames
         given = create_given()
         target = create_target(given)
         tracked_frame = create_tracked_frame()
-        target.buffer(tracked_frame)
+        await target.buffer(tracked_frame)
         event = create_otdet_file_written_event()
 
         # When: Calling on_flush
-        target.on_flush(event)
+        await target.on_flush(event)
 
         # Then: It should create correct builder config
         call_args = given.builder.set_config.call_args[0][0]
@@ -276,13 +282,14 @@ class TestStreamOttrkFileWriter:
         assert call_args.tracking_run_id == TEST_TRACKING_RUN_ID
         assert call_args.frame_group == STREAMING_FRAME_GROUP_ID
 
-    def test_reset_clears_buffer(self) -> None:
+    @pytest.mark.asyncio
+    async def test_reset_clears_buffer(self) -> None:
         """Verify that reset clears the buffer."""
         # Given: A StreamOttrkFileWriter with buffered data
         given = create_given()
         target = create_target(given)
         tracked_frame = create_tracked_frame()
-        target.buffer(tracked_frame)
+        await target.buffer(tracked_frame)
 
         # When: Calling reset
         target.reset()
@@ -291,7 +298,8 @@ class TestStreamOttrkFileWriter:
         assert len(target._get_buffered_elements()) == 0
 
     @patch("OTVision.track.stream_ottrk_file_writer.write_json")
-    def test_write_calls_write_json_with_correct_parameters(
+    @pytest.mark.asyncio
+    async def test_write_calls_write_json_with_correct_parameters(
         self, mock_write_json: Mock
     ) -> None:
         """Verify that write method calls write_json with correct parameters."""
@@ -302,7 +310,7 @@ class TestStreamOttrkFileWriter:
         ottrk_data = {"test": "data"}
 
         # When: Calling write
-        target.write(ottrk_data)
+        await target.write(ottrk_data)
 
         # Then: It should call write_json with correct parameters
         mock_write_json.assert_called_once_with(
@@ -326,7 +334,7 @@ class Given:
     get_current_tracking_run_id: Mock
     save_path_provider: Mock
     config: Mock
-    subject: Mock
+    subject: AsyncMock
 
 
 def create_given() -> Given:
@@ -363,7 +371,7 @@ def create_given() -> Given:
         get_current_tracking_run_id=get_current_tracking_run_id,
         save_path_provider=save_path_provider,
         config=config,
-        subject=Mock(),
+        subject=AsyncMock(),
     )
 
 

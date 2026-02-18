@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import cached_property
 
-from OTVision.abstraction.observer import Subject
+from OTVision.abstraction.observer import AsyncSubject
 from OTVision.application.config import Config, DetectConfig
 from OTVision.application.config_parser import ConfigParser
 from OTVision.application.configure_logger import ConfigureLogger
@@ -127,7 +127,7 @@ class DetectBuilder(ABC):
     @cached_property
     def otdet_file_writer(self) -> OtdetFileWriter:
         return OtdetFileWriter(
-            subject=Subject[OtdetFileWrittenEvent](),
+            subject=AsyncSubject[OtdetFileWrittenEvent](),
             builder=self.otdet_builder,
             get_current_config=self.get_current_config,
             current_object_detector_metadata=self.current_object_detector_metadata,
@@ -147,7 +147,7 @@ class DetectBuilder(ABC):
 
     @cached_property
     def detected_frame_buffer(self) -> DetectedFrameBuffer:
-        return DetectedFrameBuffer(subject=Subject[DetectedFrameBufferEvent]())
+        return DetectedFrameBuffer(subject=AsyncSubject[DetectedFrameBufferEvent]())
 
     @cached_property
     def detected_frame_producer(self) -> DetectedFrameProducer:
