@@ -79,6 +79,9 @@ class FinishedTracksExporter(ABC, Generic[F]):
 
     @staticmethod
     def reindex(det_dicts: list[dict]) -> list[dict]:
+        if len(det_dicts) == 0:
+            return []
+
         min_frame_no = min(det[FRAME] for det in det_dicts)
 
         det_dicts_progress = tqdm(
@@ -91,9 +94,6 @@ class FinishedTracksExporter(ABC, Generic[F]):
             {**det, **{FRAME: det[FRAME] - min_frame_no + 1}}
             for det in det_dicts_progress
         ]
-
-        if len(reindexed_dets) == 0:
-            return []
 
         if len({detection[INPUT_FILE_PATH] for detection in reindexed_dets}) > 1:
             raise ValueError("Expect detections from only a single source file")
