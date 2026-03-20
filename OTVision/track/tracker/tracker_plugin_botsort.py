@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 import types
 from typing import Any, Protocol, TypedDict, cast
 
 import numpy as np
 from numpy.typing import NDArray
 
+from OTVision import dataformat
 from OTVision.application.config import TrackConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.domain.detection import TrackId, TrackedDetection
 from OTVision.domain.frame import DetectedFrame, TrackedFrame
+from OTVision.helpers.files import read_json_bz2_metadata
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 
 
@@ -31,6 +34,23 @@ def _xywh_center_to_xyxy(xywh: NDArray[np.floating]) -> NDArray[np.float32]:
     out[..., :2] = xy - wh
     out[..., 2:] = xy + wh
     return out
+
+
+def _extract_frame_rate_from_metadata(metadata: dict) -> float | None:
+    """Extract preferred frame rate from OTDET metadata."""
+    video = metadata.get(dataformat.VIDEO, {})
+    if not isinstance(video, dict):
+        return None
+
+    actual = video.get(dataformat.ACTUAL_FPS)
+    if isinstance(actual, (int, float)) and float(actual) > 0:
+        return float(actual)
+
+    recorded = video.get(dataformat.RECORDED_FPS)
+    if isinstance(recorded, (int, float)) and float(recorded) > 0:
+        return float(recorded)
+
+    return None
 
 
 class UltralyticsResultsLike(Protocol):
@@ -126,6 +146,7 @@ class BotsortTracker(Tracker):
         self._get_current_config = get_current_config
 
         self._botsort: BoTSORTTrackerLike | None = None
+        self._frame_rate_by_source: dict[str, int] = {}
         self._class_name_to_id: dict[str, int] = {}
         self._botsort_track_id_to_ot_id: dict[int, TrackId] = {}
         self._ot_id_to_botsort_track_id: dict[TrackId, int] = {}
@@ -140,10 +161,41 @@ class BotsortTracker(Tracker):
 
     def _reset_for_new_group(self) -> None:
         self._botsort = None
+        self._frame_rate_by_source = {}
         self._class_name_to_id = {}
         self._botsort_track_id_to_ot_id = {}
         self._ot_id_to_botsort_track_id = {}
         self._track_state = {}
+
+    def _frame_rate_from_source(self, frame: DetectedFrame) -> int:
+        cached = self._frame_rate_by_source.get(frame.source)
+        if cached is not None:
+            return cached
+
+        source = Path(frame.source)
+        if source.suffix.lower() != ".otdet":
+            raise ValueError(
+                "BoT-SORT requires FPS metadata from an .otdet source file, "
+                f"but got '{source.suffix or '<no suffix>'}' for source '{frame.source}'."
+            )
+
+        try:
+            metadata = read_json_bz2_metadata(source)
+        except Exception as e:
+            raise ValueError(
+                f"BoT-SORT requires readable .otdet metadata to determine FPS: '{frame.source}'."
+            ) from e
+
+        extracted = _extract_frame_rate_from_metadata(metadata)
+        if extracted is None:
+            raise ValueError(
+                "BoT-SORT requires FPS metadata in .otdet video section "
+                f"('{dataformat.ACTUAL_FPS}' or '{dataformat.RECORDED_FPS}') for source '{frame.source}'."
+            )
+
+        frame_rate = max(1, int(round(extracted)))
+        self._frame_rate_by_source[frame.source] = frame_rate
+        return frame_rate
 
     def _build_args(self) -> types.SimpleNamespace:
         args_dict = dict(self._DEFAULT_BOTSORT_ARGS)
@@ -178,8 +230,9 @@ class BotsortTracker(Tracker):
                 "Provide images (streaming mode) or disable ReID (`with_reid: false`)."
             )
 
+        frame_rate = self._frame_rate_from_source(frame)
         self._botsort = cast(
-            BoTSORTTrackerLike, BOTSORT(args=self._build_args(), frame_rate=30)
+            BoTSORTTrackerLike, BOTSORT(args=self._build_args(), frame_rate=frame_rate)
         )
         return self._botsort
 
