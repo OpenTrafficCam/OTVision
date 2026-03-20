@@ -73,6 +73,8 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
                 sigma_iou=self.config.sigma_iou,
                 t_min=self.config.t_min,
                 t_miss_max=self.config.t_miss_max,
+                tracker_type=self.config.tracker_type,
+                tracker_params=self.config.botsort.tracker_params,
             )
             metadata.update(ottrk_metadata)
 

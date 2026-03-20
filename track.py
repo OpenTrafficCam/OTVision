@@ -30,6 +30,10 @@ def main(argv: list[str] | None = None) -> None:
     config = builder.update_track_config_with_cli_args.update(
         config=builder.get_config.get(cli_args)
     )
+    # Validation happens during YAML parsing, before we apply CLI-only
+    # `config.track.tracker_type` selection. Re-validate here so BoT-SORT mode
+    # uses its own lifecycle parameters for streaming.
+    builder.config_parser.validate_config(config)
     log = builder.configure_logger.configure(
         config=config,
         log_file=cli_args.logfile,

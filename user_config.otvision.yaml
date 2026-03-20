@@ -28,6 +28,19 @@ TRACK:
     SIGMA_L: 0.27
     T_MIN: 5
     T_MISS_MAX: 51
+  BOT_SORT:
+    T_MIN: 5
+    T_MISS_MAX: 51
+    track_high_thresh: 0.25
+    track_low_thresh: 0.1
+    new_track_thresh: 0.25
+    match_thresh: 0.8
+    fuse_score: true
+    gmc_method: sparseOptFlow
+    proximity_thresh: 0.5
+    appearance_thresh: 0.8
+    with_reid: false
+    model: auto
   OVERWRITE: true
 
 LOG:

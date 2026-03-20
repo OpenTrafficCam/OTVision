@@ -25,6 +25,7 @@ from OTVision.application.config import (
     IMG_SIZE,
     INPUT_FPS,
     IOU,
+    BOT_SORT,
     LOCATION_X,
     LOCATION_Y,
     LOG,
@@ -69,6 +70,7 @@ from OTVision.application.config import (
     _GuiWindowConfig,
     _LogConfig,
     _TrackIouConfig,
+    _TrackBotSortConfig,
     _TransformConfig,
     _UndistortConfig,
 )
@@ -249,13 +251,20 @@ class ConfigParser:
             if iou_config_dict
             else TrackConfig.iou
         )
+        botsort_config_dict = data.get(BOT_SORT)
+        botsort_config = (
+            self.parse_track_botsort_config(botsort_config_dict)
+            if botsort_config_dict
+            else _TrackBotSortConfig()
+        )
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
-            sources,
-            data.get(RUN_CHAINED, TrackConfig.run_chained),
-            iou_config,
-            data.get(OVERWRITE, TrackConfig.overwrite),
+            paths=sources,
+            run_chained=data.get(RUN_CHAINED, TrackConfig.run_chained),
+            iou=iou_config,
+            botsort=botsort_config,
+            overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
     def parse_track_iou_config(self, data: dict) -> _TrackIouConfig:
@@ -265,6 +274,20 @@ class ConfigParser:
             data.get(SIGMA_IOU, _TrackIouConfig.sigma_iou),
             data.get(T_MIN, _TrackIouConfig.t_min),
             data.get(T_MISS_MAX, _TrackIouConfig.t_miss_max),
+        )
+
+    def parse_track_botsort_config(self, data: dict) -> _TrackBotSortConfig:
+        # Keep t_min/t_miss_max as OT pipeline lifecycle parameters.
+        # Forward everything else as ultralytics BoT-SORT tracker params.
+        tracker_params = {
+            k: v
+            for k, v in data.items()
+            if k not in {T_MIN, T_MISS_MAX}
+        }
+        return _TrackBotSortConfig(
+            t_min=data.get(T_MIN, _TrackBotSortConfig.t_min),
+            t_miss_max=data.get(T_MISS_MAX, _TrackBotSortConfig.t_miss_max),
+            tracker_params=tracker_params,
         )
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:

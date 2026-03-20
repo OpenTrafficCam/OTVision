@@ -1,7 +1,7 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Self
+from typing import Any, Self
 
 from OTVision import dataformat, version
 from OTVision.detect.otdet import (
@@ -25,6 +25,8 @@ class OttrkBuilderConfig:
     t_miss_max: int
     tracking_run_id: str
     frame_group: int
+    tracker_type: str = "iou"
+    tracker_params: dict[str, Any] = field(default_factory=dict)
 
 
 class OttrkBuilderError(Exception):
@@ -75,6 +77,8 @@ class OttrkBuilder:
             sigma_iou=self.config.sigma_iou,
             t_min=self.config.t_min,
             t_miss_max=self.config.t_miss_max,
+            tracker_type=self.config.tracker_type,
+            tracker_params=self.config.tracker_params,
         )
         tracking_metadata = result[dataformat.TRACKING]
         tracking_metadata[dataformat.TRACKING_RUN_ID] = self.config.tracking_run_id
@@ -177,6 +181,8 @@ def create_ottrk_metadata_entry(
     sigma_iou: float,
     t_min: int,
     t_miss_max: int,
+    tracker_type: str = "iou",
+    tracker_params: dict[str, Any] | None = None,
 ) -> dict:
     return {
         dataformat.OTTRACK_VERSION: version.ottrack_version(),
@@ -185,20 +191,38 @@ def create_ottrk_metadata_entry(
             dataformat.FIRST_TRACKED_VIDEO_START: start_date.timestamp(),
             dataformat.LAST_TRACKED_VIDEO_END: end_date.timestamp(),
             dataformat.TRACKER: create_tracker_metadata(
-                sigma_l, sigma_h, sigma_iou, t_min, t_miss_max
+                sigma_l,
+                sigma_h,
+                sigma_iou,
+                t_min,
+                t_miss_max,
+                tracker_type=tracker_type,
+                tracker_params=tracker_params,
             ),
         },
     }
 
 
 def create_tracker_metadata(
-    sigma_l: float, sigma_h: float, sigma_iou: float, t_min: int, t_miss_max: int
+    sigma_l: float,
+    sigma_h: float,
+    sigma_iou: float,
+    t_min: int,
+    t_miss_max: int,
+    tracker_type: str = "iou",
+    tracker_params: dict[str, Any] | None = None,
 ) -> dict:
-    return {
-        dataformat.NAME: "IOU",
+    tracker_name = "IOU" if tracker_type != "botsort" else "BoTSORT"
+    result = {
+        dataformat.NAME: tracker_name,
         dataformat.SIGMA_L: sigma_l,
         dataformat.SIGMA_H: sigma_h,
         dataformat.SIGMA_IOU: sigma_iou,
         dataformat.T_MIN: t_min,
         dataformat.T_MISS_MAX: t_miss_max,
     }
+
+    if tracker_type == "botsort" and tracker_params:
+        result[dataformat.TRACKER_PARAMS] = tracker_params
+
+    return result

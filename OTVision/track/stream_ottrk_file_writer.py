@@ -93,6 +93,8 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             sigma_iou=self.track_config.sigma_iou,
             t_min=self.track_config.t_min,
             t_miss_max=self.track_config.t_miss_max,
+            tracker_type=self.track_config.tracker_type,
+            tracker_params=self.track_config.botsort.tracker_params,
             tracking_run_id=self._current_tracking_run_id.get(),
             frame_group=STREAMING_FRAME_GROUP_ID,
         )
