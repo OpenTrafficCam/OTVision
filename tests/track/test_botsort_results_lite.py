@@ -3,7 +3,11 @@
 import numpy as np
 import pytest
 
-from OTVision.track.tracker.tracker_plugin_botsort import UltralyticsResultsLite
+from OTVision import dataformat
+from OTVision.track.tracker.tracker_plugin_botsort import (
+    UltralyticsResultsLite,
+    _extract_frame_rate_from_metadata,
+)
 
 
 def test_ultralytics_results_lite_len_and_slice() -> None:
@@ -47,3 +51,23 @@ def test_ultralytics_results_lite_empty_xyxy() -> None:
     )
     assert len(results) == 0
     assert results.xyxy.shape == (0, 4)
+
+
+def test_extract_frame_rate_prefers_actual_over_recorded() -> None:
+    metadata = {
+        dataformat.VIDEO: {
+            dataformat.RECORDED_FPS: 30.0,
+            dataformat.ACTUAL_FPS: 29.97,
+        }
+    }
+    assert _extract_frame_rate_from_metadata(metadata) == pytest.approx(29.97)
+
+
+def test_extract_frame_rate_falls_back_to_recorded() -> None:
+    metadata = {
+        dataformat.VIDEO: {
+            dataformat.RECORDED_FPS: 25.0,
+            dataformat.ACTUAL_FPS: 0.0,
+        }
+    }
+    assert _extract_frame_rate_from_metadata(metadata) == pytest.approx(25.0)
