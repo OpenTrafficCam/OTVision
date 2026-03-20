@@ -22,6 +22,7 @@ DETECT:
 
 TRACK:
   PATHS: []
+  TRACKER_TYPE: iou
   IOU:
     SIGMA_H: 0.42
     SIGMA_IOU: 0.38

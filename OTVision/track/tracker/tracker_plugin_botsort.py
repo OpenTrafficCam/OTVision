@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import types
-from typing import Protocol, TypedDict, cast
+from typing import Any, Protocol, TypedDict, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,22 +17,48 @@ from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 UltralyticsScalar = bool | int | float | str
 
 
+def _xywh_center_to_xyxy(xywh: NDArray[np.floating]) -> NDArray[np.float32]:
+    """Map center-format ``(x, y, w, h)`` boxes to ``(x1, y1, x2, y2)``.
+
+    Matches :func:`ultralytics.utils.ops.xywh2xyxy` (used by BYTETracker / BoT-SORT).
+    """
+    if xywh.size == 0:
+        return np.zeros((0, 4), dtype=np.float32)
+    x = np.asarray(xywh, dtype=np.float32)
+    xy = x[..., :2]
+    wh = x[..., 2:] / 2.0
+    out = np.empty_like(x)
+    out[..., :2] = xy - wh
+    out[..., 2:] = xy + wh
+    return out
+
+
 class UltralyticsResultsLike(Protocol):
+    """Subset of ultralytics ``Results`` API required by ``BYTETracker.update``."""
+
     conf: NDArray[np.floating]
     xywh: NDArray[np.floating]
     cls: NDArray[np.integer]
 
+    @property
+    def xyxy(self) -> NDArray[np.floating]:
+        """Needed when ``img is not None`` (GMC uses ``results.xyxy``)."""
+        ...
+
+    def __len__(self) -> int:
+        ...
+
+    def __getitem__(self, item: Any) -> UltralyticsResultsLike:
+        """Boolean mask indexing as in ``results = results[remain_inds]``."""
+        ...
+
 
 class BoTSORTTrackerLike(Protocol):
-    # ultralytics tracker expects:
-    # - results with .conf, .xywh, .cls
-    # - img: Optional[np.ndarray]
-    # - feats: Optional[np.ndarray]
+    # ultralytics BYTETracker/BOTSORT (8.3+): update(results, img=None)
     def update(
         self,
         results: UltralyticsResultsLike,
-        img: NDArray[np.uint8] | None,
-        feats: NDArray[np.floating] | None,
+        img: NDArray[np.uint8] | None = None,
     ) -> NDArray[np.floating]:
         ...
 
@@ -44,11 +70,27 @@ class TrackLifecycleState(TypedDict):
     max_conf: float
 
 
-@dataclass(frozen=True)
+@dataclass
 class UltralyticsResultsLite:
+    """Minimal stand-in for ultralytics detection results (``conf``/``xywh``/``cls`` + slicing)."""
+
     conf: NDArray[np.floating]
     xywh: NDArray[np.floating]
     cls: NDArray[np.integer]
+
+    def __len__(self) -> int:
+        return int(self.conf.shape[0])
+
+    @property
+    def xyxy(self) -> NDArray[np.float32]:
+        return _xywh_center_to_xyxy(self.xywh)
+
+    def __getitem__(self, item: Any) -> UltralyticsResultsLite:
+        return UltralyticsResultsLite(
+            conf=np.asarray(self.conf[item]),
+            xywh=np.asarray(self.xywh[item]),
+            cls=np.asarray(self.cls[item]),
+        )
 
 
 class BotsortTracker(Tracker):
@@ -181,7 +223,6 @@ class BotsortTracker(Tracker):
         tracks = botsort.update(
             results,
             cast(NDArray[np.uint8] | None, frame.image),
-            None,
         )
 
         det_idx_to_ot_id: dict[int, TrackId] = {}

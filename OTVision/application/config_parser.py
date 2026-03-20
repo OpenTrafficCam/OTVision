@@ -26,6 +26,7 @@ from OTVision.application.config import (
     INPUT_FPS,
     IOU,
     BOT_SORT,
+    TRACKER_TYPE,
     LOCATION_X,
     LOCATION_Y,
     LOG,
@@ -264,6 +265,7 @@ class ConfigParser:
             run_chained=data.get(RUN_CHAINED, TrackConfig.run_chained),
             iou=iou_config,
             botsort=botsort_config,
+            tracker_type=data.get(TRACKER_TYPE, TrackConfig.tracker_type),
             overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
@@ -282,7 +284,7 @@ class ConfigParser:
         tracker_params = {
             k: v
             for k, v in data.items()
-            if k not in {T_MIN, T_MISS_MAX}
+            if k not in {T_MIN, T_MISS_MAX, TRACKER_TYPE}
         }
         return _TrackBotSortConfig(
             t_min=data.get(T_MIN, _TrackBotSortConfig.t_min),
