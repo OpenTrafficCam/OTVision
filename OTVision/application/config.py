@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
@@ -29,6 +30,7 @@ INPUT_FPS = "INPUT_FPS"
 IMG = "IMG"
 IMG_SIZE = "IMGSIZE"
 IOU = "IOU"
+BOT_SORT = "BOT_SORT"
 LAST_PATHS = "LAST PATHS"
 LOCATION_X = "LOCATION_X"
 LOCATION_Y = "LOCATION_Y"
@@ -346,6 +348,19 @@ class _TrackIouConfig:
 
 
 @dataclass(frozen=True)
+class _TrackBotSortConfig:
+    """BoT-SORT tracker configuration.
+
+    We keep `t_min`/`t_miss_max` as our pipeline lifecycle parameters, while
+    all other keys are forwarded to ultralytics' BoT-SORT implementation.
+    """
+
+    t_min: int = 5
+    t_miss_max: int = 51
+    tracker_params: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class TrackConfig:
     @property
     def sigma_l(self) -> float:
@@ -361,15 +376,25 @@ class TrackConfig:
 
     @property
     def t_min(self) -> int:
-        return self.iou.t_min
+        return (
+            self.botsort.t_min
+            if self.tracker_type == "botsort"
+            else self.iou.t_min
+        )
 
     @property
     def t_miss_max(self) -> int:
-        return self.iou.t_miss_max
+        return (
+            self.botsort.t_miss_max
+            if self.tracker_type == "botsort"
+            else self.iou.t_miss_max
+        )
 
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
+    tracker_type: str = "iou"
+    botsort: _TrackBotSortConfig = field(default_factory=_TrackBotSortConfig)
     overwrite: bool = True
 
     def to_dict(self) -> dict:

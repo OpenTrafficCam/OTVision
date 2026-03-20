@@ -35,6 +35,7 @@ from OTVision.track.tracker.filebased_tracking import (
     UnfinishedChunksBuffer,
 )
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
+from OTVision.track.tracker.tracker_plugin_botsort import BotsortTracker
 
 
 class TrackBuilder:
@@ -90,7 +91,11 @@ class TrackBuilder:
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker = IouTracker(get_current_config=self.get_current_config)
+        tracker_type = self.get_current_config.get().track.tracker_type
+        if tracker_type == "botsort":
+            tracker = BotsortTracker(get_current_config=self.get_current_config)
+        else:
+            tracker = IouTracker(get_current_config=self.get_current_config)
         return GroupedFilesTracker(
             tracker=tracker,
             chunk_parser=self.chunk_parser,

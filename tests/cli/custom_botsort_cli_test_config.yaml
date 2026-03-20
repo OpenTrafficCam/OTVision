@@ -1,0 +1,42 @@
+---
+CONVERT:
+  PATHS: []
+  DELETE_INPUT: false
+  FPS_FROM_FILENAME: true
+  ROTATION: 0
+  OVERWRITE: true
+DETECT:
+  EXPECTED_DURATION: 3
+  PATHS: []
+  FORCE_RELOAD_TORCH_HUB_CACHE: false
+  HALF_PRECISION: false
+  OVERWRITE: true
+TRACK:
+  PATHS:
+    [
+      "tests/data/track/default/",
+      "tests/data/track/default/Testvideo_Cars-Cyclist_FR20_2020-01-01_00-00-00.otdet",
+    ]
+  IOU:
+    SIGMA_H: 0.32
+    SIGMA_IOU: 0.31
+    SIGMA_L: 0.24
+    T_MIN: 3
+    T_MISS_MAX: 33
+  BOT_SORT:
+    T_MIN: 7
+    T_MISS_MAX: 17
+    track_high_thresh: 0.77
+    track_low_thresh: 0.22
+    new_track_thresh: 0.55
+    match_thresh: 0.88
+    fuse_score: true
+    gmc_method: sparseOptFlow
+    with_reid: false
+    model: auto
+  OVERWRITE: false
+LOG:
+  LOG_LEVEL_CONSOLE: WARNING
+  LOG_LEVEL_FILE: DEBUG
+  LOG_DIR: .
+

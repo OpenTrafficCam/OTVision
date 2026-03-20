@@ -220,6 +220,54 @@ class TestTrackCLI:
         with pytest.raises(CliParseError, match=error_msg):
             track_cli(argv=[LOGFILE_OVERWRITE_CMD])
 
+    @patch("track.TrackBuilder.update_current_config")
+    @patch("track.TrackBuilder.build")
+    def test_botsort_mode_ignores_iou_cli_overrides_and_uses_yaml(
+        self,
+        mock_build: Mock,
+        mock_update_current_config: Mock,
+        track_cli: Callable,
+    ) -> None:
+        mock_otvision_track = Mock()
+        mock_otvision_track.start = AsyncMock()
+        mock_build.return_value = mock_otvision_track
+
+        botsort_config_file = "tests/cli/custom_botsort_cli_test_config.yaml"
+        command = [
+            "--config",
+            botsort_config_file,
+            "--tracker",
+            "botsort",
+            "--sigma-l",
+            "0.1",
+            "--t-min",
+            "999",
+            LOGFILE_OVERWRITE_CMD,
+        ]
+
+        with pytest.warns(
+            UserWarning, match="botsort mode ignores IOU CLI overrides"
+        ):
+            track_cli(argv=command)
+
+        mock_update_current_config.update.assert_called_once()
+        passed_config = mock_update_current_config.update.call_args.kwargs[
+            "config"
+        ]
+
+        assert passed_config.track.tracker_type == "botsort"
+        # t_min/t_miss_max must come from TRACK.BOT_SORT (YAML), not from CLI.
+        assert passed_config.track.t_min == 7
+        assert passed_config.track.t_miss_max == 17
+
+        # IOU config is still parsed from YAML but must not be overridden by CLI.
+        assert passed_config.track.iou.t_min == 3
+        assert passed_config.track.iou.sigma_l == 0.24
+
+        assert passed_config.track.botsort.tracker_params["track_high_thresh"] == pytest.approx(
+            0.77
+        )
+
 
 def create_expected_config_from_test_data(test_data: dict) -> Config:
     """

@@ -1,3 +1,5 @@
+import warnings
+
 from OTVision.abstraction.defaults import value_or_default
 from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
 from OTVision.application.track.get_track_cli_args import GetTrackCliArgs
@@ -27,17 +29,38 @@ class UpdateTrackConfigWithCliArgs:
     def _update_track_config(
         self, track_config: TrackConfig, cli_args: TrackCliArgs
     ) -> TrackConfig:
-        iou_config = _TrackIouConfig(
-            sigma_l=value_or_default(cli_args.sigma_l, track_config.sigma_l),
-            sigma_h=value_or_default(cli_args.sigma_h, track_config.sigma_h),
-            sigma_iou=value_or_default(cli_args.sigma_iou, track_config.sigma_iou),
-            t_min=value_or_default(cli_args.t_min, track_config.t_min),
-            t_miss_max=value_or_default(cli_args.t_miss_max, track_config.t_miss_max),
-        )
+        if cli_args.tracker_type == "botsort":
+            ignored = {
+                "sigma_l": cli_args.sigma_l,
+                "sigma_h": cli_args.sigma_h,
+                "sigma_iou": cli_args.sigma_iou,
+                "t_min": cli_args.t_min,
+                "t_miss_max": cli_args.t_miss_max,
+            }
+            ignored = {k: v for k, v in ignored.items() if v is not None}
+            if ignored:
+                warnings.warn(
+                    "botsort mode ignores IOU CLI overrides "
+                    f"({', '.join(sorted(ignored.keys()))}); use YAML under `TRACK.BOT_SORT` instead.",
+                    stacklevel=2,
+                )
+            iou_config = track_config.iou
+        else:
+            iou_config = _TrackIouConfig(
+                sigma_l=value_or_default(cli_args.sigma_l, track_config.sigma_l),
+                sigma_h=value_or_default(cli_args.sigma_h, track_config.sigma_h),
+                sigma_iou=value_or_default(cli_args.sigma_iou, track_config.sigma_iou),
+                t_min=value_or_default(cli_args.t_min, track_config.t_min),
+                t_miss_max=value_or_default(
+                    cli_args.t_miss_max, track_config.t_miss_max
+                ),
+            )
         return TrackConfig(
             paths=value_or_default(cli_args.paths, track_config.paths),
             run_chained=track_config.run_chained,
             iou=iou_config,
+            tracker_type=cli_args.tracker_type,
+            botsort=track_config.botsort,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
         )
 
