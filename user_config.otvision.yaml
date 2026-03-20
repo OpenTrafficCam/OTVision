@@ -30,6 +30,8 @@ TRACK:
     T_MIN: 5
     T_MISS_MAX: 51
   BOT_SORT:
+    # T_MISS_MAX is applied by OTVision after each Ultralytics BoT-SORT update
+    # to finalize/discard missing tracks; TRACK_BUFFER is used inside Ultralytics.
     T_MIN: 5
     T_MISS_MAX: 51
     TRACKER_TYPE: botsort # tracker type, ['botsort', 'bytetrack']
