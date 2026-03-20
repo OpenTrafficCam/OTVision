@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from OTVision.application.get_config import DEFAULT_USER_CONFIG
 from OTVision.application.config import (
     IOU,
     OVERWRITE,
@@ -282,9 +283,12 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     """
 
     if config_file_arg := test_data["config"].get(PASSED):
-        default_config = CONFIG_PARSER.parse(config_file_arg.split()[1])
+        default_config = CONFIG_PARSER.parse(Path(config_file_arg.split()[1]))
     else:
-        default_config = Config()
+        user_cfg = Path.cwd() / DEFAULT_USER_CONFIG
+        default_config = (
+            CONFIG_PARSER.parse(user_cfg) if user_cfg.is_file() else Config()
+        )
 
     # Map EXPECTED values to TrackConfig's relevant fields
     paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
@@ -308,6 +312,8 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
         paths=paths,
         run_chained=default_config.track.run_chained,
         iou=iou_config,
+        botsort=default_config.track.botsort,
+        tracker_type=default_config.track.tracker_type,
         overwrite=overwrite,
     )
 

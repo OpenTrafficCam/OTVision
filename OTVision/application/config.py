@@ -31,6 +31,7 @@ IMG = "IMG"
 IMG_SIZE = "IMGSIZE"
 IOU = "IOU"
 BOT_SORT = "BOT_SORT"
+TRACKER_TYPE = "TRACKER_TYPE"
 LAST_PATHS = "LAST PATHS"
 LOCATION_X = "LOCATION_X"
 LOCATION_Y = "LOCATION_Y"
@@ -359,6 +360,14 @@ class _TrackBotSortConfig:
     t_miss_max: int = 51
     tracker_params: dict[str, Any] = field(default_factory=dict)
 
+    def to_dict(self) -> dict[str, Any]:
+        merged: dict[str, Any] = {
+            T_MIN: self.t_min,
+            T_MISS_MAX: self.t_miss_max,
+        }
+        merged.update(self.tracker_params)
+        return merged
+
 
 @dataclass(frozen=True)
 class TrackConfig:
@@ -402,6 +411,8 @@ class TrackConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
+            BOT_SORT: self.botsort.to_dict(),
+            TRACKER_TYPE: self.tracker_type,
             OVERWRITE: self.overwrite,
         }
 
