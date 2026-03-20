@@ -41,7 +41,7 @@ class ArgparseTrackCliParser(TrackCliParser):
         self._parser.add_argument(
             "--tracker",
             choices=["iou", "botsort"],
-            default="iou",
+            default=None,
             help="Select tracker implementation. In `botsort` mode tracker parameters are read from YAML only.",
         )
         self._parser.add_argument(

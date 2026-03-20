@@ -29,7 +29,10 @@ class UpdateTrackConfigWithCliArgs:
     def _update_track_config(
         self, track_config: TrackConfig, cli_args: TrackCliArgs
     ) -> TrackConfig:
-        if cli_args.tracker_type == "botsort":
+        resolved_tracker_type = value_or_default(
+            cli_args.tracker_type, track_config.tracker_type
+        )
+        if resolved_tracker_type == "botsort":
             ignored = {
                 "sigma_l": cli_args.sigma_l,
                 "sigma_h": cli_args.sigma_h,
@@ -59,7 +62,7 @@ class UpdateTrackConfigWithCliArgs:
             paths=value_or_default(cli_args.paths, track_config.paths),
             run_chained=track_config.run_chained,
             iou=iou_config,
-            tracker_type=cli_args.tracker_type,
+            tracker_type=value_or_default(cli_args.tracker_type, track_config.tracker_type),
             botsort=track_config.botsort,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
         )
