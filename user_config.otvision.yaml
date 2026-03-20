@@ -32,16 +32,18 @@ TRACK:
   BOT_SORT:
     T_MIN: 5
     T_MISS_MAX: 51
-    track_high_thresh: 0.25
-    track_low_thresh: 0.1
-    new_track_thresh: 0.25
-    match_thresh: 0.8
-    fuse_score: true
-    gmc_method: sparseOptFlow
-    proximity_thresh: 0.5
-    appearance_thresh: 0.8
-    with_reid: false
-    model: auto
+    TRACKER_TYPE: botsort # tracker type, ['botsort', 'bytetrack']
+    TRACK_HIGH_THRESH: 0.25 # threshold for the first association
+    TRACK_LOW_THRESH: 0.1 # threshold for the second association
+    NEW_TRACK_THRESH: 0.25 # threshold for init new track if detection does not match tracks
+    TRACK_BUFFER: 30 # buffer to calculate when to remove tracks
+    MATCH_THRESH: 0.8 # threshold for matching tracks
+    FUSE_SCORE: true # fuse confidence score with IoU distance before matching
+    GMC_METHOD: sparseOptFlow # method of global motion compensation
+    PROXIMITY_THRESH: 0.5 # ReID proximity threshold
+    APPEARANCE_THRESH: 0.25 # ReID appearance threshold
+    WITH_REID: false # enable ReID model
+    MODEL: auto # ReID model path/name if WITH_REID is true
   OVERWRITE: true
 
 LOG:
