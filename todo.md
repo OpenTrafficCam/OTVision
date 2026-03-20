@@ -1,16 +1,16 @@
-# TODO: BOXMOT Tracking Integration Tasks
+# BOXMOT Tracking Integration Tasks
 
 ## Summary
 
-Features needed for the BOXMOT tracking integration:
+Completed feature set on this branch:
 
-1. **Add CLI arguments for tracker selection** - Allow `--tracker bytetrack` instead of editing YAML
-2. **Fix .ottrk metadata** - Currently hardcoded to "IOU" even when BOXMOT is used
-3. **Expose tracker-specific parameters** - Allow configuring FPS, track_buffer, thresholds per tracker
+1. **CLI arguments for tracker selection** - `track.py` supports `--tracker`, device, ReID, and tracker params overrides
+2. **Correct `.ottrk` tracker metadata** - output now records the effective tracker that actually ran
+3. **Tracker-specific parameters** - YAML and CLI can provide BOXMOT tracker params, with runtime `frame_rate` resolution
 
 ---
 
-## Task 1: Add CLI Arguments
+## Task 1: Add CLI Arguments ✓ COMPLETED
 
 Add these CLI arguments to `track.py`:
 
@@ -32,14 +32,14 @@ Add these CLI arguments to `track.py`:
 
 ---
 
-## Task 2: Fix Tracker Metadata in .ottrk Files
+## Task 2: Fix Tracker Metadata in .ottrk Files ✓ COMPLETED
 
-**Problem:** `OTVision/application/track/ottrk.py` line 197 has:
-```python
-dataformat.NAME: "IOU",  # HARDCODED!
-```
+**Result:** `.ottrk` metadata now exports the tracker that actually ran.
 
-**Solution:** Pass actual tracker info through the builder chain.
+**Behavior:**
+- IOU runs keep the existing IOU threshold metadata
+- BOXMOT runs export canonical tracker name plus runtime settings
+- BOXMOT `frame_rate` is exported as the effective runtime value, including auto-detected values from OTDET metadata
 
 **Expected metadata output:**
 
@@ -61,14 +61,14 @@ BOXMOT tracker:
 
 ---
 
-## Task 3: Update Tests
+## Task 3: Update Tests ✓ COMPLETED
 
 - Add CLI argument tests
 - Test metadata contains correct tracker info
 
 ---
 
-## Task 4: Update Documentation
+## Task 4: Update Documentation ✓ COMPLETED
 
 - `BOXMOT_INTEGRATION.md` - Add CLI section, remove "Future Enhancement" note
 - `CLAUDE.md` - Update CLI examples

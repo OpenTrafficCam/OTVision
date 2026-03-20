@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from OTVision import version
-from OTVision.application.config import Config
+from OTVision.application.config import Config, TrackConfig, _TrackBoxmotConfig
 from OTVision.application.track.ottrk import create_tracker_metadata
 from OTVision.dataformat import (
     EXPECTED_DURATION,
@@ -20,8 +20,13 @@ from OTVision.dataformat import (
     OTVISION_VERSION,
     RECORDED_START_DATE,
     TRACKER,
+    TRACKER_DEVICE,
+    TRACKER_PARAMS,
+    TRACKER_REID_WEIGHTS,
     TRACKING,
     VIDEO,
+    HALF_PRECISION,
+    NAME,
 )
 from OTVision.detect.otdet import MISSING_START_DATE
 from OTVision.helpers.files import InproperFormattedFilename
@@ -29,6 +34,7 @@ from OTVision.track.model.filebased.frame_group import FrameGroup
 from OTVision.track.parser.frame_group_parser_plugins import (
     TimeThresholdFrameGroupParser,
 )
+from OTVision.track.tracker_metadata import build_tracker_metadata
 from tests.track.helper.data_builder import (
     DEFAULT_HOSTNAME,
     DEFAULT_START_DATE,
@@ -38,11 +44,7 @@ from tests.track.helper.data_builder import (
 DEFAULT_CONFIG = Config()
 THRESHOLD = timedelta(minutes=1)
 EXPECTED_TRACK_METADATA = create_tracker_metadata(
-    sigma_l=DEFAULT_CONFIG.track.sigma_l,
-    sigma_h=DEFAULT_CONFIG.track.sigma_h,
-    sigma_iou=DEFAULT_CONFIG.track.sigma_iou,
-    t_min=DEFAULT_CONFIG.track.t_min,
-    t_miss_max=DEFAULT_CONFIG.track.t_miss_max,
+    build_tracker_metadata(DEFAULT_CONFIG.track),
 )
 
 
@@ -182,6 +184,48 @@ class TestTimeThresholdFrameGroupParser:
 
         result = parser.update_metadata(merged[0])
         assert expected_metadata == result
+
+    def test_update_metadata_uses_boxmot_metadata_when_enabled(self) -> None:
+        frame_group_a, frame_group_b = self.dummy_frame_groups(
+            time_diff=timedelta(microseconds=5)
+        )
+        frame_group_a.metadata_by_file[frame_group_a.files[0]].update(
+            {VIDEO: {"actual_fps": 20.0}}
+        )
+        frame_group_b.metadata_by_file[frame_group_b.files[0]].update(
+            {VIDEO: {"actual_fps": 30.0}}
+        )
+        config = Config(
+            track=TrackConfig(
+                boxmot=_TrackBoxmotConfig(
+                    enabled=True,
+                    tracker_type="ByteTrack",
+                    device="cuda:0",
+                    half_precision=True,
+                    reid_weights="weights/osnet.pt",
+                    tracker_params={"track_buffer": 60},
+                )
+            )
+        )
+        parser = create_target(create_given(config=config))
+        merged = parser.merge([frame_group_a, frame_group_b])
+
+        result = parser.update_metadata(merged[0])
+
+        assert result[frame_group_a.files[0]][TRACKING][TRACKER] == {
+            NAME: "bytetrack",
+            TRACKER_DEVICE: "cuda:0",
+            HALF_PRECISION: True,
+            TRACKER_REID_WEIGHTS: "weights/osnet.pt",
+            TRACKER_PARAMS: {"track_buffer": 60, "frame_rate": 20.0},
+        }
+        assert result[frame_group_b.files[0]][TRACKING][TRACKER] == {
+            NAME: "bytetrack",
+            TRACKER_DEVICE: "cuda:0",
+            HALF_PRECISION: True,
+            TRACKER_REID_WEIGHTS: "weights/osnet.pt",
+            TRACKER_PARAMS: {"track_buffer": 60, "frame_rate": 20.0},
+        }
 
     def test_get_hostname(self) -> None:
         hostname = "HOSTXYZ"
@@ -374,9 +418,9 @@ class TestTimeThresholdFrameGroupParser:
         assert expected == result
 
 
-def create_given() -> Mock:
+def create_given(config: Config = DEFAULT_CONFIG) -> Mock:
     given = Mock()
-    given.get.return_value = DEFAULT_CONFIG
+    given.get.return_value = config
     return given
 
 

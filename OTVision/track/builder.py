@@ -40,6 +40,7 @@ from OTVision.track.tracker.filebased_tracking import (
     GroupedFilesTracker,
     UnfinishedChunksBuffer,
 )
+from OTVision.track.tracker_metadata import resolve_effective_boxmot_tracker_params
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
 from OTVision.track.video_frame_provider import (
     SequentialVideoFrameProvider,
@@ -154,22 +155,23 @@ class TrackBuilder:
         config = self.get_current_config.get().track
 
         def factory(metadata: dict[str, Any]) -> Tracker:
-            tracker_params = dict(config.boxmot.tracker_params)
+            tracker_params = resolve_effective_boxmot_tracker_params(
+                config.boxmot, metadata=metadata
+            )
 
-            # Auto-detect frame_rate if not explicitly configured
-            if "frame_rate" not in tracker_params:
-                fps = extract_fps_from_metadata(metadata)
-                if fps is not None:
-                    tracker_params["frame_rate"] = fps
-                    logger.info(f"Auto-detected frame_rate from OTDET metadata: {fps}")
-                else:
-                    logger.warning(
-                        "Could not auto-detect frame_rate from OTDET metadata. "
-                        "Using BOXMOT default (30). Consider setting in config."
-                    )
-            else:
+            if "frame_rate" in config.boxmot.tracker_params:
                 logger.info(
                     f"Using configured frame_rate: {tracker_params['frame_rate']}"
+                )
+            elif extract_fps_from_metadata(metadata) is not None:
+                logger.info(
+                    f"Auto-detected frame_rate from OTDET metadata: "
+                    f"{tracker_params['frame_rate']}"
+                )
+            else:
+                logger.warning(
+                    "Could not auto-detect frame_rate from OTDET metadata. "
+                    "Using BOXMOT default (30). Consider setting in config."
                 )
 
             reid_weights = (

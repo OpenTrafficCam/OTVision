@@ -1,5 +1,7 @@
 """End-to-end integration tests for BOXMOT tracking pipeline."""
 
+import bz2
+import json
 import tempfile
 from pathlib import Path
 from typing import Iterator
@@ -193,6 +195,41 @@ class TestBoxmotPipelineTracking:
 
         # Should work without errors
         assert tracked_frame2 is not None
+
+    def test_track_cli_writes_boxmot_metadata(
+        self, test_data_dir: Path, tmp_path: Path
+    ) -> None:
+        """Test the file-based track CLI writes BOXMOT metadata to .ottrk output."""
+        from track import main as track_main
+
+        otdet_name = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.otdet"
+        video_name = "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.mp4"
+
+        otdet_path = tmp_path / otdet_name
+        video_path = tmp_path / video_name
+        otdet_path.write_bytes((test_data_dir / otdet_name).read_bytes())
+        video_path.write_bytes((test_data_dir / video_name).read_bytes())
+
+        logfile = tmp_path / "track.log"
+        track_main(
+            argv=[
+                "-p",
+                str(otdet_path),
+                "--tracker",
+                "ByteTrack",
+                "--overwrite",
+                "--logfile",
+                str(logfile),
+            ]
+        )
+
+        output_path = tmp_path / "Testvideo_Cars-Truck_FR20_2020-01-01_00-00-00.ottrk"
+        payload = json.loads(bz2.decompress(output_path.read_bytes()))
+
+        assert payload["metadata"]["tracking"]["tracker"]["name"] == "bytetrack"
+        assert payload["metadata"]["tracking"]["tracker"]["tracker_params"][
+            "frame_rate"
+        ] == 20.0
 
 
 @pytest.mark.skipif(not BOXMOT_INSTALLED, reason="BOXMOT not installed")

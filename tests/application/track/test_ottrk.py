@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 from OTVision import dataformat, version
+from OTVision.application.config import TrackConfig, _TrackBoxmotConfig
 from OTVision.application.track.ottrk import (
     OttrkBuilder,
     OttrkBuilderConfig,
@@ -19,6 +20,7 @@ from OTVision.detect.otdet import (
 )
 from OTVision.domain.detection import TrackedDetection, TrackId
 from OTVision.domain.frame import FrameNo, TrackedFrame
+from OTVision.track.tracker_metadata import build_tracker_metadata
 
 RECORDED_START_DATE = datetime(2023, 1, 1, 12, 0, 0)
 ACTUAL_DURATION = timedelta(seconds=295)
@@ -31,6 +33,7 @@ FRAME_1_OCCURRENCE = RECORDED_START_DATE
 FRAME_2_OCCURRENCE = FRAME_1_OCCURRENCE + timedelta(seconds=1)
 SOURCE = "test_video.mp4"
 OUTPUT = "my_output"
+BOXMOT_TRACKER_PARAMS = {"track_buffer": 60, "frame_rate": 29.97}
 
 
 class TestOttrkBuilder:
@@ -231,6 +234,68 @@ class TestOttrkBuilder:
         assert track_ids == {track_id2}
         assert len(detections) == 1
 
+    def test_build_boxmot_metadata_when_boxmot_tracker_configured(self) -> None:
+        given = setup(
+            create_given(
+                ACTUAL_DURATION,
+                EXPECTED_DURATION,
+                track_config=TrackConfig(
+                    boxmot=_TrackBoxmotConfig(
+                        enabled=True,
+                        tracker_type="ByteTrack",
+                        device="cuda:0",
+                        half_precision=True,
+                        reid_weights="weights/osnet.pt",
+                        tracker_params=BOXMOT_TRACKER_PARAMS,
+                    )
+                ),
+            )
+        )
+        target = create_target(given)
+        target.set_config(given.ottrk_builder_config)
+
+        actual = target.build()
+
+        assert actual[dataformat.METADATA][dataformat.TRACKING][dataformat.TRACKER] == {
+            dataformat.NAME: "bytetrack",
+            dataformat.TRACKER_DEVICE: "cuda:0",
+            dataformat.HALF_PRECISION: True,
+            dataformat.TRACKER_REID_WEIGHTS: "weights/osnet.pt",
+            dataformat.TRACKER_PARAMS: BOXMOT_TRACKER_PARAMS,
+        }
+
+    def test_build_boxmot_metadata_uses_default_frame_rate_when_fps_missing(self) -> None:
+        track_config = TrackConfig(
+            boxmot=_TrackBoxmotConfig(
+                enabled=True,
+                tracker_type="bytetrack",
+                device="cpu",
+                half_precision=False,
+                reid_weights=None,
+                tracker_params={},
+            )
+        )
+        given = setup(
+            create_given(
+                ACTUAL_DURATION,
+                EXPECTED_DURATION,
+                track_config=track_config,
+            )
+        )
+        given.ottrk_builder_config.otdet_builder_config.actual_fps = 0
+        given.ottrk_builder_config.otdet_builder_config.recorded_fps = 0
+        target = create_target(given)
+        target.set_config(given.ottrk_builder_config)
+
+        actual = target.build()
+
+        assert actual[dataformat.METADATA][dataformat.TRACKING][dataformat.TRACKER] == {
+            dataformat.NAME: "bytetrack",
+            dataformat.TRACKER_DEVICE: "cpu",
+            dataformat.HALF_PRECISION: False,
+            dataformat.TRACKER_PARAMS: {"frame_rate": 30.0},
+        }
+
 
 @dataclass
 class Given:
@@ -239,6 +304,7 @@ class Given:
     actual_duration: timedelta
     expected_duration: timedelta | None
     ottrk_builder_config: OttrkBuilderConfig
+    track_config: TrackConfig
 
 
 def setup(given: Given) -> Given:
@@ -247,8 +313,12 @@ def setup(given: Given) -> Given:
 
 
 def create_given(
-    actual_duration: timedelta, expected_duration: timedelta | None
+    actual_duration: timedelta,
+    expected_duration: timedelta | None,
+    track_config: TrackConfig | None = None,
 ) -> Given:
+    if track_config is None:
+        track_config = TrackConfig()
 
     return Given(
         otdet_metadata_builder=Mock(spec=OtdetMetadataBuilder),
@@ -256,8 +326,9 @@ def create_given(
         actual_duration=actual_duration,
         expected_duration=expected_duration,
         ottrk_builder_config=create_ottrk_builder_config(
-            actual_duration, expected_duration
+            actual_duration, expected_duration, track_config
         ),
+        track_config=track_config,
     )
 
 
@@ -266,8 +337,12 @@ def create_target(given: Given) -> OttrkBuilder:
 
 
 def create_ottrk_builder_config(
-    actual_duration: timedelta, expected_duration: timedelta | None
+    actual_duration: timedelta,
+    expected_duration: timedelta | None,
+    track_config: TrackConfig | None = None,
 ) -> OttrkBuilderConfig:
+    if track_config is None:
+        track_config = TrackConfig()
     otdet_builder_config = create_otdet_builder_config(
         actual_duration, expected_duration
     )
@@ -281,6 +356,7 @@ def create_ottrk_builder_config(
         t_miss_max=10,
         tracking_run_id="test_run_001",
         frame_group=1,
+        track_config=track_config,
     )
 
 
@@ -330,7 +406,9 @@ def create_otdet_metadata(
 def create_expected_track_metadata(
     actual_duration: timedelta, expected_duration: timedelta | None
 ) -> dict:
-    config = create_ottrk_builder_config(actual_duration, expected_duration)
+    config = create_ottrk_builder_config(
+        actual_duration, expected_duration, TrackConfig()
+    )
     start_date = RECORDED_START_DATE
     duration = actual_duration if expected_duration is None else expected_duration
     end_date = start_date + duration
@@ -342,11 +420,10 @@ def create_expected_track_metadata(
             dataformat.FIRST_TRACKED_VIDEO_START: start_date.timestamp(),
             dataformat.LAST_TRACKED_VIDEO_END: end_date.timestamp(),
             dataformat.TRACKER: create_tracker_metadata(
-                config.sigma_l,
-                config.sigma_h,
-                config.sigma_iou,
-                config.t_min,
-                config.t_miss_max,
+                build_tracker_metadata(
+                    config.track_config,
+                    otdet_builder_config=config.otdet_builder_config,
+                )
             ),
             dataformat.TRACKING_RUN_ID: config.tracking_run_id,
             dataformat.FRAME_GROUP: config.frame_group,

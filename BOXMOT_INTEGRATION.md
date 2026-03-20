@@ -431,7 +431,24 @@ uv run track.py --paths /path/to/*.otdet --config my_config.otvision.yaml
 
 # Process specific detection files
 uv run track.py --paths output/video1.otdet output/video2.otdet
+
+# Select BOXMOT tracker directly from the CLI
+uv run track.py --paths output/video1.otdet --tracker bytetrack
+
+# Override BOXMOT device and tracker-specific parameters
+uv run track.py --paths output/video1.otdet --tracker botsort \
+  --tracker-device cuda:0 \
+  --tracker-reid-weights weights/osnet_x0_25_msmt17.pt \
+  --tracker-params track_buffer=60 match_thresh=0.8
 ```
+
+### `.ottrk` Tracker Metadata
+
+Tracked output files record the tracker that actually ran.
+
+- **IOU runs** export IOU-specific threshold metadata
+- **BOXMOT runs** export the canonical tracker name plus runtime settings such as `device`, `half_precision`, optional `reid_weights`, and effective `tracker_params`
+- If `frame_rate` is not configured explicitly, exported BOXMOT metadata includes the resolved runtime value derived from OTDET metadata
 
 ## Architecture
 
@@ -646,8 +663,7 @@ INFO:OTVision.track.builder:Using IOU tracker
 
 Potential improvements for future iterations:
 
-1. **CLI Arguments**: Add command-line arguments for BOXMOT configuration
-2. **Performance Metrics**: Log tracking performance statistics
-3. **Auto-Selection**: Automatically choose tracker based on hardware
-4. **Custom ReID Models**: Support for custom ReID architectures
-5. **Tracker Ensembles**: Combine multiple trackers for robustness
+1. **Performance Metrics**: Log tracking performance statistics
+2. **Auto-Selection**: Automatically choose tracker based on hardware
+3. **Custom ReID Models**: Support for custom ReID architectures
+4. **Tracker Ensembles**: Combine multiple trackers for robustness

@@ -11,6 +11,7 @@ from OTVision.detect.otdet import (
 )
 from OTVision.helpers.files import read_json_bz2_metadata
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
+from OTVision.track.tracker_metadata import build_tracker_metadata
 
 MISSING_EXPECTED_DURATION = timedelta(minutes=15)
 
@@ -63,16 +64,15 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         metadata_by_file = dict(frame_group.metadata_by_file)
+        first_file = frame_group.files[0]
+        first_metadata = metadata_by_file[first_file]
+        tracker_metadata = build_tracker_metadata(self.config, metadata=first_metadata)
         for filepath in frame_group.files:
             metadata = metadata_by_file[filepath]
             ottrk_metadata = create_ottrk_metadata_entry(
                 start_date=frame_group.start_date,
                 end_date=frame_group.end_date,
-                sigma_l=self.config.sigma_l,
-                sigma_h=self.config.sigma_h,
-                sigma_iou=self.config.sigma_iou,
-                t_min=self.config.t_min,
-                t_miss_max=self.config.t_miss_max,
+                tracker_metadata=tracker_metadata,
             )
             metadata.update(ottrk_metadata)
 

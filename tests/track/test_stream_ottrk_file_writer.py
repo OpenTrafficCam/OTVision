@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from OTVision.application.buffer import Buffer
-from OTVision.application.config import Config, TrackConfig
+from OTVision.application.config import Config, TrackConfig, _TrackBoxmotConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
@@ -32,6 +32,7 @@ TRACK_ID_1 = TrackId(1)
 TRACK_ID_2 = TrackId(2)
 TRACK_ID_3 = TrackId(3)
 TRACK_ID_4 = TrackId(4)
+BOXMOT_TRACKER_PARAMS = {"track_buffer": 60, "frame_rate": 29.97}
 
 
 class TestStreamOttrkFileWriter:
@@ -275,6 +276,64 @@ class TestStreamOttrkFileWriter:
         assert call_args.t_miss_max == given.config.track.t_miss_max
         assert call_args.tracking_run_id == TEST_TRACKING_RUN_ID
         assert call_args.frame_group == STREAMING_FRAME_GROUP_ID
+        assert call_args.track_config == given.config.track
+
+    def test_on_flush_uses_boxmot_track_config_in_builder_config(self) -> None:
+        given = create_given(
+            track_config=TrackConfig(
+                boxmot=_TrackBoxmotConfig(
+                    enabled=True,
+                    tracker_type="ByteTrack",
+                    device="cuda:0",
+                    half_precision=True,
+                    reid_weights="weights/osnet.pt",
+                    tracker_params={"track_buffer": 60},
+                )
+            )
+        )
+        target = create_target(given)
+        tracked_frame = create_tracked_frame()
+        target.buffer(tracked_frame)
+        event = create_otdet_file_written_event()
+        event.otdet_builder_config.actual_fps = 29.97
+        event.otdet_builder_config.recorded_fps = 30.0
+
+        target.on_flush(event)
+
+        call_args = given.builder.set_config.call_args[0][0]
+        assert call_args.track_config.boxmot.enabled is True
+        assert call_args.track_config.boxmot.tracker_type == "ByteTrack"
+        assert call_args.track_config.boxmot.device == "cuda:0"
+        assert call_args.track_config.boxmot.half_precision is True
+        assert call_args.track_config.boxmot.reid_weights == "weights/osnet.pt"
+        assert call_args.track_config.boxmot.tracker_params == {"track_buffer": 60}
+
+    def test_on_flush_preserves_empty_boxmot_tracker_params_for_runtime_resolution(
+        self,
+    ) -> None:
+        given = create_given(
+            track_config=TrackConfig(
+                boxmot=_TrackBoxmotConfig(
+                    enabled=True,
+                    tracker_type="bytetrack",
+                    device="cpu",
+                    half_precision=False,
+                    reid_weights=None,
+                    tracker_params={},
+                )
+            )
+        )
+        target = create_target(given)
+        tracked_frame = create_tracked_frame()
+        target.buffer(tracked_frame)
+        event = create_otdet_file_written_event()
+        event.otdet_builder_config.actual_fps = 0
+        event.otdet_builder_config.recorded_fps = 0
+
+        target.on_flush(event)
+
+        call_args = given.builder.set_config.call_args[0][0]
+        assert call_args.track_config.boxmot.tracker_params == {}
 
     def test_reset_clears_buffer(self) -> None:
         """Verify that reset clears the buffer."""
@@ -329,7 +388,7 @@ class Given:
     subject: Mock
 
 
-def create_given() -> Given:
+def create_given(track_config: TrackConfig | None = None) -> Given:
     """Create test data following the Given-When-Then pattern."""
     # Mock dependencies
     built_ottrk = Mock()
@@ -342,12 +401,13 @@ def create_given() -> Given:
 
     # Mock configuration
     config = Mock(spec=Config)
-    track_config = Mock(spec=TrackConfig)
-    track_config.sigma_l = 0.3
-    track_config.sigma_h = 0.7
-    track_config.sigma_iou = 0.5
-    track_config.t_min = 5
-    track_config.t_miss_max = 10
+    if track_config is None:
+        track_config = Mock(spec=TrackConfig)
+        track_config.sigma_l = 0.3
+        track_config.sigma_h = 0.7
+        track_config.sigma_iou = 0.5
+        track_config.t_min = 5
+        track_config.t_miss_max = 10
     config.track = track_config
     config.filetypes.track = "ottrk"
 
@@ -397,6 +457,8 @@ def create_otdet_file_written_event() -> Mock:
     event = Mock(spec=OtdetFileWrittenEvent)
     event.otdet_builder_config = Mock(spec=OtdetBuilderConfig)
     event.otdet_builder_config.source = TEST_SOURCE
+    event.otdet_builder_config.actual_fps = 29.97
+    event.otdet_builder_config.recorded_fps = 30.0
     event.number_of_frames = 100
     return event
 
@@ -417,4 +479,5 @@ def create_expected_builder_config(
         t_miss_max=track_config.t_miss_max,
         tracking_run_id=tracking_run_id,
         frame_group=STREAMING_FRAME_GROUP_ID,
+        track_config=track_config,
     )

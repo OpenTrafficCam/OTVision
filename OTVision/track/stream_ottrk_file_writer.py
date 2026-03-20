@@ -95,6 +95,7 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             t_miss_max=self.track_config.t_miss_max,
             tracking_run_id=self._current_tracking_run_id.get(),
             frame_group=STREAMING_FRAME_GROUP_ID,
+            track_config=self.track_config,
         )
 
     def reset(self) -> None:
