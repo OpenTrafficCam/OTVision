@@ -281,8 +281,10 @@ class ConfigParser:
     def parse_track_botsort_config(self, data: dict) -> _TrackBotSortConfig:
         # Keep t_min/t_miss_max as OT pipeline lifecycle parameters.
         # Forward everything else as ultralytics BoT-SORT tracker params.
+        # Accept UPPERCASE keys in YAML and normalize to ultralytics' lowercase
+        # argument names (e.g. TRACK_HIGH_THRESH -> track_high_thresh).
         tracker_params = {
-            k: v
+            str(k).lower(): v
             for k, v in data.items()
             if k not in {T_MIN, T_MISS_MAX, TRACKER_TYPE}
         }
