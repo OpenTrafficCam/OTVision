@@ -71,3 +71,14 @@ def test_extract_frame_rate_falls_back_to_recorded() -> None:
         }
     }
     assert _extract_frame_rate_from_metadata(metadata) == pytest.approx(25.0)
+
+
+def test_extract_frame_rate_handles_string_encoded_fps() -> None:
+    """Real .otdet files may store FPS as strings (e.g. '20.0')."""
+    metadata = {
+        dataformat.VIDEO: {
+            dataformat.RECORDED_FPS: "20.0",
+            dataformat.ACTUAL_FPS: "0.0",
+        }
+    }
+    assert _extract_frame_rate_from_metadata(metadata) == pytest.approx(20.0)
