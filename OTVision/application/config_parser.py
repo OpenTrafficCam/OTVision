@@ -341,8 +341,19 @@ class ConfigParser:
             flush_buffer_size=flush_buffer_size,
         )
 
+    _VALID_TRACKER_TYPES = {"iou", "botsort"}
+
     def validate_config(self, config: Config) -> None:
+        self.validate_tracker_type(config)
         self.validate_flush_buffer_support_track_lifecycle(config)
+
+    def validate_tracker_type(self, config: Config) -> None:
+        tt = config.track.tracker_type
+        if tt not in self._VALID_TRACKER_TYPES:
+            raise InvalidOtvisionConfigError(
+                f"Unknown TRACK.TRACKER_TYPE '{tt}'. "
+                f"Valid options: {sorted(self._VALID_TRACKER_TYPES)}"
+            )
 
     def validate_flush_buffer_support_track_lifecycle(self, config: Config) -> None:
         """Validate that the flush buffer size supports complete track lifecycle.
