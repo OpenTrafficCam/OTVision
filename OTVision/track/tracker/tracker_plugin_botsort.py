@@ -36,19 +36,30 @@ def _xywh_center_to_xyxy(xywh: NDArray[np.floating]) -> NDArray[np.float32]:
     return out
 
 
+def _try_positive_float(value: object) -> float | None:
+    """Return *value* as a positive float, or ``None`` if conversion fails."""
+    if value is None:
+        return None
+    try:
+        f = float(value)  # handles int, float, and numeric strings like "20.0"
+    except (TypeError, ValueError):
+        return None
+    return f if f > 0 else None
+
+
 def _extract_frame_rate_from_metadata(metadata: dict) -> float | None:
     """Extract preferred frame rate from OTDET metadata."""
     video = metadata.get(dataformat.VIDEO, {})
     if not isinstance(video, dict):
         return None
 
-    actual = video.get(dataformat.ACTUAL_FPS)
-    if isinstance(actual, (int, float)) and float(actual) > 0:
-        return float(actual)
+    actual = _try_positive_float(video.get(dataformat.ACTUAL_FPS))
+    if actual is not None:
+        return actual
 
-    recorded = video.get(dataformat.RECORDED_FPS)
-    if isinstance(recorded, (int, float)) and float(recorded) > 0:
-        return float(recorded)
+    recorded = _try_positive_float(video.get(dataformat.RECORDED_FPS))
+    if recorded is not None:
+        return recorded
 
     return None
 
@@ -263,6 +274,11 @@ class BotsortTracker(Tracker):
     def track_frame(
         self, frame: DetectedFrame, id_generator: IdGenerator
     ) -> TrackedFrame:
+        # frame.no == 0 signals the start of a new video group.  The chunk
+        # parser (via GroupedFilesTracker) resets the frame offset to 0 at the
+        # beginning of each group, so this is the canonical way to detect a
+        # group boundary.  We must clear all internal state to prevent track
+        # IDs, class mappings, and lifecycle data from leaking across videos.
         if frame.no == 0:
             self._reset_for_new_group()
 
@@ -273,6 +289,8 @@ class BotsortTracker(Tracker):
         # [x1, y1, x2, y2, track_id, score, cls, det_idx]
         # The concrete dtype/shape is ultralytics-dependent, but we only index by
         # known column offsets.
+        # ultralytics expects uint8 images; the detection pipeline guarantees
+        # this dtype when images are present.
         tracks = botsort.update(
             results,
             cast(NDArray[np.uint8] | None, frame.image),
@@ -327,10 +345,20 @@ class BotsortTracker(Tracker):
         for ot_id, state in list(self._track_state.items()):
             # Match IOU-tracker semantics: we only finish/discard once the track
             # has been missing for *more* than `t_miss_max` consecutive frames.
-            # (IOU tracker saves on `age_missing == t_miss_max`.)
+            # (IOU tracker keeps tracks while `track_age < t_miss_max`, incrementing
+            # after the check, so a track with age == t_miss_max is finished on the
+            # next miss.  Here we increment first, so `<= t_miss_max` is equivalent.)
             if state["age_missing"] <= self.config.t_miss_max:
                 continue
 
+            # NOTE: Unlike the IOU tracker, we intentionally omit a `sigma_h`
+            # (high-confidence) gate here.  The IOU tracker associates *all*
+            # detections above `sigma_l` and retroactively discards tracks whose
+            # `max_conf` never reached `sigma_h`.  BoT-SORT, however, already
+            # filters detections during association via `track_high_thresh`,
+            # `track_low_thresh`, and `new_track_thresh` — only sufficiently
+            # confident detections survive long enough to form tracks, making an
+            # additional confidence gate at finish time redundant.
             span = int(state["last_frame"]) - int(state["first_frame"])
             if span >= self.config.t_min:
                 finished_track_ids.add(ot_id)
