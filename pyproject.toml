@@ -125,6 +125,7 @@ name = "tensorrt-cu12-bindings"
 name = "tensorrt-cu12-libs"
 
 [tool.uv]
+exclude-newer = "3 days"
 environments = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
