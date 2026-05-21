@@ -126,6 +126,7 @@ name = "tensorrt-cu12-libs"
 
 [tool.uv]
 exclude-newer = "3 days"
+exclude-newer-package = { tensorrt = false, tensorrt-cu12-bindings = false, tensorrt-cu12-libs = false }
 environments = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
