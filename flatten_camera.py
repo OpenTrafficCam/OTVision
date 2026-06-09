@@ -32,6 +32,7 @@ import filecmp
 import shutil
 import sys
 from dataclasses import dataclass, field
+from datetime import date as _date
 from pathlib import Path
 from typing import Callable
 
@@ -55,19 +56,30 @@ class FlattenResult:
         return not self.conflicts
 
 
-def find_sources(camera: Path, types: tuple[str, ...]):
-    """Data files in SUBfolders of `camera` (not the root), excluding dotfiles."""
-    root = camera.resolve()
+def _subdir_date(name: str) -> _date | None:
+    try:
+        return _date.fromisoformat(name)
+    except ValueError:
+        return None
+
+
+def find_sources(camera: Path, types: tuple[str, ...], date_filter=None):
+    """Data files / junk / temps in scoped SUBfolders."""
     sources, appledouble, temp_dotfiles = [], [], []
-    for f in camera.rglob("*"):
-        if not f.is_file() or f.parent.resolve() == root:
-            continue
-        if f.name.startswith(APPLEDOUBLE_PREFIX):
-            appledouble.append(f)
-        elif f.name.startswith("."):
-            temp_dotfiles.append(f)  # e.g. .OTCamera..._10-30-00.otdet.WQoSZM
-        elif f.suffix.lower() in types:
-            sources.append(f)
+    for sub in sorted(p for p in camera.iterdir() if p.is_dir()):
+        if date_filter is not None:
+            d = _subdir_date(sub.name)
+            if d is None or not date_filter(d):
+                continue
+        for f in sub.rglob("*"):
+            if not f.is_file():
+                continue
+            if f.name.startswith(APPLEDOUBLE_PREFIX):
+                appledouble.append(f)
+            elif f.name.startswith("."):
+                temp_dotfiles.append(f)  # e.g. .OTCamera..._10-30-00.otdet.WQoSZM
+            elif f.suffix.lower() in types:
+                sources.append(f)
     return sorted(sources), sorted(appledouble), sorted(temp_dotfiles)
 
 
@@ -77,10 +89,11 @@ def flatten_camera(
     clean_appledouble: bool = True,
     dry_run: bool = False,
     log: Callable[[str], None] = print,
+    date_filter=None,
 ) -> FlattenResult:
     """Move every data file from `camera`'s subfolders into `camera` itself."""
     res = FlattenResult(camera=camera)
-    sources, appledouble, temp_dotfiles = find_sources(camera, types)
+    sources, appledouble, temp_dotfiles = find_sources(camera, types, date_filter)
     res.temp_files = temp_dotfiles
 
     exts = ", ".join(sorted({s.suffix for s in sources})) or "none"

@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 _OTC_RE = re.compile(
     r"^(?P<host>[A-Za-z0-9]+)_FR\d+_"
@@ -51,3 +53,69 @@ def next_block(
         if len(pend) >= block_days:
             return pend[:block_days]
     return []
+
+
+@dataclass
+class CoverageReport:
+    fire: bool
+    reason: str
+    days: list[date] = field(default_factory=list)
+    otdet_paths: list[Path] = field(default_factory=list)
+    tracked_through_after: date | None = None
+
+
+def _scan(camera: Path):
+    host = camera.name.lower()
+    files, temps, seen, dups, foreign = [], [], set(), set(), 0
+    for f in camera.rglob("*"):
+        if not f.is_file() or f.name.startswith("._"):
+            continue
+        if f.name.startswith(".") and ".otdet" in f.name:
+            inner = parse_otc_filename(
+                f.name.lstrip(".").rsplit(".otdet", 1)[0] + ".otdet"
+            )
+            temps.append((inner[1].date() if inner else None, f))
+            continue
+        parsed = parse_otc_filename(f.name)
+        if not parsed:
+            continue
+        fhost, dt = parsed
+        if fhost.lower() != host:
+            foreign += 1
+            continue
+        if f.name in seen:
+            dups.add(f.name)
+        seen.add(f.name)
+        files.append((dt, f))
+    return files, temps, sorted(dups), foreign
+
+
+def assess_camera(
+    camera: Path,
+    *,
+    now,
+    tracked_through,
+    block_days=4,
+    slots_per_day=96,
+    idle_minutes=5,
+) -> CoverageReport:
+    files, temps, dups, foreign = _scan(camera)
+    note = f"; {foreign} foreign-host file(s) ignored" if foreign else ""
+    if not files:
+        return CoverageReport(False, "no same-host .otdet found" + note)
+    complete = complete_dates([dt for dt, _ in files], slots_per_day)
+    days = next_block(complete, tracked_through, block_days)
+    if not days:
+        return CoverageReport(False, f"no full {block_days}-day block pending" + note)
+    dayset = set(days)
+    window = [(dt, p) for dt, p in files if dt.date() in dayset]
+    if any(p.name in dups for _, p in window):
+        return CoverageReport(False, "duplicate .otdet basenames in block")
+    fresh = now.timestamp() - idle_minutes * 60
+    for d, p in temps:
+        if d in dayset and p.stat().st_mtime > fresh:
+            return CoverageReport(False, f"fresh temp write in block ({p.name})")
+    if any(p.stat().st_mtime > fresh for _, p in window):
+        return CoverageReport(False, f"block not idle (<{idle_minutes}m)")
+    paths = [p for _, p in sorted(window)]
+    return CoverageReport(True, "fire", days, paths, max(days))
