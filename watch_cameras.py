@@ -36,6 +36,10 @@ PYTHON = SCRIPT_DIR / ".venv" / "bin" / "python"
 TRACK_SCRIPT = SCRIPT_DIR / "track.py"
 DEFAULT_CONFIG = SCRIPT_DIR / "config.continuous.botsort.yaml"
 CAMERA_GLOBS = ("OTCamera*", "otcamera*")
+_ACTIVE_CHILDREN = set()
+_ACTIVE_CHILDREN_LOCK = threading.Lock()
+_SIGNAL_HANDLERS_INSTALLED = False
+_PREVIOUS_SIGNAL_HANDLERS = {}
 
 
 @dataclass
@@ -206,36 +210,60 @@ def _run_track_in_slot(
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
-        previous = {}
-
-        def terminate_child(signum, frame):
-            try:
-                os.killpg(proc.pid, signum)
-            except ProcessLookupError:
-                pass
-            try:
-                proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(proc.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                proc.wait()
-            raise SystemExit(128 + signum)
-
-        if threading.current_thread() is threading.main_thread():
-            for sig in (signal.SIGTERM, signal.SIGINT):
-                previous[sig] = signal.getsignal(sig)
-                signal.signal(sig, terminate_child)
+        _install_signal_handlers()
+        _register_child(proc)
         try:
             rc = proc.wait()
         finally:
-            for sig, handler in previous.items():
-                signal.signal(sig, handler)
+            _unregister_child(proc)
         if rc == 0:
             return True
         log(f"{camera.name}: track exit {rc} (see {console.name})")
         return False
+
+
+def _register_child(proc) -> None:
+    with _ACTIVE_CHILDREN_LOCK:
+        _ACTIVE_CHILDREN.add(proc)
+
+
+def _unregister_child(proc) -> None:
+    with _ACTIVE_CHILDREN_LOCK:
+        _ACTIVE_CHILDREN.discard(proc)
+
+
+def _terminate_active_children(signum: int) -> None:
+    with _ACTIVE_CHILDREN_LOCK:
+        children = list(_ACTIVE_CHILDREN)
+    for proc in children:
+        try:
+            os.killpg(proc.pid, signum)
+        except ProcessLookupError:
+            pass
+
+
+def _handle_shutdown(signum, frame):
+    _terminate_active_children(signum)
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        with _ACTIVE_CHILDREN_LOCK:
+            if not _ACTIVE_CHILDREN:
+                break
+        time.sleep(0.05)
+    _terminate_active_children(signal.SIGKILL)
+    raise SystemExit(128 + signum)
+
+
+def _install_signal_handlers() -> None:
+    global _SIGNAL_HANDLERS_INSTALLED
+    if _SIGNAL_HANDLERS_INSTALLED:
+        return
+    if threading.current_thread() is not threading.main_thread():
+        return
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        _PREVIOUS_SIGNAL_HANDLERS[sig] = signal.getsignal(sig)
+        signal.signal(sig, _handle_shutdown)
+    _SIGNAL_HANDLERS_INSTALLED = True
 
 
 def track_slot_budget(max_parallel: int, reserve: int, cores_per_track: int = 4) -> int:
@@ -304,6 +332,7 @@ def _overloaded(reserve: int) -> bool:
 def poll_once(
     root: Path, cfg: WatchConfig, now: datetime, log: Callable[[str], None] = print
 ) -> list[Outcome]:
+    _install_signal_handlers()
     outcomes = []
     futures = {}
     workers = safe_parallelism(cfg.max_parallel, cfg.reserve_cores)

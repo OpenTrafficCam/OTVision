@@ -265,6 +265,20 @@ def test_run_track_uses_start_new_session_without_preexec(tmp_path, monkeypatch)
     assert "preexec_fn" not in seen
 
 
+def test_active_child_registry_kills_worker_thread_process_group(monkeypatch):
+    import watch_cameras as wc
+
+    calls = []
+    proc = type("Proc", (), {"pid": 12345})()
+
+    monkeypatch.setattr(wc.os, "killpg", lambda pid, sig: calls.append((pid, sig)))
+    wc._register_child(proc)
+    wc._terminate_active_children(wc.signal.SIGTERM)
+    wc._unregister_child(proc)
+
+    assert calls == [(12345, wc.signal.SIGTERM)]
+
+
 REAL = Path("/Volumes/platomo data/Projekte/OTC015_Team-Red/videos/OTCamera07")
 
 
