@@ -5,6 +5,7 @@ import argparse
 import bz2
 import ctypes
 import fcntl
+import json
 import os
 import signal
 import subprocess
@@ -52,8 +53,8 @@ class Outcome:
 
 def _bz2_ok(path: Path) -> bool:
     try:
-        with bz2.open(path, "rb") as fh:
-            fh.read(64)
+        with bz2.open(path, "rt") as fh:
+            json.load(fh)
         return True
     except Exception:
         return False
@@ -312,6 +313,10 @@ def main(argv: list[str] | None = None) -> int:
     if not root.is_dir():
         print(f"[fatal] not a directory: {root}", file=sys.stderr)
         return 2
+    error = _validate_args(a)
+    if error:
+        print(f"[fatal] {error}", file=sys.stderr)
+        return 2
     cfg = WatchConfig(
         config=Path(a.config),
         log_dir=Path(a.log_dir),
@@ -342,6 +347,26 @@ def main(argv: list[str] | None = None) -> int:
         started = time.monotonic()
         run()
         time.sleep(max(0, max(60, a.interval) - (time.monotonic() - started)))
+
+
+def _validate_args(a) -> str | None:
+    if a.block_days < 1:
+        return "--block-days must be >= 1"
+    if a.slots_per_day < 1:
+        return "--slots-per-day must be >= 1"
+    if 24 * 60 % a.slots_per_day != 0:
+        return "--slots-per-day must divide 1440"
+    if a.idle_minutes < 0:
+        return "--idle-minutes must be >= 0"
+    if a.stable_minutes < 0:
+        return "--stable-minutes must be >= 0"
+    if a.reserve_cores < 0:
+        return "--reserve-cores must be >= 0"
+    if a.max_parallel < 1:
+        return "--max-parallel must be >= 1"
+    if a.cores_per_track < 1:
+        return "--cores-per-track must be >= 1"
+    return None
 
 
 if __name__ == "__main__":

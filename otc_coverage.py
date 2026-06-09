@@ -32,6 +32,8 @@ def complete_dates(slot_datetimes, slots_per_day: int = 96) -> set[date]:
     want = expected_slots(slots_per_day)
     by_day: dict[date, set] = {}
     for dt in slot_datetimes:
+        if dt.second != 0:
+            continue
         by_day.setdefault(dt.date(), set()).add((dt.hour, dt.minute))
     return {d for d, got in by_day.items() if got == want}
 

@@ -1,4 +1,5 @@
 import bz2
+import json
 import os
 import shutil
 import signal
@@ -15,6 +16,7 @@ from watch_cameras import (
     WatchConfig,
     acquire_track_slot,
     discover_cameras,
+    main,
     now_utc,
     process_camera,
     safe_parallelism,
@@ -104,6 +106,25 @@ def test_no_mark_when_ottrk_missing(tmp_path):
     assert out.status == "failed" and get_tracked_through(cam) is None
 
 
+def test_verify_outputs_rejects_truncated_or_non_json_bz2(tmp_path):
+    good = tmp_path / "good.otdet"
+    truncated = tmp_path / "truncated.otdet"
+    non_json = tmp_path / "non-json.otdet"
+    for p in (good, truncated, non_json):
+        p.write_bytes(b"x")
+    with bz2.open(good.with_suffix(".ottrk"), "wt") as fh:
+        json.dump({"ok": True}, fh)
+    payload = json.dumps({"items": list(range(2000))}).encode()
+    truncated.with_suffix(".ottrk").write_bytes(bz2.compress(payload)[:-10])
+    with bz2.open(non_json.with_suffix(".ottrk"), "wt") as fh:
+        fh.write("not json")
+
+    bad = verify_outputs([good, truncated, non_json])
+    assert good.with_suffix(".ottrk") not in bad
+    assert truncated.with_suffix(".ottrk") in bad
+    assert non_json.with_suffix(".ottrk") in bad
+
+
 def test_discover(tmp_path):
     (tmp_path / "OTCamera07").mkdir()
     (tmp_path / "otcamera23").mkdir()
@@ -114,6 +135,21 @@ def test_discover(tmp_path):
 def test_safe_parallelism_caps_to_cores():
     assert safe_parallelism(1000, reserve=2) <= (os.cpu_count() or 4)
     assert safe_parallelism(1, reserve=2) == 1
+
+
+def test_cli_rejects_invalid_knobs(tmp_path, capsys):
+    for args in (
+        ["--once", "--block-days", "0", str(tmp_path)],
+        ["--once", "--slots-per-day", "0", str(tmp_path)],
+        ["--once", "--slots-per-day", "7", str(tmp_path)],
+        ["--once", "--idle-minutes", "-1", str(tmp_path)],
+        ["--once", "--stable-minutes", "-1", str(tmp_path)],
+        ["--once", "--reserve-cores", "-1", str(tmp_path)],
+        ["--once", "--max-parallel", "0", str(tmp_path)],
+        ["--once", "--cores-per-track", "0", str(tmp_path)],
+    ):
+        assert main(args) == 2
+    assert "fatal" in capsys.readouterr().err
 
 
 def _hold_slot(lock_dir, q):
@@ -195,7 +231,11 @@ REAL = Path("/Volumes/platomo data/Projekte/OTC015_Team-Red/videos/OTCamera07")
 )
 def test_end_to_end_small(tmp_path):
     src = REAL / "2026-06-03"
-    samples = sorted(src.glob("OTCamera07_FR20_2026-06-03_01-3*-00.otdet"))[:2]
+    samples = [
+        src / "OTCamera07_FR20_2026-06-03_00-00-00.otdet",
+        src / "OTCamera07_FR20_2026-06-03_12-00-00.otdet",
+    ]
+    samples = [s for s in samples if s.exists()]
     if len(samples) < 2:
         pytest.skip("samples unavailable")
     cam = tmp_path / "OTCamera07" / "2026-06-03"

@@ -55,6 +55,14 @@ def test_complete_requires_exact_set():
     assert complete_dates(off_cadence, 96) == set()
 
 
+def test_complete_rejects_nonzero_seconds():
+    full = _slots(
+        date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
+    )
+    full[0] = full[0].replace(second=59)
+    assert complete_dates(full, 96) == set()
+
+
 def test_runs():
     ds = {date(2026, 6, 3), date(2026, 6, 4), date(2026, 6, 6)}
     assert consecutive_runs(ds) == [

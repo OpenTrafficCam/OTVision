@@ -48,15 +48,19 @@ def set_tracked_through(
     _atomic_write(p, state)
 
 
-def _signature(files: list[Path]) -> str:
+def _signature(files: list[Path], base: Path) -> str:
     h = hashlib.sha1()
     for f in sorted(files):
         try:
+            name = str(f.relative_to(base))
+        except ValueError:
+            name = f.name
+        try:
             st = f.stat()
         except FileNotFoundError:
-            h.update(f"{f.name}:missing\n".encode())
+            h.update(f"{name}:missing\n".encode())
             continue
-        h.update(f"{f.name}:{st.st_size}:{int(st.st_mtime)}\n".encode())
+        h.update(f"{name}:{st.st_size}:{st.st_mtime_ns}\n".encode())
     return h.hexdigest()
 
 
@@ -72,7 +76,7 @@ def check_stable(
         return True
     p = camera / SCAN
     data = json.loads(p.read_text()) if p.exists() else {}
-    sig = _signature(files)
+    sig = _signature(files, camera)
     entry = data.get(block_key)
     if entry and entry["sig"] == sig:
         first = datetime.fromisoformat(entry["first_seen"])
