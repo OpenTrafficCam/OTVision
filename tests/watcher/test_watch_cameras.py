@@ -2,8 +2,6 @@ import bz2
 import json
 import os
 import shutil
-import signal
-import subprocess
 import time
 from multiprocessing import Process, Queue
 from datetime import date, datetime, timezone
@@ -106,6 +104,72 @@ def test_no_mark_when_ottrk_missing(tmp_path):
     assert out.status == "failed" and get_tracked_through(cam) is None
 
 
+def test_corrupt_marker_does_not_flatten_or_track(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    (cam / ".otc_watch_state.json").write_text("{")
+    called = {"flatten": False, "track": False}
+
+    def flatten(*args, **kwargs):
+        called["flatten"] = True
+
+    def track(*args, **kwargs):
+        called["track"] = True
+
+    out = process_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 0, tzinfo=timezone.utc),
+        cfg=_cfg(tmp_path),
+        flatten_fn=flatten,
+        track_fn=track,
+        log=lambda m: None,
+    )
+    assert out.status == "failed" and "state marker unreadable" in out.detail
+    assert called == {"flatten": False, "track": False}
+
+
+def test_repeated_track_failures_backoff_and_quarantine(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    cfg = _cfg(tmp_path)
+    cfg.max_failures = 2
+
+    def flatten(camera, date_filter=None, log=None, **k):
+        from flatten_camera import FlattenResult
+
+        return FlattenResult(camera=camera)
+
+    out1 = process_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 0, tzinfo=timezone.utc),
+        cfg=cfg,
+        flatten_fn=flatten,
+        track_fn=lambda paths, log=None: False,
+        log=lambda m: None,
+    )
+    out2 = process_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 1, tzinfo=timezone.utc),
+        cfg=cfg,
+        flatten_fn=flatten,
+        track_fn=lambda paths, log=None: False,
+        log=lambda m: None,
+    )
+    out3 = process_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 2, tzinfo=timezone.utc),
+        cfg=cfg,
+        flatten_fn=flatten,
+        track_fn=lambda paths, log=None: True,
+        log=lambda m: None,
+    )
+    assert out1.status == "failed"
+    assert out2.status == "skipped" and "backoff" in out2.detail
+    assert out3.status == "skipped" and "backoff" in out3.detail
+
+
 def test_verify_outputs_rejects_truncated_or_non_json_bz2(tmp_path):
     good = tmp_path / "good.otdet"
     truncated = tmp_path / "truncated.otdet"
@@ -147,6 +211,7 @@ def test_cli_rejects_invalid_knobs(tmp_path, capsys):
         ["--once", "--reserve-cores", "-1", str(tmp_path)],
         ["--once", "--max-parallel", "0", str(tmp_path)],
         ["--once", "--cores-per-track", "0", str(tmp_path)],
+        ["--once", "--max-failures", "0", str(tmp_path)],
     ):
         assert main(args) == 2
     assert "fatal" in capsys.readouterr().err
@@ -176,49 +241,28 @@ def test_track_slot_budget_spans_processes(tmp_path):
     assert p.exitcode == 0
 
 
-def test_run_track_terminates_child_process_group_on_signal(tmp_path):
-    from watch_cameras import _run_track
+def test_run_track_uses_start_new_session_without_preexec(tmp_path, monkeypatch):
+    from watch_cameras import _run_track_in_slot
     import watch_cameras as wc
 
-    script = tmp_path / "sleeper.py"
-    marker = tmp_path / "child.pid"
-    script.write_text(
-        "import pathlib, time, os\n"
-        f"pathlib.Path({str(marker)!r}).write_text(str(os.getpid()))\n"
-        "time.sleep(30)\n"
-    )
-    wc.PYTHON = Path("/usr/bin/python3")
-    wc.TRACK_SCRIPT = script
+    seen = {}
+
+    class FakeProc:
+        pid = 123456
+
+        def wait(self, timeout=None):
+            return 0
+
+    def fake_popen(*args, **kwargs):
+        seen.update(kwargs)
+        return FakeProc()
+
+    monkeypatch.setattr(wc.subprocess, "Popen", fake_popen)
     cam = tmp_path / "OTCamera07"
     cam.mkdir()
-    p = Process(
-        target=_run_track,
-        args=([cam / "a.otdet"], _cfg(tmp_path), cam, lambda m: None),
-    )
-    p.start()
-    for _ in range(50):
-        if marker.exists():
-            break
-        time.sleep(0.05)
-    child_pid = int(marker.read_text())
-    os.kill(p.pid, signal.SIGKILL)
-    p.join(timeout=3)
-    assert p.exitcode is not None
-    for _ in range(30):
-        status = subprocess.run(
-            ["ps", "-o", "stat=", "-p", str(child_pid)],
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        if not status or status.startswith("Z"):
-            break
-        time.sleep(0.05)
-    status = subprocess.run(
-        ["ps", "-o", "stat=", "-p", str(child_pid)],
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    assert not status or status.startswith("Z")
+    assert _run_track_in_slot([cam / "a.otdet"], _cfg(tmp_path), cam, lambda m: None)
+    assert seen["start_new_session"] is True
+    assert "preexec_fn" not in seen
 
 
 REAL = Path("/Volumes/platomo data/Projekte/OTC015_Team-Red/videos/OTCamera07")

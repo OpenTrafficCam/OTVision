@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import bz2
-import ctypes
 import fcntl
 import json
 import os
@@ -21,7 +20,15 @@ from typing import Callable
 
 from flatten_camera import flatten_camera
 from otc_coverage import assess_camera
-from otc_state import check_stable, get_tracked_through, set_tracked_through
+from otc_state import (
+    StateUnreadable,
+    block_failure,
+    check_stable,
+    clear_failure,
+    get_tracked_through,
+    record_failure,
+    set_tracked_through,
+)
 from track_continuous import camera_lock
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -42,6 +49,7 @@ class WatchConfig:
     reserve_cores: int = 2
     max_parallel: int = 1
     cores_per_track: int = 4
+    max_failures: int = 3
 
 
 @dataclass
@@ -83,7 +91,10 @@ def process_camera(
     with camera_lock(camera) as got:
         if not got:
             return Outcome(camera, "skipped", "locked by another run")
-        tt = get_tracked_through(camera)
+        try:
+            tt = get_tracked_through(camera)
+        except StateUnreadable:
+            return Outcome(camera, "failed", "state marker unreadable")
         rep = assess_camera(
             camera,
             now=now,
@@ -95,6 +106,15 @@ def process_camera(
         if not rep.fire:
             return Outcome(camera, "idle", rep.reason)
         block_key = f"{rep.days[0]}_{rep.days[-1]}"
+        try:
+            failure = block_failure(camera, block_key, now)
+        except StateUnreadable:
+            return Outcome(camera, "failed", "state marker unreadable")
+        if failure:
+            if failure.quarantined:
+                return Outcome(camera, "skipped", f"quarantined after {failure.count} failures")
+            if now < failure.next_retry:
+                return Outcome(camera, "skipped", f"backoff until {failure.next_retry.isoformat()}")
         if not check_stable(
             camera, block_key, rep.otdet_paths, now=now, stable_minutes=cfg.stable_minutes
         ):
@@ -102,17 +122,39 @@ def process_camera(
         wanted = set(rep.days)
         fres = flatten_fn(camera, date_filter=lambda d: d in wanted, log=log)
         if not getattr(fres, "ok", True):
+            record_failure(
+                camera,
+                block_key,
+                "flatten conflict",
+                now=now,
+                max_failures=cfg.max_failures,
+            )
             return Outcome(camera, "failed", "flatten conflict")
         flat = [camera / p.name for p in rep.otdet_paths]
         track_result = track_fn(flat, log=log)
         if track_result == "no_slot":
             return Outcome(camera, "skipped", "no host-wide track slot")
         if not track_result:
+            record_failure(
+                camera,
+                block_key,
+                "track failed",
+                now=now,
+                max_failures=cfg.max_failures,
+            )
             return Outcome(camera, "failed", "track failed; retry next poll")
         missing = verify_outputs(flat)
         if missing:
             log(f"{camera.name}: {len(missing)} .ottrk missing/invalid; not marking")
+            record_failure(
+                camera,
+                block_key,
+                f"{len(missing)} .ottrk incomplete",
+                now=now,
+                max_failures=cfg.max_failures,
+            )
             return Outcome(camera, "failed", f"{len(missing)} .ottrk incomplete")
+        clear_failure(camera, block_key)
         set_tracked_through(
             camera,
             rep.tracked_through_after,
@@ -162,7 +204,7 @@ def _run_track_in_slot(
             cmd,
             stdout=fh,
             stderr=subprocess.STDOUT,
-            preexec_fn=_child_process_setup,
+            start_new_session=True,
         )
         previous = {}
 
@@ -194,15 +236,6 @@ def _run_track_in_slot(
             return True
         log(f"{camera.name}: track exit {rc} (see {console.name})")
         return False
-
-
-def _child_process_setup() -> None:
-    os.setsid()
-    try:
-        libc = ctypes.CDLL("libc.so.6")
-        libc.prctl(1, signal.SIGTERM)
-    except Exception:
-        pass
 
 
 def track_slot_budget(max_parallel: int, reserve: int, cores_per_track: int = 4) -> int:
@@ -306,6 +339,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--reserve-cores", type=int, default=2)
     p.add_argument("--max-parallel", type=int, default=1)
     p.add_argument("--cores-per-track", type=int, default=4)
+    p.add_argument("--max-failures", type=int, default=3)
     p.add_argument("--config", default=str(DEFAULT_CONFIG))
     p.add_argument("--log-dir", default=str(SCRIPT_DIR / "logs_track"))
     a = p.parse_args(argv)
@@ -327,6 +361,7 @@ def main(argv: list[str] | None = None) -> int:
         reserve_cores=a.reserve_cores,
         max_parallel=a.max_parallel,
         cores_per_track=a.cores_per_track,
+        max_failures=a.max_failures,
     )
 
     def run():
@@ -366,6 +401,8 @@ def _validate_args(a) -> str | None:
         return "--max-parallel must be >= 1"
     if a.cores_per_track < 1:
         return "--cores-per-track must be >= 1"
+    if a.max_failures < 1:
+        return "--max-failures must be >= 1"
     return None
 
 

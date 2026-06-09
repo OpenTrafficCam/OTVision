@@ -1,7 +1,15 @@
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from otc_state import check_stable, get_tracked_through, set_tracked_through
+import pytest
+
+from otc_state import (
+    StateUnreadable,
+    check_stable,
+    get_tracked_through,
+    record_failure,
+    set_tracked_through,
+)
 
 
 def test_marker_roundtrip(tmp_path):
@@ -74,12 +82,52 @@ def test_stability_zero_is_immediate(tmp_path):
     )
 
 
-def test_marker_read_tolerates_partial_json_and_cleans_tmp(tmp_path):
+def test_marker_read_fails_closed_on_partial_json(tmp_path):
     cam = tmp_path / "OTCamera07"
     cam.mkdir()
     (cam / ".otc_watch_state.json").write_text("{")
+    with pytest.raises(StateUnreadable):
+        get_tracked_through(cam)
+
+
+def test_state_prunes_tmp_history_and_scan_entries(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    cam.mkdir()
     (cam / ".otc_watch_state.json.123.tmp").write_text("{}")
-    assert get_tracked_through(cam) is None
-    set_tracked_through(cam, date(2026, 6, 6), days=4, files=384, at="t1")
-    assert get_tracked_through(cam) == date(2026, 6, 6)
+    for n in range(80):
+        set_tracked_through(cam, date(2026, 6, min(28, n + 1)), days=4, files=n, at=str(n))
+    assert get_tracked_through(cam) == date(2026, 6, 28)
+    import json
+
+    state = json.loads((cam / ".otc_watch_state.json").read_text())
+    assert len(state["history"]) <= 50
     assert not list(cam.glob(".otc_watch_state.json.*.tmp"))
+
+    f = cam / "a.otdet"
+    f.write_bytes(b"x")
+    for n in range(80):
+        check_stable(
+            cam,
+            f"blk-{n}",
+            [f],
+            now=datetime(2026, 6, 9, 12, n % 60),
+            stable_minutes=5,
+        )
+    scan = json.loads((cam / ".otc_watch_scan.json").read_text())
+    assert len(scan) <= 50
+
+
+def test_failure_backoff_then_quarantine(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    cam.mkdir()
+    block = "2026-06-03_2026-06-06"
+    t0 = datetime(2026, 6, 9, 12, 0)
+    assert record_failure(cam, block, "track failed", now=t0, max_failures=3).quarantined is False
+    state = record_failure(
+        cam, block, "track failed", now=t0 + timedelta(minutes=1), max_failures=3
+    )
+    assert state.next_retry > t0 + timedelta(minutes=1)
+    state = record_failure(
+        cam, block, "track failed", now=t0 + timedelta(minutes=2), max_failures=3
+    )
+    assert state.quarantined is True
