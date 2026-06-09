@@ -9,6 +9,10 @@ tests/resources/
 !test.log
 *.otvision.yaml
 
+# continuous-tracking pipeline runtime dirs
+.locks/
+logs_track/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

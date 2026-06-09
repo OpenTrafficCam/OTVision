@@ -28,6 +28,7 @@ Filenames embed the full date+time, so flattening across days never collides.
 from __future__ import annotations
 
 import argparse
+import filecmp
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -120,16 +121,20 @@ def flatten_camera(
     for s in sources:
         dst = camera / s.name
         if dst.exists():
+            # Drop the source as a duplicate ONLY if the root file is byte-identical.
+            # Same size is not enough -- it could silently delete a differing file of
+            # equal size (e.g. a re-detection of the same timestamp).
             try:
-                same = dst.stat().st_size == s.stat().st_size
+                same_size = dst.stat().st_size == s.stat().st_size
             except OSError:
-                same = False
-            if same:
-                s.unlink()          # already-flattened duplicate -> drop source
+                same_size = False
+            if same_size and filecmp.cmp(str(s), str(dst), shallow=False):
+                s.unlink()          # verified-identical duplicate -> drop source
                 res.deduped += 1
             else:
+                reason = "different size" if not same_size else "same size, different content"
                 res.conflicts.append(
-                    f"root file exists with different size, left in place: {s.name}"
+                    f"root file exists ({reason}), left in place: {s.name}"
                 )
                 log(f"flatten: [warn] {res.conflicts[-1]}")
         else:

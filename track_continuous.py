@@ -42,10 +42,13 @@ Background launch (fire-and-forget, survives logout):
 from __future__ import annotations
 
 import argparse
+import fcntl
+import hashlib
 import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -57,6 +60,7 @@ PYTHON = SCRIPT_DIR / ".venv" / "bin" / "python"
 TRACK_SCRIPT = SCRIPT_DIR / "track.py"
 DEFAULT_CONFIG = SCRIPT_DIR / "config.continuous.botsort.yaml"
 CAMERA_GLOBS = ("OTCamera*", "otcamera*")
+LOCK_DIR = SCRIPT_DIR / ".locks"
 
 
 @dataclass
@@ -106,6 +110,31 @@ def duplicate_otdet(camera_dir: Path) -> list[str]:
     return sorted(n for n, c in Counter(names).items() if c > 1)
 
 
+@contextmanager
+def camera_lock(camera_dir: Path):
+    """Host-local advisory lock: never let two runs process one camera at once.
+
+    flock on a local lockfile keyed by the camera's resolved path. Released
+    automatically when the process exits (even on crash), so there are no stale
+    locks to clean up. Yields True if acquired, False if another run holds it.
+    """
+    LOCK_DIR.mkdir(parents=True, exist_ok=True)
+    key = hashlib.sha1(str(camera_dir.resolve()).encode()).hexdigest()[:12]
+    handle = (LOCK_DIR / f"{camera_dir.name}-{key}.lock").open("w")
+    acquired = False
+    try:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquired = True
+        except OSError:
+            acquired = False
+        yield acquired
+    finally:
+        if acquired:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        handle.close()
+
+
 def track_camera(
     camera_dir: Path,
     config: Path,
@@ -126,45 +155,53 @@ def track_camera(
             fh.write(msg + "\n")
             fh.flush()
 
-        # --- stage 1: flatten by atomic move (optional) ---
-        if flatten:
-            fres = flatten_camera(camera_dir, clean_appledouble=clean_appledouble, log=w)
-            if not fres.ok:
-                return Result(camera_dir, "FAILED", count_otdet(camera_dir),
-                              "flatten conflict; not tracked",
+        # --- per-camera lock: refuse to run a camera another run already holds ---
+        with camera_lock(camera_dir) as acquired:
+            if not acquired:
+                w("[lock] another run already holds this camera; skipping.")
+                return Result(camera_dir, "skipped", count_otdet(camera_dir),
+                              "locked by another run",
                               time.monotonic() - start, console_log)
 
-        # --- guard: a half-flattened folder would double-count frames ---
-        dups = duplicate_otdet(camera_dir)
-        if dups:
-            w(f"[fatal] duplicate .otdet basenames (incomplete flatten): {dups[:5]}")
-            return Result(camera_dir, "FAILED", count_otdet(camera_dir),
-                          "duplicate .otdet; not tracked",
-                          time.monotonic() - start, console_log)
+            # --- stage 1: flatten by atomic move (optional) ---
+            if flatten:
+                fres = flatten_camera(camera_dir, clean_appledouble=clean_appledouble, log=w)
+                if not fres.ok:
+                    return Result(camera_dir, "FAILED", count_otdet(camera_dir),
+                                  "flatten conflict; not tracked",
+                                  time.monotonic() - start, console_log)
 
-        n = count_otdet(camera_dir)
-        if n == 0:
-            return Result(camera_dir, "skipped", 0, "no .otdet files",
-                          time.monotonic() - start, console_log)
+            # --- guard: a half-flattened folder would double-count frames ---
+            dups = duplicate_otdet(camera_dir)
+            if dups:
+                w(f"[fatal] duplicate .otdet basenames (incomplete flatten): {dups[:5]}")
+                return Result(camera_dir, "FAILED", count_otdet(camera_dir),
+                              "duplicate .otdet; not tracked",
+                              time.monotonic() - start, console_log)
 
-        # --- stage 2: continuous BoT-SORT track ---
-        cmd = [
-            str(PYTHON), str(TRACK_SCRIPT),
-            "-p", str(camera_dir),
-            "-c", str(config),
-            "--tracker", "botsort",
-            "--overwrite" if overwrite else "--no-overwrite",
-            "--logfile", str(otvision_log),
-            "--logfile-overwrite",
-        ]
-        w("# " + " ".join(cmd))
-        try:
-            subprocess.run(cmd, check=True, stdout=fh, stderr=subprocess.STDOUT)
-            status, detail = "ok", ""
-        except subprocess.CalledProcessError as e:
-            status, detail = "FAILED", f"track exit code {e.returncode}"
-        except Exception as e:  # noqa: BLE001
-            status, detail = "ERROR", str(e)
+            n = count_otdet(camera_dir)
+            if n == 0:
+                return Result(camera_dir, "skipped", 0, "no .otdet files",
+                              time.monotonic() - start, console_log)
+
+            # --- stage 2: continuous BoT-SORT track ---
+            cmd = [
+                str(PYTHON), str(TRACK_SCRIPT),
+                "-p", str(camera_dir),
+                "-c", str(config),
+                "--tracker", "botsort",
+                "--overwrite" if overwrite else "--no-overwrite",
+                "--logfile", str(otvision_log),
+                "--logfile-overwrite",
+            ]
+            w("# " + " ".join(cmd))
+            try:
+                subprocess.run(cmd, check=True, stdout=fh, stderr=subprocess.STDOUT)
+                status, detail = "ok", ""
+            except subprocess.CalledProcessError as e:
+                status, detail = "FAILED", f"track exit code {e.returncode}"
+            except Exception as e:  # noqa: BLE001
+                status, detail = "ERROR", str(e)
     return Result(camera_dir, status, n, detail, time.monotonic() - start, console_log)
 
 
