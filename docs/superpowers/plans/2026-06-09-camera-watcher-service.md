@@ -1,4 +1,4 @@
-# Camera Watcher Service Implementation Plan (rev. 2)
+# Camera Watcher Service Implementation Plan (rev. 2.1)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
@@ -6,7 +6,7 @@
 
 **Goal:** A polling service that watches the project `videos/` tree and, whenever a camera has a complete, **stable** 4-day block of `.otdet` not yet processed, flattens exactly those days and tracks them as **one continuous BoT-SORT run** (continuous IDs within the block), then verifies the `.ottrk` outputs before marking the block done.
 
-**Architecture:** Three repo-root modules beside the existing helpers. `otc_coverage.py` = pure assessment (filenames + mtime, no metadata reads): exact 96-slot complete-day detection, 4-day block selection, coarse settledness. `otc_state.py` = per-camera persistence: the `tracked_through` marker **and** the stability snapshot, both written atomically. `watch_cameras.py` = the poll loop: per camera, assess → require snapshot stability → acquire the per-camera lock (reused from `track_continuous.camera_lock`) → scoped flatten → one continuous track → verify `.ottrk` → advance marker. Poll, not inotify (CIFS/SMB doesn't deliver other-host writes). Deploy via cron `--once` (lock makes overlap safe) or `--interval`.
+**Architecture:** Three repo-root modules beside the existing helpers. `otc_coverage.py` = pure assessment (filenames + mtime, no metadata reads): exact 96-slot complete-day detection, 4-day block selection, coarse settledness. `otc_state.py` = per-camera persistence: the `tracked_through` marker **and** the stability snapshot, both written atomically. `watch_cameras.py` = the poll loop: per camera, acquire the per-camera lock (reused from `track_continuous.camera_lock`) → assess → require snapshot stability → scoped flatten → one continuous track → verify `.ottrk` → advance marker. Poll, not inotify (CIFS/SMB doesn't deliver other-host writes). Deploy via cron `--once` (lock makes overlap safe) or `--interval`.
 
 **Tech Stack:** Python 3.12 stdlib (argparse, dataclasses, pathlib, json, re, datetime, subprocess, bz2, fcntl, hashlib, os). pytest. Reuses `flatten_camera.flatten_camera`, `track_continuous.camera_lock`, `track.py`, `config.continuous.botsort.yaml`.
 
