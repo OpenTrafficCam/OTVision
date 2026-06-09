@@ -25,13 +25,13 @@
 **Settledness / transfer-complete — INPUT `.otdet` (two layers).**
 1. *Coarse age:* no block `.otdet` modified within `--idle-minutes` (default 5).
 2. *Stability snapshot (primary):* the block's `(name, size, mtime)` signature must be **unchanged for ≥ `--stable-minutes` (default 5)**. Persisted in `<camera>/.otc_watch_scan.json`: first sighting records the signature + timestamp; a later poll fires only if the signature is identical and old enough; any change resets the timer. This is robust on SMB where a single mtime check is weak.
-3. *Temp policy (scoped + age):* fire is blocked only by a `.<…>.otdet.XXXX` atomic-write temp that is **inside the block's date folders** AND **newer than `--stable-minutes`**. Stale temps elsewhere (e.g. the existing `.WQoSZM`) do **not** block — this unbreaks OTCamera07.
+3. *Temp policy (scoped + age):* fire is blocked only by a `.<…>.otdet.XXXX` atomic-write temp that is **inside the block's date folders** AND **newer than `--idle-minutes`** (same coarse-age knob used for the file-idle check below). Stale temps elsewhere (e.g. the existing `.WQoSZM`) do **not** block — this unbreaks OTCamera07.
 
 **Transfer-complete — OUTPUT `.ottrk` (your question).** `track.py` writes `.ottrk` **non-atomically** (`stream_ottrk_file_writer.py` → `helpers/files.py` `bz2.open(final_path,"wt")`), so a partial file can briefly exist at the real path. Therefore: after `track.py` exits 0, **verify** every block `.otdet` has a sibling `.ottrk` that is non-empty and bz2-readable; only then advance the marker. **Downstream consumes based on the marker (`tracked_through`), never raw `.ottrk` mtime.**
 
 **Scoped flatten (fixes Task-6 leak).** With `date_filter`, the flatten restricts **all** side effects to the selected days' subfolders: moved sources, AppleDouble cleanup, empty-folder removal, and temp reporting. Subfolders of unselected (in-progress) days are never touched.
 
-**Locking & marker safety.** `process_camera` holds the per-camera `fcntl` lock (reused from `track_continuous.camera_lock`) across assess→flatten→track→verify→**marker write**. Cron `--once` overlap is therefore safe. The marker temp file name includes the PID so two writers never collide even without the lock.
+**Locking & marker safety.** `process_camera` acquires the per-camera `fcntl` lock (reused from `track_continuous.camera_lock`) **before** reading the marker, then holds it across assess→stability→flatten→track→verify→**marker write**. This closes the read-then-lock race: two cron runs can never both act on the same pending block. Cron `--once` overlap is therefore safe. The marker temp file name includes the PID so two writers never collide even without the lock.
 
 **OS concurrency guard (your 32-thread safety).** Cap concurrent camera processing at `min(--max-parallel, cpu_count − --reserve-cores)`; before launching a track, if 1-min load average exceeds `cpu_count − reserve`, defer that camera to the next poll. Each `track.py` is one process; this prevents oversubscription even though we don't expect to hit 32.
 
@@ -66,6 +66,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _isolate_locks(tmp_path_factory, monkeypatch):
+    """Keep per-camera lock files out of the repo during tests."""
+    import track_continuous as tc
+    monkeypatch.setattr(tc, "LOCK_DIR", tmp_path_factory.mktemp("locks"))
 ```
 
 - [ ] **Step 2: register the integration marker** (append to `pytest.ini`, or create it)
@@ -304,6 +313,29 @@ def test_scoped_temp_in_block_blocks_but_stale_outside_does_not(tmp_path):
     rep = assess_camera(cam, now=datetime(2026, 6, 9, 12, 0), tracked_through=None,
                         block_days=4, slots_per_day=96, idle_minutes=5)
     assert rep.fire is False and "temp" in rep.reason.lower()
+
+
+def test_foreign_host_ignored(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    bad = cam / "2026-06-03" / "OTCamera09_FR20_2026-06-03_00-00-00.otdet"
+    bad.write_bytes(b"x"); os.utime(bad, (1_000_000, 1_000_000))
+    rep = assess_camera(cam, now=datetime(2026, 6, 9, 12, 0), tracked_through=None,
+                        block_days=4, slots_per_day=96, idle_minutes=5)
+    assert rep.fire is True                              # 96 OTCamera07 slots/day still complete
+    assert all("OTCamera09" not in p.name for p in rep.otdet_paths)
+
+
+def test_duplicate_basename_blocks(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    dup = "OTCamera07_FR20_2026-06-03_00-00-00.otdet"   # already in 2026-06-03/
+    (cam / dup).write_bytes(b"x"); os.utime(cam / dup, (1_000_000, 1_000_000))  # also in root
+    rep = assess_camera(cam, now=datetime(2026, 6, 9, 12, 0), tracked_through=None,
+                        block_days=4, slots_per_day=96, idle_minutes=5)
+    assert rep.fire is False and "duplicate" in rep.reason.lower()
 ```
 
 - [ ] **Step 2: Run** → FAIL (import).
@@ -324,8 +356,11 @@ class CoverageReport:
 
 
 def _scan(camera: Path):
-    """(start_dt, path) for valid .otdet under camera; plus temp files by day."""
-    files, temps = [], []   # temps: (date|None, path)
+    """Same-host valid .otdet (root + subdirs), temps, duplicate basenames, and a
+    foreign-host count. The camera's host = its directory name; foreign-host files
+    are ignored (so a stray OTCamera09 file can't complete/track OTCamera07)."""
+    host = camera.name.lower()
+    files, temps, seen, dups, foreign = [], [], set(), set(), 0
     for f in camera.rglob("*"):
         if not f.is_file() or f.name.startswith("._"):
             continue
@@ -334,27 +369,37 @@ def _scan(camera: Path):
             temps.append((inner[1].date() if inner else None, f))
             continue
         parsed = parse_otc_filename(f.name)
-        if parsed:
-            files.append((parsed[1], f))
-    return files, temps
+        if not parsed:
+            continue
+        fhost, dt = parsed
+        if fhost.lower() != host:
+            foreign += 1
+            continue
+        if f.name in seen:
+            dups.add(f.name)
+        seen.add(f.name)
+        files.append((dt, f))
+    return files, temps, sorted(dups), foreign
 
 
 def assess_camera(camera: Path, *, now, tracked_through, block_days=4,
                   slots_per_day=96, idle_minutes=5) -> CoverageReport:
-    files, temps = _scan(camera)
+    files, temps, dups, foreign = _scan(camera)
+    note = f"; {foreign} foreign-host file(s) ignored" if foreign else ""
     if not files:
-        return CoverageReport(False, "no .otdet found")
+        return CoverageReport(False, "no same-host .otdet found" + note)
     complete = complete_dates([dt for dt, _ in files], slots_per_day)
     days = next_block(complete, tracked_through, block_days)
     if not days:
-        return CoverageReport(False, f"no full {block_days}-day block pending")
+        return CoverageReport(False, f"no full {block_days}-day block pending" + note)
     dayset = set(days)
+    window = [(dt, p) for dt, p in files if dt.date() in dayset]
+    if any(p.name in dups for _, p in window):     # half-flatten / mixed source
+        return CoverageReport(False, "duplicate .otdet basenames in block")
     fresh = now.timestamp() - idle_minutes * 60
-    # scoped + age temp policy: a temp inside the block, newer than idle, blocks
-    for d, p in temps:
+    for d, p in temps:               # scoped + age: a fresh temp inside the block blocks
         if d in dayset and p.stat().st_mtime > fresh:
             return CoverageReport(False, f"fresh temp write in block ({p.name})")
-    window = [(dt, p) for dt, p in files if dt.date() in dayset]
     if any(p.stat().st_mtime > fresh for _, p in window):
         return CoverageReport(False, f"block not idle (<{idle_minutes}m)")
     paths = [p for _, p in sorted(window)]
@@ -394,6 +439,12 @@ def test_stability_requires_unchanged_for_window(tmp_path):
     assert check_stable(cam, "blk", [f], now=t0 + timedelta(minutes=6), stable_minutes=5) is True
     f.write_bytes(b"xx")                                                            # changed -> reset
     assert check_stable(cam, "blk", [f], now=t0 + timedelta(minutes=7), stable_minutes=5) is False
+
+
+def test_stability_zero_is_immediate(tmp_path):
+    cam = tmp_path / "OTCamera07"; cam.mkdir()
+    f = cam / "a.otdet"; f.write_bytes(b"x")
+    assert check_stable(cam, "blk", [f], now=datetime(2026, 6, 9, 12, 0), stable_minutes=0) is True
 ```
 
 - [ ] **Step 2: Run** → FAIL (import).
@@ -448,7 +499,10 @@ def _signature(files: list[Path]) -> str:
 def check_stable(camera: Path, block_key: str, files: list[Path], *,
                  now: datetime, stable_minutes: int) -> bool:
     """True iff the block's (name,size,mtime) signature has been unchanged for
-    >= stable_minutes. Persists first-sighting in .otc_watch_scan.json."""
+    >= stable_minutes. Persists first-sighting in .otc_watch_scan.json.
+    stable_minutes <= 0 means 'no stability gate' (immediate) -- used by tests."""
+    if stable_minutes <= 0:
+        return True
     p = camera / SCAN
     data = json.loads(p.read_text()) if p.exists() else {}
     sig = _signature(files)
@@ -697,20 +751,20 @@ def process_camera(camera: Path, *, now: datetime, cfg: WatchConfig,
                    log: Callable[[str], None] = print) -> Outcome:
     if track_fn is None:
         track_fn = lambda paths, log=log: _run_track(paths, cfg, camera, log)
-    tt = get_tracked_through(camera)
-    rep = assess_camera(camera, now=now, tracked_through=tt, block_days=cfg.block_days,
-                        slots_per_day=cfg.slots_per_day, idle_minutes=cfg.idle_minutes)
-    if not rep.fire:
-        return Outcome(camera, "idle", rep.reason)
-
-    block_key = f"{rep.days[0]}_{rep.days[-1]}"
-    if not check_stable(camera, block_key, rep.otdet_paths, now=now,
-                        stable_minutes=cfg.stable_minutes):
-        return Outcome(camera, "stabilizing", f"block {block_key} not stable yet")
-
+    # Lock FIRST, then read marker / assess / stability / flatten / track / verify /
+    # mark -- all under the lock, so two cron runs can never act on a stale block.
     with camera_lock(camera) as got:
         if not got:
             return Outcome(camera, "skipped", "locked by another run")
+        tt = get_tracked_through(camera)
+        rep = assess_camera(camera, now=now, tracked_through=tt, block_days=cfg.block_days,
+                            slots_per_day=cfg.slots_per_day, idle_minutes=cfg.idle_minutes)
+        if not rep.fire:
+            return Outcome(camera, "idle", rep.reason)
+        block_key = f"{rep.days[0]}_{rep.days[-1]}"
+        if not check_stable(camera, block_key, rep.otdet_paths, now=now,
+                            stable_minutes=cfg.stable_minutes):
+            return Outcome(camera, "stabilizing", f"block {block_key} not stable yet")
         wanted = set(rep.days)
         fres = flatten_fn(camera, date_filter=lambda d: d in wanted, log=log)
         if not getattr(fres, "ok", True):
@@ -946,8 +1000,10 @@ to flush a tail, run once with --block-days 1.
 
 **Your concerns:** `.ottrk` completeness → `verify_outputs` gate + marker-as-contract (Task 7, policy). 5-min unchanged check → `check_stable` snapshot, default 5 (Task 5). Thread safety → `safe_parallelism`/`_overloaded` (Task 8).
 
+**Rev.2 review patches:** (P1) lock acquired **before** marker read/assess — `process_camera` is fully lock-first (Task 7), so no read-then-mark race; tests isolate `LOCK_DIR` via an autouse fixture (Task 0). (P1) `check_stable` short-circuits `True` when `stable_minutes <= 0` (Task 5) — fixes the `stable_minutes=0` immediate-mode used by Task 7/9 tests. (P2) duplicate `.otdet` basenames in a block block firing — `_scan` detects, `assess_camera` rejects, with a test (Task 4). (P2) foreign-host files are ignored by host match in `_scan` (camera dir name, case-insensitive), with a test (Task 4). (P3) temp-freshness now consistently uses `--idle-minutes` in both policy and `assess_camera`.
+
 **Placeholder scan:** none — every code step is complete.
 
-**Type consistency:** `CoverageReport(fire, reason, days, otdet_paths, tracked_through_after)` (Task 4) consumed unchanged in Task 7. `WatchConfig` fields (block_days, idle_minutes, stable_minutes, slots_per_day, reserve_cores) consistent across Tasks 7/8. `flatten_camera(..., date_filter=)` (Task 6) matches the Task 7 call. `check_stable(camera, block_key, files, *, now, stable_minutes)` and `set_tracked_through(camera, through, *, days, files, at)` match their callers.
+**Type consistency:** `_scan` returns `(files, temps, dups, foreign)` and is consumed only inside `assess_camera` (Task 4). `CoverageReport(fire, reason, days, otdet_paths, tracked_through_after)` (Task 4) consumed unchanged in Task 7. `WatchConfig` fields (block_days, idle_minutes, stable_minutes, slots_per_day, reserve_cores) consistent across Tasks 7/8. `flatten_camera(..., date_filter=)` (Task 6) matches the Task 7 call. `check_stable(camera, block_key, files, *, now, stable_minutes)` and `set_tracked_through(camera, through, *, days, files, at)` match their callers.
 
 **Known limitation (documented):** a trailing run shorter than `--block-days` is never auto-processed; flush with `--block-days 1`.
