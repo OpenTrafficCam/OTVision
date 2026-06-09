@@ -1,0 +1,66 @@
+---
+# Dedicated run config for CONTINUOUS BoT-SORT tracking over OTCamera .otdet files.
+# Used by track_continuous.py (passed to track.py via -c). Keeps the committed
+# user_config.otvision.yaml untouched. Tuning profile: "Optimistic".
+#
+# Continuity note: track.py groups consecutive videos of the SAME camera with a
+# gap <= 1 min into one FrameGroup and tracks them with persistent IDs. IDs reset
+# at gaps > 1 min and never cross cameras (different hostname = new group).
+#
+# In `botsort` mode, tracker params are read from YAML ONLY (CLI tuning flags are
+# ignored), so this block is the single source of truth for the run.
+
+CONVERT:
+  PATHS: []
+  DELETE_INPUT: false
+  FPS_FROM_FILENAME: true
+  INPUT_FPS: 20.0
+  ROTATION: 0
+  OVERWRITE: true
+  DETECT_START: null
+  DETECT_END: null
+
+DETECT:
+  PATHS: []
+  FORCE_RELOAD_TORCH_HUB_CACHE: false
+  HALF_PRECISION: false
+  OVERWRITE: true
+  YOLO:
+    CONF: 0.25
+    IMGSIZE: 640
+    IOU: 0.45
+    WEIGHTS: yolov8s
+
+TRACK:
+  PATHS: []
+  TRACKER_TYPE: botsort
+  IOU:
+    SIGMA_H: 0.42
+    SIGMA_IOU: 0.38
+    SIGMA_L: 0.27
+    T_MIN: 5
+    T_MISS_MAX: 51
+  BOT_SORT:
+    # Effective occlusion window inside Ultralytics = int(fps/30 * TRACK_BUFFER).
+    # At 20 fps: int(20/30 * 90) = 60 frames ~= 3.0 s. T_MISS_MAX is set to match
+    # so OTVision keeps a missing track "alive" exactly as long as Ultralytics can
+    # still revive its ID (avoids the 30-vs-51 mismatch in the default config).
+    T_MIN: 5
+    T_MISS_MAX: 60          # was 51 - aligned to the buffer below
+    TRACKER_TYPE: botsort   # ['botsort', 'bytetrack']
+    TRACK_HIGH_THRESH: 0.2  # was 0.25 - trust detections a bit more (first assoc.)
+    TRACK_LOW_THRESH: 0.1   # second association threshold
+    NEW_TRACK_THRESH: 0.2   # was 0.25 - spawn new tracks more readily
+    TRACK_BUFFER: 90        # was 30 -> eff. 60 frames ~= 3.0 s occlusion memory
+    MATCH_THRESH: 0.9       # permissive association (stock 0.8)
+    FUSE_SCORE: true        # fuse confidence with IoU distance before matching
+    GMC_METHOD: none        # was sparseOptFlow - inert without images (we feed .otdet)
+    PROXIMITY_THRESH: 0.5   # inert while WITH_REID: false
+    APPEARANCE_THRESH: 0.25 # inert while WITH_REID: false
+    WITH_REID: false        # mandatory: .otdet carries no images, ReID needs frames
+    MODEL: auto             # ReID model (only used if WITH_REID: true)
+  OVERWRITE: true
+
+LOG:
+  LOG_LEVEL_CONSOLE: WARNING
+  LOG_LEVEL_FILE: DEBUG
