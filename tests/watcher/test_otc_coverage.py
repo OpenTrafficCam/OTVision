@@ -37,6 +37,13 @@ def test_expected_slots_15min():
     assert (0, 0) in s and (23, 45) in s and len(s) == 96 and (0, 7) not in s
 
 
+def test_expected_slots_rejects_non_divisor():
+    import pytest
+
+    with pytest.raises(ValueError, match="divide 1440"):
+        expected_slots(7)
+
+
 def test_complete_requires_exact_set():
     full = _slots(
         date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
@@ -148,6 +155,78 @@ def test_scoped_temp_in_block_blocks_but_stale_outside_does_not(tmp_path):
         idle_minutes=5,
     )
     assert rep.fire is False and "temp" in rep.reason.lower()
+
+
+def test_vanished_temp_does_not_raise(tmp_path, monkeypatch):
+    from otc_coverage import assess_camera
+
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    tmp = cam / "2026-06-06" / ".OTCamera07_FR20_2026-06-06_10-30-00.otdet.NEW"
+    tmp.write_bytes(b"")
+    real_stat = Path.stat
+
+    def vanish(self, *args, **kwargs):
+        if self == tmp:
+            raise FileNotFoundError
+        return real_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", vanish)
+    rep = assess_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 0),
+        tracked_through=None,
+        block_days=4,
+        slots_per_day=96,
+        idle_minutes=5,
+    )
+    assert rep.fire is True
+
+
+def test_vanished_window_file_returns_idle(tmp_path, monkeypatch):
+    from otc_coverage import assess_camera
+
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    gone = cam / "2026-06-06" / "OTCamera07_FR20_2026-06-06_10-30-00.otdet"
+    real_stat = Path.stat
+
+    def vanish(self, *args, **kwargs):
+        if self == gone:
+            raise FileNotFoundError
+        return real_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", vanish)
+    rep = assess_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 0),
+        tracked_through=None,
+        block_days=4,
+        slots_per_day=96,
+        idle_minutes=5,
+    )
+    assert rep.fire is False
+
+
+def test_foreign_host_temp_does_not_block_same_host(tmp_path):
+    from otc_coverage import assess_camera
+
+    cam = tmp_path / "OTCamera07"
+    for n in (3, 4, 5, 6):
+        _make_day(cam, date(2026, 6, n))
+    tmp = cam / "2026-06-06" / ".OTCamera09_FR20_2026-06-06_10-30-00.otdet.NEW"
+    tmp.write_bytes(b"")
+    rep = assess_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 0),
+        tracked_through=None,
+        block_days=4,
+        slots_per_day=96,
+        idle_minutes=5,
+    )
+    assert rep.fire is True
 
 
 def test_foreign_host_ignored(tmp_path):

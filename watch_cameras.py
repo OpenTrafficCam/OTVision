@@ -3,11 +3,16 @@ from __future__ import annotations
 
 import argparse
 import bz2
+import ctypes
+import fcntl
 import os
+import signal
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +40,7 @@ class WatchConfig:
     slots_per_day: int = 96
     reserve_cores: int = 2
     max_parallel: int = 1
+    cores_per_track: int = 4
 
 
 @dataclass
@@ -97,7 +103,10 @@ def process_camera(
         if not getattr(fres, "ok", True):
             return Outcome(camera, "failed", "flatten conflict")
         flat = [camera / p.name for p in rep.otdet_paths]
-        if not track_fn(flat, log=log):
+        track_result = track_fn(flat, log=log)
+        if track_result == "no_slot":
+            return Outcome(camera, "skipped", "no host-wide track slot")
+        if not track_result:
             return Outcome(camera, "failed", "track failed; retry next poll")
         missing = verify_outputs(flat)
         if missing:
@@ -114,6 +123,17 @@ def process_camera(
 
 
 def _run_track(
+    paths: list[Path], cfg: WatchConfig, camera: Path, log: Callable[[str], None]
+) -> bool | str:
+    slots = track_slot_budget(cfg.max_parallel, cfg.reserve_cores, cfg.cores_per_track)
+    with acquire_track_slot(slots) as slot:
+        if slot is None:
+            log(f"{camera.name}: no host-wide track slot available")
+            return "no_slot"
+        return _run_track_in_slot(paths, cfg, camera, log)
+
+
+def _run_track_in_slot(
     paths: list[Path], cfg: WatchConfig, camera: Path, log: Callable[[str], None]
 ) -> bool:
     stamp = now_utc().strftime("%Y%m%d-%H%M%S")
@@ -137,12 +157,87 @@ def _run_track(
     with console.open("w") as fh:
         fh.write(f"# track {len(paths)} files\n")
         fh.flush()
+        proc = subprocess.Popen(
+            cmd,
+            stdout=fh,
+            stderr=subprocess.STDOUT,
+            preexec_fn=_child_process_setup,
+        )
+        previous = {}
+
+        def terminate_child(signum, frame):
+            try:
+                os.killpg(proc.pid, signum)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                proc.wait()
+            raise SystemExit(128 + signum)
+
+        if threading.current_thread() is threading.main_thread():
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                previous[sig] = signal.getsignal(sig)
+                signal.signal(sig, terminate_child)
         try:
-            subprocess.run(cmd, check=True, stdout=fh, stderr=subprocess.STDOUT)
+            rc = proc.wait()
+        finally:
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
+        if rc == 0:
             return True
-        except subprocess.CalledProcessError as e:
-            log(f"{camera.name}: track exit {e.returncode} (see {console.name})")
-            return False
+        log(f"{camera.name}: track exit {rc} (see {console.name})")
+        return False
+
+
+def _child_process_setup() -> None:
+    os.setsid()
+    try:
+        libc = ctypes.CDLL("libc.so.6")
+        libc.prctl(1, signal.SIGTERM)
+    except Exception:
+        pass
+
+
+def track_slot_budget(max_parallel: int, reserve: int, cores_per_track: int = 4) -> int:
+    cores = max(1, (os.cpu_count() or 4) - reserve)
+    return max(1, min(max_parallel, cores // max(1, cores_per_track)))
+
+
+def _slot_root() -> Path:
+    import track_continuous as tc
+
+    return tc.LOCK_DIR / "slots"
+
+
+@contextmanager
+def acquire_track_slot(budget: int):
+    root = _slot_root()
+    root.mkdir(parents=True, exist_ok=True)
+    handle = None
+    slot = None
+    try:
+        for i in range(max(1, budget)):
+            candidate = (root / f"slot-{i}.lock").open("w")
+            try:
+                fcntl.flock(candidate.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                handle = candidate
+                slot = i
+                break
+            except OSError:
+                candidate.close()
+        yield slot
+    finally:
+        if handle is not None:
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            finally:
+                handle.close()
 
 
 def now_utc() -> datetime:
@@ -209,6 +304,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--slots-per-day", type=int, default=96)
     p.add_argument("--reserve-cores", type=int, default=2)
     p.add_argument("--max-parallel", type=int, default=1)
+    p.add_argument("--cores-per-track", type=int, default=4)
     p.add_argument("--config", default=str(DEFAULT_CONFIG))
     p.add_argument("--log-dir", default=str(SCRIPT_DIR / "logs_track"))
     a = p.parse_args(argv)
@@ -225,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         slots_per_day=a.slots_per_day,
         reserve_cores=a.reserve_cores,
         max_parallel=a.max_parallel,
+        cores_per_track=a.cores_per_track,
     )
 
     def run():
@@ -242,8 +339,9 @@ def main(argv: list[str] | None = None) -> int:
         run()
         return 0
     while True:
+        started = time.monotonic()
         run()
-        time.sleep(max(60, a.interval))
+        time.sleep(max(0, max(60, a.interval) - (time.monotonic() - started)))
 
 
 if __name__ == "__main__":

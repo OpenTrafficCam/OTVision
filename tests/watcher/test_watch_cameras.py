@@ -1,6 +1,10 @@
 import bz2
 import os
 import shutil
+import signal
+import subprocess
+import time
+from multiprocessing import Process, Queue
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -9,6 +13,7 @@ import pytest
 from otc_state import get_tracked_through
 from watch_cameras import (
     WatchConfig,
+    acquire_track_slot,
     discover_cameras,
     now_utc,
     process_camera,
@@ -109,6 +114,75 @@ def test_discover(tmp_path):
 def test_safe_parallelism_caps_to_cores():
     assert safe_parallelism(1000, reserve=2) <= (os.cpu_count() or 4)
     assert safe_parallelism(1, reserve=2) == 1
+
+
+def _hold_slot(lock_dir, q):
+    import track_continuous as tc
+    from watch_cameras import acquire_track_slot
+
+    tc.LOCK_DIR = Path(lock_dir)
+    with acquire_track_slot(1) as slot:
+        q.put(slot is not None)
+        time.sleep(0.4)
+
+
+def test_track_slot_budget_spans_processes(tmp_path):
+    q = Queue()
+    p = Process(target=_hold_slot, args=(tmp_path / "locks", q))
+    p.start()
+    assert q.get(timeout=2) is True
+    import track_continuous as tc
+
+    tc.LOCK_DIR = tmp_path / "locks"
+    with acquire_track_slot(1) as slot:
+        assert slot is None
+    p.join(timeout=2)
+    assert p.exitcode == 0
+
+
+def test_run_track_terminates_child_process_group_on_signal(tmp_path):
+    from watch_cameras import _run_track
+    import watch_cameras as wc
+
+    script = tmp_path / "sleeper.py"
+    marker = tmp_path / "child.pid"
+    script.write_text(
+        "import pathlib, time, os\n"
+        f"pathlib.Path({str(marker)!r}).write_text(str(os.getpid()))\n"
+        "time.sleep(30)\n"
+    )
+    wc.PYTHON = Path("/usr/bin/python3")
+    wc.TRACK_SCRIPT = script
+    cam = tmp_path / "OTCamera07"
+    cam.mkdir()
+    p = Process(
+        target=_run_track,
+        args=([cam / "a.otdet"], _cfg(tmp_path), cam, lambda m: None),
+    )
+    p.start()
+    for _ in range(50):
+        if marker.exists():
+            break
+        time.sleep(0.05)
+    child_pid = int(marker.read_text())
+    os.kill(p.pid, signal.SIGKILL)
+    p.join(timeout=3)
+    assert p.exitcode is not None
+    for _ in range(30):
+        status = subprocess.run(
+            ["ps", "-o", "stat=", "-p", str(child_pid)],
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if not status or status.startswith("Z"):
+            break
+        time.sleep(0.05)
+    status = subprocess.run(
+        ["ps", "-o", "stat=", "-p", str(child_pid)],
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert not status or status.startswith("Z")
 
 
 REAL = Path("/Volumes/platomo data/Projekte/OTC015_Team-Red/videos/OTCamera07")

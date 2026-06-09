@@ -44,3 +44,14 @@ def test_stability_zero_is_immediate(tmp_path):
         )
         is True
     )
+
+
+def test_marker_read_tolerates_partial_json_and_cleans_tmp(tmp_path):
+    cam = tmp_path / "OTCamera07"
+    cam.mkdir()
+    (cam / ".otc_watch_state.json").write_text("{")
+    (cam / ".otc_watch_state.json.123.tmp").write_text("{}")
+    assert get_tracked_through(cam) is None
+    set_tracked_through(cam, date(2026, 6, 6), days=4, files=384, at="t1")
+    assert get_tracked_through(cam) == date(2026, 6, 6)
+    assert not list(cam.glob(".otc_watch_state.json.*.tmp"))

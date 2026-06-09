@@ -22,6 +22,8 @@ def parse_otc_filename(name: str) -> tuple[str, datetime] | None:
 
 
 def expected_slots(slots_per_day: int) -> set[tuple[int, int]]:
+    if 24 * 60 % slots_per_day != 0:
+        raise ValueError("slots_per_day must divide 1440 minutes")
     step = 24 * 60 // slots_per_day
     return {(m // 60, m % 60) for m in range(0, 24 * 60, step)}
 
@@ -68,12 +70,19 @@ def _scan(camera: Path):
     host = camera.name.lower()
     files, temps, seen, dups, foreign = [], [], set(), set(), 0
     for f in camera.rglob("*"):
-        if not f.is_file() or f.name.startswith("._"):
+        try:
+            is_file = f.is_file()
+        except FileNotFoundError:
+            continue
+        if not is_file or f.name.startswith("._"):
             continue
         if f.name.startswith(".") and ".otdet" in f.name:
             inner = parse_otc_filename(
                 f.name.lstrip(".").rsplit(".otdet", 1)[0] + ".otdet"
             )
+            if inner and inner[0].lower() != host:
+                foreign += 1
+                continue
             temps.append((inner[1].date() if inner else None, f))
             continue
         parsed = parse_otc_filename(f.name)
@@ -113,9 +122,17 @@ def assess_camera(
         return CoverageReport(False, "duplicate .otdet basenames in block")
     fresh = now.timestamp() - idle_minutes * 60
     for d, p in temps:
-        if d in dayset and p.stat().st_mtime > fresh:
+        try:
+            mtime = p.stat().st_mtime
+        except FileNotFoundError:
+            continue
+        if d in dayset and mtime > fresh:
             return CoverageReport(False, f"fresh temp write in block ({p.name})")
-    if any(p.stat().st_mtime > fresh for _, p in window):
-        return CoverageReport(False, f"block not idle (<{idle_minutes}m)")
+    for _, p in window:
+        try:
+            if p.stat().st_mtime > fresh:
+                return CoverageReport(False, f"block not idle (<{idle_minutes}m)")
+        except FileNotFoundError:
+            return CoverageReport(False, "block changed during scan")
     paths = [p for _, p in sorted(window)]
     return CoverageReport(True, "fire", days, paths, max(days))

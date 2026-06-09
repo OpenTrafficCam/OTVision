@@ -12,6 +12,11 @@ SCAN = ".otc_watch_scan.json"
 
 
 def _atomic_write(path: Path, data: dict) -> None:
+    for stale in path.parent.glob(f"{path.name}.*.tmp"):
+        try:
+            stale.unlink()
+        except OSError:
+            pass
     tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     tmp.write_text(json.dumps(data, indent=2))
     os.replace(tmp, path)
@@ -21,7 +26,10 @@ def get_tracked_through(camera: Path) -> date | None:
     p = camera / MARKER
     if not p.exists():
         return None
-    v = json.loads(p.read_text()).get("tracked_through")
+    try:
+        v = json.loads(p.read_text()).get("tracked_through")
+    except (json.JSONDecodeError, OSError):
+        return None
     return date.fromisoformat(v) if v else None
 
 
@@ -29,7 +37,10 @@ def set_tracked_through(
     camera: Path, through: date, *, days: int, files: int, at: str
 ) -> None:
     p = camera / MARKER
-    state = json.loads(p.read_text()) if p.exists() else {"history": []}
+    try:
+        state = json.loads(p.read_text()) if p.exists() else {"history": []}
+    except (json.JSONDecodeError, OSError):
+        state = {"history": []}
     state.update(camera=camera.name, tracked_through=through.isoformat(), updated=at)
     state.setdefault("history", []).append(
         {"through": through.isoformat(), "days": days, "files": files, "at": at}
@@ -40,7 +51,11 @@ def set_tracked_through(
 def _signature(files: list[Path]) -> str:
     h = hashlib.sha1()
     for f in sorted(files):
-        st = f.stat()
+        try:
+            st = f.stat()
+        except FileNotFoundError:
+            h.update(f"{f.name}:missing\n".encode())
+            continue
         h.update(f"{f.name}:{st.st_size}:{int(st.st_mtime)}\n".encode())
     return h.hexdigest()
 

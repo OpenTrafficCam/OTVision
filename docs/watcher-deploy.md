@@ -8,12 +8,14 @@ Cron, single pass per run (lock makes overlapping runs safe):
       >> logs_track/watch.log 2>&1
 
 Knobs: --block-days 4, --idle-minutes 5, --stable-minutes 5, --slots-per-day 96,
---reserve-cores 2, --max-parallel 1.
+--reserve-cores 2, --max-parallel 1, --cores-per-track 4.
 
 Per-camera state (in the camera dir):
 - .otc_watch_state.json -> tracked_through (downstream ready signal)
 - .otc_watch_scan.json -> stability snapshot
 - lock: .locks/<camera>-<hash>.lock under the repo
+- host-wide track slots: .locks/slots/slot-*.lock bound total track.py processes
+  across overlapping cron runs
 
 Recovery: crash never advances tracked_through, so the block retries next poll.
 To reprocess a camera, delete .otc_watch_state.json. flock releases
