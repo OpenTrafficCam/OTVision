@@ -25,6 +25,7 @@ from OTVision.track.id_generator import track_id_generator, tracking_run_uuid_ge
 from OTVision.track.model.filebased.frame_chunk import ChunkParser
 from OTVision.track.model.filebased.frame_group import FrameGroupParser
 from OTVision.track.model.track_exporter import FinishedTracksExporter
+from OTVision.track.model.tracking_interfaces import Tracker
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 from OTVision.track.parser.frame_group_parser_plugins import (
     TimeThresholdFrameGroupParser,
@@ -34,8 +35,9 @@ from OTVision.track.tracker.filebased_tracking import (
     GroupedFilesTracker,
     UnfinishedChunksBuffer,
 )
-from OTVision.track.tracker.tracker_plugin_iou import IouTracker
 from OTVision.track.tracker.tracker_plugin_botsort import BotsortTracker
+from OTVision.track.tracker.tracker_plugin_iou import IouTracker
+from OTVision.track.tracker.video_backed_tracker import VideoBackedTracker
 
 
 class TrackBuilder:
@@ -91,9 +93,16 @@ class TrackBuilder:
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker_type = self.get_current_config.get().track.tracker_type
-        if tracker_type == "botsort":
+        track_config = self.get_current_config.get().track
+        tracker: Tracker
+        if track_config.tracker_type == "botsort":
             tracker = BotsortTracker(get_current_config=self.get_current_config)
+            params = track_config.botsort.tracker_params
+            if params.get("with_reid", False):
+                # file-based frames carry no images; ReID needs them
+                tracker = VideoBackedTracker(
+                    tracker, reid_model=params.get("model", "auto")
+                )
         else:
             tracker = IouTracker(get_current_config=self.get_current_config)
         return GroupedFilesTracker(
