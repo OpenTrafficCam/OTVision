@@ -389,6 +389,17 @@ def test_lock_and_slot_are_shared_with_the_watcher():
     assert pt.track_slot_budget is wc.track_slot_budget
 
 
+def test_abs_does_not_dereference_symlinks(tmp_path):
+    # regression: .resolve() followed the .venv/bin/python symlink to the base
+    # interpreter and lost the virtualenv -> every track.py failed to import.
+    target = tmp_path / "python3.12"
+    target.write_text("#!/bin/sh\n")
+    link = tmp_path / "python"  # mimics .venv/bin/python -> base interpreter
+    link.symlink_to(target)
+    assert pt._abs(str(link)) == link  # symlink path preserved, absolute
+    assert pt._abs(str(link)) != link.resolve()  # NOT dereferenced to target
+
+
 def test_in_scope_otdet_skips_regex_match_with_invalid_date(tmp_path):
     cam = tmp_path / "OTCamera05"
     good = _otdet(cam, "2026-06-03", "00-00-00")

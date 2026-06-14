@@ -53,6 +53,19 @@ CUTOFF_DEFAULT = date(2026, 6, 3)
 VIDEO_EXT = ".mp4"
 
 
+def _abs(path: str | Path) -> Path:
+    """Absolute path that does NOT resolve symlinks.
+
+    The subprocess runs with cwd=worktree, so relative -c/--logfile/exe would
+    resolve against the wrong tree -- hence "make absolute". But Path.resolve()
+    also DEREFERENCES symlinks: applied to .venv/bin/python it follows the link
+    down to the base interpreter (/usr/bin/pythonX), and running THAT loses the
+    virtualenv (site-packages, editable OTVision, ffmpeg) -> track.py ImportError.
+    .absolute() only anchors a relative path to cwd; symlinks stay intact.
+    """
+    return Path(path).absolute()
+
+
 def _safe_parse(name: str) -> tuple[str, datetime] | None:
     """parse_otc_filename, but never raises: a regex-match with an invalid date
     (e.g. month 13) raises ValueError upstream; treat it as unparseable -> skip."""
@@ -519,17 +532,17 @@ def main(argv: list[str] | None = None) -> int:
     if not root.is_dir():
         print(f"[fatal] not a directory: {root}", file=sys.stderr)
         return 2
-    # Resolve to absolute: the track/detect subprocess runs with cwd=worktree,
-    # so any relative -c/--logfile/path would resolve against the wrong tree.
+    # Make absolute (subprocess runs with cwd=worktree) but WITHOUT dereferencing
+    # symlinks -- crucially the .venv/bin/python symlink must stay intact (_abs).
     cfg = ProvConfig(
-        root=root.resolve(),
+        root=_abs(a.root),
         cutoff=date.fromisoformat(a.cutoff),
         exclude=set(EXCLUDE_MANDATORY) | set(s for s in a.exclude.split(",") if s),
-        worktree=Path(a.worktree).resolve(),
-        venv_python=Path(a.venv_python).resolve(),
-        config=Path(a.config).resolve(),
-        log_dir=Path(a.log_dir).resolve(),
-        manifest_dir=Path(a.manifest_dir).resolve(),
+        worktree=_abs(a.worktree),
+        venv_python=_abs(a.venv_python),
+        config=_abs(a.config),
+        log_dir=_abs(a.log_dir),
+        manifest_dir=_abs(a.manifest_dir),
         detect=a.detect,
         dry_run=a.dry_run,
         max_parallel=a.max_parallel,
