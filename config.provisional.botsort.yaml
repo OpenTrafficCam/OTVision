@@ -1,0 +1,53 @@
+---
+CONVERT:
+  PATHS: []
+  DELETE_INPUT: false
+  FPS_FROM_FILENAME: true
+  INPUT_FPS: 20.0
+  ROTATION: 0
+  OVERWRITE: true
+  DETECT_START: null
+  DETECT_END: null
+
+DETECT:
+  PATHS: []
+  FORCE_RELOAD_TORCH_HUB_CACHE: false
+  HALF_PRECISION: false
+  OVERWRITE: true
+  YOLO:
+    CONF: 0.25
+    IMGSIZE: 640
+    IOU: 0.45
+    WEIGHTS: yolov8s
+
+TRACK:
+  PATHS: []
+  TRACKER_TYPE: iou
+  IOU:
+    SIGMA_H: 0.42
+    SIGMA_IOU: 0.38
+    SIGMA_L: 0.27
+    T_MIN: 5
+    T_MISS_MAX: 51
+  BOT_SORT:
+    # T_MISS_MAX is applied by OTVision after each Ultralytics BoT-SORT update
+    # to finalize/discard missing tracks; TRACK_BUFFER is used inside Ultralytics.
+    T_MIN: 5
+    T_MISS_MAX: 51
+    TRACKER_TYPE: botsort # tracker type, ['botsort', 'bytetrack']
+    TRACK_HIGH_THRESH: 0.25 # threshold for the first association
+    TRACK_LOW_THRESH: 0.1 # threshold for the second association
+    NEW_TRACK_THRESH: 0.25 # threshold for init new track if detection does not match tracks
+    TRACK_BUFFER: 30 # buffer to calculate when to remove tracks
+    MATCH_THRESH: 0.8 # threshold for matching tracks
+    FUSE_SCORE: true # fuse confidence score with IoU distance before matching
+    GMC_METHOD: sparseOptFlow # method of global motion compensation
+    PROXIMITY_THRESH: 0.5 # ReID proximity threshold
+    APPEARANCE_THRESH: 0.25 # ReID appearance threshold
+    WITH_REID: false # enable ReID model
+    MODEL: auto # ReID model path/name if WITH_REID is true
+  OVERWRITE: true
+
+LOG:
+  LOG_LEVEL_CONSOLE: WARNING
+  LOG_LEVEL_FILE: DEBUG
