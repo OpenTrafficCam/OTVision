@@ -1,0 +1,12 @@
+OTCamera03: skip - no .otdet <= 2026-06-03
+OTCamera07: skip - excluded (fully tracked, never touch)
+OTCamera02: skip - no .otdet <= 2026-06-03
+OTCamera06: skip - no .otdet <= 2026-06-03
+OTCamera11: skip - no .otdet <= 2026-06-03
+OTCamera18: skip - excluded (fully tracked, never touch)
+OTCamera20: skip - excluded (fully tracked, never touch)
+otcamera21: skip - excluded (fully tracked, never touch)
+otcamera23: skip - excluded (fully tracked, never touch)
+otcamera26: skip - excluded (fully tracked, never touch)
+[2026-06-14T20:40:54.784838+00:00] 21 cameras | FAILED=11, skipped=10
+manifest: /home/Sebastian-Gerken/OTVision/logs_track/provisional/manifest_20260614-204054.json

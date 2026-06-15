@@ -1,0 +1,30 @@
+[23:03:20] fresh completion start
+[23:04:44] pass 1: 9 target(s) pending
+OTCamera07: skip - excluded (fully tracked, never touch)
+OTCamera03: skip - no .otdet <= 2026-06-03
+OTCamera11: skip - no .otdet <= 2026-06-03
+OTCamera02: skip - no .otdet <= 2026-06-03
+OTCamera18: skip - excluded (fully tracked, never touch)
+OTCamera06: skip - no .otdet <= 2026-06-03
+OTCamera20: skip - excluded (fully tracked, never touch)
+otcamera21: skip - excluded (fully tracked, never touch)
+otcamera23: skip - excluded (fully tracked, never touch)
+otcamera26: skip - excluded (fully tracked, never touch)
+otcamera29: skip - already tracked (96/96 .ottrk present)
+otcamera30: skip - already tracked (96/96 .ottrk present)
+[2026-06-14T21:04:44.250364+00:00] 21 cameras | ok=9, skipped=12
+manifest: /home/Sebastian-Gerken/OTVision/logs_track/provisional/manifest_20260614-210444.json
+[23:34:31] pass 2: 0 target(s) pending
+[23:34:31] ALL 11 TARGETS DONE
+[23:34:31] === finished; final state ===
+OTCamera05: skip - already tracked (96/96 .ottrk present)
+OTCamera09: skip - already tracked (96/96 .ottrk present)
+OTCamera10: skip - already tracked (96/96 .ottrk present)
+OTCamera12: skip - already tracked (96/96 .ottrk present)
+OTCamera15: skip - already tracked (96/96 .ottrk present)
+OTCamera16: skip - already tracked (96/96 .ottrk present)
+OTCamera17: skip - already tracked (96/96 .ottrk present)
+OTCamera19: skip - already tracked (96/96 .ottrk present)
+otcamera28: skip - already tracked (96/96 .ottrk present)
+otcamera29: skip - already tracked (96/96 .ottrk present)
+otcamera30: skip - already tracked (96/96 .ottrk present)
