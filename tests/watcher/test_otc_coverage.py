@@ -44,23 +44,62 @@ def test_expected_slots_rejects_non_divisor():
         expected_slots(7)
 
 
-def test_complete_requires_exact_set():
+def test_complete_full_grid():
     full = _slots(
         date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
     )
-    missing_one = full[:-1]
-    off_cadence = full[:-1] + _slots(date(2026, 6, 3), [(23, 47)])
     assert complete_dates(full, 96) == {date(2026, 6, 3)}
-    assert complete_dates(missing_one, 96) == set()
-    assert complete_dates(off_cadence, 96) == set()
 
 
-def test_complete_rejects_nonzero_seconds():
+def test_complete_rejects_missing_window():
     full = _slots(
         date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
     )
-    full[0] = full[0].replace(second=59)
-    assert complete_dates(full, 96) == set()
+    missing_one = full[:-1]  # drop the 23:45 window with no replacement
+    assert complete_dates(missing_one, 96) == set()
+
+
+def test_complete_tolerates_off_cadence_within_window():
+    # a file at 23:47 covers the 23:45 window even though it is off the grid
+    full = _slots(
+        date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
+    )
+    covered = full[:-1] + _slots(date(2026, 6, 3), [(23, 47)])
+    assert complete_dates(covered, 96) == {date(2026, 6, 3)}
+
+
+def test_complete_tolerates_nonzero_seconds():
+    full = _slots(
+        date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
+    )
+    full[0] = full[0].replace(second=59)  # drift off :00, still covers window 0
+    assert complete_dates(full, 96) == {date(2026, 6, 3)}
+
+
+def test_complete_tolerates_phase_offset():
+    # cam-11 style: every 15 min but phase-shifted to :NN:06 (08, 23, 38, 53)
+    base = datetime(2026, 6, 3)
+    dts = [
+        base.replace(hour=h, minute=m, second=6)
+        for h in range(24)
+        for m in (8, 23, 38, 53)
+    ]
+    assert complete_dates(dts, 96) == {date(2026, 6, 3)}
+
+
+def test_incomplete_when_fewer_than_all_windows():
+    full = _slots(
+        date(2026, 6, 3), [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
+    )
+    assert complete_dates(full[:40], 96) == set()
+
+
+def test_complete_rejects_bad_slots_per_day():
+    import pytest
+
+    for bad in (7, 0, -96):
+        with pytest.raises(ValueError, match="divide 1440"):
+            complete_dates([], bad)
 
 
 def test_runs():
@@ -99,14 +138,14 @@ def test_leftover_smaller_than_block_waits():
     assert next_block(run6, tracked_through=D(6), block_days=4) == []
 
 
-def _make_day(cam: Path, day: date, complete=True, old=True):
+def _make_day(cam: Path, day: date, complete=True, old=True, second=0):
     d = cam / f"{day:%Y-%m-%d}"
     d.mkdir(parents=True, exist_ok=True)
     times = [(h, m) for h in range(24) for m in (0, 15, 30, 45)]
     if not complete:
         times = times[:40]
     for h, m in times:
-        f = d / f"OTCamera07_FR20_{day:%Y-%m-%d}_{h:02d}-{m:02d}-00.otdet"
+        f = d / f"OTCamera07_FR20_{day:%Y-%m-%d}_{h:02d}-{m:02d}-{second:02d}.otdet"
         f.write_bytes(b"x")
         if old:
             os.utime(f, (1_000_000, 1_000_000))
@@ -118,6 +157,26 @@ def test_fires_on_complete_settled_block(tmp_path):
     cam = tmp_path / "OTCamera07"
     for n in (3, 4, 5, 6):
         _make_day(cam, date(2026, 6, n))
+    rep = assess_camera(
+        cam,
+        now=datetime(2026, 6, 9, 12, 0),
+        tracked_through=None,
+        block_days=4,
+        slots_per_day=96,
+        idle_minutes=5,
+    )
+    assert rep.fire and rep.tracked_through_after == date(2026, 6, 6)
+    assert len(rep.otdet_paths) == 96 * 4
+
+
+def test_fires_on_second_drifted_block(tmp_path):
+    from otc_coverage import assess_camera
+
+    cam = tmp_path / "OTCamera07"
+    _make_day(cam, date(2026, 6, 3))
+    _make_day(cam, date(2026, 6, 4), second=1)  # whole day off :00 (clock drift)
+    _make_day(cam, date(2026, 6, 5), second=2)
+    _make_day(cam, date(2026, 6, 6))
     rep = assess_camera(
         cam,
         now=datetime(2026, 6, 9, 12, 0),

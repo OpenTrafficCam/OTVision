@@ -29,13 +29,28 @@ def expected_slots(slots_per_day: int) -> set[tuple[int, int]]:
 
 
 def complete_dates(slot_datetimes, slots_per_day: int = 96) -> set[date]:
-    want = expected_slots(slots_per_day)
+    """Dates that cover every time-window of the day.
+
+    A day is complete when each of ``slots_per_day`` equal-width windows
+    (``1440 / slots_per_day`` minutes wide) holds at least one recording.
+    Membership is by window, ignoring the exact second and sub-window phase:
+    recorder clock drift (``..._06-00-01``) or a fixed phase offset
+    (``..._00-08-06``) still counts toward its window. A genuinely missing
+    window (no file at all) keeps the day incomplete.
+
+    Note: windows derive from naive local filename timestamps over a fixed
+    1440-minute day, so DST-transition days (23h/25h civil time) are not
+    modelled and may never read complete -- an accepted limitation.
+    """
+    if slots_per_day <= 0 or 24 * 60 % slots_per_day != 0:
+        raise ValueError("slots_per_day must divide 1440 minutes")
+    step = 24 * 60 // slots_per_day
+    full = set(range(slots_per_day))
     by_day: dict[date, set] = {}
     for dt in slot_datetimes:
-        if dt.second != 0:
-            continue
-        by_day.setdefault(dt.date(), set()).add((dt.hour, dt.minute))
-    return {d for d, got in by_day.items() if got == want}
+        window = (dt.hour * 60 + dt.minute) // step
+        by_day.setdefault(dt.date(), set()).add(window)
+    return {d for d, got in by_day.items() if got == full}
 
 
 def consecutive_runs(days: set[date]) -> list[list[date]]:
