@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Sequence
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from OTVision.dataformat import DATA, DETECTIONS, FRAME
 from OTVision.domain.detection import FinishedDetection
@@ -47,7 +47,7 @@ def create_frame(
 class TestFinishedChunkTrackExporter:
     @patch("OTVision.track.model.track_exporter.write_json")
     def test_reindex_rebases_frames_to_video_not_to_first_detection(
-        self, mock_write_json: patch
+        self, mock_write_json: MagicMock
     ) -> None:
         """Detection frame numbers in the written ottrk must match the source
         video's frame numbering. The chunk's first frames have no detections,
@@ -75,7 +75,7 @@ class TestFinishedChunkTrackExporter:
 
     @patch("OTVision.track.model.track_exporter.write_json")
     def test_export_chunk_without_detections_writes_empty_detections(
-        self, mock_write_json: patch
+        self, mock_write_json: MagicMock
     ) -> None:
         chunk = FinishedChunk(
             file=Path("video.otdet"),
