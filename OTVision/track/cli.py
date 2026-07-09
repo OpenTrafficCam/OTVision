@@ -42,7 +42,7 @@ class ArgparseTrackCliParser(TrackCliParser):
             "--tracker",
             choices=["iou", "botsort"],
             default=None,
-            help="Select tracker implementation. In `botsort` mode tracker parameters are read from YAML only.",
+            help="Select tracker implementation. In `botsort` mode tracker parameters are read from YAML only.",  # noqa: E501
         )
         self._parser.add_argument(
             "--sigma-l",

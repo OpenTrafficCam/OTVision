@@ -44,7 +44,7 @@ class UpdateTrackConfigWithCliArgs:
             if ignored:
                 warnings.warn(
                     "botsort mode ignores IOU CLI overrides "
-                    f"({', '.join(sorted(ignored.keys()))}); use YAML under `TRACK.BOT_SORT` instead.",
+                    f"({', '.join(sorted(ignored.keys()))}); use YAML under `TRACK.BOT_SORT` instead.",  # noqa: E501
                     stacklevel=2,
                 )
             iou_config = track_config.iou
@@ -62,7 +62,9 @@ class UpdateTrackConfigWithCliArgs:
             paths=value_or_default(cli_args.paths, track_config.paths),
             run_chained=track_config.run_chained,
             iou=iou_config,
-            tracker_type=value_or_default(cli_args.tracker_type, track_config.tracker_type),
+            tracker_type=value_or_default(
+                cli_args.tracker_type, track_config.tracker_type
+            ),  # noqa: E501
             botsort=track_config.botsort,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
         )

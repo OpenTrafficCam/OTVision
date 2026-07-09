@@ -22,7 +22,7 @@ DETECT:
 
 TRACK:
   PATHS: []
-  TRACKER_TYPE: iou
+  TRACKER_TYPE: botsort
   IOU:
     SIGMA_H: 0.42
     SIGMA_IOU: 0.38
@@ -30,22 +30,24 @@ TRACK:
     T_MIN: 5
     T_MISS_MAX: 51
   BOT_SORT:
-    # T_MISS_MAX is applied by OTVision after each Ultralytics BoT-SORT update
-    # to finalize/discard missing tracks; TRACK_BUFFER is used inside Ultralytics.
+    # Effective occlusion window inside Ultralytics = int(fps/30 * TRACK_BUFFER).
+    # At 20 fps: int(20/30 * 90) = 60 frames ~= 3.0 s. T_MISS_MAX is set to match
+    # so OTVision keeps a missing track alive exactly as long as Ultralytics can
+    # still revive its ID.
     T_MIN: 5
-    T_MISS_MAX: 51
-    TRACKER_TYPE: botsort # tracker type, ['botsort', 'bytetrack']
-    TRACK_HIGH_THRESH: 0.25 # threshold for the first association
-    TRACK_LOW_THRESH: 0.1 # threshold for the second association
-    NEW_TRACK_THRESH: 0.25 # threshold for init new track if detection does not match tracks
-    TRACK_BUFFER: 30 # buffer to calculate when to remove tracks
-    MATCH_THRESH: 0.8 # threshold for matching tracks
-    FUSE_SCORE: true # fuse confidence score with IoU distance before matching
-    GMC_METHOD: sparseOptFlow # method of global motion compensation
-    PROXIMITY_THRESH: 0.5 # ReID proximity threshold
-    APPEARANCE_THRESH: 0.25 # ReID appearance threshold
-    WITH_REID: false # enable ReID model
-    MODEL: auto # ReID model path/name if WITH_REID is true
+    T_MISS_MAX: 60
+    TRACKER_TYPE: botsort  # tracker type, ['botsort', 'bytetrack']
+    TRACK_HIGH_THRESH: 0.2  # threshold for the first association
+    TRACK_LOW_THRESH: 0.1  # threshold for the second association
+    NEW_TRACK_THRESH: 0.2  # threshold for init new track if detection does not match tracks
+    TRACK_BUFFER: 90  # buffer to calculate when to remove tracks
+    MATCH_THRESH: 0.9  # threshold for matching tracks
+    FUSE_SCORE: true  # fuse confidence score with IoU distance before matching
+    GMC_METHOD: none  # method of global motion compensation
+    PROXIMITY_THRESH: 0.5  # ReID proximity threshold
+    APPEARANCE_THRESH: 0.25  # ReID appearance threshold
+    WITH_REID: false  # enable ReID model
+    MODEL: auto  # ReID model path/name if WITH_REID is true
   OVERWRITE: true
 
 LOG:

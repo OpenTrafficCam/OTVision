@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from OTVision.application.buffer import Buffer
-from OTVision.application.config import Config, TrackConfig
+from OTVision.application.config import Config, TrackConfig, _TrackIouConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
@@ -350,12 +350,16 @@ def create_given() -> Given:
 
     # Mock configuration
     config = Mock(spec=Config)
-    track_config = Mock(spec=TrackConfig)
-    track_config.sigma_l = 0.3
-    track_config.sigma_h = 0.7
-    track_config.sigma_iou = 0.5
-    track_config.t_min = 5
-    track_config.t_miss_max = 10
+    track_config = TrackConfig(
+        iou=_TrackIouConfig(
+            sigma_l=0.3,
+            sigma_h=0.7,
+            sigma_iou=0.5,
+            t_min=5,
+            t_miss_max=10,
+        ),
+        tracker_type="iou",
+    )
     config.track = track_config
     config.filetypes.track = "ottrk"
 
@@ -425,4 +429,6 @@ def create_expected_builder_config(
         t_miss_max=track_config.t_miss_max,
         tracking_run_id=tracking_run_id,
         frame_group=STREAMING_FRAME_GROUP_ID,
+        tracker_type=track_config.tracker_type,
+        tracker_params=track_config.botsort.tracker_params,
     )

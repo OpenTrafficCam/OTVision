@@ -357,8 +357,23 @@ class _TrackBotSortConfig:
     """
 
     t_min: int = 5
-    t_miss_max: int = 51
-    tracker_params: dict[str, Any] = field(default_factory=dict)
+    t_miss_max: int = 60
+    tracker_params: dict[str, Any] = field(
+        default_factory=lambda: {
+            "tracker_type": "botsort",
+            "track_high_thresh": 0.2,
+            "track_low_thresh": 0.1,
+            "new_track_thresh": 0.2,
+            "track_buffer": 90,
+            "match_thresh": 0.9,
+            "fuse_score": True,
+            "gmc_method": "none",
+            "proximity_thresh": 0.5,
+            "appearance_thresh": 0.25,
+            "with_reid": False,
+            "model": "auto",
+        }
+    )
 
     def to_dict(self) -> dict[str, Any]:
         merged: dict[str, Any] = {
@@ -385,11 +400,7 @@ class TrackConfig:
 
     @property
     def t_min(self) -> int:
-        return (
-            self.botsort.t_min
-            if self.tracker_type == "botsort"
-            else self.iou.t_min
-        )
+        return self.botsort.t_min if self.tracker_type == "botsort" else self.iou.t_min
 
     @property
     def t_miss_max(self) -> int:
@@ -402,7 +413,7 @@ class TrackConfig:
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
-    tracker_type: str = "iou"
+    tracker_type: str = "botsort"
     botsort: _TrackBotSortConfig = field(default_factory=_TrackBotSortConfig)
     overwrite: bool = True
 

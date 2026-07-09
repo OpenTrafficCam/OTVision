@@ -25,6 +25,7 @@ from pathlib import Path
 
 from OTVision.application.config import (
     AVAILABLE_WEIGHTS,
+    BOT_SORT,
     CALIBRATIONS,
     COL_WIDTH,
     CONF,
@@ -49,7 +50,6 @@ from OTVision.application.config import (
     IMG_SIZE,
     INPUT_FPS,
     IOU,
-    BOT_SORT,
     LAST_PATHS,
     LOCATION_X,
     LOCATION_Y,
@@ -66,10 +66,10 @@ from OTVision.application.config import (
     ROTATION,
     RUN_CHAINED,
     SEARCH_SUBDIRS,
-    START_TIME,
     SIGMA_H,
     SIGMA_IOU,
     SIGMA_L,
+    START_TIME,
     T_MIN,
     T_MISS_MAX,
     TRACK,
@@ -77,9 +77,9 @@ from OTVision.application.config import (
     TRACKS,
     TRANSFORM,
     UNDISTORT,
-    VIDEO_CODEC,
     VID,
     VID_ROTATABLE,
+    VIDEO_CODEC,
     VIDEOS,
     WEIGHTS,
     WINDOW,
@@ -202,8 +202,20 @@ CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
 CONFIG[TRACK][BOT_SORT] = {}
 CONFIG[TRACK][BOT_SORT][T_MIN] = 5
-CONFIG[TRACK][BOT_SORT][T_MISS_MAX] = 51
-CONFIG[TRACK][TRACKER_TYPE] = "iou"
+CONFIG[TRACK][BOT_SORT][T_MISS_MAX] = 60
+CONFIG[TRACK][BOT_SORT]["tracker_type"] = "botsort"
+CONFIG[TRACK][BOT_SORT]["track_high_thresh"] = 0.2
+CONFIG[TRACK][BOT_SORT]["track_low_thresh"] = 0.1
+CONFIG[TRACK][BOT_SORT]["new_track_thresh"] = 0.2
+CONFIG[TRACK][BOT_SORT]["track_buffer"] = 90
+CONFIG[TRACK][BOT_SORT]["match_thresh"] = 0.9
+CONFIG[TRACK][BOT_SORT]["fuse_score"] = True
+CONFIG[TRACK][BOT_SORT]["gmc_method"] = "none"
+CONFIG[TRACK][BOT_SORT]["proximity_thresh"] = 0.5
+CONFIG[TRACK][BOT_SORT]["appearance_thresh"] = 0.25
+CONFIG[TRACK][BOT_SORT]["with_reid"] = False
+CONFIG[TRACK][BOT_SORT]["model"] = "auto"
+CONFIG[TRACK][TRACKER_TYPE] = "botsort"
 CONFIG[TRACK][OVERWRITE] = True
 
 # UNDISTORT

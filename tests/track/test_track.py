@@ -322,6 +322,7 @@ def create_track_config(
             t_min=t_min,
             t_miss_max=t_miss_max,
         ),
+        tracker_type="iou",
         overwrite=overwrite,
     )
 

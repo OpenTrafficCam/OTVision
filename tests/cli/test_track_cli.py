@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from OTVision.application.get_config import DEFAULT_USER_CONFIG
 from OTVision.application.config import (
     IOU,
     OVERWRITE,
@@ -20,6 +19,7 @@ from OTVision.application.config import (
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser
+from OTVision.application.get_config import DEFAULT_USER_CONFIG
 from OTVision.domain.cli import CliParseError
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
@@ -50,6 +50,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "t_min": {PASSED: "--t-min 5", EXPECTED: 5},
     "t_miss_max": {PASSED: "--t-miss-max 38", EXPECTED: 38},
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
+    "tracker": {PASSED: "--tracker iou", EXPECTED: "iou"},
     "config": {PASSED: ""},
 }
 
@@ -67,6 +68,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "t_min": {PASSED: "--t-min 7", EXPECTED: 7},
     "t_miss_max": {PASSED: "--t-miss-max 43", EXPECTED: 43},
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "tracker": {PASSED: "--tracker iou", EXPECTED: "iou"},
     "config": {PASSED: ""},
 }
 
@@ -174,6 +176,7 @@ class TestTrackCLI:
             *test_data["t_min"]["passed"].split(),
             *test_data["t_miss_max"]["passed"].split(),
             *test_data["overwrite"]["passed"].split(),
+            *test_data.get("tracker", {}).get("passed", "").split(),
             *test_data["config"]["passed"].split(),
             LOGFILE_OVERWRITE_CMD,
         ]
@@ -246,15 +249,11 @@ class TestTrackCLI:
             LOGFILE_OVERWRITE_CMD,
         ]
 
-        with pytest.warns(
-            UserWarning, match="botsort mode ignores IOU CLI overrides"
-        ):
+        with pytest.warns(UserWarning, match="botsort mode ignores IOU CLI overrides"):
             track_cli(argv=command)
 
         mock_update_current_config.update.assert_called_once()
-        passed_config = mock_update_current_config.update.call_args.kwargs[
-            "config"
-        ]
+        passed_config = mock_update_current_config.update.call_args.kwargs["config"]
 
         assert passed_config.track.tracker_type == "botsort"
         # t_min/t_miss_max must come from TRACK.BOT_SORT (YAML), not from CLI.
@@ -265,9 +264,9 @@ class TestTrackCLI:
         assert passed_config.track.iou.t_min == 3
         assert passed_config.track.iou.sigma_l == 0.24
 
-        assert passed_config.track.botsort.tracker_params["track_high_thresh"] == pytest.approx(
-            0.77
-        )
+        assert passed_config.track.botsort.tracker_params[
+            "track_high_thresh"
+        ] == pytest.approx(0.77)
 
 
 def create_expected_config_from_test_data(test_data: dict) -> Config:
@@ -298,6 +297,9 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     t_min = test_data["t_min"].get(EXPECTED, default_config.track.t_min)
     t_miss_max = test_data["t_miss_max"].get(EXPECTED, default_config.track.t_miss_max)
     overwrite = test_data["overwrite"].get(EXPECTED, default_config.track.overwrite)
+    tracker_type = test_data.get("tracker", {}).get(
+        EXPECTED, default_config.track.tracker_type
+    )
     paths = [str(Path(p).expanduser()) for p in paths]
 
     iou_config = _TrackIouConfig(
@@ -313,7 +315,7 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
         run_chained=default_config.track.run_chained,
         iou=iou_config,
         botsort=default_config.track.botsort,
-        tracker_type=default_config.track.tracker_type,
+        tracker_type=tracker_type,
         overwrite=overwrite,
     )
 

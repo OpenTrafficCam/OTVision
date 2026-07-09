@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import types
 from dataclasses import dataclass
 from pathlib import Path
-import types
 from typing import Any, Protocol, TypedDict, cast
 
 import numpy as np
@@ -11,11 +11,10 @@ from numpy.typing import NDArray
 from OTVision import dataformat
 from OTVision.application.config import TrackConfig
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.domain.detection import TrackId, TrackedDetection
+from OTVision.domain.detection import TrackedDetection, TrackId
 from OTVision.domain.frame import DetectedFrame, TrackedFrame
 from OTVision.helpers.files import read_json_bz2_metadata
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
-
 
 UltralyticsScalar = bool | int | float | str
 
@@ -36,7 +35,7 @@ def _xywh_center_to_xyxy(xywh: NDArray[np.floating]) -> NDArray[np.float32]:
     return out
 
 
-def _try_positive_float(value: object) -> float | None:
+def _try_positive_float(value: Any) -> float | None:
     """Return *value* as a positive float, or ``None`` if conversion fails."""
     if value is None:
         return None
@@ -76,8 +75,7 @@ class UltralyticsResultsLike(Protocol):
         """Needed when ``img is not None`` (GMC uses ``results.xyxy``)."""
         ...
 
-    def __len__(self) -> int:
-        ...
+    def __len__(self) -> int: ...
 
     def __getitem__(self, item: Any) -> UltralyticsResultsLike:
         """Boolean mask indexing as in ``results = results[remain_inds]``."""
@@ -90,8 +88,7 @@ class BoTSORTTrackerLike(Protocol):
         self,
         results: UltralyticsResultsLike,
         img: NDArray[np.uint8] | None = None,
-    ) -> NDArray[np.floating]:
-        ...
+    ) -> NDArray[np.floating]: ...
 
 
 class TrackLifecycleState(TypedDict):
@@ -103,7 +100,10 @@ class TrackLifecycleState(TypedDict):
 
 @dataclass
 class UltralyticsResultsLite:
-    """Minimal stand-in for ultralytics detection results (``conf``/``xywh``/``cls`` + slicing)."""
+    """Minimal stand-in for ultralytics detection results.
+
+    Supports ``conf``/``xywh``/``cls`` fields plus slicing.
+    """
 
     conf: NDArray[np.floating]
     xywh: NDArray[np.floating]
@@ -133,21 +133,21 @@ class BotsortTracker(Tracker):
       integrates with the existing buffering/finishing logic.
     """
 
-    # Defaults mirrored from `ultralytics/cfg/trackers/botsort.yaml`.
-    # These ensure we can build a working tracker even if the YAML only specifies
+    # Continuous-tracking defaults for 20 fps OTCamera detections.
+    # These ensure we can build a working tracker even if YAML only specifies
     # a subset of fields.
     _DEFAULT_BOTSORT_ARGS: dict[str, UltralyticsScalar] = {
         "tracker_type": "botsort",
-        "track_high_thresh": 0.25,
+        "track_high_thresh": 0.2,
         "track_low_thresh": 0.1,
-        "new_track_thresh": 0.25,
+        "new_track_thresh": 0.2,
         # `track_buffer` is aligned to `t_miss_max` by default (see _build_args()).
-        "track_buffer": 30,
-        "match_thresh": 0.8,
+        "track_buffer": 90,
+        "match_thresh": 0.9,
         "fuse_score": True,
-        "gmc_method": "sparseOptFlow",
+        "gmc_method": "none",
         "proximity_thresh": 0.5,
-        "appearance_thresh": 0.8,
+        "appearance_thresh": 0.25,
         "with_reid": False,
         "model": "auto",
     }
@@ -187,21 +187,24 @@ class BotsortTracker(Tracker):
         if source.suffix.lower() != ".otdet":
             raise ValueError(
                 "BoT-SORT requires FPS metadata from an .otdet source file, "
-                f"but got '{source.suffix or '<no suffix>'}' for source '{frame.source}'."
+                f"but got '{source.suffix or '<no suffix>'}' "
+                f"for source '{frame.source}'."
             )
 
         try:
             metadata = read_json_bz2_metadata(source)
         except Exception as e:
             raise ValueError(
-                f"BoT-SORT requires readable .otdet metadata to determine FPS: '{frame.source}'."
+                "BoT-SORT requires readable .otdet metadata to determine FPS: "
+                f"'{frame.source}'."
             ) from e
 
         extracted = _extract_frame_rate_from_metadata(metadata)
         if extracted is None:
             raise ValueError(
                 "BoT-SORT requires FPS metadata in .otdet video section "
-                f"('{dataformat.ACTUAL_FPS}' or '{dataformat.RECORDED_FPS}') for source '{frame.source}'."
+                f"('{dataformat.ACTUAL_FPS}' or '{dataformat.RECORDED_FPS}') "
+                f"for source '{frame.source}'."
             )
 
         frame_rate = max(1, int(round(extracted)))
@@ -215,7 +218,8 @@ class BotsortTracker(Tracker):
         )
         args_dict.update(tracker_params)
 
-        # Align ultralytics track-buffer with OT's "missing frames" semantics by default.
+        # Align ultralytics track-buffer with OT missing-frame semantics
+        # by default.
         if "track_buffer" not in self.config.botsort.tracker_params:
             args_dict["track_buffer"] = int(self.config.botsort.t_miss_max)
 
@@ -235,10 +239,15 @@ class BotsortTracker(Tracker):
                 "dependencies that include ultralytics."
             ) from e
 
-        if self.config.botsort.tracker_params.get("with_reid", False) and frame.image is None:
+        if (
+            self.config.botsort.tracker_params.get("with_reid", False)
+            and frame.image is None
+        ):
             raise ValueError(
-                "BoT-SORT ReID is enabled in TRACK.BOT_SORT, but frame.image is missing. "
-                "Provide images (streaming mode) or disable ReID (`with_reid: false`)."
+                "BoT-SORT ReID is enabled in TRACK.BOT_SORT, but "
+                "frame.image is missing. "
+                "Provide images (streaming mode) or disable ReID "
+                "(`with_reid: false`)."
             )
 
         frame_rate = self._frame_rate_from_source(frame)
@@ -263,12 +272,14 @@ class BotsortTracker(Tracker):
         cls: NDArray[np.int32] = np.zeros((n,), dtype=np.int32)
 
         for i, det in enumerate(detections):
-            # Our detections already store (x, y, w, h) with (x,y) as center coordinates.
+            # Our detections already store (x, y, w, h) with (x, y)
+            # as center coordinates.
             xywh[i] = np.array([det.x, det.y, det.w, det.h], dtype=np.float32)
             conf[i] = float(det.conf)
             cls[i] = self._class_id(det.label)
 
-        # ultralytics BoT-SORT expects `results.conf`, `results.xywh`, and `results.cls`.
+        # ultralytics BoT-SORT expects `results.conf`, `results.xywh`,
+        # and `results.cls`.
         return UltralyticsResultsLite(conf=conf, xywh=xywh, cls=cls)
 
     def track_frame(
@@ -365,9 +376,9 @@ class BotsortTracker(Tracker):
             else:
                 discarded_track_ids.add(ot_id)
 
-            botsort_track_id = self._ot_id_to_botsort_track_id.get(ot_id)
-            if botsort_track_id is not None:
-                self._botsort_track_id_to_ot_id.pop(botsort_track_id, None)
+            mapped_botsort_track_id = self._ot_id_to_botsort_track_id.get(ot_id)
+            if mapped_botsort_track_id is not None:
+                self._botsort_track_id_to_ot_id.pop(mapped_botsort_track_id, None)
             self._ot_id_to_botsort_track_id.pop(ot_id, None)
             self._track_state.pop(ot_id, None)
 
@@ -381,9 +392,11 @@ class BotsortTracker(Tracker):
             tracked_detections.append(
                 det.of_track(
                     ot_id,
-                    is_first=int(self._track_state[ot_id]["first_frame"]) == frame.no
-                    if ot_id in self._track_state
-                    else True,
+                    is_first=(
+                        int(self._track_state[ot_id]["first_frame"]) == frame.no
+                        if ot_id in self._track_state
+                        else True
+                    ),
                 )
             )
 
@@ -397,4 +410,3 @@ class BotsortTracker(Tracker):
             finished_tracks=finished_track_ids,
             discarded_tracks=discarded_track_ids,
         )
-

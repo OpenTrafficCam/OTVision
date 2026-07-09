@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from OTVision.application.config import (
+    BOT_SORT,
     COL_WIDTH,
     CONF,
     CONVERT,
@@ -25,8 +26,6 @@ from OTVision.application.config import (
     IMG_SIZE,
     INPUT_FPS,
     IOU,
-    BOT_SORT,
-    TRACKER_TYPE,
     LOCATION_X,
     LOCATION_Y,
     LOG,
@@ -52,6 +51,7 @@ from OTVision.application.config import (
     T_MIN,
     T_MISS_MAX,
     TRACK,
+    TRACKER_TYPE,
     TRANSFORM,
     UNDISTORT,
     VID,
@@ -70,8 +70,8 @@ from OTVision.application.config import (
     _GuiConfig,
     _GuiWindowConfig,
     _LogConfig,
-    _TrackIouConfig,
     _TrackBotSortConfig,
+    _TrackIouConfig,
     _TransformConfig,
     _UndistortConfig,
 )
@@ -284,9 +284,7 @@ class ConfigParser:
         # Accept UPPERCASE keys in YAML and normalize to ultralytics' lowercase
         # argument names (e.g. TRACK_HIGH_THRESH -> track_high_thresh).
         tracker_params = {
-            str(k).lower(): v
-            for k, v in data.items()
-            if k not in {T_MIN, T_MISS_MAX, TRACKER_TYPE}
+            str(k).lower(): v for k, v in data.items() if k not in {T_MIN, T_MISS_MAX}
         }
         return _TrackBotSortConfig(
             t_min=data.get(T_MIN, _TrackBotSortConfig.t_min),

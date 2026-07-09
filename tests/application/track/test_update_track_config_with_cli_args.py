@@ -39,7 +39,8 @@ def custom_config() -> Config:
     track_config = TrackConfig(
         iou=_TrackIouConfig(
             sigma_l=0.0, sigma_h=0.0, sigma_iou=0.0, t_min=0, t_miss_max=0
-        )
+        ),
+        tracker_type="iou",
     )
     return Config(track=track_config)
 
@@ -88,6 +89,7 @@ def expected_config() -> Config:
                 t_min=T_MIN,
                 t_miss_max=T_MISS_MAX,
             ),
+            tracker_type="iou",
             overwrite=OVERWRITE,
         ),
         undistort=config.undistort,

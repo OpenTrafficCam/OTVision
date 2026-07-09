@@ -8,16 +8,10 @@ from functools import cached_property
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import numpy as np
 import pytest
 
 from OTVision import dataformat
-from OTVision.application.config import (
-    Config,
-    TrackConfig,
-    _TrackBotSortConfig,
-    _TrackIouConfig,
-)
+from OTVision.application.config import Config, TrackConfig, _TrackBotSortConfig
 from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.config import CONFIG
 from OTVision.domain.detection import Detection
@@ -185,9 +179,9 @@ def test_botsort_resets_state_on_new_video_group(
             group2_ids.add(det.track_id)
 
     assert len(group2_ids) > 0, "No tracks assigned in group 2"
-    assert group1_ids.isdisjoint(group2_ids), (
-        f"Track IDs leaked across video groups: {group1_ids & group2_ids}"
-    )
+    assert group1_ids.isdisjoint(
+        group2_ids
+    ), f"Track IDs leaked across video groups: {group1_ids & group2_ids}"
 
 
 # ---------------------------------------------------------------------------
@@ -238,5 +232,7 @@ def test_extract_frame_rate_returns_none_for_missing_video_section() -> None:
 
 
 def test_extract_frame_rate_returns_none_for_zero_fps() -> None:
-    metadata = {dataformat.VIDEO: {dataformat.ACTUAL_FPS: 0, dataformat.RECORDED_FPS: 0}}
+    metadata = {
+        dataformat.VIDEO: {dataformat.ACTUAL_FPS: 0, dataformat.RECORDED_FPS: 0}
+    }
     assert _extract_frame_rate_from_metadata(metadata) is None

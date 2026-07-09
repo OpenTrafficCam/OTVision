@@ -43,6 +43,8 @@ EXPECTED_TRACK_METADATA = create_tracker_metadata(
     sigma_iou=DEFAULT_CONFIG.track.sigma_iou,
     t_min=DEFAULT_CONFIG.track.t_min,
     t_miss_max=DEFAULT_CONFIG.track.t_miss_max,
+    tracker_type=DEFAULT_CONFIG.track.tracker_type,
+    tracker_params=DEFAULT_CONFIG.track.botsort.tracker_params,
 )
 
 
