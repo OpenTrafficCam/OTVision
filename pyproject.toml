@@ -37,7 +37,7 @@ dependencies = [
     "pandas==2.3.3",
     "PyYAML==6.0.2",
     "tqdm==4.67.1",
-    "ujson==5.10.0",
+    "ujson==5.11.0",
 ]
 
 [dependency-groups]
