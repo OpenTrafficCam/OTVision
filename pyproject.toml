@@ -26,7 +26,7 @@ dependencies = [
     "av==13.0.0",
     "coremltools==8.2; sys_platform == 'darwin'",
     "ffmpeg-python==0.2.0",
-    "fire==0.7.0",
+    "fire==0.7.1",
     "geopandas==1.0.1",
     "ijson==3.3.0",
     "more-itertools==10.7.0",
