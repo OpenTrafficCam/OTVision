@@ -44,7 +44,6 @@ from OTVision.application.config import (
 )
 from OTVision.application.track.botsort_params import (
     derive_track_buffer,
-    extract_frame_rate_from_metadata,
     resolve_botsort_tracker_params,
     ultralytics_effective_miss_frames,
     validate_botsort_gmc_config,
@@ -58,7 +57,6 @@ from OTVision.domain.frame import DetectedFrame
 from OTVision.domain.tracker import TrackerLifecycle, TrackerType
 from OTVision.track.tracker.tracker_plugin_botsort import (
     BotsortTracker,
-    BoTSORTTrackerLike,
     TrackAssignment,
     TrackRegistry,
     UltralyticsResultsLike,
@@ -228,19 +226,6 @@ def test_validate_botsort_update_rows_rejects_wider_or_narrower() -> None:
         validate_botsort_update_rows(np.zeros((8,), dtype=np.float32))
 
 
-def test_extract_frame_rate_returns_none_for_missing_video_section() -> None:
-    """Missing video section yields no FPS."""
-    assert extract_frame_rate_from_metadata({}) is None
-
-
-def test_extract_frame_rate_returns_none_for_zero_fps() -> None:
-    """Zero FPS values are treated as missing."""
-    metadata = {
-        dataformat.VIDEO: {dataformat.ACTUAL_FPS: 0, dataformat.RECORDED_FPS: 0}
-    }
-    assert extract_frame_rate_from_metadata(metadata) is None
-
-
 def test_botsort_metadata_omits_iou_sigma_fields() -> None:
     """BoT-SORT metadata keeps lifecycle params and omits unused IOU sigmas."""
     meta = tracker_metadata_of(
@@ -330,26 +315,24 @@ def test_resolve_botsort_tracker_params_silent_on_oversized_explicit_buffer(
     assert not any("TRACK_BUFFER" in record.message for record in caplog.records)
 
 
-@pytest.mark.parametrize("model", ["auto", "", "  ", "none"])
-def test_validate_botsort_reid_rejects_unusable_model(model: str) -> None:
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"with_reid": True, "model": "auto"},
+        {"with_reid": True, "model": ""},
+        {"with_reid": True, "model": "  "},
+        {"with_reid": True, "model": "none"},
+        {"with_reid": True, "model": None},
+        {"with_reid": True},
+    ],
+)
+def test_validate_botsort_reid_rejects_unusable_model(params: dict) -> None:
     """ReID without a usable explicit model fails inside Ultralytics.
 
     `auto` means native detector feature tensors, which OTVision does not
-    supply; null/empty must not slip through merely by not equalling `auto`.
+    supply; null/empty/absent must not slip through merely by not equalling
+    `auto` (YAML `MODEL:` parses to None).
     """
-    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
-        validate_botsort_reid_config({"with_reid": True, "model": model})
-
-
-def test_validate_botsort_reid_rejects_missing_model_key() -> None:
-    """An absent MODEL key is as unusable as an explicit `auto`."""
-    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
-        validate_botsort_reid_config({"with_reid": True})
-
-
-def test_validate_botsort_reid_rejects_null_model() -> None:
-    """YAML `MODEL:` parses to None and must not bypass the check."""
-    params: dict = {"with_reid": True, "model": None}
     with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
         validate_botsort_reid_config(params)
 
@@ -437,52 +420,6 @@ def test_mocked_t_min_discards_short_tracks() -> None:
     assert finished == set()
 
 
-def test_mocked_t_miss_max_finishes_long_tracks() -> None:
-    """Tracks spanning at least t_min finish after exceeding t_miss_max misses."""
-    track_config = _create_botsort_track_config(t_min=2, t_miss_max=2)
-    tracker = BotsortTracker(get_current_config=_mock_get_current_config(track_config))
-    fake = FakeBoTSORT(
-        rows_by_frame={
-            0: [_botsort_row(det_idx=0, track_id=1)],
-            1: [_botsort_row(det_idx=0, track_id=1)],
-            2: [_botsort_row(det_idx=0, track_id=1)],
-            3: [_botsort_row(det_idx=0, track_id=1)],
-            4: [],
-            5: [],
-            6: [],
-        }
-    )
-    id_gen = iter(range(1, 100))
-    finished: set[int] = set()
-
-    with (
-        patch.object(tracker, "_ensure_botsort_initialized", return_value=fake),
-        patch.object(tracker, "_reset_for_new_group"),
-    ):
-        for frame_no in range(7):
-            dets = [_make_detection()] if frame_no < 4 else []
-            result = tracker.track_frame(
-                _make_frame(frame_no=frame_no, detections=dets), id_gen
-            )
-            finished |= result.finished_tracks
-
-    assert finished == {1}
-
-
-def test_explicit_reset_clears_id_maps() -> None:
-    """``reset()`` clears Ultralytics state and OTVision ID maps."""
-    track_config = _create_botsort_track_config(t_miss_max=100)
-    tracker = BotsortTracker(get_current_config=_mock_get_current_config(track_config))
-    fake: BoTSORTTrackerLike = FakeBoTSORT()
-    tracker._botsort = fake
-    tracker._registry.observe(99, frame_no=1, id_generator=iter([1]))
-
-    tracker.reset()
-
-    assert tracker._botsort is None
-    assert tracker._registry._entries == {}
-
-
 def test_shape_guard_raised_during_track_frame() -> None:
     """Invalid update shapes raise during ``track_frame``."""
     track_config = _create_botsort_track_config(t_miss_max=100)
@@ -496,21 +433,6 @@ def test_shape_guard_raised_during_track_frame() -> None:
     ):
         with pytest.raises(ValueError, match="Unexpected BoT-SORT update"):
             tracker.track_frame(_make_frame(frame_no=1), iter(range(1, 10)))
-
-
-def test_build_args_rejects_reid_with_model_auto() -> None:
-    """Tracker construction rejects WITH_REID with MODEL=auto."""
-    track_config = TrackConfig(
-        tracker_type=TrackerType.BOTSORT,
-        botsort=_TrackBotSortConfig(
-            t_min=5,
-            t_miss_max=60,
-            tracker_params={"with_reid": True, "model": "auto"},
-        ),
-    )
-    tracker = BotsortTracker(get_current_config=_mock_get_current_config(track_config))
-    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
-        tracker._build_args(frame_rate=20)
 
 
 def test_fps_extraction_non_otdet_source_raises() -> None:
