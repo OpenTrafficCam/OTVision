@@ -21,6 +21,7 @@ OTVision BoT-SORT tracker adapter using ultralytics BOTSORT.
 
 from __future__ import annotations
 
+import inspect
 import logging
 import types
 from dataclasses import dataclass
@@ -295,6 +296,76 @@ class UltralyticsResultsLite:
         )
 
 
+def _import_eager_botsort_class() -> type:
+    """Import ultralytics and derive an eagerly-activating BOTSORT subclass.
+
+    Documented deviation from stock BoT-SORT: ByteTrack creates every track
+    *unconfirmed* and only emits it after a second consecutive match
+    (``STrack.activate`` sets ``is_activated`` only on frame 1), so every
+    track born later silently loses its first detection in the output.
+    OTVision suppresses false positives retroactively via ``t_min`` instead,
+    and the IOU tracker emits from the first frame, so activation is made
+    eager to match those semantics.
+
+    Returns:
+        type: BOTSORT subclass whose tracks are emitted from their first frame.
+
+    Raises:
+        ModuleNotFoundError: If ultralytics is not installed.
+        RuntimeError: If the installed ``BOTSORT.init_track`` signature
+            deviates from the pinned 8.3.159 layout mirrored below.
+    """
+    try:
+        from ultralytics.trackers import BOTSORT
+        from ultralytics.trackers.bot_sort import BOTrack
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            "ultralytics is required for `--tracker botsort`. Install the optional "
+            "dependencies that include ultralytics."
+        ) from e
+
+    expected_params = ("self", "dets", "scores", "cls", "img")
+    actual_params = tuple(inspect.signature(BOTSORT.init_track).parameters)
+    if actual_params != expected_params:
+        raise RuntimeError(
+            "ultralytics BOTSORT.init_track signature changed from "
+            f"{expected_params} to {actual_params}. The eager-activation "
+            "override mirrors the 8.3.159 implementation and must be "
+            "revisited for this ultralytics version."
+        )
+
+    class EagerBOTrack(BOTrack):  # type: ignore[misc, valid-type]
+        """BOTrack that is emitted from its first frame onward."""
+
+        def activate(self, kalman_filter: object, frame_id: int) -> None:
+            """Activate the tracklet and emit it immediately."""
+            super().activate(kalman_filter, frame_id)
+            self.is_activated = True
+
+    class EagerBOTSORT(BOTSORT):  # type: ignore[misc, valid-type]
+        """BOTSORT creating eagerly-activated tracks."""
+
+        def init_track(
+            self,
+            dets: NDArray[np.floating],
+            scores: NDArray[np.floating],
+            cls: NDArray[np.floating],
+            img: NDArray[np.uint8] | None = None,
+        ) -> list:
+            """Mirror ``BOTSORT.init_track`` (8.3.159) with eager tracks."""
+            if len(dets) == 0:
+                return []
+            if self.args.with_reid and self.encoder is not None:
+                features = self.encoder(img, dets)
+                return [
+                    EagerBOTrack(xyxy, s, c, f)
+                    for (xyxy, s, c, f) in zip(dets, scores, cls, features)
+                ]
+            return [EagerBOTrack(xyxy, s, c) for (xyxy, s, c) in zip(dets, scores, cls)]
+
+    return EagerBOTSORT
+
+
 class BotsortTracker(Tracker):
     """Tracker implementation based on ultralytics BoT-SORT.
 
@@ -302,6 +373,9 @@ class BotsortTracker(Tracker):
     - We use ultralytics' BoT-SORT to associate detections to internal track IDs.
     - We keep OT's own lifecycle semantics (`t_min`/`t_miss_max`) so the output
       integrates with the existing buffering/finishing logic.
+    - Tracks activate eagerly (see :func:`_import_eager_botsort_class`), so
+      ByteTrack's one-frame confirmation step never swallows a track's first
+      detection; `t_min` owns false-positive suppression instead.
     - Call :meth:`reset` at each independent video-group boundary;
       GroupedFilesTracker does so before streaming each group.
     """
@@ -422,13 +496,7 @@ class BotsortTracker(Tracker):
             return self._botsort
 
         # Lazy import to avoid hard dependency on ultralytics during non-botsort runs.
-        try:
-            from ultralytics.trackers import BOTSORT  # type: ignore
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError(
-                "ultralytics is required for `--tracker botsort`. Install the optional "
-                "dependencies that include ultralytics."
-            ) from e
+        botsort_class = _import_eager_botsort_class()
 
         # Resolve params early so ReID/model validation uses effective values.
         frame_rate = self._frame_rate_from_source(frame)
@@ -443,7 +511,7 @@ class BotsortTracker(Tracker):
 
         self._botsort = cast(
             BoTSORTTrackerLike,
-            BOTSORT(args=args, frame_rate=frame_rate),
+            botsort_class(args=args, frame_rate=frame_rate),
         )
         return self._botsort
 

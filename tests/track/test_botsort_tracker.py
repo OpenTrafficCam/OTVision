@@ -674,6 +674,41 @@ class TestBotsortUltralyticsIntegration:
             group2_ids
         ), f"Track IDs leaked across video groups: {group1_ids & group2_ids}"
 
+    @patch(
+        "OTVision.track.tracker.tracker_plugin_botsort.read_json_bz2_metadata",
+        return_value=_FPS_METADATA,
+    )
+    def test_track_born_after_frame_one_keeps_its_first_detection(
+        self,
+        _mock_metadata: Mock,
+    ) -> None:
+        """A track appearing mid-video is emitted from its very first frame.
+
+        Stock ByteTrack keeps a new track unconfirmed for one frame, which
+        silently dropped each such track's first detection; eager activation
+        (OP#9534) hands false-positive suppression to ``t_min`` instead.
+        """
+        track_config = _create_botsort_track_config()
+        tracker = BotsortTracker(
+            get_current_config=_mock_get_current_config(track_config)
+        )
+        id_gen = iter(range(1, 100))
+        object_a = _make_detection(x=100.0, y=100.0)
+        object_b = _make_detection(x=300.0, y=200.0)
+
+        track_ids_per_frame = []
+        frames = ([object_a], [object_a], [object_a, object_b], [object_a, object_b])
+        for frame_no, detections in enumerate(frames, start=1):
+            result = tracker.track_frame(
+                _make_frame(frame_no=frame_no, detections=list(detections)), id_gen
+            )
+            track_ids_per_frame.append({d.track_id for d in result.detections})
+
+        assert len(track_ids_per_frame[2]) == 2, (
+            "Track born in frame 3 must be emitted in frame 3, "
+            f"got per-frame track ids {track_ids_per_frame}"
+        )
+
 
 class TestTrackRegistry:
     """Lifecycle behaviour of the registry that owns BoT-SORT id mapping."""
