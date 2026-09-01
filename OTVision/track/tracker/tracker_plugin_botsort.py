@@ -419,8 +419,9 @@ class BotsortTracker(Tracker):
 
         Raises:
             ModuleNotFoundError: If ultralytics is not installed.
-            ValueError: If the source FPS cannot be determined, or if the
-                effective params request unsupported ReID or GMC.
+            ValueError: If the source FPS cannot be determined, if the
+                effective params request unsupported ReID or GMC, or if ReID
+                is enabled for a frame that carries no image.
         """
         if self._botsort is not None:
             return self._botsort
@@ -437,6 +438,13 @@ class BotsortTracker(Tracker):
         # Resolve params early so ReID/model validation uses effective values.
         frame_rate = self._frame_rate_from_source(frame)
         args = self._build_args(frame_rate)
+
+        if bool(getattr(args, "with_reid", False)) and frame.image is None:
+            raise ValueError(
+                "BoT-SORT ReID is enabled in TRACK.BOT_SORT, but the frame "
+                "carries no image. .otdet input has no images; provide images "
+                "(streaming mode) or disable ReID (`WITH_REID: false`)."
+            )
 
         self._botsort = cast(
             BoTSORTTrackerLike,

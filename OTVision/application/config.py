@@ -364,6 +364,7 @@ DEFAULT_BOTSORT_TRACKER_PARAMS: dict[str, BotSortTrackerParam] = {
     "proximity_thresh": 0.5,
     "appearance_thresh": 0.25,
     "with_reid": False,
+    "model": "auto",
 }
 
 

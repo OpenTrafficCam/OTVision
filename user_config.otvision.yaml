@@ -51,12 +51,14 @@ TRACK:
     # Only `none` is accepted: GMC needs frame images, which .otdet never
     # carries, so Ultralytics would skip motion compensation silently.
     GMC_METHOD: none
-    PROXIMITY_THRESH: 0.5  # inert: ReID is not supported
-    APPEARANCE_THRESH: 0.25  # inert: ReID is not supported
-    # Must stay false: Ultralytics 8.3.159 disables its ReID encoder
-    # unconditionally, so enabling ReID would promise appearance matching
-    # that never runs.
+    PROXIMITY_THRESH: 0.5  # ReID proximity threshold (inert while WITH_REID false)
+    APPEARANCE_THRESH: 0.25  # ReID appearance threshold (inert while WITH_REID false)
+    # ReID needs frame images, which .otdet does not carry, so it is unusable
+    # for file-based tracking. If you enable it, MODEL must name an explicit
+    # ReID model: `auto` means native detector feature tensors, which OTVision
+    # does not supply, and tracking then fails inside Ultralytics.
     WITH_REID: false
+    MODEL: auto  # only used when WITH_REID is true; must not be `auto` then
   OVERWRITE: true
 
 LOG:

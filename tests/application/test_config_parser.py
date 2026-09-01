@@ -304,12 +304,14 @@ class TestTrackConfigTrackerTypeCoercion:
         with pytest.raises(ValueError, match="not a valid TrackerType"):
             TrackConfig(tracker_type="deepsort")  # type: ignore[arg-type]
 
-    def test_rejects_reid_at_parse_time(self) -> None:
-        """ReID must be rejected while parsing, not first at tracker init."""
+    def test_rejects_unusable_reid_at_parse_time(self) -> None:
+        """Unusable ReID must be rejected while parsing, not at tracker init."""
         target = ConfigParser(YamlDeserializer())
 
-        with pytest.raises(InvalidOtvisionConfigError, match="ReID is not supported"):
-            target.parse_track_botsort_config({"WITH_REID": True})
+        with pytest.raises(
+            InvalidOtvisionConfigError, match="ReID needs an explicit MODEL"
+        ):
+            target.parse_track_botsort_config({"WITH_REID": True, "MODEL": "auto"})
 
     def test_rejects_non_none_gmc_at_parse_time(self) -> None:
         """A GMC method needing images must be rejected while parsing."""

@@ -330,15 +330,38 @@ def test_resolve_botsort_tracker_params_silent_on_oversized_explicit_buffer(
     assert not any("TRACK_BUFFER" in record.message for record in caplog.records)
 
 
-def test_validate_botsort_reid_rejects_reid_entirely() -> None:
-    """ReID is rejected: Ultralytics 8.3.159 disables its encoder regardless."""
-    with pytest.raises(ValueError, match="ReID is not supported"):
+@pytest.mark.parametrize("model", ["auto", "", "  ", "none"])
+def test_validate_botsort_reid_rejects_unusable_model(model: str) -> None:
+    """ReID without a usable explicit model fails inside Ultralytics.
+
+    `auto` means native detector feature tensors, which OTVision does not
+    supply; null/empty must not slip through merely by not equalling `auto`.
+    """
+    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
+        validate_botsort_reid_config({"with_reid": True, "model": model})
+
+
+def test_validate_botsort_reid_rejects_missing_model_key() -> None:
+    """An absent MODEL key is as unusable as an explicit `auto`."""
+    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
         validate_botsort_reid_config({"with_reid": True})
 
 
+def test_validate_botsort_reid_rejects_null_model() -> None:
+    """YAML `MODEL:` parses to None and must not bypass the check."""
+    params: dict = {"with_reid": True, "model": None}
+    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
+        validate_botsort_reid_config(params)
+
+
+def test_validate_botsort_reid_allows_explicit_model() -> None:
+    """An explicit ReID model goes through `ReID(model)`, which uses images."""
+    validate_botsort_reid_config({"with_reid": True, "model": "osnet_x0_25"})
+
+
 def test_validate_botsort_reid_allows_reid_disabled() -> None:
-    """Disabled ReID passes validation."""
-    validate_botsort_reid_config({"with_reid": False})
+    """Disabled ReID passes validation whatever MODEL says."""
+    validate_botsort_reid_config({"with_reid": False, "model": "auto"})
 
 
 def test_validate_botsort_gmc_rejects_non_none_method() -> None:
@@ -475,18 +498,18 @@ def test_shape_guard_raised_during_track_frame() -> None:
             tracker.track_frame(_make_frame(frame_no=1), iter(range(1, 10)))
 
 
-def test_build_args_rejects_reid() -> None:
-    """Tracker construction rejects WITH_REID."""
+def test_build_args_rejects_reid_with_model_auto() -> None:
+    """Tracker construction rejects WITH_REID with MODEL=auto."""
     track_config = TrackConfig(
         tracker_type=TrackerType.BOTSORT,
         botsort=_TrackBotSortConfig(
             t_min=5,
             t_miss_max=60,
-            tracker_params={"with_reid": True},
+            tracker_params={"with_reid": True, "model": "auto"},
         ),
     )
     tracker = BotsortTracker(get_current_config=_mock_get_current_config(track_config))
-    with pytest.raises(ValueError, match="ReID is not supported"):
+    with pytest.raises(ValueError, match="ReID needs an explicit MODEL"):
         tracker._build_args(frame_rate=20)
 
 

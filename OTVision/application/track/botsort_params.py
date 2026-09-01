@@ -196,25 +196,35 @@ def to_frame_rate(fps: float) -> int:
 def validate_botsort_reid_config(
     tracker_params: dict[str, BotSortTrackerParam],
 ) -> None:
-    """Reject ReID, which the pinned Ultralytics release cannot perform.
+    """Reject ReID configurations OTVision's detection path cannot satisfy.
 
-    Ultralytics 8.3.159 sets ``BOTSORT.encoder = None`` whenever ``with_reid``
-    is requested ("Haven't supported BoT-SORT(reid) yet"), and only uses ReID
-    features when that encoder is non-null. Enabling ReID therefore changes
-    nothing regardless of ``model``, so accepting it would silently promise
-    appearance matching that never happens.
+    Ultralytics 8.3.159 treats ``model: auto`` as *native detector feature
+    tensors* and its encoder calls ``.cpu()`` on them. OTVision supplies NumPy
+    frame images, so ``auto`` raises ``AttributeError: 'numpy.ndarray' object
+    has no attribute 'cpu'`` inside ``init_track``. An explicit ReID model goes
+    through ``ReID(model)``, which does consume images, so it stays allowed.
+
+    A missing, null or empty ``MODEL`` is rejected too: it is not a usable
+    model name and must not slip through by failing to equal ``"auto"``.
 
     Args:
         tracker_params (dict[str, BotSortTrackerParam]): Effective tracker params.
 
     Raises:
-        ValueError: If ReID is enabled.
+        ValueError: If ReID is enabled without a usable explicit model.
     """
-    if bool(tracker_params.get("with_reid", False)):
+    if not bool(tracker_params.get("with_reid", False)):
+        return
+
+    model = tracker_params.get("model")
+    model_name = "" if model is None else str(model).strip().lower()
+    if model_name in {"", "auto", "none", "null"}:
         raise ValueError(
-            "BoT-SORT ReID is not supported: Ultralytics 8.3.159 disables its "
-            "ReID encoder unconditionally, so WITH_REID has no effect. "
-            "Set `WITH_REID: false` under TRACK.BOT_SORT."
+            "BoT-SORT ReID needs an explicit MODEL. Ultralytics 8.3.159 reads "
+            f"MODEL={model!r} as native detector feature tensors, but OTVision "
+            "supplies NumPy frame images, so tracking would fail inside "
+            "Ultralytics. Set an explicit ReID model path/name, or disable ReID "
+            "(`WITH_REID: false`)."
         )
 
 
