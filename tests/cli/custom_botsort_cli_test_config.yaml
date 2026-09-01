@@ -31,9 +31,8 @@ TRACK:
     new_track_thresh: 0.55
     match_thresh: 0.88
     fuse_score: true
-    gmc_method: sparseOptFlow
-    with_reid: false
-    model: auto
+    GMC_METHOD: none
+    WITH_REID: false
   OVERWRITE: false
 LOG:
   LOG_LEVEL_CONSOLE: WARNING

@@ -1,9 +1,10 @@
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Self
 
 from OTVision import dataformat, version
+from OTVision.application.track.tracker_metadata import TrackerMetadata
 from OTVision.detect.otdet import (
     OtdetBuilderConfig,
     OtdetMetadataBuilder,
@@ -18,15 +19,9 @@ from OTVision.domain.frame import FrameNo, TrackedFrame
 class OttrkBuilderConfig:
     otdet_builder_config: OtdetBuilderConfig
     number_of_frames: int
-    sigma_l: float
-    sigma_h: float
-    sigma_iou: float
-    t_min: int
-    t_miss_max: int
+    tracker_metadata: TrackerMetadata
     tracking_run_id: str
     frame_group: int
-    tracker_type: str = "iou"
-    tracker_params: dict[str, bool | int | float | str] = field(default_factory=dict)
 
 
 class OttrkBuilderError(Exception):
@@ -72,13 +67,7 @@ class OttrkBuilder:
         result = create_ottrk_metadata_entry(
             start_date=start_date,
             end_date=end_date,
-            sigma_l=self.config.sigma_l,
-            sigma_h=self.config.sigma_h,
-            sigma_iou=self.config.sigma_iou,
-            t_min=self.config.t_min,
-            t_miss_max=self.config.t_miss_max,
-            tracker_type=self.config.tracker_type,
-            tracker_params=self.config.tracker_params,
+            tracker_metadata=self.config.tracker_metadata,
         )
         tracking_metadata = result[dataformat.TRACKING]
         tracking_metadata[dataformat.TRACKING_RUN_ID] = self.config.tracking_run_id
@@ -176,74 +165,24 @@ class OttrkBuilder:
 def create_ottrk_metadata_entry(
     start_date: datetime,
     end_date: datetime,
-    sigma_l: float,
-    sigma_h: float,
-    sigma_iou: float,
-    t_min: int,
-    t_miss_max: int,
-    tracker_type: str = "iou",
-    tracker_params: dict[str, bool | int | float | str] | None = None,
+    tracker_metadata: TrackerMetadata,
 ) -> dict:
+    """Build the ``metadata`` entry of an ``.ottrk`` file.
+
+    Args:
+        start_date (datetime): Start of the first tracked video.
+        end_date (datetime): End of the last tracked video.
+        tracker_metadata (TrackerMetadata): Metadata of the tracker used.
+
+    Returns:
+        dict: Mapping merged into ``.ottrk`` metadata.
+    """
     return {
         dataformat.OTTRACK_VERSION: version.ottrack_version(),
         dataformat.TRACKING: {
             dataformat.OTVISION_VERSION: version.otvision_version(),
             dataformat.FIRST_TRACKED_VIDEO_START: start_date.timestamp(),
             dataformat.LAST_TRACKED_VIDEO_END: end_date.timestamp(),
-            dataformat.TRACKER: create_tracker_metadata(
-                sigma_l,
-                sigma_h,
-                sigma_iou,
-                t_min,
-                t_miss_max,
-                tracker_type=tracker_type,
-                tracker_params=tracker_params,
-            ),
+            dataformat.TRACKER: tracker_metadata.to_dict(),
         },
     }
-
-
-def create_tracker_metadata(
-    sigma_l: float,
-    sigma_h: float,
-    sigma_iou: float,
-    t_min: int,
-    t_miss_max: int,
-    tracker_type: str = "iou",
-    tracker_params: dict[str, bool | int | float | str] | None = None,
-) -> dict:
-    """Build the ``tracking.tracker`` section of ``.ottrk`` metadata.
-
-    For BoT-SORT, ``tracker_params`` should already be the *effective* resolved
-    mapping (defaults + overrides + FPS-derived ``track_buffer``).
-
-    Args:
-        sigma_l (float): IOU low-confidence threshold.
-        sigma_h (float): IOU high-confidence threshold.
-        sigma_iou (float): IOU matching threshold.
-        t_min (int): Minimum track span in frames.
-        t_miss_max (int): Maximum missing frames before finish/discard.
-        tracker_type (str): ``iou`` or ``botsort``.
-        tracker_params (dict[str, bool | int | float | str] | None): Effective
-            BoT-SORT params.
-
-    Returns:
-        dict: Tracker metadata mapping.
-    """
-    tracker_name = "IOU" if tracker_type != "botsort" else "BoTSORT"
-    result: dict = {
-        dataformat.NAME: tracker_name,
-        dataformat.T_MIN: t_min,
-        dataformat.T_MISS_MAX: t_miss_max,
-    }
-
-    if tracker_type == "botsort":
-        # IOU thresholds are not used by BoT-SORT; omit them from metadata.
-        if tracker_params:
-            result[dataformat.TRACKER_PARAMS] = tracker_params
-    else:
-        result[dataformat.SIGMA_L] = sigma_l
-        result[dataformat.SIGMA_H] = sigma_h
-        result[dataformat.SIGMA_IOU] = sigma_iou
-
-    return result

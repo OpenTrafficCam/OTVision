@@ -33,12 +33,15 @@ class OtvisionTrack:
         self._tracking_run_id_generator = tracking_run_id_generator
 
     async def start(self) -> None:
+        # sigma_* are IOU-only; the lifecycle belongs to the selected tracker.
+        iou = self.config.track.iou
+        lifecycle = self.config.track.lifecycle
         check_types(
-            self.config.track.sigma_l,
-            self.config.track.sigma_h,
-            self.config.track.sigma_iou,
-            self.config.track.t_min,
-            self.config.track.t_miss_max,
+            iou.sigma_l,
+            iou.sigma_h,
+            iou.sigma_iou,
+            lifecycle.t_min,
+            lifecycle.t_miss_max,
         )
 
         detections_files = get_files(

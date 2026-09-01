@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Callable
 from unittest.mock import AsyncMock, Mock, patch
@@ -20,6 +21,7 @@ from OTVision.application.config import (
 )
 from OTVision.application.config_parser import ConfigParser
 from OTVision.domain.cli import CliParseError
+from OTVision.domain.tracker import TrackerType
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 YAML_DESERIALIZER = YamlDeserializer()
@@ -230,6 +232,7 @@ class TestTrackCLI:
         mock_build: Mock,
         mock_update_current_config: Mock,
         track_cli: Callable,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         mock_otvision_track = Mock()
         mock_otvision_track.start = AsyncMock()
@@ -248,16 +251,20 @@ class TestTrackCLI:
             LOGFILE_OVERWRITE_CMD,
         ]
 
-        with pytest.warns(UserWarning, match="botsort mode ignores IOU CLI overrides"):
+        with caplog.at_level(logging.WARNING):
             track_cli(argv=command)
+        assert any(
+            "botsort mode ignores the IOU CLI override" in record.message
+            for record in caplog.records
+        )
 
         mock_update_current_config.update.assert_called_once()
         passed_config = mock_update_current_config.update.call_args.kwargs["config"]
 
-        assert passed_config.track.tracker_type == "botsort"
-        # t_min/t_miss_max must come from TRACK.BOT_SORT (YAML), not from CLI.
-        assert passed_config.track.t_min == 7
-        assert passed_config.track.t_miss_max == 17
+        assert passed_config.track.tracker_type is TrackerType.BOTSORT
+        # Lifecycle must come from TRACK.BOT_SORT (YAML), not from the CLI.
+        assert passed_config.track.lifecycle.t_min == 7
+        assert passed_config.track.lifecycle.t_miss_max == 17
 
         # IOU config is still parsed from YAML but must not be overridden by CLI.
         assert passed_config.track.iou.t_min == 3
@@ -287,14 +294,15 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
 
     # Map EXPECTED values to TrackConfig's relevant fields
     paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
-    sigma_l = test_data["sigma_l"].get(EXPECTED, default_config.track.sigma_l)
-    sigma_h = test_data["sigma_h"].get(EXPECTED, default_config.track.sigma_h)
-    sigma_iou = test_data["sigma_iou"].get(EXPECTED, default_config.track.sigma_iou)
-    t_min = test_data["t_min"].get(EXPECTED, default_config.track.t_min)
-    t_miss_max = test_data["t_miss_max"].get(EXPECTED, default_config.track.t_miss_max)
+    default_iou = default_config.track.iou
+    sigma_l = test_data["sigma_l"].get(EXPECTED, default_iou.sigma_l)
+    sigma_h = test_data["sigma_h"].get(EXPECTED, default_iou.sigma_h)
+    sigma_iou = test_data["sigma_iou"].get(EXPECTED, default_iou.sigma_iou)
+    t_min = test_data["t_min"].get(EXPECTED, default_iou.t_min)
+    t_miss_max = test_data["t_miss_max"].get(EXPECTED, default_iou.t_miss_max)
     overwrite = test_data["overwrite"].get(EXPECTED, default_config.track.overwrite)
-    tracker_type = test_data.get("tracker", {}).get(
-        EXPECTED, default_config.track.tracker_type
+    tracker_type = TrackerType(
+        test_data.get("tracker", {}).get(EXPECTED, default_config.track.tracker_type)
     )
     paths = [str(Path(p).expanduser()) for p in paths]
 

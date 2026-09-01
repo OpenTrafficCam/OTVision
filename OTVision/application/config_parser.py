@@ -3,12 +3,14 @@ from pathlib import Path
 from typing import cast
 
 from OTVision.application.config import (
+    ALLOWED_BOTSORT_TRACKER_PARAMS,
     BOT_SORT,
     COL_WIDTH,
     CONF,
     CONVERT,
     CRF,
     DATETIME_FORMAT,
+    DEFAULT_BOTSORT_TRACKER_PARAMS,
     DEFAULT_FILETYPE,
     DELETE_INPUT,
     DETECT,
@@ -77,7 +79,12 @@ from OTVision.application.config import (
     _TransformConfig,
     _UndistortConfig,
 )
+from OTVision.application.track.botsort_params import (
+    validate_botsort_gmc_config,
+    validate_botsort_reid_config,
+)
 from OTVision.domain.serialization import Deserializer
+from OTVision.domain.tracker import TrackerType
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
@@ -267,7 +274,7 @@ class ConfigParser:
             run_chained=data.get(RUN_CHAINED, TrackConfig.run_chained),
             iou=iou_config,
             botsort=botsort_config,
-            tracker_type=data.get(TRACKER_TYPE, TrackConfig.tracker_type),
+            tracker_type=self.parse_tracker_type(data.get(TRACKER_TYPE)),
             overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
@@ -279,6 +286,28 @@ class ConfigParser:
             data.get(T_MIN, _TrackIouConfig.t_min),
             data.get(T_MISS_MAX, _TrackIouConfig.t_miss_max),
         )
+
+    def parse_tracker_type(self, value: object) -> TrackerType:
+        """Parse ``TRACK.TRACKER_TYPE`` into a :class:`TrackerType`.
+
+        Args:
+            value (object): Raw YAML value, or ``None`` when absent.
+
+        Returns:
+            TrackerType: Selected tracker, defaulting to IOU when absent.
+
+        Raises:
+            InvalidOtvisionConfigError: If the value is not a known tracker.
+        """
+        if value is None:
+            return TrackConfig.tracker_type
+        try:
+            return TrackerType(str(value).lower())
+        except ValueError:
+            raise InvalidOtvisionConfigError(
+                f"Unknown TRACK.TRACKER_TYPE '{value}'. "
+                f"Valid options: {TrackerType.values()}"
+            ) from None
 
     def parse_track_botsort_config(self, data: dict) -> _TrackBotSortConfig:
         """Parse ``TRACK.BOT_SORT`` YAML into a BoT-SORT config object.
@@ -297,11 +326,60 @@ class ConfigParser:
         tracker_params = {
             str(k).lower(): v for k, v in data.items() if k not in {T_MIN, T_MISS_MAX}
         }
+        self.validate_botsort_param_names(tracker_params)
+        self.validate_botsort_param_values(tracker_params)
         return _TrackBotSortConfig(
             t_min=data.get(T_MIN, _TrackBotSortConfig.t_min),
             t_miss_max=data.get(T_MISS_MAX, _TrackBotSortConfig.t_miss_max),
             tracker_params=cast(dict[str, BotSortTrackerParam], tracker_params),
         )
+
+    def validate_botsort_param_names(self, tracker_params: dict) -> None:
+        """Reject BoT-SORT params OTVision does not forward to Ultralytics.
+
+        Catches typos at config-parse time instead of letting them surface from
+        deep inside Ultralytics. ``TRACKER_TYPE`` is rejected explicitly: the
+        nested Ultralytics key is inert because OTVision always constructs
+        ``BOTSORT`` directly, and it is easily confused with the
+        ``TRACK.TRACKER_TYPE`` selector.
+
+        Args:
+            tracker_params (dict): Normalized (lowercase) BoT-SORT params.
+
+        Raises:
+            InvalidOtvisionConfigError: If any param name is unknown.
+        """
+        if TRACKER_TYPE.lower() in tracker_params:
+            raise InvalidOtvisionConfigError(
+                "TRACK.BOT_SORT.TRACKER_TYPE is not supported. OTVision always "
+                "uses Ultralytics BoT-SORT; select the tracker with "
+                "TRACK.TRACKER_TYPE instead."
+            )
+        unknown = sorted(set(tracker_params) - ALLOWED_BOTSORT_TRACKER_PARAMS)
+        if unknown:
+            raise InvalidOtvisionConfigError(
+                f"Unknown TRACK.BOT_SORT parameter(s): {unknown}. "
+                f"Valid options: {sorted(ALLOWED_BOTSORT_TRACKER_PARAMS)}"
+            )
+
+    def validate_botsort_param_values(self, tracker_params: dict) -> None:
+        """Reject BoT-SORT params the pinned Ultralytics release cannot honour.
+
+        Runs at parse time so a misconfiguration surfaces before any file is
+        read, rather than from inside the tracking loop.
+
+        Args:
+            tracker_params (dict): Normalized (lowercase) BoT-SORT params.
+
+        Raises:
+            InvalidOtvisionConfigError: If ReID or GMC is requested.
+        """
+        effective = {**DEFAULT_BOTSORT_TRACKER_PARAMS, **tracker_params}
+        for validate in (validate_botsort_reid_config, validate_botsort_gmc_config):
+            try:
+                validate(effective)
+            except ValueError as e:
+                raise InvalidOtvisionConfigError(str(e)) from None
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:
         return _UndistortConfig(
@@ -350,27 +428,8 @@ class ConfigParser:
             flush_buffer_size=flush_buffer_size,
         )
 
-    _VALID_TRACKER_TYPES = {"iou", "botsort"}
-
     def validate_config(self, config: Config) -> None:
-        self.validate_tracker_type(config)
         self.validate_flush_buffer_support_track_lifecycle(config)
-
-    def validate_tracker_type(self, config: Config) -> None:
-        """Validate that ``TRACK.TRACKER_TYPE`` is a known tracker implementation.
-
-        Args:
-            config (Config): Parsed application configuration.
-
-        Raises:
-            InvalidOtvisionConfigError: If the tracker type is unknown.
-        """
-        tracker_type = config.track.tracker_type
-        if tracker_type not in self._VALID_TRACKER_TYPES:
-            raise InvalidOtvisionConfigError(
-                f"Unknown TRACK.TRACKER_TYPE '{tracker_type}'. "
-                f"Valid options: {sorted(self._VALID_TRACKER_TYPES)}"
-            )
 
     def validate_flush_buffer_support_track_lifecycle(self, config: Config) -> None:
         """Validate that the flush buffer size supports complete track lifecycle.
@@ -398,15 +457,16 @@ class ConfigParser:
             return
 
         flush_buffer_size = config.stream.flush_buffer_size
+        lifecycle = config.track.lifecycle
         if (
-            config.track.t_min < flush_buffer_size
-            and config.track.t_miss_max < flush_buffer_size
+            lifecycle.t_min < flush_buffer_size
+            and lifecycle.t_miss_max < flush_buffer_size
         ):
             return
 
         raise InvalidOtvisionConfigError(
             f"The flush buffer size ({flush_buffer_size}) must be greater than the "
-            f"t_min ({config.track.t_min}) and t_miss_max "
-            f"({config.track.t_miss_max}) values to allow tracks to complete "
+            f"t_min ({lifecycle.t_min}) and t_miss_max "
+            f"({lifecycle.t_miss_max}) values to allow tracks to complete "
             "before flushing."
         )

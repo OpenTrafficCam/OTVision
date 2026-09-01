@@ -10,6 +10,7 @@ from OTVision import version
 from OTVision.application.config import TrackConfig, _TrackIouConfig
 from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.config import CONFIG
+from OTVision.domain.tracker import TrackerType
 from OTVision.helpers.files import read_json
 from OTVision.track.builder import TrackBuilder
 from OTVision.track.track import OtvisionTrack
@@ -322,7 +323,7 @@ def create_track_config(
             t_min=t_min,
             t_miss_max=t_miss_max,
         ),
-        tracker_type="iou",
+        tracker_type=TrackerType.IOU,
         overwrite=overwrite,
     )
 

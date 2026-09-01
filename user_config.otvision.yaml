@@ -42,20 +42,21 @@ TRACK:
     # explicitly only when you intentionally override that alignment.
     T_MIN: 5
     T_MISS_MAX: 60
-    TRACKER_TYPE: botsort  # tracker type, ['botsort', 'bytetrack']
     TRACK_HIGH_THRESH: 0.2  # threshold for the first association
     TRACK_LOW_THRESH: 0.1  # threshold for the second association
-    NEW_TRACK_THRESH: 0.2  # threshold for init new track if detection does not match tracks
+    # threshold for initialising a new track when a detection matches no track
+    NEW_TRACK_THRESH: 0.2
     MATCH_THRESH: 0.9  # threshold for matching tracks
     FUSE_SCORE: true  # fuse confidence score with IoU distance before matching
-    GMC_METHOD: none  # none: .otdet has no images; sparseOptFlow needs frames
-    PROXIMITY_THRESH: 0.5  # ReID proximity threshold (inert while WITH_REID: false)
-    APPEARANCE_THRESH: 0.25  # ReID appearance threshold (inert while WITH_REID: false)
-    WITH_REID: false  # enable ReID only with an explicit MODEL (not auto)
-    # MODEL: auto is unsupported with ReID: Ultralytics 8.3.159 expects native
-    # detector feature tensors; OTVision supplies NumPy images. Use an explicit
-    # ReID weights path/name when WITH_REID is true.
-    MODEL: auto  # ignored unless WITH_REID is true with an explicit model path
+    # Only `none` is accepted: GMC needs frame images, which .otdet never
+    # carries, so Ultralytics would skip motion compensation silently.
+    GMC_METHOD: none
+    PROXIMITY_THRESH: 0.5  # inert: ReID is not supported
+    APPEARANCE_THRESH: 0.25  # inert: ReID is not supported
+    # Must stay false: Ultralytics 8.3.159 disables its ReID encoder
+    # unconditionally, so enabling ReID would promise appearance matching
+    # that never runs.
+    WITH_REID: false
   OVERWRITE: true
 
 LOG:

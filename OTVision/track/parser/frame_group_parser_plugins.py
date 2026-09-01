@@ -3,7 +3,12 @@ from pathlib import Path
 
 from OTVision.application.config import TrackConfig
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.track.botsort_params import (
+    extract_frame_rate_from_metadata,
+    resolve_botsort_params_for_fps,
+)
 from OTVision.application.track.ottrk import create_ottrk_metadata_entry
+from OTVision.application.track.tracker_metadata import tracker_metadata_of
 from OTVision.detect.otdet import (
     extract_expected_duration_from_otdet,
     extract_hostname_from_otdet,
@@ -11,10 +16,6 @@ from OTVision.detect.otdet import (
 )
 from OTVision.helpers.files import read_json_bz2_metadata
 from OTVision.track.model.filebased.frame_group import FrameGroup, FrameGroupParser
-from OTVision.track.tracker.tracker_plugin_botsort import (
-    extract_frame_rate_from_metadata,
-    resolve_botsort_tracker_params,
-)
 
 MISSING_EXPECTED_DURATION = timedelta(minutes=15)
 
@@ -70,46 +71,22 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
         # Resolve once from the first file: GroupedFilesTracker builds one BoT-SORT
         # instance for the whole group using that first source's FPS.
         first_metadata = metadata_by_file[frame_group.files[0]]
-        tracker_params = self._resolve_tracker_params_for_metadata(first_metadata)
+        tracker_metadata = tracker_metadata_of(
+            self.config,
+            resolve_botsort_params_for_fps(
+                self.config, extract_frame_rate_from_metadata(first_metadata)
+            ),
+        )
         for filepath in frame_group.files:
             metadata = metadata_by_file[filepath]
             ottrk_metadata = create_ottrk_metadata_entry(
                 start_date=frame_group.start_date,
                 end_date=frame_group.end_date,
-                sigma_l=self.config.sigma_l,
-                sigma_h=self.config.sigma_h,
-                sigma_iou=self.config.sigma_iou,
-                t_min=self.config.t_min,
-                t_miss_max=self.config.t_miss_max,
-                tracker_type=self.config.tracker_type,
-                tracker_params=tracker_params,
+                tracker_metadata=tracker_metadata,
             )
             metadata.update(ottrk_metadata)
 
         return metadata_by_file
-
-    def _resolve_tracker_params_for_metadata(
-        self, otdet_metadata: dict
-    ) -> dict[str, bool | int | float | str]:
-        """Resolve effective BoT-SORT params for ``.ottrk`` metadata.
-
-        Args:
-            otdet_metadata (dict): Source OTDET metadata used for FPS (group-first).
-
-        Returns:
-            dict[str, bool | int | float | str]: Effective BoT-SORT params, or
-            empty for IOU.
-        """
-        if self.config.tracker_type != "botsort":
-            return {}
-        fps = extract_frame_rate_from_metadata(otdet_metadata)
-        if fps is None:
-            raise ValueError(
-                "BoT-SORT metadata requires FPS in .otdet video section "
-                "to resolve effective tracker parameters."
-            )
-        frame_rate = max(1, int(round(fps)))
-        return resolve_botsort_tracker_params(self.config.botsort, frame_rate)
 
     def merge(self, frame_groups: list[FrameGroup]) -> list[FrameGroup]:
         if len(frame_groups) == 0:

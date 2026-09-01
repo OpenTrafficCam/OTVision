@@ -2,6 +2,7 @@ from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from pathlib import Path
 
 from OTVision.domain.cli import CliParseError, TrackCliArgs, TrackCliParser
+from OTVision.domain.tracker import TrackerType
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
 
@@ -40,9 +41,12 @@ class ArgparseTrackCliParser(TrackCliParser):
         )
         self._parser.add_argument(
             "--tracker",
-            choices=["iou", "botsort"],
+            choices=TrackerType.values(),
             default=None,
-            help="Select tracker implementation. In `botsort` mode tracker parameters are read from YAML only.",  # noqa: E501
+            help=(
+                "Select tracker implementation. In `botsort` mode tracker "
+                "parameters are read from YAML only."
+            ),
         )
         self._parser.add_argument(
             "--sigma-l",
@@ -104,7 +108,7 @@ class ArgparseTrackCliParser(TrackCliParser):
         return TrackCliArgs(
             paths=self._parse_files(args.paths),
             config_file=args.config,
-            tracker_type=args.tracker,
+            tracker_type=TrackerType(args.tracker) if args.tracker else None,
             overwrite=args.overwrite,
             sigma_l=float(args.sigma_l) if args.sigma_l is not None else None,
             sigma_h=float(args.sigma_h) if args.sigma_h is not None else None,

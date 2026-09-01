@@ -24,37 +24,37 @@ from __future__ import annotations
 import logging
 import types
 from dataclasses import dataclass
-from math import ceil
 from pathlib import Path
-from typing import Protocol, TypedDict, cast
+from typing import Protocol, cast
 
 import numpy as np
 from numpy.typing import NDArray
 
 from OTVision import dataformat
-from OTVision.application.config import (
-    DEFAULT_BOTSORT_TRACKER_PARAMS,
-    BotSortTrackerParam,
-    TrackConfig,
-    _TrackBotSortConfig,
-)
+from OTVision.application.config import TrackConfig
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.domain.detection import TrackedDetection, TrackId
-from OTVision.domain.frame import DetectedFrame, TrackedFrame
+from OTVision.application.track.botsort_params import (
+    extract_frame_rate_from_metadata,
+    resolve_botsort_tracker_params,
+    to_frame_rate,
+    validate_botsort_gmc_config,
+    validate_botsort_reid_config,
+)
+from OTVision.domain.detection import TrackId
+from OTVision.domain.frame import DetectedFrame, FrameNo, TrackedFrame
+from OTVision.domain.tracker import TrackerLifecycle
 from OTVision.helpers.files import read_json_bz2_metadata
 from OTVision.helpers.log import LOGGER_NAME
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 
 log = logging.getLogger(LOGGER_NAME)
 
-UltralyticsScalar = BotSortTrackerParam
 NumpyIndex = int | slice | NDArray[np.bool_] | NDArray[np.integer]
 
 # Ultralytics BOTSORT.update() (8.3.159) returns Nx8 float rows:
 # [x1, y1, x2, y2, track_id, score, cls, det_idx]
 _BOTSORT_UPDATE_COLS = 8
 _BOTSORT_COL_TRACK_ID = 4
-_BOTSORT_COL_SCORE = 5
 _BOTSORT_COL_DET_IDX = 7
 
 
@@ -80,137 +80,6 @@ def _xywh_center_to_xyxy(xywh: NDArray[np.floating]) -> NDArray[np.float32]:
     return out
 
 
-def _try_positive_float(value: object) -> float | None:
-    """Return *value* as a positive float, or ``None`` if conversion fails.
-
-    Args:
-        value (object): Candidate numeric value (int, float, Decimal, or
-            numeric string).
-
-    Returns:
-        float | None: Positive float, or ``None`` when conversion fails.
-    """
-    if value is None or isinstance(value, bool):
-        return None
-    try:
-        # ``.otdet`` metadata may store FPS as Decimal via ijson.
-        f = float(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return None
-    return f if f > 0 else None
-
-
-def extract_frame_rate_from_metadata(metadata: dict) -> float | None:
-    """Extract preferred frame rate from OTDET metadata.
-
-    Prefers ``actual_fps`` over ``recorded_fps`` when both are present and positive.
-
-    Args:
-        metadata (dict): OTDET metadata dictionary.
-
-    Returns:
-        float | None: Positive FPS value, or ``None`` if unavailable.
-    """
-    video = metadata.get(dataformat.VIDEO, {})
-    if not isinstance(video, dict):
-        return None
-
-    actual = _try_positive_float(video.get(dataformat.ACTUAL_FPS))
-    if actual is not None:
-        return actual
-
-    recorded = _try_positive_float(video.get(dataformat.RECORDED_FPS))
-    if recorded is not None:
-        return recorded
-
-    return None
-
-
-# Keep private alias for older test imports during transition.
-_extract_frame_rate_from_metadata = extract_frame_rate_from_metadata
-
-
-def ultralytics_effective_miss_frames(frame_rate: int, track_buffer: int) -> int:
-    """Compute Ultralytics' occlusion window for a ``track_buffer``.
-
-    Ultralytics uses ``int(fps / 30 * track_buffer)``.
-
-    Args:
-        frame_rate (int): Video frame rate used by BOTSORT.
-        track_buffer (int): Ultralytics ``track_buffer`` argument.
-
-    Returns:
-        int: Effective number of missing frames before Ultralytics drops a track.
-    """
-    fps = max(1, int(frame_rate))
-    return int(fps / 30 * int(track_buffer))
-
-
-def derive_track_buffer(t_miss_max: int, frame_rate: int) -> int:
-    """Derive Ultralytics ``track_buffer`` covering at least ``t_miss_max``.
-
-    Ultralytics floors ``int(fps / 30 * track_buffer)``, so ``round`` is not an inverse.
-    Using ``ceil(t_miss_max * 30 / fps)`` guarantees the effective lifetime is at least
-    ``t_miss_max``. Exact equality is impossible for some FPS values.
-
-    Args:
-        t_miss_max (int): OTVision missing-frame threshold.
-        frame_rate (int): Video frame rate used by BOTSORT.
-
-    Returns:
-        int: Derived ``track_buffer`` (>= 1).
-    """
-    fps = max(1, int(frame_rate))
-    buffer = max(1, int(ceil(t_miss_max * 30 / fps)))
-    # Guard floating-point edge cases so effective lifetime never undershoots.
-    while ultralytics_effective_miss_frames(fps, buffer) < t_miss_max:
-        buffer += 1
-    return buffer
-
-
-def resolve_botsort_tracker_params(
-    botsort_config: _TrackBotSortConfig,
-    frame_rate: int,
-) -> dict[str, UltralyticsScalar]:
-    """Resolve effective BoT-SORT args (defaults + overrides + derived buffer).
-
-    This is the single source of truth for tracker construction and ``.ottrk``
-    metadata. When YAML does not set ``track_buffer``, it is derived from
-    ``t_miss_max`` and ``frame_rate``.
-
-    Args:
-        botsort_config (_TrackBotSortConfig): BoT-SORT configuration section.
-        frame_rate (int): Video frame rate used by BOTSORT.
-
-    Returns:
-        dict[str, UltralyticsScalar]: Effective Ultralytics tracker arguments.
-    """
-    args_dict: dict[str, UltralyticsScalar] = dict(DEFAULT_BOTSORT_TRACKER_PARAMS)
-    tracker_params = cast(dict[str, UltralyticsScalar], botsort_config.tracker_params)
-    args_dict.update(tracker_params)
-
-    derived_buffer = derive_track_buffer(botsort_config.t_miss_max, frame_rate)
-    if "track_buffer" not in botsort_config.tracker_params:
-        args_dict["track_buffer"] = derived_buffer
-    else:
-        explicit_buffer = int(args_dict["track_buffer"])
-        effective_miss = ultralytics_effective_miss_frames(frame_rate, explicit_buffer)
-        if effective_miss != botsort_config.t_miss_max:
-            log.warning(
-                "TRACK.BOT_SORT.TRACK_BUFFER=%s at %s fps implies an Ultralytics "
-                "occlusion window of %s frames, but T_MISS_MAX=%s. "
-                "Divergent lifecycles can split one physical object into multiple "
-                "OTVision track IDs. Omit TRACK_BUFFER to derive %s automatically.",
-                explicit_buffer,
-                frame_rate,
-                effective_miss,
-                botsort_config.t_miss_max,
-                derived_buffer,
-            )
-
-    return args_dict
-
-
 def validate_botsort_update_rows(tracks: NDArray[np.floating] | None) -> None:
     """Fail loudly if Ultralytics ``BOTSORT.update()`` row layout changed.
 
@@ -232,32 +101,6 @@ def validate_botsort_update_rows(tracks: NDArray[np.floating] | None) -> None:
             f"{getattr(arr, 'shape', type(arr))}; "
             f"expected Nx{_BOTSORT_UPDATE_COLS} rows "
             "[x1, y1, x2, y2, track_id, score, cls, det_idx]."
-        )
-
-
-def validate_botsort_reid_config(
-    tracker_params: dict[str, UltralyticsScalar],
-) -> None:
-    """Reject ReID configurations unsupported by OTVision's detection path.
-
-    Ultralytics 8.3.159 interprets ``model: auto`` as native detector feature
-    tensors. OTVision only supplies NumPy frame images, so ``auto`` crashes.
-
-    Args:
-        tracker_params (dict[str, UltralyticsScalar]): Effective or configured
-            tracker params.
-
-    Raises:
-        ValueError: If ReID is enabled with ``model: auto``.
-    """
-    with_reid = bool(tracker_params.get("with_reid", False))
-    model = str(tracker_params.get("model", "auto")).lower()
-    if with_reid and model == "auto":
-        raise ValueError(
-            "BoT-SORT ReID with MODEL=auto is not supported: Ultralytics 8.3.159 "
-            "expects native detector feature tensors, but OTVision supplies NumPy "
-            "frame images. Set an explicit ReID model path/name, or disable ReID "
-            "(`WITH_REID: false`)."
         )
 
 
@@ -294,13 +137,131 @@ class BoTSORTTrackerLike(Protocol):
         ...
 
 
-class TrackLifecycleState(TypedDict):
-    """Per-track lifecycle bookkeeping used by :class:`BotsortTracker`."""
+@dataclass(frozen=True)
+class Observation:
+    """An OTVision track id assigned to a detection in the current frame.
 
-    first_frame: int
-    last_frame: int
-    age_missing: int
-    max_conf: float
+    Attributes:
+        ot_id: OTVision track id the detection belongs to.
+        is_first: Whether this frame is the first the track was ever seen in.
+    """
+
+    ot_id: TrackId
+    is_first: bool
+
+
+@dataclass
+class _TrackEntry:
+    """Lifecycle state of one track, keyed by its Ultralytics track id."""
+
+    ot_id: TrackId
+    first_frame: FrameNo
+    last_frame: FrameNo
+    age_missing: int = 0
+
+    @property
+    def frame_span(self) -> int:
+        """Number of frames between the first and last observation.
+
+        Returns:
+            int: Frame span of the track.
+        """
+        return self.last_frame - self.first_frame
+
+
+class TrackRegistry:
+    """Owns the mapping from Ultralytics track ids to OTVision tracks.
+
+    Keyed by Ultralytics track id, so eviction needs no reverse lookup. The
+    registry also owns the lifecycle: which tracks were observed, how long each
+    has been missing, and when a track is finished or discarded.
+    """
+
+    def __init__(self) -> None:
+        self._entries: dict[int, _TrackEntry] = {}
+
+    def clear(self) -> None:
+        """Forget every track, for use at video-group boundaries."""
+        self._entries.clear()
+
+    def observe(
+        self,
+        botsort_track_id: int,
+        frame_no: FrameNo,
+        id_generator: IdGenerator,
+    ) -> Observation:
+        """Record that ``botsort_track_id`` was seen in frame ``frame_no``.
+
+        Assigns a fresh OTVision track id the first time an Ultralytics id is
+        seen, and resets the missing-frame counter on every hit.
+
+        Args:
+            botsort_track_id (int): Ultralytics track id from ``update()``.
+            frame_no (FrameNo): Current frame number.
+            id_generator (IdGenerator): Provider of new OTVision track ids.
+
+        Returns:
+            Observation: Assigned OTVision track id and first-sighting flag.
+        """
+        entry = self._entries.get(botsort_track_id)
+        if entry is None:
+            entry = _TrackEntry(
+                ot_id=next(id_generator),
+                first_frame=frame_no,
+                last_frame=frame_no,
+            )
+            self._entries[botsort_track_id] = entry
+            return Observation(ot_id=entry.ot_id, is_first=True)
+
+        entry.last_frame = frame_no
+        entry.age_missing = 0
+        return Observation(ot_id=entry.ot_id, is_first=entry.first_frame == frame_no)
+
+    def age_unobserved(self, observed_botsort_track_ids: set[int]) -> None:
+        """Increment the missing-frame counter of every unobserved track.
+
+        Args:
+            observed_botsort_track_ids (set[int]): Ids seen in the current frame.
+        """
+        for botsort_track_id, entry in self._entries.items():
+            if botsort_track_id not in observed_botsort_track_ids:
+                entry.age_missing += 1
+
+    def evict_expired(
+        self, lifecycle: TrackerLifecycle
+    ) -> tuple[set[TrackId], set[TrackId]]:
+        """Remove tracks missing for longer than ``t_miss_max``.
+
+        A track is finished when it spans at least ``t_min`` frames, and
+        discarded otherwise. Unlike the IOU tracker there is no ``sigma_h``
+        gate: BoT-SORT already filters detections during association via
+        ``track_high_thresh``, ``track_low_thresh`` and ``new_track_thresh``,
+        so only sufficiently confident detections ever form a track.
+
+        Args:
+            lifecycle (TrackerLifecycle): Thresholds of the BoT-SORT config.
+
+        Returns:
+            tuple[set[TrackId], set[TrackId]]: Finished and discarded track ids.
+        """
+        finished: set[TrackId] = set()
+        discarded: set[TrackId] = set()
+        expired = [
+            botsort_track_id
+            for botsort_track_id, entry in self._entries.items()
+            # Matches IOU-tracker semantics: finish only once a track has been
+            # missing for MORE than t_miss_max consecutive frames. The IOU
+            # tracker checks before incrementing; we increment first, so `<=`
+            # here is equivalent to its `<`.
+            if entry.age_missing > lifecycle.t_miss_max
+        ]
+        for botsort_track_id in expired:
+            entry = self._entries.pop(botsort_track_id)
+            if entry.frame_span >= lifecycle.t_min:
+                finished.add(entry.ot_id)
+            else:
+                discarded.add(entry.ot_id)
+        return finished, discarded
 
 
 @dataclass
@@ -339,9 +300,8 @@ class BotsortTracker(Tracker):
     - We use ultralytics' BoT-SORT to associate detections to internal track IDs.
     - We keep OT's own lifecycle semantics (`t_min`/`t_miss_max`) so the output
       integrates with the existing buffering/finishing logic.
-    - Call :meth:`reset` at each independent video-group boundary. As a defensive
-      fallback, ``frame.no == 0`` also resets state (GroupedFilesTracker starts
-      each group at frame 0).
+    - Call :meth:`reset` at each independent video-group boundary;
+      GroupedFilesTracker does so before streaming each group.
     """
 
     def __init__(self, get_current_config: GetCurrentConfig) -> None:
@@ -354,14 +314,9 @@ class BotsortTracker(Tracker):
         self._get_current_config = get_current_config
 
         self._botsort: BoTSORTTrackerLike | None = None
-        self._resolved_tracker_params: dict[str, UltralyticsScalar] | None = None
         self._frame_rate_by_source: dict[str, int] = {}
         self._class_name_to_id: dict[str, int] = {}
-        self._botsort_track_id_to_ot_id: dict[int, TrackId] = {}
-        self._ot_id_to_botsort_track_id: dict[TrackId, int] = {}
-
-        # Lifecycle state keyed by OT track id.
-        self._track_state: dict[TrackId, TrackLifecycleState] = {}
+        self._registry = TrackRegistry()
 
     @property
     def config(self) -> TrackConfig:
@@ -369,9 +324,18 @@ class BotsortTracker(Tracker):
         return self._get_current_config.get().track
 
     @property
-    def resolved_tracker_params(self) -> dict[str, UltralyticsScalar] | None:
-        """Effective Ultralytics args used after the tracker was initialized."""
-        return self._resolved_tracker_params
+    def lifecycle(self) -> TrackerLifecycle:
+        """Return BoT-SORT's own lifecycle thresholds.
+
+        Reads ``TRACK.BOT_SORT`` directly rather than the tracker-dispatching
+        ``TrackConfig.lifecycle``, mirroring ``IouTracker``: this adapter is
+        unambiguously BoT-SORT.
+
+        Returns:
+            TrackerLifecycle: BoT-SORT lifecycle thresholds.
+        """
+        botsort = self.config.botsort
+        return TrackerLifecycle(botsort.t_min, botsort.t_miss_max)
 
     def reset(self) -> None:
         """Clear all tracker state between independent video groups."""
@@ -380,12 +344,9 @@ class BotsortTracker(Tracker):
     def _reset_for_new_group(self) -> None:
         """Clear Ultralytics state, ID maps, and lifecycle bookkeeping."""
         self._botsort = None
-        self._resolved_tracker_params = None
         self._frame_rate_by_source = {}
         self._class_name_to_id = {}
-        self._botsort_track_id_to_ot_id = {}
-        self._ot_id_to_botsort_track_id = {}
-        self._track_state = {}
+        self._registry.clear()
 
     def _frame_rate_from_source(self, frame: DetectedFrame) -> int:
         """Read and cache FPS for ``frame.source`` from ``.otdet`` metadata.
@@ -427,7 +388,7 @@ class BotsortTracker(Tracker):
                 f"for source '{frame.source}'."
             )
 
-        frame_rate = max(1, int(round(extracted)))
+        frame_rate = to_frame_rate(extracted)
         self._frame_rate_by_source[frame.source] = frame_rate
         return frame_rate
 
@@ -442,7 +403,7 @@ class BotsortTracker(Tracker):
         """
         args_dict = resolve_botsort_tracker_params(self.config.botsort, frame_rate)
         validate_botsort_reid_config(args_dict)
-        self._resolved_tracker_params = dict(args_dict)
+        validate_botsort_gmc_config(args_dict)
         return types.SimpleNamespace(**args_dict)
 
     def _ensure_botsort_initialized(self, frame: DetectedFrame) -> BoTSORTTrackerLike:
@@ -473,14 +434,6 @@ class BotsortTracker(Tracker):
         # Resolve params early so ReID/model validation uses effective values.
         frame_rate = self._frame_rate_from_source(frame)
         args = self._build_args(frame_rate)
-
-        if bool(getattr(args, "with_reid", False)) and frame.image is None:
-            raise ValueError(
-                "BoT-SORT ReID is enabled in TRACK.BOT_SORT, but "
-                "frame.image is missing. "
-                "Provide images (streaming mode) or disable ReID "
-                "(`with_reid: false`)."
-            )
 
         self._botsort = cast(
             BoTSORTTrackerLike,
@@ -530,6 +483,45 @@ class BotsortTracker(Tracker):
         # and `results.cls`.
         return UltralyticsResultsLite(conf=conf, xywh=xywh, cls=cls)
 
+    @staticmethod
+    def _observed_botsort_ids(tracks: NDArray[np.floating] | None) -> set[int]:
+        """Collect the Ultralytics track ids present in an ``update()`` result.
+
+        Args:
+            tracks (NDArray[np.floating] | None): Validated Nx8 update rows.
+
+        Returns:
+            set[int]: Ultralytics track ids observed in the current frame.
+        """
+        if tracks is None:
+            return set()
+        return {int(row[_BOTSORT_COL_TRACK_ID]) for row in tracks}
+
+    def _assign_track_ids(
+        self,
+        tracks: NDArray[np.floating] | None,
+        frame_no: FrameNo,
+        id_generator: IdGenerator,
+    ) -> dict[int, Observation]:
+        """Map each matched detection index to its OTVision track.
+
+        Args:
+            tracks (NDArray[np.floating] | None): Validated Nx8 update rows.
+            frame_no (FrameNo): Current frame number.
+            id_generator (IdGenerator): Provider of new OTVision track ids.
+
+        Returns:
+            dict[int, Observation]: Detection index to assigned OTVision track.
+        """
+        if tracks is None:
+            return {}
+        return {
+            int(row[_BOTSORT_COL_DET_IDX]): self._registry.observe(
+                int(row[_BOTSORT_COL_TRACK_ID]), frame_no, id_generator
+            )
+            for row in tracks
+        }
+
     def track_frame(
         self, frame: DetectedFrame, id_generator: IdGenerator
     ) -> TrackedFrame:
@@ -542,12 +534,6 @@ class BotsortTracker(Tracker):
         Returns:
             TrackedFrame: Frame with tracked detections and lifecycle sets.
         """
-        # Defensive fallback: GroupedFilesTracker starts each video group at
-        # frame.no == 0. Prefer calling :meth:`reset` explicitly at group
-        # boundaries; this keeps streaming / alternate callers safe.
-        if frame.no == 0:
-            self._reset_for_new_group()
-
         botsort = self._ensure_botsort_initialized(frame)
         results = self._build_ultralytics_results(frame)
 
@@ -562,98 +548,16 @@ class BotsortTracker(Tracker):
         )
         validate_botsort_update_rows(tracks_arr)
 
-        det_idx_to_ot_id: dict[int, TrackId] = {}
-
-        if tracks_arr is not None:
-            for row in tracks_arr:
-                det_idx = int(row[_BOTSORT_COL_DET_IDX])
-                botsort_track_id = int(row[_BOTSORT_COL_TRACK_ID])
-
-                if botsort_track_id not in self._botsort_track_id_to_ot_id:
-                    ot_id = next(id_generator)
-                    self._botsort_track_id_to_ot_id[botsort_track_id] = ot_id
-                    self._ot_id_to_botsort_track_id[ot_id] = botsort_track_id
-                else:
-                    ot_id = self._botsort_track_id_to_ot_id[botsort_track_id]
-
-                det_idx_to_ot_id[det_idx] = ot_id
-
-                # Update/update-on-hit lifecycle state immediately.
-                state = self._track_state.get(ot_id)
-                score = float(row[_BOTSORT_COL_SCORE])
-                if state is None:
-                    self._track_state[ot_id] = cast(
-                        TrackLifecycleState,
-                        {
-                            "first_frame": frame.no,
-                            "last_frame": frame.no,
-                            "age_missing": 0,
-                            "max_conf": score,
-                        },
-                    )
-                else:
-                    state["last_frame"] = frame.no
-                    state["age_missing"] = 0
-                    state["max_conf"] = max(float(state["max_conf"]), score)
-
-        seen_now: set[TrackId] = set(det_idx_to_ot_id.values())
-
-        # Age tracks that were not observed in the current frame.
-        for ot_id, state in list(self._track_state.items()):
-            if ot_id in seen_now:
-                continue
-            state["age_missing"] += 1
-
-        finished_track_ids: set[TrackId] = set()
-        discarded_track_ids: set[TrackId] = set()
-
-        # Move tracks that exceeded missing-frame threshold.
-        for ot_id, state in list(self._track_state.items()):
-            # Match IOU-tracker semantics: we only finish/discard once the track
-            # has been missing for *more* than `t_miss_max` consecutive frames.
-            # (IOU tracker keeps tracks while `track_age < t_miss_max`, incrementing
-            # after the check, so a track with age == t_miss_max is finished on the
-            # next miss.  Here we increment first, so `<= t_miss_max` is equivalent.)
-            if state["age_missing"] <= self.config.t_miss_max:
-                continue
-
-            # NOTE: Unlike the IOU tracker, we intentionally omit a `sigma_h`
-            # (high-confidence) gate here.  The IOU tracker associates *all*
-            # detections above `sigma_l` and retroactively discards tracks whose
-            # `max_conf` never reached `sigma_h`.  BoT-SORT, however, already
-            # filters detections during association via `track_high_thresh`,
-            # `track_low_thresh`, and `new_track_thresh` — only sufficiently
-            # confident detections survive long enough to form tracks, making an
-            # additional confidence gate at finish time redundant.
-            span = int(state["last_frame"]) - int(state["first_frame"])
-            if span >= self.config.t_min:
-                finished_track_ids.add(ot_id)
-            else:
-                discarded_track_ids.add(ot_id)
-
-            mapped_botsort_track_id = self._ot_id_to_botsort_track_id.get(ot_id)
-            if mapped_botsort_track_id is not None:
-                self._botsort_track_id_to_ot_id.pop(mapped_botsort_track_id, None)
-            self._ot_id_to_botsort_track_id.pop(ot_id, None)
-            self._track_state.pop(ot_id, None)
-
-        tracked_detections: list[TrackedDetection] = []
-        for det_idx, det in enumerate(frame.detections):
-            if det_idx not in det_idx_to_ot_id:
-                continue
-            ot_id = det_idx_to_ot_id[det_idx]
-
-            # "is_first" is true for the first time we ever assigned an OT id.
-            tracked_detections.append(
-                det.of_track(
-                    ot_id,
-                    is_first=(
-                        int(self._track_state[ot_id]["first_frame"]) == frame.no
-                        if ot_id in self._track_state
-                        else True
-                    ),
-                )
-            )
+        observations = self._assign_track_ids(tracks_arr, frame.no, id_generator)
+        self._registry.age_unobserved(self._observed_botsort_ids(tracks_arr))
+        finished_track_ids, discarded_track_ids = self._registry.evict_expired(
+            self.lifecycle
+        )
+        tracked_detections = [
+            detection.of_track(observation.ot_id, is_first=observation.is_first)
+            for index, detection in enumerate(frame.detections)
+            if (observation := observations.get(index)) is not None
+        ]
 
         return TrackedFrame(
             no=frame.no,

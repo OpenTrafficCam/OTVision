@@ -10,14 +10,17 @@ from OTVision.application.config import (
     StreamConfig,
     TrackConfig,
     YoloConfig,
+    _TrackBotSortConfig,
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
+from OTVision.domain.tracker import TrackerLifecycle, TrackerType
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
     VideoCodec,
 )
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 # Ensure paths are translated to the respective platform (unix, windows)
 VIDEO_1 = str(Path("tests/data/video1.mp4"))
@@ -196,7 +199,7 @@ class TestConfigParserValidateFlushBufferSupportTrackLifecycle:
             TrackConfig: Configured track instance.
         """
         iou_config = _TrackIouConfig(t_min=t_min, t_miss_max=t_miss_max)
-        return TrackConfig(iou=iou_config, tracker_type="iou")
+        return TrackConfig(iou=iou_config, tracker_type=TrackerType.IOU)
 
     def _build_config(
         self,
@@ -216,3 +219,87 @@ class TestConfigParserValidateFlushBufferSupportTrackLifecycle:
             stream=stream_config,
             track=track_config or TrackConfig(),
         )
+
+
+class TestTrackerTypeParsing:
+    """Parsing and validation of tracker selection and BoT-SORT params."""
+
+    def test_parses_uppercase_botsort_keys_from_yaml(self) -> None:
+        """Shipped YAML uses UPPERCASE keys; they normalize to Ultralytics names."""
+        target = ConfigParser(YamlDeserializer())
+
+        config = target.parse_track_botsort_config(
+            {"T_MIN": 5, "T_MISS_MAX": 60, "TRACK_HIGH_THRESH": 0.3}
+        )
+
+        assert config.t_min == 5
+        assert config.t_miss_max == 60
+        assert config.tracker_params["track_high_thresh"] == 0.3
+
+    def test_rejects_unknown_botsort_param(self) -> None:
+        """A typo'd param fails at parse time, not deep inside Ultralytics."""
+        target = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="track_high_tresh"):
+            target.parse_track_botsort_config({"TRACK_HIGH_TRESH": 0.3})
+
+    def test_rejects_nested_ultralytics_tracker_type(self) -> None:
+        """The inert nested TRACKER_TYPE is rejected to avoid confusion."""
+        target = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="not supported"):
+            target.parse_track_botsort_config({"TRACKER_TYPE": "bytetrack"})
+
+    def test_track_buffer_is_an_accepted_override(self) -> None:
+        """TRACK_BUFFER is absent from defaults but remains a valid override."""
+        target = ConfigParser(YamlDeserializer())
+
+        config = target.parse_track_botsort_config({"TRACK_BUFFER": 90})
+
+        assert config.tracker_params["track_buffer"] == 90
+
+    def test_rejects_unknown_tracker_type(self) -> None:
+        """An unknown TRACK.TRACKER_TYPE is rejected with the valid options."""
+        target = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="Unknown TRACK.TRACKER"):
+            target.parse_tracker_type("deepsort")
+
+    def test_tracker_type_is_case_insensitive(self) -> None:
+        """Tracker selection tolerates casing differences in YAML."""
+        target = ConfigParser(YamlDeserializer())
+
+        assert target.parse_tracker_type("BotSort") is TrackerType.BOTSORT
+
+    def test_absent_tracker_type_defaults_to_iou(self) -> None:
+        """IOU stays the default tracker when YAML omits the selector."""
+        target = ConfigParser(YamlDeserializer())
+
+        assert target.parse_tracker_type(None) is TrackerType.IOU
+
+
+class TestTrackConfigTrackerTypeCoercion:
+    """`TrackConfig` normalizes tracker_type however it was constructed."""
+
+    def test_plain_string_is_coerced_to_the_enum(self) -> None:
+        """A raw string must not silently take the wrong dispatch branch.
+
+        StrEnum members compare equal to their string value but are not
+        identical, so an un-coerced `"botsort"` would fail every `is` check
+        and select IOU's lifecycle instead.
+        """
+        config = TrackConfig(
+            iou=_TrackIouConfig(
+                sigma_l=0.27, sigma_h=0.42, sigma_iou=0.38, t_min=5, t_miss_max=51
+            ),
+            botsort=_TrackBotSortConfig(t_min=7, t_miss_max=60),
+            tracker_type="botsort",  # type: ignore[arg-type]
+        )
+
+        assert config.tracker_type is TrackerType.BOTSORT
+        assert config.lifecycle == TrackerLifecycle(t_min=7, t_miss_max=60)
+
+    def test_unknown_string_is_rejected(self) -> None:
+        """An unknown tracker name fails at construction."""
+        with pytest.raises(ValueError, match="not a valid TrackerType"):
+            TrackConfig(tracker_type="deepsort")  # type: ignore[arg-type]

@@ -18,6 +18,7 @@ from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.domain.cli import TrackCliParser
 from OTVision.domain.current_config import CurrentConfig
 from OTVision.domain.serialization import Deserializer
+from OTVision.domain.tracker import TrackerType
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 from OTVision.track.cli import ArgparseTrackCliParser
 from OTVision.track.exporter.filebased_exporter import FinishedChunkTrackExporter
@@ -86,19 +87,32 @@ class TrackBuilder:
     def chunk_parser(self) -> ChunkParser:
         return JsonChunkParser()
 
+    def _create_tracker(self, tracker_type: TrackerType) -> Tracker:
+        """Create the tracker implementation named by ``tracker_type``.
+
+        Args:
+            tracker_type (TrackerType): Selected tracker.
+
+        Returns:
+            Tracker: Tracker instance.
+
+        Raises:
+            ValueError: If the tracker type has no implementation.
+        """
+        match tracker_type:
+            case TrackerType.IOU:
+                return IouTracker(get_current_config=self.get_current_config)
+            case TrackerType.BOTSORT:
+                return BotsortTracker(get_current_config=self.get_current_config)
+        raise ValueError(f"No tracker implementation for '{tracker_type}'.")
+
     @cached_property
     def frame_group_parser(self) -> FrameGroupParser:
         return TimeThresholdFrameGroupParser(self.get_current_config)
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker_type = self.get_current_config.get().track.tracker_type
-        if tracker_type == "botsort":
-            tracker: Tracker = BotsortTracker(
-                get_current_config=self.get_current_config
-            )
-        else:
-            tracker = IouTracker(get_current_config=self.get_current_config)
+        tracker = self._create_tracker(self.get_current_config.get().track.tracker_type)
         return GroupedFilesTracker(
             tracker=tracker,
             chunk_parser=self.chunk_parser,

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from OTVision.domain.tracker import TrackerType
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
@@ -61,7 +62,7 @@ class TrackCliArgs(CliArgs):
     logfile_overwrite: bool
     log_level_console: str | None
     log_level_file: str | None
-    tracker_type: str | None = None
+    tracker_type: TrackerType | None = None
     overwrite: bool | None = None
     sigma_l: float | None = None
     sigma_h: float | None = None
