@@ -18,6 +18,7 @@ from OTVision.application.update_current_config import UpdateCurrentConfig
 from OTVision.domain.cli import TrackCliParser
 from OTVision.domain.current_config import CurrentConfig
 from OTVision.domain.serialization import Deserializer
+from OTVision.domain.tracker import TrackerType
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 from OTVision.track.cli import ArgparseTrackCliParser
 from OTVision.track.exporter.filebased_exporter import FinishedChunkTrackExporter
@@ -25,6 +26,7 @@ from OTVision.track.id_generator import track_id_generator, tracking_run_uuid_ge
 from OTVision.track.model.filebased.frame_chunk import ChunkParser
 from OTVision.track.model.filebased.frame_group import FrameGroupParser
 from OTVision.track.model.track_exporter import FinishedTracksExporter
+from OTVision.track.model.tracking_interfaces import Tracker
 from OTVision.track.parser.chunk_parser_plugins import JsonChunkParser
 from OTVision.track.parser.frame_group_parser_plugins import (
     TimeThresholdFrameGroupParser,
@@ -34,6 +36,7 @@ from OTVision.track.tracker.filebased_tracking import (
     GroupedFilesTracker,
     UnfinishedChunksBuffer,
 )
+from OTVision.track.tracker.tracker_plugin_botsort import BotsortTracker
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
 
 
@@ -84,13 +87,32 @@ class TrackBuilder:
     def chunk_parser(self) -> ChunkParser:
         return JsonChunkParser()
 
+    def _create_tracker(self, tracker_type: TrackerType) -> Tracker:
+        """Create the tracker implementation named by ``tracker_type``.
+
+        Args:
+            tracker_type (TrackerType): Selected tracker.
+
+        Returns:
+            Tracker: Tracker instance.
+
+        Raises:
+            ValueError: If the tracker type has no implementation.
+        """
+        match tracker_type:
+            case TrackerType.IOU:
+                return IouTracker(get_current_config=self.get_current_config)
+            case TrackerType.BOTSORT:
+                return BotsortTracker(get_current_config=self.get_current_config)
+        raise ValueError(f"No tracker implementation for '{tracker_type}'.")
+
     @cached_property
     def frame_group_parser(self) -> FrameGroupParser:
         return TimeThresholdFrameGroupParser(self.get_current_config)
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker = IouTracker(get_current_config=self.get_current_config)
+        tracker = self._create_tracker(self.get_current_config.get().track.tracker_type)
         return GroupedFilesTracker(
             tracker=tracker,
             chunk_parser=self.chunk_parser,
@@ -100,7 +122,11 @@ class TrackBuilder:
 
     @cached_property
     def unfinished_chunks_buffer(self) -> UnfinishedChunksBuffer:
-        return UnfinishedChunksBuffer(tracker=self.tracker, keep_discarded=True)
+        # Discarded (sub-t_min) tracks must not reach the .ottrk: the file
+        # format has no discard flag, so kept rows are indistinguishable from
+        # real tracks downstream, and OTAnalytics applies no length filter of
+        # its own.
+        return UnfinishedChunksBuffer(tracker=self.tracker, keep_discarded=False)
 
     @cached_property
     def track_exporter(self) -> FinishedTracksExporter:

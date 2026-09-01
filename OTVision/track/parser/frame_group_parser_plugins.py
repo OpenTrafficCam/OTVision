@@ -3,7 +3,12 @@ from pathlib import Path
 
 from OTVision.application.config import TrackConfig
 from OTVision.application.get_current_config import GetCurrentConfig
+from OTVision.application.track.botsort_params import (
+    extract_frame_rate_from_metadata,
+    resolve_botsort_params_for_fps,
+)
 from OTVision.application.track.ottrk import create_ottrk_metadata_entry
+from OTVision.application.track.tracker_metadata import tracker_metadata_of
 from OTVision.detect.otdet import (
     extract_expected_duration_from_otdet,
     extract_hostname_from_otdet,
@@ -63,16 +68,21 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
 
     def update_metadata(self, frame_group: FrameGroup) -> dict[Path, dict]:
         metadata_by_file = dict(frame_group.metadata_by_file)
+        # Resolve once from the first file: GroupedFilesTracker builds one BoT-SORT
+        # instance for the whole group using that first source's FPS.
+        first_metadata = metadata_by_file[frame_group.files[0]]
+        tracker_metadata = tracker_metadata_of(
+            self.config,
+            resolve_botsort_params_for_fps(
+                self.config, extract_frame_rate_from_metadata(first_metadata)
+            ),
+        )
         for filepath in frame_group.files:
             metadata = metadata_by_file[filepath]
             ottrk_metadata = create_ottrk_metadata_entry(
                 start_date=frame_group.start_date,
                 end_date=frame_group.end_date,
-                sigma_l=self.config.sigma_l,
-                sigma_h=self.config.sigma_h,
-                sigma_iou=self.config.sigma_iou,
-                t_min=self.config.t_min,
-                t_miss_max=self.config.t_miss_max,
+                tracker_metadata=tracker_metadata,
             )
             metadata.update(ottrk_metadata)
 

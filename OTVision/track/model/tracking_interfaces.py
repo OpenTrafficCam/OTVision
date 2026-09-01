@@ -40,6 +40,14 @@ class Tracker(ABC):
         async for frame in frames:
             yield self.track_frame(frame, id_generator)
 
+    def reset(self) -> None:
+        """Reset tracker state between independent video groups.
+
+        Default is a no-op. Stateful trackers (e.g. BoT-SORT) override this so
+        callers can clear ID maps and motion state at group boundaries.
+        """
+        return None
+
     @abstractmethod
     def track_frame(
         self,

@@ -22,12 +22,43 @@ DETECT:
 
 TRACK:
   PATHS: []
+  # Default remains IOU; set to botsort to opt into Ultralytics BoT-SORT.
+  TRACKER_TYPE: iou
   IOU:
     SIGMA_H: 0.42
     SIGMA_IOU: 0.38
     SIGMA_L: 0.27
     T_MIN: 5
     T_MISS_MAX: 51
+  BOT_SORT:
+    # Tuned continuous-tracking defaults (typically 20 fps OTCamera .otdet).
+    # T_MISS_MAX is applied by OTVision after each Ultralytics BoT-SORT update
+    # to finalize/discard missing tracks.
+    #
+    # Ultralytics effective occlusion window = int(fps/30 * TRACK_BUFFER).
+    # TRACK_BUFFER is intentionally omitted here: OTVision derives it as
+    # ceil(T_MISS_MAX * 30 / fps) so the window is at least T_MISS_MAX
+    # (exact equality is impossible for some FPS values). Set TRACK_BUFFER
+    # explicitly only when you intentionally override that alignment.
+    T_MIN: 5
+    T_MISS_MAX: 60
+    TRACK_HIGH_THRESH: 0.2  # threshold for the first association
+    TRACK_LOW_THRESH: 0.1  # threshold for the second association
+    # threshold for initialising a new track when a detection matches no track
+    NEW_TRACK_THRESH: 0.2
+    MATCH_THRESH: 0.9  # threshold for matching tracks
+    FUSE_SCORE: true  # fuse confidence score with IoU distance before matching
+    # Only `none` is accepted: GMC needs frame images, which .otdet never
+    # carries, so Ultralytics would skip motion compensation silently.
+    GMC_METHOD: none
+    PROXIMITY_THRESH: 0.5  # ReID proximity threshold (inert while WITH_REID false)
+    APPEARANCE_THRESH: 0.25  # ReID appearance threshold (inert while WITH_REID false)
+    # ReID needs frame images, which .otdet does not carry, so it is unusable
+    # for file-based tracking. If you enable it, MODEL must name an explicit
+    # ReID model: `auto` means native detector feature tensors, which OTVision
+    # does not supply, and tracking then fails inside Ultralytics.
+    WITH_REID: false
+    MODEL: auto  # only used when WITH_REID is true; must not be `auto` then
   OVERWRITE: true
 
 LOG:

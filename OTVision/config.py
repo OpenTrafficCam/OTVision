@@ -25,16 +25,20 @@ from pathlib import Path
 
 from OTVision.application.config import (
     AVAILABLE_WEIGHTS,
+    BOT_SORT,
     CALIBRATIONS,
     COL_WIDTH,
     CONF,
     CONVERT,
+    CRF,
+    DEFAULT_BOTSORT_TRACKER_PARAMS,
     DEFAULT_FILETYPE,
     DELETE_INPUT,
     DETECT,
     DETECT_END,
     DETECT_START,
     DETECTIONS,
+    ENCODING_SPEED,
     EXPECTED_DURATION,
     FILETYPES,
     FONT,
@@ -66,20 +70,24 @@ from OTVision.application.config import (
     SIGMA_H,
     SIGMA_IOU,
     SIGMA_L,
+    START_TIME,
     T_MIN,
     T_MISS_MAX,
     TRACK,
+    TRACKER_TYPE,
     TRACKS,
     TRANSFORM,
     UNDISTORT,
     VID,
     VID_ROTATABLE,
+    VIDEO_CODEC,
     VIDEOS,
     WEIGHTS,
     WINDOW,
     WRITE_VIDEO,
     YOLO,
     Config,
+    _GuiConfig,
 )
 from OTVision.application.config_parser import ConfigParser
 from OTVision.helpers.log import LOGGER_NAME
@@ -178,6 +186,10 @@ CONFIG[DETECT][HALF_PRECISION] = False
 CONFIG[DETECT][DETECT_START] = None
 CONFIG[DETECT][DETECT_END] = None
 CONFIG[DETECT][WRITE_VIDEO] = False
+CONFIG[DETECT][START_TIME] = None
+CONFIG[DETECT][VIDEO_CODEC] = "libx264"
+CONFIG[DETECT][ENCODING_SPEED] = "fast"
+CONFIG[DETECT][CRF] = "DEFAULT"
 
 # TRACK
 CONFIG[TRACK] = {}
@@ -189,6 +201,11 @@ CONFIG[TRACK][IOU][SIGMA_H] = 0.42  # 0.420
 CONFIG[TRACK][IOU][SIGMA_IOU] = 0.38  # 0.381
 CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
+CONFIG[TRACK][BOT_SORT] = {}
+CONFIG[TRACK][BOT_SORT][T_MIN] = 5
+CONFIG[TRACK][BOT_SORT][T_MISS_MAX] = 60
+CONFIG[TRACK][BOT_SORT].update(DEFAULT_BOTSORT_TRACKER_PARAMS)
+CONFIG[TRACK][TRACKER_TYPE] = "iou"
 CONFIG[TRACK][OVERWRITE] = True
 
 # UNDISTORT
@@ -203,9 +220,7 @@ CONFIG[TRANSFORM][OVERWRITE] = True
 
 # GUI
 CONFIG[GUI] = {}
-CONFIG[GUI][OTC_ICON] = str(
-    Path(__file__).parents[0] / r"view" / r"helpers" / r"OTC.ico"
-)
+CONFIG[GUI][OTC_ICON] = _GuiConfig().otc_icon
 CONFIG[GUI][FONT] = "Open Sans"
 CONFIG[GUI][FONT_SIZE] = 12
 CONFIG[GUI][WINDOW] = {}

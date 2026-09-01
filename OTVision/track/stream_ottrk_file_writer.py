@@ -8,7 +8,9 @@ from OTVision.application.config import Config, TrackConfig
 from OTVision.application.configure_logger import logger
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
+from OTVision.application.track.botsort_params import resolve_botsort_params_for_fps
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
+from OTVision.application.track.tracker_metadata import tracker_metadata_of
 from OTVision.application.track.tracking_run_id import GetCurrentTrackingRunId
 from OTVision.detect.otdet import OtdetBuilderConfig
 from OTVision.detect.otdet_file_writer import OtdetFileWrittenEvent
@@ -88,11 +90,14 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
         return OttrkBuilderConfig(
             otdet_builder_config=otdet_builder_config,
             number_of_frames=number_of_frames,
-            sigma_l=self.track_config.sigma_l,
-            sigma_h=self.track_config.sigma_h,
-            sigma_iou=self.track_config.sigma_iou,
-            t_min=self.track_config.t_min,
-            t_miss_max=self.track_config.t_miss_max,
+            tracker_metadata=tracker_metadata_of(
+                self.track_config,
+                resolve_botsort_params_for_fps(
+                    self.track_config,
+                    otdet_builder_config.actual_fps
+                    or otdet_builder_config.recorded_fps,
+                ),
+            ),
             tracking_run_id=self._current_tracking_run_id.get(),
             frame_group=STREAMING_FRAME_GROUP_ID,
         )

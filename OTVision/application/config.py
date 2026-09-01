@@ -2,11 +2,15 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from OTVision.domain.tracker import TrackerLifecycle, TrackerType
 from OTVision.plugin.ffmpeg_video_writer import (
     ConstantRateFactor,
     EncodingSpeed,
     VideoCodec,
 )
+
+# Scalar values accepted in TRACK.BOT_SORT tracker_params / Ultralytics args.
+BotSortTrackerParam = bool | int | float | str
 
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
 CALIBRATIONS = "CALIBRATIONS"
@@ -29,6 +33,8 @@ INPUT_FPS = "INPUT_FPS"
 IMG = "IMG"
 IMG_SIZE = "IMGSIZE"
 IOU = "IOU"
+BOT_SORT = "BOT_SORT"
+TRACKER_TYPE = "TRACKER_TYPE"
 LAST_PATHS = "LAST PATHS"
 LOCATION_X = "LOCATION_X"
 LOCATION_Y = "LOCATION_Y"
@@ -345,8 +351,76 @@ class _TrackIouConfig:
         }
 
 
+# Tuned continuous-tracking defaults for OTCamera .otdet input (typically 20 fps).
+# `track_buffer` is intentionally omitted: when unset, BotsortTracker derives it as
+# ceil(t_miss_max * 30 / fps) so Ultralytics' occlusion window is at least T_MISS_MAX.
+DEFAULT_BOTSORT_TRACKER_PARAMS: dict[str, BotSortTrackerParam] = {
+    "track_high_thresh": 0.2,
+    "track_low_thresh": 0.1,
+    "new_track_thresh": 0.2,
+    "match_thresh": 0.9,
+    "fuse_score": True,
+    "gmc_method": "none",
+    "proximity_thresh": 0.5,
+    "appearance_thresh": 0.25,
+    "with_reid": False,
+    "model": "auto",
+}
+
+
+# `track_buffer` is a valid override even though it is deliberately absent from
+# the defaults: when unset, BotsortTracker derives it from T_MISS_MAX and FPS.
+ALLOWED_BOTSORT_TRACKER_PARAMS: frozenset[str] = frozenset(
+    DEFAULT_BOTSORT_TRACKER_PARAMS
+) | {"track_buffer"}
+
+
+@dataclass(frozen=True)
+class _TrackBotSortConfig:
+    """BoT-SORT tracker configuration.
+
+    We keep `t_min`/`t_miss_max` as our pipeline lifecycle parameters, while
+    all other keys are forwarded to ultralytics' BoT-SORT implementation.
+    """
+
+    t_min: int = 5
+    t_miss_max: int = 60
+    tracker_params: dict[str, BotSortTrackerParam] = field(
+        default_factory=lambda: dict(DEFAULT_BOTSORT_TRACKER_PARAMS)
+    )
+
+    def to_dict(self) -> dict[str, BotSortTrackerParam]:
+        """Serialize BoT-SORT config including forwarded tracker params.
+
+        Returns:
+            dict[str, BotSortTrackerParam]: Mapping for YAML / config round-trips.
+        """
+        merged: dict[str, BotSortTrackerParam] = {
+            T_MIN: self.t_min,
+            T_MISS_MAX: self.t_miss_max,
+        }
+        merged.update(self.tracker_params)
+        return merged
+
+
 @dataclass(frozen=True)
 class TrackConfig:
+    def __post_init__(self) -> None:
+        """Normalize ``tracker_type`` to a :class:`TrackerType` member.
+
+        ``StrEnum`` members compare equal to their string value but are not
+        identical to it, so a config built with a plain ``"botsort"`` would
+        silently take the IOU branch of every ``is`` comparison. Coercing once
+        here keeps that invariant true however the config was constructed.
+
+        Raises:
+            ValueError: If ``tracker_type`` is not a known tracker.
+        """
+        if not isinstance(self.tracker_type, TrackerType):
+            object.__setattr__(
+                self, "tracker_type", TrackerType(str(self.tracker_type).lower())
+            )
+
     @property
     def sigma_l(self) -> float:
         return self.iou.sigma_l
@@ -360,16 +434,25 @@ class TrackConfig:
         return self.iou.sigma_iou
 
     @property
-    def t_min(self) -> int:
-        return self.iou.t_min
+    def lifecycle(self) -> TrackerLifecycle:
+        """Lifecycle thresholds of the selected tracker.
 
-    @property
-    def t_miss_max(self) -> int:
-        return self.iou.t_miss_max
+        This is the only place that dispatches on tracker type to answer
+        "which lifecycle applies?". Code that is specific to one tracker must
+        read that tracker's own config directly rather than come through here.
+
+        Returns:
+            TrackerLifecycle: Thresholds of the tracker named by ``tracker_type``.
+        """
+        if self.tracker_type is TrackerType.BOTSORT:
+            return TrackerLifecycle(self.botsort.t_min, self.botsort.t_miss_max)
+        return TrackerLifecycle(self.iou.t_min, self.iou.t_miss_max)
 
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
+    tracker_type: TrackerType = TrackerType.IOU
+    botsort: _TrackBotSortConfig = field(default_factory=_TrackBotSortConfig)
     overwrite: bool = True
 
     def to_dict(self) -> dict:
@@ -377,6 +460,8 @@ class TrackConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
+            BOT_SORT: self.botsort.to_dict(),
+            TRACKER_TYPE: self.tracker_type.value,
             OVERWRITE: self.overwrite,
         }
 

@@ -1,11 +1,18 @@
 from pathlib import Path
 from unittest.mock import Mock
 
-from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
+from OTVision.application.config import (
+    Config,
+    TrackConfig,
+    _LogConfig,
+    _TrackBotSortConfig,
+    _TrackIouConfig,
+)
 from OTVision.application.track.update_track_config_with_cli_args import (
     UpdateTrackConfigWithCliArgs,
 )
 from OTVision.domain.cli import TrackCliArgs
+from OTVision.domain.tracker import TrackerType
 
 PATHS = ["file1.otdet", "file2.otdet"]
 CONFIG_FILE = Path("config.yaml")
@@ -39,7 +46,8 @@ def custom_config() -> Config:
     track_config = TrackConfig(
         iou=_TrackIouConfig(
             sigma_l=0.0, sigma_h=0.0, sigma_iou=0.0, t_min=0, t_miss_max=0
-        )
+        ),
+        tracker_type=TrackerType.IOU,
     )
     return Config(track=track_config)
 
@@ -88,9 +96,46 @@ def expected_config() -> Config:
                 t_min=T_MIN,
                 t_miss_max=T_MISS_MAX,
             ),
+            tracker_type=TrackerType.IOU,
             overwrite=OVERWRITE,
         ),
         undistort=config.undistort,
         transform=config.transform,
         gui=config.gui,
     )
+
+
+class TestTrackerTypeOverride:
+    def test_cli_iou_over_yaml_botsort_keeps_iou_lifecycle(self) -> None:
+        """`--tracker iou` must not import BoT-SORT's lifecycle into IOU config.
+
+        Regression: the updater read the tracker-dispatching
+        ``TrackConfig.t_min``/``t_miss_max``, which still resolved against the
+        YAML tracker type (``botsort``), so selecting IOU on the CLI silently
+        tracked with BoT-SORT's ``t_min``/``t_miss_max``.
+        """
+        yaml_config = Config(
+            track=TrackConfig(
+                iou=_TrackIouConfig(
+                    sigma_l=0.27, sigma_h=0.42, sigma_iou=0.38, t_min=5, t_miss_max=51
+                ),
+                botsort=_TrackBotSortConfig(t_min=7, t_miss_max=60),
+                tracker_type=TrackerType.BOTSORT,
+            )
+        )
+        cli = Mock()
+        cli.get.return_value = TrackCliArgs(
+            paths=None,
+            config_file=CONFIG_FILE,
+            logfile=LOGFILE,
+            logfile_overwrite=LOGFILE_OVERWRITE,
+            log_level_file=None,
+            log_level_console=None,
+            tracker_type=TrackerType.IOU,
+        )
+
+        actual = UpdateTrackConfigWithCliArgs(cli).update(yaml_config)
+
+        assert actual.track.tracker_type == "iou"
+        assert actual.track.iou.t_min == 5
+        assert actual.track.iou.t_miss_max == 51

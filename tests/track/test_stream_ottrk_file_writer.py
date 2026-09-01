@@ -6,15 +6,18 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from OTVision.application.buffer import Buffer
-from OTVision.application.config import Config, TrackConfig
+from OTVision.application.config import Config, TrackConfig, _TrackIouConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
+from OTVision.application.track.botsort_params import resolve_botsort_params_for_fps
 from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
+from OTVision.application.track.tracker_metadata import tracker_metadata_of
 from OTVision.application.track.tracking_run_id import GetCurrentTrackingRunId
 from OTVision.detect.otdet import OtdetBuilderConfig
 from OTVision.detect.otdet_file_writer import OtdetFileWrittenEvent
 from OTVision.domain.detection import TrackId
 from OTVision.domain.frame import TrackedFrame
+from OTVision.domain.tracker import TrackerType
 from OTVision.track.stream_ottrk_file_writer import (
     STREAMING_FRAME_GROUP_ID,
     OttrkFileWrittenEvent,
@@ -22,6 +25,7 @@ from OTVision.track.stream_ottrk_file_writer import (
 )
 
 # Test data constants
+TEST_ACTUAL_FPS = 20.0
 TEST_SOURCE = "test_video.mp4"
 TEST_TRACKING_RUN_ID = "test_run_001"
 TEST_OUTPUT_PATH = Path("/test/output/tracks.ottrk")
@@ -274,11 +278,7 @@ class TestStreamOttrkFileWriter:
         assert isinstance(call_args, OttrkBuilderConfig)
         assert call_args.otdet_builder_config == event.otdet_builder_config
         assert call_args.number_of_frames == event.number_of_frames
-        assert call_args.sigma_l == given.config.track.sigma_l
-        assert call_args.sigma_h == given.config.track.sigma_h
-        assert call_args.sigma_iou == given.config.track.sigma_iou
-        assert call_args.t_min == given.config.track.t_min
-        assert call_args.t_miss_max == given.config.track.t_miss_max
+        assert call_args.tracker_metadata == tracker_metadata_of(given.config.track)
         assert call_args.tracking_run_id == TEST_TRACKING_RUN_ID
         assert call_args.frame_group == STREAMING_FRAME_GROUP_ID
 
@@ -350,12 +350,16 @@ def create_given() -> Given:
 
     # Mock configuration
     config = Mock(spec=Config)
-    track_config = Mock(spec=TrackConfig)
-    track_config.sigma_l = 0.3
-    track_config.sigma_h = 0.7
-    track_config.sigma_iou = 0.5
-    track_config.t_min = 5
-    track_config.t_miss_max = 10
+    track_config = TrackConfig(
+        iou=_TrackIouConfig(
+            sigma_l=0.3,
+            sigma_h=0.7,
+            sigma_iou=0.5,
+            t_min=5,
+            t_miss_max=10,
+        ),
+        tracker_type=TrackerType.IOU,
+    )
     config.track = track_config
     config.filetypes.track = "ottrk"
 
@@ -405,6 +409,8 @@ def create_otdet_file_written_event() -> Mock:
     event = Mock(spec=OtdetFileWrittenEvent)
     event.otdet_builder_config = Mock(spec=OtdetBuilderConfig)
     event.otdet_builder_config.source = TEST_SOURCE
+    event.otdet_builder_config.actual_fps = TEST_ACTUAL_FPS
+    event.otdet_builder_config.recorded_fps = TEST_ACTUAL_FPS
     event.number_of_frames = 100
     return event
 
@@ -415,14 +421,13 @@ def create_expected_builder_config(
     number_of_frames: int,
     tracking_run_id: str,
 ) -> OttrkBuilderConfig:
+    fps = otdet_builder_config.actual_fps or otdet_builder_config.recorded_fps
     return OttrkBuilderConfig(
         otdet_builder_config=otdet_builder_config,
         number_of_frames=number_of_frames,
-        sigma_l=track_config.sigma_l,
-        sigma_h=track_config.sigma_h,
-        sigma_iou=track_config.sigma_iou,
-        t_min=track_config.t_min,
-        t_miss_max=track_config.t_miss_max,
+        tracker_metadata=tracker_metadata_of(
+            track_config, resolve_botsort_params_for_fps(track_config, fps)
+        ),
         tracking_run_id=tracking_run_id,
         frame_group=STREAMING_FRAME_GROUP_ID,
     )

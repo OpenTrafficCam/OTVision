@@ -40,6 +40,10 @@ class ChunkBasedTracker(Tracker):
     ) -> TrackedFrame:
         return self._tracker.track_frame(frames, id_generator)
 
+    def reset(self) -> None:
+        """Forward reset to the wrapped single-frame tracker."""
+        self._tracker.reset()
+
     async def track_chunk(
         self,
         chunk: FrameChunk,
@@ -94,9 +98,11 @@ class GroupedFilesTracker(ChunkBasedTracker):
     async def track_group(self, group: FrameGroup) -> AsyncIterator[TrackedChunk]:
         if self.check_skip_due_to_existing_output_files(group):
             log.warning(f"Skip FrameGroup {group.id}")
-            empty: list[TrackedChunk] = []
-            for item in empty:
-                yield item
+            return
+
+        # Explicit group-boundary reset so stateful trackers (BoT-SORT) do not
+        # leak IDs / motion state across independent video groups.
+        self.reset()
 
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group

@@ -7,9 +7,10 @@ from unittest.mock import Mock, patch
 import pytest
 
 from OTVision import version
-from OTVision.application.config import Config
-from OTVision.application.track.ottrk import create_tracker_metadata
+from OTVision.application.config import Config, TrackConfig, _TrackBotSortConfig
+from OTVision.application.track.tracker_metadata import tracker_metadata_of
 from OTVision.dataformat import (
+    ACTUAL_FPS,
     EXPECTED_DURATION,
     FILENAME,
     FIRST_TRACKED_VIDEO_START,
@@ -20,10 +21,12 @@ from OTVision.dataformat import (
     OTVISION_VERSION,
     RECORDED_START_DATE,
     TRACKER,
+    TRACKER_PARAMS,
     TRACKING,
     VIDEO,
 )
 from OTVision.detect.otdet import MISSING_START_DATE
+from OTVision.domain.tracker import TrackerType
 from OTVision.helpers.files import InproperFormattedFilename
 from OTVision.track.model.filebased.frame_group import FrameGroup
 from OTVision.track.parser.frame_group_parser_plugins import (
@@ -37,13 +40,7 @@ from tests.track.helper.data_builder import (
 
 DEFAULT_CONFIG = Config()
 THRESHOLD = timedelta(minutes=1)
-EXPECTED_TRACK_METADATA = create_tracker_metadata(
-    sigma_l=DEFAULT_CONFIG.track.sigma_l,
-    sigma_h=DEFAULT_CONFIG.track.sigma_h,
-    sigma_iou=DEFAULT_CONFIG.track.sigma_iou,
-    t_min=DEFAULT_CONFIG.track.t_min,
-    t_miss_max=DEFAULT_CONFIG.track.t_miss_max,
-)
+EXPECTED_TRACK_METADATA = tracker_metadata_of(DEFAULT_CONFIG.track).to_dict()
 
 
 class TestTimeThresholdFrameGroupParser:
@@ -182,6 +179,40 @@ class TestTimeThresholdFrameGroupParser:
 
         result = parser.update_metadata(merged[0])
         assert expected_metadata == result
+
+    def test_update_metadata_uses_first_file_fps_for_botsort_group(self) -> None:
+        """Mixed-FPS groups must serialize the first file's resolved params.
+
+        GroupedFilesTracker initializes one BoT-SORT instance from the first
+        source FPS; every ``.ottrk`` in the group must report that same mapping.
+        """
+        file_a = Path("file/a.otdet")
+        file_b = Path("file/b.otdet")
+        metadata_a = {VIDEO: {ACTUAL_FPS: 20.0}, "test": 1}
+        metadata_b = {VIDEO: {ACTUAL_FPS: 30.0}, "test": 2}
+        group = FrameGroup(
+            id=1,
+            start_date=DEFAULT_START_DATE,
+            end_date=DEFAULT_START_DATE + timedelta(seconds=2),
+            hostname=DEFAULT_HOSTNAME,
+            files=[file_a, file_b],
+            metadata_by_file={file_a: dict(metadata_a), file_b: dict(metadata_b)},
+        )
+        track_config = TrackConfig(
+            tracker_type=TrackerType.BOTSORT,
+            botsort=_TrackBotSortConfig(t_min=5, t_miss_max=60, tracker_params={}),
+        )
+        get_current_config = Mock()
+        get_current_config.get.return_value = Config(track=track_config)
+        parser = TimeThresholdFrameGroupParser(get_current_config)
+
+        result = parser.update_metadata(group)
+
+        params_a = result[file_a][TRACKING][TRACKER][TRACKER_PARAMS]
+        params_b = result[file_b][TRACKING][TRACKER][TRACKER_PARAMS]
+        assert params_a == params_b
+        # First file is 20 fps -> ceil(60 * 30 / 20) = 90, not 60 (30 fps).
+        assert params_a["track_buffer"] == 90
 
     def test_get_hostname(self) -> None:
         hostname = "HOSTXYZ"
