@@ -1,7 +1,3 @@
-"""
-Ultralytics-compatible detection result stub used by ``BotsortTracker``.
-"""
-
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -18,6 +14,10 @@ Ultralytics-compatible detection result stub used by ``BotsortTracker``.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Ultralytics-compatible detection result stub used by ``BotsortTracker``.
+"""
 
 import numpy as np
 import pytest

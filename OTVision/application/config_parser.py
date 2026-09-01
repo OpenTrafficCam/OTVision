@@ -80,6 +80,7 @@ from OTVision.application.config import (
     _UndistortConfig,
 )
 from OTVision.application.track.botsort_params import (
+    normalize_botsort_param_values,
     validate_botsort_gmc_config,
     validate_botsort_reid_config,
 )
@@ -327,6 +328,10 @@ class ConfigParser:
             str(k).lower(): v for k, v in data.items() if k not in {T_MIN, T_MISS_MAX}
         }
         self.validate_botsort_param_names(tracker_params)
+        try:
+            tracker_params = normalize_botsort_param_values(tracker_params)
+        except ValueError as e:
+            raise InvalidOtvisionConfigError(str(e)) from None
         self.validate_botsort_param_values(tracker_params)
         return _TrackBotSortConfig(
             t_min=data.get(T_MIN, _TrackBotSortConfig.t_min),

@@ -258,6 +258,37 @@ class TestTrackerTypeParsing:
 
         assert config.tracker_params["track_buffer"] == 90
 
+    @pytest.mark.parametrize(
+        "key, value",
+        [
+            ("TRACK_BUFFER", "90"),
+            ("TRACK_HIGH_THRESH", "0.3"),
+            ("FUSE_SCORE", "true"),
+            ("GMC_METHOD", 0),
+        ],
+    )
+    def test_rejects_botsort_param_of_wrong_type(self, key: str, value: object) -> None:
+        """Mis-typed YAML values fail at parse time, not deep inside Ultralytics.
+
+        E.g. TRACK_BUFFER: "90" raises a TypeError in BYTETracker's
+        max_time_lost computation only once tracking starts.
+        """
+        target = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="must be of type"):
+            target.parse_track_botsort_config({key: value})
+
+    def test_canonicalizes_gmc_method_case(self) -> None:
+        """GMC_METHOD validates case-insensitively, so its case is canonicalized.
+
+        Ultralytics' GMC rejects 'NONE' verbatim with 'Unknown GMC method'.
+        """
+        target = ConfigParser(YamlDeserializer())
+
+        config = target.parse_track_botsort_config({"GMC_METHOD": "NONE"})
+
+        assert config.tracker_params["gmc_method"] == "none"
+
     def test_rejects_unknown_tracker_type(self) -> None:
         """An unknown TRACK.TRACKER_TYPE is rejected with the valid options."""
         target = ConfigParser(YamlDeserializer())

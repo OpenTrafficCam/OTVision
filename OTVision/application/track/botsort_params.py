@@ -1,3 +1,20 @@
+# Copyright (C) 2022 OpenTrafficCam Contributors
+# <https://github.com/OpenTrafficCam
+# <team@opentrafficcam.org>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 """Resolution and validation of BoT-SORT tracker parameters.
 
 Pure configuration logic: turns ``TRACK.BOT_SORT`` plus a source frame rate
@@ -104,6 +121,75 @@ def derive_track_buffer(t_miss_max: int, frame_rate: int) -> int:
     while ultralytics_effective_miss_frames(fps, buffer) < t_miss_max:
         buffer += 1
     return buffer
+
+
+# Types the pinned Ultralytics release expects per TRACK.BOT_SORT key. A value
+# of the wrong type passes YAML parsing but fails deep inside BYTETracker/GMC
+# (e.g. TRACK_BUFFER: "90" -> TypeError in max_time_lost; GMC_METHOD: NONE ->
+# "Unknown GMC method"), so wrong types are rejected at parse time instead.
+_BOTSORT_PARAM_TYPES: dict[str, type] = {
+    "track_high_thresh": float,
+    "track_low_thresh": float,
+    "new_track_thresh": float,
+    "match_thresh": float,
+    "proximity_thresh": float,
+    "appearance_thresh": float,
+    "track_buffer": int,
+    "fuse_score": bool,
+    "with_reid": bool,
+    "gmc_method": str,
+    "model": str,
+}
+
+
+def normalize_botsort_param_values(
+    tracker_params: dict[str, BotSortTrackerParam],
+) -> dict[str, BotSortTrackerParam]:
+    """Enforce per-key value types and canonicalize enum-like strings.
+
+    ``gmc_method`` is validated case-insensitively, so it is lowered here to
+    the form Ultralytics' ``GMC`` accepts. Everything else must already carry
+    the expected type; ints are accepted where floats are expected.
+
+    Args:
+        tracker_params (dict[str, BotSortTrackerParam]): Normalized-name
+            (lowercase-key) BoT-SORT params from YAML.
+
+    Returns:
+        dict[str, BotSortTrackerParam]: Params with canonicalized values.
+
+    Raises:
+        ValueError: If a value does not have the type Ultralytics expects.
+    """
+    normalized: dict[str, BotSortTrackerParam] = {}
+    for key, value in tracker_params.items():
+        expected = _BOTSORT_PARAM_TYPES.get(key)
+        if key == "model" and value is None:
+            # YAML `MODEL:` parses to None; ReID validation owns its semantics.
+            normalized[key] = value
+            continue
+        if expected is float and isinstance(value, (int, float)):
+            if not isinstance(value, bool):
+                normalized[key] = float(value)
+                continue
+        if expected is int and isinstance(value, int) and not isinstance(value, bool):
+            normalized[key] = value
+            continue
+        if expected is bool and isinstance(value, bool):
+            normalized[key] = value
+            continue
+        if expected is str and isinstance(value, str):
+            normalized[key] = value.lower() if key == "gmc_method" else value
+            continue
+        if expected is None:
+            normalized[key] = value
+            continue
+        raise ValueError(
+            f"TRACK.BOT_SORT.{key.upper()}={value!r} must be of type "
+            f"{expected.__name__}. The pinned Ultralytics release fails on "
+            "other types deep inside tracking; fix the YAML value."
+        )
+    return normalized
 
 
 def resolve_botsort_tracker_params(

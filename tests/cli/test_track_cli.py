@@ -234,6 +234,7 @@ class TestTrackCLI:
         track_cli: Callable,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
+        """IOU-specific CLI overrides are ignored (with a warning) in botsort mode."""
         mock_otvision_track = Mock()
         mock_otvision_track.start = AsyncMock()
         mock_build.return_value = mock_otvision_track

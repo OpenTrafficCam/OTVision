@@ -1,7 +1,3 @@
-"""
-Integration and unit tests for the BoT-SORT tracker adapter.
-"""
-
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -18,6 +14,10 @@ Integration and unit tests for the BoT-SORT tracker adapter.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Integration and unit tests for the BoT-SORT tracker adapter.
+"""
 
 from __future__ import annotations
 
@@ -529,8 +529,11 @@ class TestBotsortUltralyticsIntegration:
         from OTVision.track.builder import TrackBuilder
 
         class MockBotsortTrackBuilder(TrackBuilder):
+            """TrackBuilder with a deterministic tracking run id."""
+
             @cached_property
             def tracking_run_id_generator(self) -> StrIdGenerator:
+                """Return a generator yielding the fixed test run id."""
                 return lambda: TEST_RUN_ID
 
         input_folder = test_track_tmp_dir / "default"

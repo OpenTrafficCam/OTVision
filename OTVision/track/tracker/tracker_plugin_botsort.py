@@ -1,7 +1,3 @@
-"""
-OTVision BoT-SORT tracker adapter using ultralytics BOTSORT.
-"""
-
 # Copyright (C) 2022 OpenTrafficCam Contributors
 # <https://github.com/OpenTrafficCam
 # <team@opentrafficcam.org>
@@ -18,6 +14,10 @@ OTVision BoT-SORT tracker adapter using ultralytics BOTSORT.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+OTVision BoT-SORT tracker adapter using ultralytics BOTSORT.
+"""
 
 from __future__ import annotations
 
