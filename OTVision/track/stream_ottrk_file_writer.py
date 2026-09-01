@@ -15,6 +15,7 @@ from OTVision.detect.otdet_file_writer import OtdetFileWrittenEvent
 from OTVision.domain.detection import TrackId
 from OTVision.domain.frame import TrackedFrame
 from OTVision.helpers.files import write_json
+from OTVision.track.tracker.tracker_plugin_botsort import resolve_botsort_tracker_params
 
 STREAMING_FRAME_GROUP_ID = 0
 
@@ -93,9 +94,34 @@ class StreamOttrkFileWriter(Buffer[TrackedFrame, OtdetFileWrittenEvent]):
             sigma_iou=self.track_config.sigma_iou,
             t_min=self.track_config.t_min,
             t_miss_max=self.track_config.t_miss_max,
+            tracker_type=self.track_config.tracker_type,
+            tracker_params=self._resolve_tracker_params(otdet_builder_config),
             tracking_run_id=self._current_tracking_run_id.get(),
             frame_group=STREAMING_FRAME_GROUP_ID,
         )
+
+    def _resolve_tracker_params(
+        self, otdet_builder_config: OtdetBuilderConfig
+    ) -> dict[str, bool | int | float | str]:
+        """Resolve effective BoT-SORT params for streamed ``.ottrk`` metadata.
+
+        Args:
+            otdet_builder_config (OtdetBuilderConfig): Source video FPS metadata.
+
+        Returns:
+            dict[str, bool | int | float | str]: Effective BoT-SORT params, or
+            empty for IOU.
+        """
+        if self.track_config.tracker_type != "botsort":
+            return {}
+        fps = otdet_builder_config.actual_fps or otdet_builder_config.recorded_fps
+        if fps <= 0:
+            raise ValueError(
+                "BoT-SORT metadata requires a positive FPS from the detection "
+                "stream to resolve effective tracker parameters."
+            )
+        frame_rate = max(1, int(round(fps)))
+        return resolve_botsort_tracker_params(self.track_config.botsort, frame_rate)
 
     def reset(self) -> None:
         self._reset_buffer()

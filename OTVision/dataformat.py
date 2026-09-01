@@ -34,6 +34,9 @@ H: str = "h"
 TRACK_ID: str = "track-id"
 INTERPOLATED_DETECTION: str = "interpolated-detection"
 
+# Tracker-specific configuration metadata (e.g., BoT-SORT params).
+TRACKER_PARAMS: str = "tracker_params"
+
 # Detector config
 MODEL: str = "model"
 CHUNKSIZE: str = "chunksize"

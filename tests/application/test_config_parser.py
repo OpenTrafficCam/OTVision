@@ -196,7 +196,7 @@ class TestConfigParserValidateFlushBufferSupportTrackLifecycle:
             TrackConfig: Configured track instance.
         """
         iou_config = _TrackIouConfig(t_min=t_min, t_miss_max=t_miss_max)
-        return TrackConfig(iou=iou_config)
+        return TrackConfig(iou=iou_config, tracker_type="iou")
 
     def _build_config(
         self,

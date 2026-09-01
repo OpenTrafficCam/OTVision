@@ -19,6 +19,7 @@ from OTVision.application.config import (
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser
+from OTVision.application.get_config import DEFAULT_USER_CONFIG
 from OTVision.domain.cli import CliParseError
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
@@ -49,6 +50,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "t_min": {PASSED: "--t-min 5", EXPECTED: 5},
     "t_miss_max": {PASSED: "--t-miss-max 38", EXPECTED: 38},
     "overwrite": {PASSED: "--overwrite", EXPECTED: True},
+    "tracker": {PASSED: "--tracker iou", EXPECTED: "iou"},
     "config": {PASSED: ""},
 }
 
@@ -66,6 +68,7 @@ TEST_DATA_ALL_PARAMS_FROM_CLI_2 = {
     "t_min": {PASSED: "--t-min 7", EXPECTED: 7},
     "t_miss_max": {PASSED: "--t-miss-max 43", EXPECTED: 43},
     "overwrite": {PASSED: "--no-overwrite", EXPECTED: False},
+    "tracker": {PASSED: "--tracker iou", EXPECTED: "iou"},
     "config": {PASSED: ""},
 }
 
@@ -173,6 +176,7 @@ class TestTrackCLI:
             *test_data["t_min"]["passed"].split(),
             *test_data["t_miss_max"]["passed"].split(),
             *test_data["overwrite"]["passed"].split(),
+            *test_data.get("tracker", {}).get("passed", "").split(),
             *test_data["config"]["passed"].split(),
             LOGFILE_OVERWRITE_CMD,
         ]
@@ -220,6 +224,50 @@ class TestTrackCLI:
         with pytest.raises(CliParseError, match=error_msg):
             track_cli(argv=[LOGFILE_OVERWRITE_CMD])
 
+    @patch("track.TrackBuilder.update_current_config")
+    @patch("track.TrackBuilder.build")
+    def test_botsort_mode_ignores_iou_cli_overrides_and_uses_yaml(
+        self,
+        mock_build: Mock,
+        mock_update_current_config: Mock,
+        track_cli: Callable,
+    ) -> None:
+        mock_otvision_track = Mock()
+        mock_otvision_track.start = AsyncMock()
+        mock_build.return_value = mock_otvision_track
+
+        botsort_config_file = "tests/cli/custom_botsort_cli_test_config.yaml"
+        command = [
+            "--config",
+            botsort_config_file,
+            "--tracker",
+            "botsort",
+            "--sigma-l",
+            "0.1",
+            "--t-min",
+            "999",
+            LOGFILE_OVERWRITE_CMD,
+        ]
+
+        with pytest.warns(UserWarning, match="botsort mode ignores IOU CLI overrides"):
+            track_cli(argv=command)
+
+        mock_update_current_config.update.assert_called_once()
+        passed_config = mock_update_current_config.update.call_args.kwargs["config"]
+
+        assert passed_config.track.tracker_type == "botsort"
+        # t_min/t_miss_max must come from TRACK.BOT_SORT (YAML), not from CLI.
+        assert passed_config.track.t_min == 7
+        assert passed_config.track.t_miss_max == 17
+
+        # IOU config is still parsed from YAML but must not be overridden by CLI.
+        assert passed_config.track.iou.t_min == 3
+        assert passed_config.track.iou.sigma_l == 0.24
+
+        assert passed_config.track.botsort.tracker_params[
+            "track_high_thresh"
+        ] == pytest.approx(0.77)
+
 
 def create_expected_config_from_test_data(test_data: dict) -> Config:
     """
@@ -234,9 +282,12 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     """
 
     if config_file_arg := test_data["config"].get(PASSED):
-        default_config = CONFIG_PARSER.parse(config_file_arg.split()[1])
+        default_config = CONFIG_PARSER.parse(Path(config_file_arg.split()[1]))
     else:
-        default_config = Config()
+        user_cfg = Path.cwd() / DEFAULT_USER_CONFIG
+        default_config = (
+            CONFIG_PARSER.parse(user_cfg) if user_cfg.is_file() else Config()
+        )
 
     # Map EXPECTED values to TrackConfig's relevant fields
     paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
@@ -246,6 +297,9 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     t_min = test_data["t_min"].get(EXPECTED, default_config.track.t_min)
     t_miss_max = test_data["t_miss_max"].get(EXPECTED, default_config.track.t_miss_max)
     overwrite = test_data["overwrite"].get(EXPECTED, default_config.track.overwrite)
+    tracker_type = test_data.get("tracker", {}).get(
+        EXPECTED, default_config.track.tracker_type
+    )
     paths = [str(Path(p).expanduser()) for p in paths]
 
     iou_config = _TrackIouConfig(
@@ -260,6 +314,8 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
         paths=paths,
         run_chained=default_config.track.run_chained,
         iou=iou_config,
+        botsort=default_config.track.botsort,
+        tracker_type=tracker_type,
         overwrite=overwrite,
     )
 

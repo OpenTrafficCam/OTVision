@@ -39,6 +39,12 @@ class ArgparseTrackCliParser(TrackCliParser):
             help="Overwrite existing output files",
         )
         self._parser.add_argument(
+            "--tracker",
+            choices=["iou", "botsort"],
+            default=None,
+            help="Select tracker implementation. In `botsort` mode tracker parameters are read from YAML only.",  # noqa: E501
+        )
+        self._parser.add_argument(
             "--sigma-l",
             type=float,
             help="Set sigma_l parameter for tracking",
@@ -98,6 +104,7 @@ class ArgparseTrackCliParser(TrackCliParser):
         return TrackCliArgs(
             paths=self._parse_files(args.paths),
             config_file=args.config,
+            tracker_type=args.tracker,
             overwrite=args.overwrite,
             sigma_l=float(args.sigma_l) if args.sigma_l is not None else None,
             sigma_h=float(args.sigma_h) if args.sigma_h is not None else None,

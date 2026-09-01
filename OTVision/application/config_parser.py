@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import cast
 
 from OTVision.application.config import (
+    BOT_SORT,
     COL_WIDTH,
     CONF,
     CONVERT,
@@ -50,6 +52,7 @@ from OTVision.application.config import (
     T_MIN,
     T_MISS_MAX,
     TRACK,
+    TRACKER_TYPE,
     TRANSFORM,
     UNDISTORT,
     VID,
@@ -58,6 +61,7 @@ from OTVision.application.config import (
     WINDOW,
     WRITE_VIDEO,
     YOLO,
+    BotSortTrackerParam,
     Config,
     ConvertConfig,
     DetectConfig,
@@ -68,6 +72,7 @@ from OTVision.application.config import (
     _GuiConfig,
     _GuiWindowConfig,
     _LogConfig,
+    _TrackBotSortConfig,
     _TrackIouConfig,
     _TransformConfig,
     _UndistortConfig,
@@ -249,13 +254,21 @@ class ConfigParser:
             if iou_config_dict
             else TrackConfig.iou
         )
+        botsort_config_dict = data.get(BOT_SORT)
+        botsort_config = (
+            self.parse_track_botsort_config(botsort_config_dict)
+            if botsort_config_dict
+            else _TrackBotSortConfig()
+        )
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
-            sources,
-            data.get(RUN_CHAINED, TrackConfig.run_chained),
-            iou_config,
-            data.get(OVERWRITE, TrackConfig.overwrite),
+            paths=sources,
+            run_chained=data.get(RUN_CHAINED, TrackConfig.run_chained),
+            iou=iou_config,
+            botsort=botsort_config,
+            tracker_type=data.get(TRACKER_TYPE, TrackConfig.tracker_type),
+            overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
         )
 
     def parse_track_iou_config(self, data: dict) -> _TrackIouConfig:
@@ -265,6 +278,29 @@ class ConfigParser:
             data.get(SIGMA_IOU, _TrackIouConfig.sigma_iou),
             data.get(T_MIN, _TrackIouConfig.t_min),
             data.get(T_MISS_MAX, _TrackIouConfig.t_miss_max),
+        )
+
+    def parse_track_botsort_config(self, data: dict) -> _TrackBotSortConfig:
+        """Parse ``TRACK.BOT_SORT`` YAML into a BoT-SORT config object.
+
+        Keep ``t_min``/``t_miss_max`` as OT pipeline lifecycle parameters.
+        Forward everything else as ultralytics BoT-SORT tracker params.
+        Accept UPPERCASE keys in YAML and normalize to ultralytics' lowercase
+        argument names (e.g. ``TRACK_HIGH_THRESH`` -> ``track_high_thresh``).
+
+        Args:
+            data (dict): Raw ``BOT_SORT`` mapping from YAML.
+
+        Returns:
+            _TrackBotSortConfig: Parsed BoT-SORT configuration.
+        """
+        tracker_params = {
+            str(k).lower(): v for k, v in data.items() if k not in {T_MIN, T_MISS_MAX}
+        }
+        return _TrackBotSortConfig(
+            t_min=data.get(T_MIN, _TrackBotSortConfig.t_min),
+            t_miss_max=data.get(T_MISS_MAX, _TrackBotSortConfig.t_miss_max),
+            tracker_params=cast(dict[str, BotSortTrackerParam], tracker_params),
         )
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:
@@ -314,8 +350,27 @@ class ConfigParser:
             flush_buffer_size=flush_buffer_size,
         )
 
+    _VALID_TRACKER_TYPES = {"iou", "botsort"}
+
     def validate_config(self, config: Config) -> None:
+        self.validate_tracker_type(config)
         self.validate_flush_buffer_support_track_lifecycle(config)
+
+    def validate_tracker_type(self, config: Config) -> None:
+        """Validate that ``TRACK.TRACKER_TYPE`` is a known tracker implementation.
+
+        Args:
+            config (Config): Parsed application configuration.
+
+        Raises:
+            InvalidOtvisionConfigError: If the tracker type is unknown.
+        """
+        tracker_type = config.track.tracker_type
+        if tracker_type not in self._VALID_TRACKER_TYPES:
+            raise InvalidOtvisionConfigError(
+                f"Unknown TRACK.TRACKER_TYPE '{tracker_type}'. "
+                f"Valid options: {sorted(self._VALID_TRACKER_TYPES)}"
+            )
 
     def validate_flush_buffer_support_track_lifecycle(self, config: Config) -> None:
         """Validate that the flush buffer size supports complete track lifecycle.

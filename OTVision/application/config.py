@@ -8,6 +8,9 @@ from OTVision.plugin.ffmpeg_video_writer import (
     VideoCodec,
 )
 
+# Scalar values accepted in TRACK.BOT_SORT tracker_params / Ultralytics args.
+BotSortTrackerParam = bool | int | float | str
+
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
 CALIBRATIONS = "CALIBRATIONS"
 COL_WIDTH = "COLWIDTH"
@@ -29,6 +32,8 @@ INPUT_FPS = "INPUT_FPS"
 IMG = "IMG"
 IMG_SIZE = "IMGSIZE"
 IOU = "IOU"
+BOT_SORT = "BOT_SORT"
+TRACKER_TYPE = "TRACKER_TYPE"
 LAST_PATHS = "LAST PATHS"
 LOCATION_X = "LOCATION_X"
 LOCATION_Y = "LOCATION_Y"
@@ -345,6 +350,52 @@ class _TrackIouConfig:
         }
 
 
+# Tuned continuous-tracking defaults for OTCamera .otdet input (typically 20 fps).
+# `track_buffer` is intentionally omitted: when unset, BotsortTracker derives it as
+# ceil(t_miss_max * 30 / fps) so Ultralytics' occlusion window is at least T_MISS_MAX.
+DEFAULT_BOTSORT_TRACKER_PARAMS: dict[str, BotSortTrackerParam] = {
+    "tracker_type": "botsort",
+    "track_high_thresh": 0.2,
+    "track_low_thresh": 0.1,
+    "new_track_thresh": 0.2,
+    "match_thresh": 0.9,
+    "fuse_score": True,
+    "gmc_method": "none",
+    "proximity_thresh": 0.5,
+    "appearance_thresh": 0.25,
+    "with_reid": False,
+    "model": "auto",
+}
+
+
+@dataclass(frozen=True)
+class _TrackBotSortConfig:
+    """BoT-SORT tracker configuration.
+
+    We keep `t_min`/`t_miss_max` as our pipeline lifecycle parameters, while
+    all other keys are forwarded to ultralytics' BoT-SORT implementation.
+    """
+
+    t_min: int = 5
+    t_miss_max: int = 60
+    tracker_params: dict[str, BotSortTrackerParam] = field(
+        default_factory=lambda: dict(DEFAULT_BOTSORT_TRACKER_PARAMS)
+    )
+
+    def to_dict(self) -> dict[str, BotSortTrackerParam]:
+        """Serialize BoT-SORT config including forwarded tracker params.
+
+        Returns:
+            dict[str, BotSortTrackerParam]: Mapping for YAML / config round-trips.
+        """
+        merged: dict[str, BotSortTrackerParam] = {
+            T_MIN: self.t_min,
+            T_MISS_MAX: self.t_miss_max,
+        }
+        merged.update(self.tracker_params)
+        return merged
+
+
 @dataclass(frozen=True)
 class TrackConfig:
     @property
@@ -361,15 +412,21 @@ class TrackConfig:
 
     @property
     def t_min(self) -> int:
-        return self.iou.t_min
+        return self.botsort.t_min if self.tracker_type == "botsort" else self.iou.t_min
 
     @property
     def t_miss_max(self) -> int:
-        return self.iou.t_miss_max
+        return (
+            self.botsort.t_miss_max
+            if self.tracker_type == "botsort"
+            else self.iou.t_miss_max
+        )
 
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
+    tracker_type: str = "iou"
+    botsort: _TrackBotSortConfig = field(default_factory=_TrackBotSortConfig)
     overwrite: bool = True
 
     def to_dict(self) -> dict:
@@ -377,6 +434,8 @@ class TrackConfig:
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
+            BOT_SORT: self.botsort.to_dict(),
+            TRACKER_TYPE: self.tracker_type,
             OVERWRITE: self.overwrite,
         }
 

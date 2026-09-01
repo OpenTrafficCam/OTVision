@@ -61,6 +61,7 @@ class TrackCliArgs(CliArgs):
     logfile_overwrite: bool
     log_level_console: str | None
     log_level_file: str | None
+    tracker_type: str | None = None
     overwrite: bool | None = None
     sigma_l: float | None = None
     sigma_h: float | None = None

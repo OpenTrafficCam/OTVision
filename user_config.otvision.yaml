@@ -22,12 +22,40 @@ DETECT:
 
 TRACK:
   PATHS: []
+  # Default remains IOU; set to botsort to opt into Ultralytics BoT-SORT.
+  TRACKER_TYPE: iou
   IOU:
     SIGMA_H: 0.42
     SIGMA_IOU: 0.38
     SIGMA_L: 0.27
     T_MIN: 5
     T_MISS_MAX: 51
+  BOT_SORT:
+    # Tuned continuous-tracking defaults (typically 20 fps OTCamera .otdet).
+    # T_MISS_MAX is applied by OTVision after each Ultralytics BoT-SORT update
+    # to finalize/discard missing tracks.
+    #
+    # Ultralytics effective occlusion window = int(fps/30 * TRACK_BUFFER).
+    # TRACK_BUFFER is intentionally omitted here: OTVision derives it as
+    # ceil(T_MISS_MAX * 30 / fps) so the window is at least T_MISS_MAX
+    # (exact equality is impossible for some FPS values). Set TRACK_BUFFER
+    # explicitly only when you intentionally override that alignment.
+    T_MIN: 5
+    T_MISS_MAX: 60
+    TRACKER_TYPE: botsort  # tracker type, ['botsort', 'bytetrack']
+    TRACK_HIGH_THRESH: 0.2  # threshold for the first association
+    TRACK_LOW_THRESH: 0.1  # threshold for the second association
+    NEW_TRACK_THRESH: 0.2  # threshold for init new track if detection does not match tracks
+    MATCH_THRESH: 0.9  # threshold for matching tracks
+    FUSE_SCORE: true  # fuse confidence score with IoU distance before matching
+    GMC_METHOD: none  # none: .otdet has no images; sparseOptFlow needs frames
+    PROXIMITY_THRESH: 0.5  # ReID proximity threshold (inert while WITH_REID: false)
+    APPEARANCE_THRESH: 0.25  # ReID appearance threshold (inert while WITH_REID: false)
+    WITH_REID: false  # enable ReID only with an explicit MODEL (not auto)
+    # MODEL: auto is unsupported with ReID: Ultralytics 8.3.159 expects native
+    # detector feature tensors; OTVision supplies NumPy images. Use an explicit
+    # ReID weights path/name when WITH_REID is true.
+    MODEL: auto  # ignored unless WITH_REID is true with an explicit model path
   OVERWRITE: true
 
 LOG:
