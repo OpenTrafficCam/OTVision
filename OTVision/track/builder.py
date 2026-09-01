@@ -122,7 +122,11 @@ class TrackBuilder:
 
     @cached_property
     def unfinished_chunks_buffer(self) -> UnfinishedChunksBuffer:
-        return UnfinishedChunksBuffer(tracker=self.tracker, keep_discarded=True)
+        # Discarded (sub-t_min) tracks must not reach the .ottrk: the file
+        # format has no discard flag, so kept rows are indistinguishable from
+        # real tracks downstream, and OTAnalytics applies no length filter of
+        # its own.
+        return UnfinishedChunksBuffer(tracker=self.tracker, keep_discarded=False)
 
     @cached_property
     def track_exporter(self) -> FinishedTracksExporter:
