@@ -23,10 +23,8 @@ import numpy as np
 import pytest
 
 from OTVision import dataformat
-from OTVision.track.tracker.tracker_plugin_botsort import (
-    UltralyticsResultsLite,
-    extract_frame_rate_from_metadata,
-)
+from OTVision.application.track.botsort_params import extract_frame_rate_from_metadata
+from OTVision.track.tracker.tracker_plugin_botsort import UltralyticsResultsLite
 
 
 def test_ultralytics_results_lite_len_and_slice() -> None:

@@ -316,7 +316,6 @@ class BotsortTracker(Tracker):
         self._get_current_config = get_current_config
 
         self._botsort: BoTSORTTrackerLike | None = None
-        self._frame_rate_by_source: dict[str, int] = {}
         self._class_name_to_id: dict[str, int] = {}
         self._registry = TrackRegistry()
 
@@ -346,12 +345,14 @@ class BotsortTracker(Tracker):
     def _reset_for_new_group(self) -> None:
         """Clear Ultralytics state, ID maps, and lifecycle bookkeeping."""
         self._botsort = None
-        self._frame_rate_by_source = {}
         self._class_name_to_id = {}
         self._registry.clear()
 
     def _frame_rate_from_source(self, frame: DetectedFrame) -> int:
-        """Read and cache FPS for ``frame.source`` from ``.otdet`` metadata.
+        """Read FPS for ``frame.source`` from ``.otdet`` metadata.
+
+        Called once per video group, from the first frame; BOTSORT is built
+        with that group's FPS and kept until :meth:`reset`.
 
         Args:
             frame (DetectedFrame): Frame whose source path carries OTDET metadata.
@@ -362,10 +363,6 @@ class BotsortTracker(Tracker):
         Raises:
             ValueError: If the source is not ``.otdet`` or FPS is missing.
         """
-        cached = self._frame_rate_by_source.get(frame.source)
-        if cached is not None:
-            return cached
-
         source = Path(frame.source)
         if source.suffix.lower() != ".otdet":
             raise ValueError(
@@ -390,9 +387,7 @@ class BotsortTracker(Tracker):
                 f"for source '{frame.source}'."
             )
 
-        frame_rate = to_frame_rate(extracted)
-        self._frame_rate_by_source[frame.source] = frame_rate
-        return frame_rate
+        return to_frame_rate(extracted)
 
     def _build_args(self, frame_rate: int) -> types.SimpleNamespace:
         """Build Ultralytics BOTSORT args for ``frame_rate``.

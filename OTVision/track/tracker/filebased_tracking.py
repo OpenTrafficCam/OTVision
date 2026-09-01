@@ -98,9 +98,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
     async def track_group(self, group: FrameGroup) -> AsyncIterator[TrackedChunk]:
         if self.check_skip_due_to_existing_output_files(group):
             log.warning(f"Skip FrameGroup {group.id}")
-            empty: list[TrackedChunk] = []
-            for item in empty:
-                yield item
+            return
 
         # Explicit group-boundary reset so stateful trackers (BoT-SORT) do not
         # leak IDs / motion state across independent video groups.
