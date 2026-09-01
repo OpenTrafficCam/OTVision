@@ -30,7 +30,6 @@ from OTVision.application.config import (
     COL_WIDTH,
     CONF,
     CONVERT,
-    CRF,
     DEFAULT_BOTSORT_TRACKER_PARAMS,
     DEFAULT_FILETYPE,
     DELETE_INPUT,
@@ -38,7 +37,6 @@ from OTVision.application.config import (
     DETECT_END,
     DETECT_START,
     DETECTIONS,
-    ENCODING_SPEED,
     EXPECTED_DURATION,
     FILETYPES,
     FONT,
@@ -70,7 +68,6 @@ from OTVision.application.config import (
     SIGMA_H,
     SIGMA_IOU,
     SIGMA_L,
-    START_TIME,
     T_MIN,
     T_MISS_MAX,
     TRACK,
@@ -80,14 +77,12 @@ from OTVision.application.config import (
     UNDISTORT,
     VID,
     VID_ROTATABLE,
-    VIDEO_CODEC,
     VIDEOS,
     WEIGHTS,
     WINDOW,
     WRITE_VIDEO,
     YOLO,
     Config,
-    _GuiConfig,
 )
 from OTVision.application.config_parser import ConfigParser
 from OTVision.helpers.log import LOGGER_NAME
@@ -186,10 +181,6 @@ CONFIG[DETECT][HALF_PRECISION] = False
 CONFIG[DETECT][DETECT_START] = None
 CONFIG[DETECT][DETECT_END] = None
 CONFIG[DETECT][WRITE_VIDEO] = False
-CONFIG[DETECT][START_TIME] = None
-CONFIG[DETECT][VIDEO_CODEC] = "libx264"
-CONFIG[DETECT][ENCODING_SPEED] = "fast"
-CONFIG[DETECT][CRF] = "DEFAULT"
 
 # TRACK
 CONFIG[TRACK] = {}
@@ -220,7 +211,9 @@ CONFIG[TRANSFORM][OVERWRITE] = True
 
 # GUI
 CONFIG[GUI] = {}
-CONFIG[GUI][OTC_ICON] = _GuiConfig().otc_icon
+CONFIG[GUI][OTC_ICON] = str(
+    Path(__file__).parents[0] / r"view" / r"helpers" / r"OTC.ico"
+)
 CONFIG[GUI][FONT] = "Open Sans"
 CONFIG[GUI][FONT_SIZE] = 12
 CONFIG[GUI][WINDOW] = {}

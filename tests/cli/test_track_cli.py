@@ -19,7 +19,6 @@ from OTVision.application.config import (
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser
-from OTVision.application.get_config import DEFAULT_USER_CONFIG
 from OTVision.domain.cli import CliParseError
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
@@ -284,10 +283,7 @@ def create_expected_config_from_test_data(test_data: dict) -> Config:
     if config_file_arg := test_data["config"].get(PASSED):
         default_config = CONFIG_PARSER.parse(Path(config_file_arg.split()[1]))
     else:
-        user_cfg = Path.cwd() / DEFAULT_USER_CONFIG
-        default_config = (
-            CONFIG_PARSER.parse(user_cfg) if user_cfg.is_file() else Config()
-        )
+        default_config = Config()
 
     # Map EXPECTED values to TrackConfig's relevant fields
     paths = test_data["paths"].get(EXPECTED, default_config.detect.paths)
