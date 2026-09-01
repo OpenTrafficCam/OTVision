@@ -138,8 +138,8 @@ class BoTSORTTrackerLike(Protocol):
 
 
 @dataclass(frozen=True)
-class Observation:
-    """An OTVision track id assigned to a detection in the current frame.
+class TrackAssignment:
+    """The OTVision track a detection in the current frame was assigned to.
 
     Attributes:
         ot_id: OTVision track id the detection belongs to.
@@ -189,7 +189,7 @@ class TrackRegistry:
         botsort_track_id: int,
         frame_no: FrameNo,
         id_generator: IdGenerator,
-    ) -> Observation:
+    ) -> TrackAssignment:
         """Record that ``botsort_track_id`` was seen in frame ``frame_no``.
 
         Assigns a fresh OTVision track id the first time an Ultralytics id is
@@ -201,7 +201,7 @@ class TrackRegistry:
             id_generator (IdGenerator): Provider of new OTVision track ids.
 
         Returns:
-            Observation: Assigned OTVision track id and first-sighting flag.
+            TrackAssignment: Assigned OTVision track and first-sighting flag.
         """
         entry = self._entries.get(botsort_track_id)
         if entry is None:
@@ -211,11 +211,13 @@ class TrackRegistry:
                 last_frame=frame_no,
             )
             self._entries[botsort_track_id] = entry
-            return Observation(ot_id=entry.ot_id, is_first=True)
+            return TrackAssignment(ot_id=entry.ot_id, is_first=True)
 
         entry.last_frame = frame_no
         entry.age_missing = 0
-        return Observation(ot_id=entry.ot_id, is_first=entry.first_frame == frame_no)
+        return TrackAssignment(
+            ot_id=entry.ot_id, is_first=entry.first_frame == frame_no
+        )
 
     def age_unobserved(self, observed_botsort_track_ids: set[int]) -> None:
         """Increment the missing-frame counter of every unobserved track.
@@ -417,7 +419,8 @@ class BotsortTracker(Tracker):
 
         Raises:
             ModuleNotFoundError: If ultralytics is not installed.
-            ValueError: If ReID is enabled without a frame image.
+            ValueError: If the source FPS cannot be determined, or if the
+                effective params request unsupported ReID or GMC.
         """
         if self._botsort is not None:
             return self._botsort
@@ -502,7 +505,7 @@ class BotsortTracker(Tracker):
         tracks: NDArray[np.floating] | None,
         frame_no: FrameNo,
         id_generator: IdGenerator,
-    ) -> dict[int, Observation]:
+    ) -> dict[int, TrackAssignment]:
         """Map each matched detection index to its OTVision track.
 
         Args:
@@ -511,7 +514,7 @@ class BotsortTracker(Tracker):
             id_generator (IdGenerator): Provider of new OTVision track ids.
 
         Returns:
-            dict[int, Observation]: Detection index to assigned OTVision track.
+            dict[int, TrackAssignment]: Detection index to assigned track.
         """
         if tracks is None:
             return {}
@@ -548,15 +551,15 @@ class BotsortTracker(Tracker):
         )
         validate_botsort_update_rows(tracks_arr)
 
-        observations = self._assign_track_ids(tracks_arr, frame.no, id_generator)
+        assignments = self._assign_track_ids(tracks_arr, frame.no, id_generator)
         self._registry.age_unobserved(self._observed_botsort_ids(tracks_arr))
         finished_track_ids, discarded_track_ids = self._registry.evict_expired(
             self.lifecycle
         )
         tracked_detections = [
-            detection.of_track(observation.ot_id, is_first=observation.is_first)
+            detection.of_track(assignment.ot_id, is_first=assignment.is_first)
             for index, detection in enumerate(frame.detections)
-            if (observation := observations.get(index)) is not None
+            if (assignment := assignments.get(index)) is not None
         ]
 
         return TrackedFrame(

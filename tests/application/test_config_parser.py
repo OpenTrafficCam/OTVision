@@ -303,3 +303,35 @@ class TestTrackConfigTrackerTypeCoercion:
         """An unknown tracker name fails at construction."""
         with pytest.raises(ValueError, match="not a valid TrackerType"):
             TrackConfig(tracker_type="deepsort")  # type: ignore[arg-type]
+
+    def test_rejects_reid_at_parse_time(self) -> None:
+        """ReID must be rejected while parsing, not first at tracker init."""
+        target = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="ReID is not supported"):
+            target.parse_track_botsort_config({"WITH_REID": True})
+
+    def test_rejects_non_none_gmc_at_parse_time(self) -> None:
+        """A GMC method needing images must be rejected while parsing."""
+        target = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="requires frame images"):
+            target.parse_track_botsort_config({"GMC_METHOD": "sparseOptFlow"})
+
+    def test_accepts_the_shipped_defaults(self) -> None:
+        """The defaults shipped in user_config.otvision.yaml must parse."""
+        target = ConfigParser(YamlDeserializer())
+
+        config = target.parse_track_botsort_config(
+            {
+                "T_MIN": 5,
+                "T_MISS_MAX": 60,
+                "GMC_METHOD": "none",
+                "WITH_REID": False,
+                "PROXIMITY_THRESH": 0.5,
+                "APPEARANCE_THRESH": 0.25,
+            }
+        )
+
+        assert config.t_miss_max == 60
+        assert config.tracker_params["gmc_method"] == "none"

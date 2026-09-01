@@ -436,8 +436,9 @@ class TrackConfig:
     def lifecycle(self) -> TrackerLifecycle:
         """Lifecycle thresholds of the selected tracker.
 
-        This is the single deliberate dispatch point on tracker type. Code that
-        is specific to one tracker must read that tracker's own config instead.
+        This is the only place that dispatches on tracker type to answer
+        "which lifecycle applies?". Code that is specific to one tracker must
+        read that tracker's own config directly rather than come through here.
 
         Returns:
             TrackerLifecycle: Thresholds of the tracker named by ``tracker_type``.

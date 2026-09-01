@@ -59,7 +59,7 @@ from OTVision.domain.tracker import TrackerLifecycle, TrackerType
 from OTVision.track.tracker.tracker_plugin_botsort import (
     BotsortTracker,
     BoTSORTTrackerLike,
-    Observation,
+    TrackAssignment,
     TrackRegistry,
     UltralyticsResultsLike,
     validate_botsort_update_rows,
@@ -617,7 +617,7 @@ class TestBotsortUltralyticsIntegration:
         self,
         _mock_metadata: Mock,
     ) -> None:
-        """Feeding frame.no=0 a second time must clear state from the first group."""
+        """An explicit reset at a group boundary must not leak track ids."""
         track_config = _create_botsort_track_config(t_miss_max=100)
         tracker = BotsortTracker(
             get_current_config=_mock_get_current_config(track_config)
@@ -663,8 +663,8 @@ class TestTrackRegistry:
         first = registry.observe(7, frame_no=1, id_generator=ids)
         second = registry.observe(7, frame_no=2, id_generator=ids)
 
-        assert first == Observation(ot_id=1, is_first=True)
-        assert second == Observation(ot_id=1, is_first=False)
+        assert first == TrackAssignment(ot_id=1, is_first=True)
+        assert second == TrackAssignment(ot_id=1, is_first=False)
 
     def test_distinct_ultralytics_ids_get_distinct_ot_ids(self) -> None:
         """Separate Ultralytics tracks never share an OTVision id."""
