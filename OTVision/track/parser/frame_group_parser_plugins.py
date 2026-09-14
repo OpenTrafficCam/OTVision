@@ -87,18 +87,27 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
         merged_groups = []
         sorted_groups = sorted(frame_groups, key=lambda group: group.start_date)
         last_group = sorted_groups[0]
+        last_clip_start = last_group.start_date
         for current_group in sorted_groups[1:]:
             if last_group.hostname != current_group.hostname:
                 merged_groups.append(last_group)
                 last_group = current_group
             elif (
-                timedelta(seconds=0)
+                last_clip_start < current_group.start_date
+                and -self._time_without_frames
                 <= (current_group.start_date - last_group.end_date)
                 <= self._time_without_frames
             ):
+                # A negative gap is a nominal overlap: consecutive OTCamera clips
+                # start exactly on the slot boundary, but a clip's serialized
+                # length is rounded to whole seconds and can overshoot the next
+                # start by one second. The frames are not duplicated, so such
+                # clips belong to one recording stream (issue #535). Clips with
+                # the same start are duplicates, not a continuation.
                 last_group = last_group.merge(current_group)
             else:
                 merged_groups.append(last_group)
                 last_group = current_group
+            last_clip_start = current_group.start_date
         merged_groups.append(last_group)
         return merged_groups

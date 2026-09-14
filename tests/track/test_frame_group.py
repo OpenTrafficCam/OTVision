@@ -61,6 +61,25 @@ class TestFrameGroup:
         assert len(merge_first_second.metadata_by_file) == 2
         assert len(merge_second_first.metadata_by_file) == 2
 
+    def test_merge_keeps_latest_end_date(self) -> None:
+        first_start = datetime(2022, 5, 4, 12, 0, 0)
+        first_group = self._create_frame_group(
+            start_date=first_start,
+            end_date=first_start + timedelta(seconds=901),
+            input_file_path=Path("file/a.otdet"),
+        )
+        contained_group = self._create_frame_group(
+            start_date=first_start + timedelta(seconds=900),
+            end_date=first_start + timedelta(seconds=900.5),
+            input_file_path=Path("file/b.otdet"),
+        )
+
+        merged = first_group.merge(contained_group)
+
+        assert merged.start_date == first_group.start_date
+        assert merged.end_date == first_group.end_date
+        assert merged.files == first_group.files + contained_group.files
+
     def test_with_id(self) -> None:
         frame_group = self._create_frame_group()
 

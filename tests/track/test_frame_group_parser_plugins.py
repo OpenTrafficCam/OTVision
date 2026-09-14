@@ -157,6 +157,110 @@ class TestTimeThresholdFrameGroupParser:
         assert expected == result_1
         assert expected == result_2
 
+    def test_merge_nominal_overlap_within_threshold(self) -> None:
+        """Consecutive OTCamera clips report a nominal end one second past the
+        next clip's start (rounded length). They belong to one recording stream.
+        """
+        frame_group_a, frame_group_b = self.dummy_frame_groups(
+            time_diff=timedelta(seconds=-1)
+        )
+
+        expected = FrameGroup(
+            id=1,
+            start_date=frame_group_a.start_date,
+            end_date=frame_group_b.end_date,
+            hostname=DEFAULT_HOSTNAME,
+            files=frame_group_a.files + frame_group_b.files,
+            metadata_by_file={
+                **frame_group_a.metadata_by_file,
+                **frame_group_b.metadata_by_file,
+            },
+        )
+
+        parser = create_target(create_given())
+        result_1 = parser.merge([frame_group_a, frame_group_b])
+        result_2 = parser.merge([frame_group_b, frame_group_a])
+
+        assert [expected] == result_1
+        assert [expected] == result_2
+
+    def test_merge_nominal_overlap_at_threshold(self) -> None:
+        frame_group_a, frame_group_b = self.dummy_frame_groups(time_diff=-THRESHOLD)
+
+        parser = create_target(create_given())
+        result = parser.merge([frame_group_a, frame_group_b])
+
+        assert len(result) == 1
+
+    def test_merge_overlap_exceeds_threshold(self) -> None:
+        frame_group_a, frame_group_b = self.dummy_frame_groups(
+            time_diff=-(THRESHOLD + timedelta(microseconds=1))
+        )
+
+        parser = create_target(create_given())
+        result_1 = parser.merge([frame_group_a, frame_group_b])
+        result_2 = parser.merge([frame_group_b, frame_group_a])
+
+        expected = [frame_group_a, frame_group_b]
+        assert expected == result_1
+        assert expected == result_2
+
+    def test_merge_same_start_clips_stay_separate(self) -> None:
+        """Two clips of one host starting at the same instant are duplicates,
+        not a continuation, even though their nominal gap is within threshold.
+        """
+        start = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        file_a = Path("file/a.otdet")
+        file_b = Path("file/b.otdet")
+        frame_group_a = FrameGroup(
+            id=1,
+            start_date=start,
+            end_date=start + timedelta(seconds=3),
+            hostname=DEFAULT_HOSTNAME,
+            files=[file_a],
+            metadata_by_file={file_a: {}},
+        )
+        frame_group_b = FrameGroup(
+            id=2,
+            start_date=start,
+            end_date=start + timedelta(seconds=3),
+            hostname=DEFAULT_HOSTNAME,
+            files=[file_b],
+            metadata_by_file={file_b: {}},
+        )
+
+        parser = create_target(create_given())
+        result = parser.merge([frame_group_a, frame_group_b])
+
+        assert result == [frame_group_a, frame_group_b]
+
+    def test_merge_duplicate_after_continuation_stays_separate(self) -> None:
+        """A duplicate of the last merged clip must be compared against that
+        clip's start, not the start of the merged group."""
+        start = datetime(2020, 1, 1, tzinfo=timezone.utc)
+
+        def group(
+            id_: int, name: str, offset: timedelta, length: timedelta
+        ) -> FrameGroup:
+            file = Path(f"file/{name}.otdet")
+            return FrameGroup(
+                id=id_,
+                start_date=start + offset,
+                end_date=start + offset + length,
+                hostname=DEFAULT_HOSTNAME,
+                files=[file],
+                metadata_by_file={file: {}},
+            )
+
+        clip_a = group(1, "a", timedelta(0), timedelta(minutes=15, seconds=1))
+        clip_b = group(2, "b", timedelta(minutes=15), timedelta(seconds=3))
+        clip_b_duplicate = group(3, "b2", timedelta(minutes=15), timedelta(seconds=3))
+
+        parser = create_target(create_given())
+        result = parser.merge([clip_a, clip_b, clip_b_duplicate])
+
+        assert result == [clip_a.merge(clip_b), clip_b_duplicate]
+
     def test_merge_host_changes(self) -> None:
         frame_group_a, frame_group_b = self.dummy_frame_groups(
             time_diff=timedelta(microseconds=5),
@@ -324,6 +428,46 @@ class TestTimeThresholdFrameGroupParser:
             ),
         )
         assert expected == result[0]
+
+    @patch("OTVision.track.parser.frame_group_parser_plugins.read_json_bz2_metadata")
+    def test_process_all_merges_overlapping_otcamera_clips(
+        self, mock_read_metadata: Any
+    ) -> None:
+        """Real OTCamera metadata: starts 15 minutes apart, the first clip holds
+        18011 frames at 20 fps so its length serializes to 0:15:01.
+        """
+        file_a = Path("OTCamera04_FR20_2025-09-03_18-45-00.otdet")
+        file_b = Path("OTCamera04_FR20_2025-09-03_19-00-00.otdet")
+        start_a = datetime(2025, 9, 3, 18, 45, tzinfo=timezone.utc)
+        start_b = start_a + timedelta(minutes=15)
+        metadata_a = {
+            VIDEO: {
+                FILENAME: "OTCamera04_FR20_2025-09-03_18-45-00.mp4",
+                RECORDED_START_DATE: start_a.timestamp(),
+                LENGTH: "0:15:01",
+            }
+        }
+        metadata_b = {
+            VIDEO: {
+                FILENAME: "OTCamera04_FR20_2025-09-03_19-00-00.mp4",
+                RECORDED_START_DATE: start_b.timestamp(),
+                LENGTH: "0:15:00",
+            }
+        }
+        mock_read_metadata.side_effect = [metadata_a, metadata_b]
+        instance = TimeThresholdFrameGroupParser(create_given(), THRESHOLD)
+
+        result = instance.process_all([file_a, file_b])
+
+        assert len(result) == 1
+        group = result[0]
+        assert group.files == [file_a, file_b]
+        assert group.start_date == start_a
+        assert group.end_date == start_b + timedelta(minutes=15)
+        for metadata in group.metadata_by_file.values():
+            tracking = metadata[TRACKING]
+            assert tracking[FIRST_TRACKED_VIDEO_START] == start_a.timestamp()
+            assert tracking[LAST_TRACKED_VIDEO_END] == group.end_date.timestamp()
 
     def expected_metadata_of(self, frame_group: FrameGroup, test: int) -> dict:
         return {

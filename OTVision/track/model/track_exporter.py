@@ -48,6 +48,15 @@ class FinishedTracksExporter(ABC, Generic[F]):
     def get_frame_group_id(self, container: F) -> int:
         pass
 
+    @abstractmethod
+    def get_first_frame_no(self, container: F) -> int:
+        """Frame no of the container's first frame (with or without detections).
+
+        Used to rebase global frame group frame numbers back to the local
+        frame numbering of the container's source video.
+        """
+        pass
+
     async def export(
         self, tracking_run_id: str, stream: AsyncIterator[F], overwrite: bool
     ) -> None:
@@ -59,7 +68,9 @@ class FinishedTracksExporter(ABC, Generic[F]):
     ) -> None:
         file_path = self.get_result_path(container)
 
-        det_dicts = self.reindex(self.get_detection_dicts(container))
+        det_dicts = self.reindex(
+            self.get_detection_dicts(container), self.get_first_frame_no(container)
+        )
 
         output = self.build_output(
             det_dicts,
@@ -78,11 +89,9 @@ class FinishedTracksExporter(ABC, Generic[F]):
         log.info(f"Successfully tracked and wrote {file_path}")
 
     @staticmethod
-    def reindex(det_dicts: list[dict]) -> list[dict]:
+    def reindex(det_dicts: list[dict], first_frame_no: int) -> list[dict]:
         if len(det_dicts) == 0:
             return []
-
-        min_frame_no = min(det[FRAME] for det in det_dicts)
 
         det_dicts_progress = tqdm(
             det_dicts,
@@ -91,7 +100,7 @@ class FinishedTracksExporter(ABC, Generic[F]):
             leave=False,
         )
         reindexed_dets = [
-            {**det, **{FRAME: det[FRAME] - min_frame_no + 1}}
+            {**det, **{FRAME: det[FRAME] - first_frame_no + 1}}
             for det in det_dicts_progress
         ]
 
