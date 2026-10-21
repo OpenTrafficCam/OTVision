@@ -12,9 +12,9 @@ class TestValueOrDefault:
             ([1, 2, 3], [4, 5, 6], [1, 2, 3]),
         ],
     )
-    def test_returns_value_when_not_none[
-        T
-    ](self, value: T, default: T, expected: T) -> None:
+    def test_returns_value_when_not_none[T](
+        self, value: T, default: T, expected: T
+    ) -> None:
         assert value_or_default(value, default) == expected
 
     @pytest.mark.parametrize(
@@ -25,9 +25,9 @@ class TestValueOrDefault:
             (None, [4, 5, 6], [4, 5, 6]),
         ],
     )
-    def test_returns_default_when_value_is_none[
-        T
-    ](self, value: None, default: T, expected: T) -> None:
+    def test_returns_default_when_value_is_none[T](
+        self, value: None, default: T, expected: T
+    ) -> None:
         assert value_or_default(value, default) == expected
 
     @pytest.mark.parametrize(
