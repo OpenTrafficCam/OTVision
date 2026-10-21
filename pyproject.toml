@@ -126,7 +126,8 @@ name = "tensorrt-cu12-libs"
 
 [tool.uv]
 exclude-newer = "3 days"
-exclude-newer-package = { tensorrt = false, tensorrt-cu12-bindings = false, tensorrt-cu12-libs = false }
+# certifi = false: eMudhra CA compromise (Oct 2026) — certifi ≥ 2026.10.19 required, remove once release clears the 3-day cutoff
+exclude-newer-package = { certifi = false, tensorrt = false, tensorrt-cu12-bindings = false, tensorrt-cu12-libs = false }
 environments = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
