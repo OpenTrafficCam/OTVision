@@ -116,8 +116,8 @@ def iou(
         int: intersection-over-onion of bbox1, bbox2
     """
 
-    (xmin_1, ymin_1, xmax_1, ymax_1) = bbox1.as_tuple()
-    (xmin_2, ymin_2, xmax_2, ymax_2) = bbox2.as_tuple()
+    xmin_1, ymin_1, xmax_1, ymax_1 = bbox1.as_tuple()
+    xmin_2, ymin_2, xmax_2, ymax_2 = bbox2.as_tuple()
 
     # get the overlap rectangle
     overlap_xmin = max(xmin_1, xmin_2)
