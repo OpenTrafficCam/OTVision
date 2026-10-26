@@ -37,7 +37,7 @@ class FrameGroup:
         merged = FrameGroup(
             id=first.id,
             start_date=first.start_date,
-            end_date=second.end_date,
+            end_date=max(first.end_date, second.end_date),
             hostname=first.hostname,
             files=files,
             metadata_by_file=metadata,
