@@ -241,9 +241,13 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             self._finish(c, is_last, discarded, keep) for c in containers
         ]
 
-        # todo check if there are edge cases where track ids in merged_last_track_frame
-        # have frame no below containers last frame,
-        # but might appear in following containers
+        # Track ids still observed by any container in _unfinished_containers
+        # must be preserved: those containers will eventually be finished and
+        # their detections need to look up the track's last frame.
+        tracks_still_needed: set[TrackId] = set()
+        for c, _ in self._unfinished_containers:
+            tracks_still_needed.update(self._get_observed_tracks(c))
+
         last_frame_of_container = max(
             self._get_last_frame_of_container(c) for c in containers
         )
@@ -251,6 +255,7 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             track_id
             for track_id, frame_no in self._merged_last_track_frame.items()
             if frame_no <= last_frame_of_container
+            and track_id not in tracks_still_needed
         ]
 
         self._merged_last_track_frame = {
