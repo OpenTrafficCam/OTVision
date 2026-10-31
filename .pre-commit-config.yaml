@@ -18,21 +18,19 @@ repos:
     rev: 0.11.26
     hooks:
       - id: uv-lock
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
+  - repo: local
     hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args:
-          - --profile
-          - black
-  - repo: https://github.com/psf/black
-    rev: 26.10.1
-    hooks:
-      - id: black
+      - id: ruff-check
+        name: Run the ruff linter
+        entry: uv run --group dev ruff check
+        args: [--fix]
+        types: [python]
+        language: system
+      - id: ruff-format
+        name: Run the ruff formatter
+        entry: uv run --group dev ruff format
+        types: [python]
+        language: system
   - repo: local
     hooks:
       - id: mypy

@@ -36,9 +36,10 @@ jobs:
           VALIDATE_PYTHON_MYPY: false
           VALIDATE_JSCPD: false
           VALIDATE_PYTHON_BLACK: false
+          VALIDATE_PYTHON_FLAKE8: false
+          VALIDATE_PYTHON_ISORT: false
           VALIDATE_PYTHON_PYINK: false
 
           LINTER_RULES_PATH: /
-          PYTHON_FLAKE8_CONFIG_FILE: .flake8
-          PYTHON_ISORT_CONFIG_FILE: pyproject.toml
+          PYTHON_RUFF_CONFIG_FILE: pyproject.toml
           YAML_CONFIG_FILE: .yamllint.yaml
