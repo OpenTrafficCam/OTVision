@@ -8,11 +8,13 @@ on:
     tags:
       - "v*.*.*"
 
-permissions: read-all
+permissions: {}
 
 jobs:
   test:
     if: endsWith(github.event.base_ref, 'main')
+    permissions:
+      contents: read
     uses: "./.github/workflows/test.yml"
   create_release:
     permissions:

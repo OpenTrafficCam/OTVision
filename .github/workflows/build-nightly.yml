@@ -8,10 +8,12 @@ on:
     branches:
       - main
 
-permissions: read-all
+permissions: {}
 
 jobs:
   test:
+    permissions:
+      contents: read
     uses: "./.github/workflows/test.yml"
   create_nightly:
     permissions:
