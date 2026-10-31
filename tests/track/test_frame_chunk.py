@@ -16,7 +16,6 @@ from tests.track.helper.data_builder import DEFAULT_START_DATE
 
 
 class TestFrameChunk:
-
     def _mock_file(self, is_file: bool) -> MagicMock:
         mock_file = MagicMock(spec=Path)
         mock_file.is_file.return_value = is_file
@@ -56,7 +55,6 @@ class TestFrameChunk:
 
 
 class TestTrackedChunk(unittest.TestCase):
-
     def _mock_detection(self, track_id: int) -> TrackedDetection:
         return TrackedDetection(
             label="car", conf=1.0, x=5, y=5, w=5, h=5, is_first=False, track_id=track_id
@@ -205,7 +203,6 @@ class TestTrackedChunk(unittest.TestCase):
 
 
 class TestFinishedChunk(TestTrackedChunk):
-
     def _tracked_chunk(self, is_last_chunk: bool) -> TrackedChunk:
         return TrackedChunk(
             file=self.mock_file,

@@ -3,7 +3,6 @@ from OTVision.domain.object_detection import ObjectDetector, ObjectDetectorFacto
 
 
 class ObjectDetectorCachedFactory(ObjectDetectorFactory):
-
     def __init__(self, other: ObjectDetectorFactory) -> None:
         self._other = other
         self.__cache: dict[str, ObjectDetector] = {}

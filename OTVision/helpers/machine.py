@@ -19,7 +19,6 @@ OTVision helpers to gather information about the machine and the system
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import platform
 
 OS = platform.system().replace("Darwin", "Mac")

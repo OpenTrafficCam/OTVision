@@ -55,7 +55,6 @@ class Counter:
 
 
 class RtspInputSource(InputSourceDetect):
-
     @property
     def current_frame_number(self) -> int:
         return self._frame_counter.get()

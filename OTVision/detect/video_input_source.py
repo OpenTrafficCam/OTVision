@@ -190,8 +190,7 @@ class VideoSource(InputSourceDetect):
     def __overwrite_existing_detection_file(self, detections_file: Path) -> bool:
         if not self._current_config.detect.overwrite and detections_file.is_file():
             log.warning(
-                f"{detections_file} already exists. To overwrite, set overwrite "
-                "to True"
+                f"{detections_file} already exists. To overwrite, set overwrite to True"
             )
             return False
         return True

@@ -28,7 +28,6 @@ F = TypeVar("F")  # Finished container: e.g. FinishedFrame or FinishedChunk
 
 
 class FinishedTracksExporter(ABC, Generic[F]):
-
     def __init__(self, file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK]):
         self.file_type = file_type
 

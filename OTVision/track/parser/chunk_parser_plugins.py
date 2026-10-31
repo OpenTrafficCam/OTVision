@@ -24,7 +24,6 @@ from OTVision.track.model.filebased.frame_group import FrameGroup
 
 
 class JsonChunkParser(ChunkParser):
-
     def parse(
         self, file: Path, frame_group: FrameGroup, frame_offset: int = 0
     ) -> FrameChunk:

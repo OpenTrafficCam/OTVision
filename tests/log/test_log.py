@@ -30,7 +30,7 @@ class TestLog:
     log_maker: LogMaker = LogMaker()
 
     log.formatter = logging.Formatter(
-        "%(levelname)s (%(filename)s::%(funcName)s" "::%(lineno)d): %(message)s"
+        "%(levelname)s (%(filename)s::%(funcName)s::%(lineno)d): %(message)s"
     )
 
     @pytest.mark.parametrize("level", VALID_LOG_LEVELS)

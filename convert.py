@@ -19,7 +19,6 @@ OTVision script to call the convert main with arguments parsed from command line
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import argparse
 import logging
 from pathlib import Path
