@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: write
     needs: test
-    uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
+    uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@a4deb65bd5188ee1115e902bbe19d949bf69fe62" # main
     secrets:
       PLATOMO_BUILDER_ACCESS: ${{ secrets.PLATOMO_BUILDER_ACCESS }}
     with:

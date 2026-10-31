@@ -23,3 +23,13 @@ format:
 
 typecheck:
     {{ with_inference }} mypy .
+
+super-lint:
+    docker run --rm -i --platform linux/amd64 \
+        -e RUN_LOCAL=true \
+        -e SAVE_SUPER_LINTER_SUMMARY=true \
+        -e SUPER_LINTER_OUTPUT_DIRECTORY_NAME=.super-linter \
+        -e SUPER_LINTER_SUMMARY_FILE_NAME=SUMMARY.md \
+        --env-file .github/super-linter.env \
+        --env-file .github/super-linter-fix.env \
+        -v {{ justfile_directory() }}:/tmp/lint ghcr.io/super-linter/super-linter@sha256:c95c714f746edc70e54926a69e229c834ffcdec2450bd3475f7865164d749a56 # slim-v8.7.0
