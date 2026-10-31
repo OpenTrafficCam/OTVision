@@ -7,4 +7,4 @@ WORKING_DIR=$(pwd)
 bash "$WORKING_DIR"/install.sh
 
 uv sync --extra inference_cpu
-uv run pre-commit install --install-hooks
+uv run pre-commit install --install-hooks --hook-type pre-commit --hook-type pre-push
