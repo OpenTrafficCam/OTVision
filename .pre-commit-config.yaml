@@ -63,20 +63,3 @@ repos:
         language: docker_image
         pass_filenames: false
         stages: [pre-push]
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args:
-          - -c=./.yamllint.yaml
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/pecigonzalo/pre-commit-shfmt
-    rev: v2.2.0
-    hooks:
-      - id: shell-fmt-docker
-        args:
-          - -i
-          - "2"

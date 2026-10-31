@@ -44,7 +44,8 @@ just test
 | `just super-lint` | super-linter in Docker, the same config as CI                    |
 
 The `pre-commit` hooks run ruff and mypy. The `pre-push` hook runs super-linter in
-Docker. The config shared by CI, the hook and `just super-lint` is in
+Docker, which also covers YAML (yamllint), shell scripts (shellcheck, shfmt), GitHub
+Actions and more. The config shared by CI, the hook and `just super-lint` is in
 [`.github/super-linter.env`](../.github/super-linter.env). Local runs also apply the
 fixes from [`.github/super-linter-fix.env`](../.github/super-linter-fix.env), so check
 `git status` afterwards.

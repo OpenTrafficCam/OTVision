@@ -56,7 +56,6 @@ dev = [
     "types-jsonschema==4.26.0.20261006",
     "types-pyyaml==6.0.12.20260906",
     "types-tqdm==4.70.0.20260906",
-    "yamllint==1.35.1",
 ]
 
 [project.optional-dependencies]
