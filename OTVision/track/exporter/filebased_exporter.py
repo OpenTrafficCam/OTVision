@@ -8,7 +8,6 @@ from OTVision.track.model.track_exporter import FinishedTracksExporter
 
 
 class FinishedChunkTrackExporter(FinishedTracksExporter[FinishedChunk]):
-
     def __init__(self, file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK]) -> None:
         super().__init__(file_type)
 

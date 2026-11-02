@@ -19,7 +19,6 @@ OTVision gui module for transform.py
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import logging
 import shutil
 import tkinter as tk

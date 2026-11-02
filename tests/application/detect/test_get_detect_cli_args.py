@@ -4,7 +4,6 @@ from OTVision.application.detect.get_detect_cli_args import GetDetectCliArgs
 
 
 class TestGetDetectCliArgs:
-
     def test_get(self) -> None:
         """
         #Requirement https://openproject.platomo.de/projects/001-opentrafficcam-live/work_packages/7184

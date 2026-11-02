@@ -19,7 +19,6 @@ OTVision helpers for logging
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import logging
 import sys
 from datetime import datetime

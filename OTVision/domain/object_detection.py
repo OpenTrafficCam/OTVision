@@ -23,7 +23,6 @@ class ObjectDetectorMetadata(ABC):
 
 
 class ObjectDetector(ObjectDetectorMetadata):
-
     @abstractmethod
     def detect(self, frames: AsyncIterator[Frame]) -> AsyncIterator[DetectedFrame]:
         """Runs object detection on a video.

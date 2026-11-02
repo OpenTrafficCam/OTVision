@@ -19,7 +19,6 @@ OTVision config module for setting default values
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import logging
 from pathlib import Path
 

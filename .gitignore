@@ -180,3 +180,6 @@ Thumbs.db
 #data
 /data/*
 /*.mlpackage
+
+# super-linter results
+.super-linter

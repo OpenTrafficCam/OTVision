@@ -85,7 +85,6 @@ class InvalidOtvisionConfigError(Exception):
 
 
 class ConfigParser:
-
     def __init__(self, deserializer: Deserializer) -> None:
         self._deserialize = deserializer
 

@@ -19,7 +19,6 @@ OTVision script to call the detect main with arguments parsed from command line
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import asyncio
 from pathlib import Path
 

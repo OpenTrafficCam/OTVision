@@ -26,7 +26,6 @@ EXPECTED_DURATION = timedelta(seconds=10)
 
 
 class TestOtdetFileWriter:
-
     @pytest.fixture
     def given_event(self) -> DetectedFrameBufferEvent:
         return DetectedFrameBufferEvent(
