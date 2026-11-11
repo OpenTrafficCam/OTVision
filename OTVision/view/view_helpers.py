@@ -19,7 +19,6 @@ OTVision helper gui module
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import logging
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -212,7 +211,7 @@ class FrameFileTree(tk.LabelFrame):
 
     def update_files_dict_values(self, path):
         TRUE_SYMBOL = "\u2705"  # "\u2713"  # "\u2714"
-        FALSE_SYMBOL = "\u274E"  # "\u2717"  # "\u2718"
+        FALSE_SYMBOL = "\u274e"  # "\u2717"  # "\u2718"
         self.files_dict[path]["filename"] = Path(path).stem
         self.files_dict[path]["h264"] = (
             TRUE_SYMBOL if Path(path).with_suffix(".h264").is_file() else FALSE_SYMBOL

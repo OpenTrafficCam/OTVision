@@ -19,20 +19,19 @@ OTVision helpers to gather information about the machine and the system
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import platform
 
 OS = platform.system().replace("Darwin", "Mac")
 """OS OTVision is currently running on"""
 
 ON_WINDOWS = OS == "Windows"
-"""Wether OS is Windows or not"""
+"""Whether OS is Windows or not"""
 
 ON_LINUX = OS == "Linux"
-"""Wether OS is Linux or not"""
+"""Whether OS is Linux or not"""
 
 ON_MAC = OS == "Mac"
-"""Wether OS is MacOS or not"""
+"""Whether OS is MacOS or not"""
 
 OS_RELEASE = platform.release()
 """Release of the OS OTVision is currently running on"""

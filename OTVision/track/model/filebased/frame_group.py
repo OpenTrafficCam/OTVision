@@ -65,7 +65,6 @@ class FrameGroup:
 
 
 class FrameGroupParser(ABC):
-
     def process_all(self, files: list[Path]) -> list[FrameGroup]:
         files_progress = tqdm(files, desc="parse FrameGroups", total=len(files))
 

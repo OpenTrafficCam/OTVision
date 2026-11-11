@@ -26,7 +26,6 @@ from tests.track.helper.data_builder import DEFAULT_START_DATE, DataBuilder
 
 
 class TestDetection:
-
     def data_builder(self) -> DataBuilder:
         return DataBuilder().batch_append_classified_frames(number_of_classifications=5)
 
@@ -56,7 +55,6 @@ class TestDetection:
 
 
 class TestTrackedDetection(TestDetection):
-
     def tracked_detections(self) -> list[TrackedDetection]:
         tracked_dets: list[TrackedDetection] = []
 
@@ -120,7 +118,6 @@ class TestTrackedDetection(TestDetection):
 
 
 class TestFinishedDetection(TestTrackedDetection):
-
     def finished_detections(self) -> list[FinishedDetection]:
         finished_dets: list[FinishedDetection] = []
 
@@ -162,7 +159,6 @@ class TestFinishedDetection(TestTrackedDetection):
 
 
 class TestTrackedFrame:
-
     def data_builder(self) -> DataBuilder:
         return DataBuilder().batch_append_classified_frames(
             number_of_frames=4, number_of_classifications=5
@@ -258,7 +254,6 @@ class TestTrackedFrame:
 
 
 class TestFinishedFrame(unittest.TestCase):
-
     def _mock_detection(self, track_id: int) -> TrackedDetection:
         return TrackedDetection(
             label="car", conf=1.0, x=5, y=5, w=5, h=5, is_first=False, track_id=track_id

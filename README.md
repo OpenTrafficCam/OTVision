@@ -138,6 +138,8 @@ For detailed documentation, visit:
 
 We appreciate your support in the form of both code and comments. Please have a look at the [contribute](https://opentrafficcam.org/contribute) section of the OpenTrafficCam documentation for guidelines on how to contribute to the project.
 
+To set up a development environment, see [docs/dev.md](docs/dev.md).
+
 ## License
 
 This software is licensed under the [GPL-3.0 License](LICENSE).

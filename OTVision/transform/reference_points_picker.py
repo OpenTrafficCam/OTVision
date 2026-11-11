@@ -20,7 +20,6 @@ from pixel to world coordinates
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import json
 import logging
 import tkinter as tk
@@ -90,7 +89,7 @@ class ReferencePointsPicker:
         """Set base_image with image from a file
 
         Raises:
-            ImageWontOpenError: If image wont open
+            ImageWontOpenError: If image won't open
         """
         try:
             self.base_image = cv2.imread(self.image_file)
@@ -107,8 +106,8 @@ class ReferencePointsPicker:
                 If false gets the next frame of the video.
 
         Raises:
-            VideoWontOpenError: If video wont open
-            FrameNotAvailableError: If frame cannt be read
+            VideoWontOpenError: If video won't open
+            FrameNotAvailableError: If frame cannot be read
         """
         if not self.video:
             self.video = cv2.VideoCapture(str(self.file))
@@ -245,7 +244,7 @@ class ReferencePointsPicker:
         refpt_utm_correct = False
         try_again = False
         while not refpt_utm_correct:
-            # Get utm part of refpt from pupup
+            # Get utm part of refpt from popup
             new_refpt_utm = DialogUTMCoordinates(
                 parent=self.popup_root, try_again=try_again
             ).coords_utm

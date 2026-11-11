@@ -52,7 +52,6 @@ class TestParseStartTimeFromFilename:
 
 
 class TestVideoTimestamper:
-
     @pytest.mark.parametrize("expected_duration", [EXPECTED_DURATION, None])
     @patch("OTVision.detect.timestamper.get_duration", return_value=ACTUAL_DURATION)
     def test_stamp_frame(

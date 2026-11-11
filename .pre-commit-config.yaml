@@ -15,85 +15,51 @@ repos:
       - id: check-executables-have-shebangs
       - id: detect-private-key
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.11
+    rev: 0.11.26
     hooks:
       - id: uv-lock
-  - repo: https://github.com/OpenTrafficCam/dependency-update-pre-commit
-    rev: v0.2.0
+  - repo: local
     hooks:
-      - id: update-mypy-dependencies
-        args:
-          - --optional-extras=inference_cpu
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
-    hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args:
-          - --profile
-          - black
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+      - id: ruff-check
+        name: Run the ruff linter
+        entry: uv run --group dev ruff check
+        args: [--fix]
+        types: [python]
+        language: system
+      - id: ruff-format
+        name: Run the ruff formatter
+        entry: uv run --group dev ruff format
+        types: [python]
+        language: system
+  - repo: local
     hooks:
       - id: mypy
-        entry: mypy .
-        additional_dependencies:
-          - --extra-index-url=https://download.pytorch.org/whl/cpu
-          - --extra-index-url=https://download.pytorch.org/whl/cu128
-          - av==13.0.0
-          - black==25.1.0
-          - coremltools==8.2; sys_platform == "darwin"
-          - ffmpeg-python==0.2.0
-          - fire==0.7.0
-          - ijson==3.3.0
-          - interrogate==1.5.0
-          - isort==5.13.2
-          - more-itertools==10.7.0
-          - moviepy==1.0.3
-          - mypy==1.15.0
-          - numpy==1.26.4; sys_platform == "win32"
-          - numpy==2.1.1; sys_platform != "win32"
-          - opencv-python-headless==4.10.0.84
-          - pandas-stubs==2.3.2.250926
-          - pandas==2.3.3
-          - pre-commit==3.8.0
-          - pytest-asyncio==1.3.0
-          - pytest-cov==5.0.0
-          - pytest==8.3.3
-          - torchvision==0.22.1
-          - twine==6.1.0
-          - types-PyYAML
-          - types-flake8
-          - types-geopandas
-          - types-jsonschema
-          - types-torch
-          - types-tqdm
-          - types-ujson
-          - ultralytics==8.3.159
-          - yamllint==1.35.1
+        name: Run mypy
+        # The inference extra provides torch and ultralytics, which are checked too.
+        entry: uv run --group dev --extra inference_cpu mypy .
+        language: system
+        types: [python]
         always_run: true
         pass_filenames: false
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
+  - repo: local
     hooks:
-      - id: yamllint
-        args:
-          - -c=./.yamllint.yaml
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/pecigonzalo/pre-commit-shfmt
-    rev: v2.2.0
-    hooks:
-      - id: shell-fmt-docker
-        args:
-          - -i
-          - "2"
+      - id: super-linter
+        name: Super-linter
+        # Docker hook mounts the workspace at /src, so we point super-linter there.
+        # Note: when the super-linter version is bumped here, upgrade it in CI too.
+        # pre-commit runs the container as the host user, who cannot write to
+        # $HOME (/github/home), so Trivy needs a writable cache dir.
+        entry: >
+          --rm --platform linux/amd64
+          --env-file .github/super-linter.env
+          --env-file .github/super-linter-fix.env
+          -e DEFAULT_WORKSPACE=/src
+          -e TRIVY_CACHE_DIR=/tmp/trivy
+          -e RUN_LOCAL=true
+          -e SAVE_SUPER_LINTER_SUMMARY=true
+          -e SUPER_LINTER_OUTPUT_DIRECTORY_NAME=.super-linter
+          -e SUPER_LINTER_SUMMARY_FILE_NAME=SUMMARY.md
+          ghcr.io/super-linter/super-linter@sha256:c95c714f746edc70e54926a69e229c834ffcdec2450bd3475f7865164d749a56
+        language: docker_image
+        pass_filenames: false
+        stages: [pre-push]

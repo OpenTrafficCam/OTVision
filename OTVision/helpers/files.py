@@ -115,7 +115,7 @@ def replace_filetype(
     files: list[Path], new_filetype: str, old_filetype: Union[str, None] = None
 ) -> list[Path]:
     """In a list of files, replace the filetype of all files of a certain old_filetype
-    by a new_filetype. If no old_filetype is given, replace tha filetype of all files.
+    by a new_filetype. If no old_filetype is given, replace the filetype of all files.
     Directories remain unchanged in the new list.
 
     Args:
@@ -236,10 +236,10 @@ def read_json(
             with bz2.open(json_file, "rt", encoding=ENCODING) as input:
                 dict_from_json_file = ujson.load(input)
         else:
-            log.debug(f"Read {json_file} withoud decompression")
+            log.debug(f"Read {json_file} without decompression")
             with open(json_file, "r", encoding=ENCODING) as input:
                 dict_from_json_file = ujson.load(input)
-        log.debug(f"Succesfully read {json_file}")
+        log.debug(f"Successfully read {json_file}")
         t_json_end = time.perf_counter()
         log.debug(f"Reading {json_file} took: {t_json_end - t_json_start:0.4f}s")
         return dict_from_json_file

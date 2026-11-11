@@ -107,7 +107,6 @@ class ConstantRateFactor(IntEnum):
 
 
 class FfmpegVideoWriter(VideoWriter):
-
     @property
     def _current_video_metadata(self) -> NewVideoStartEvent:
         if self.__current_video_metadata is None:

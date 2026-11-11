@@ -15,7 +15,6 @@ from OTVision.plugin.ffmpeg_video_writer import (
 
 
 class FileBasedDetectBuilder(DetectBuilder):
-
     @cached_property
     def input_source(self) -> VideoSource:
         return VideoSource(

@@ -8,7 +8,6 @@ from OTVision.track.model.track_exporter import FinishedTracksExporter
 
 
 class FinishedChunkTrackExporter(FinishedTracksExporter[FinishedChunk]):
-
     def __init__(self, file_type: str = CONFIG[DEFAULT_FILETYPE][TRACK]) -> None:
         super().__init__(file_type)
 
@@ -23,3 +22,8 @@ class FinishedChunkTrackExporter(FinishedTracksExporter[FinishedChunk]):
 
     def get_frame_group_id(self, container: FinishedChunk) -> int:
         return container.frame_group_id
+
+    def get_first_frame_no(self, container: FinishedChunk) -> int:
+        if not container.frames:
+            return 1
+        return min(frame.no for frame in container.frames)

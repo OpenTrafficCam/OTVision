@@ -42,7 +42,6 @@ class TestOtvisionSavePathProvider:
 
 
 class TestDeriveFilename:
-
     @pytest.mark.parametrize(
         "video_file, detection_file, detect_start, detect_end",
         [

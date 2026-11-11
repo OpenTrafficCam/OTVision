@@ -51,7 +51,7 @@ class OtvisionTrack:
 
         if not detections_files:
             log.warning(
-                f"No files of type '{self.config.filetypes.detect}' " "found to track!"
+                f"No files of type '{self.config.filetypes.detect}' found to track!"
             )
             return
 
