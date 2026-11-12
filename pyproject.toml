@@ -60,16 +60,18 @@ dev = [
 
 [project.optional-dependencies]
 inference_cpu = [
-    "torch==2.11.0",
-    "torchvision==0.26.0",
+    "torch==2.14.1",
+    "torchvision==0.29.1",
     "ultralytics==8.4.208",
 ]
 inference_cuda = [
-    "torch==2.11.0; platform_machine == 'x86_64'",
-    "torchvision==0.26.0; platform_machine == 'x86_64'",
-    "tensorrt-cu12==10.16.1.11; sys_platform != 'darwin' and platform_machine == 'x86_64'",
-    "tensorrt-cu12-bindings==10.16.1.11; sys_platform != 'darwin' and platform_machine == 'x86_64'",
-    "tensorrt-cu12-libs==10.16.1.11; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    "torch==2.14.1; platform_machine == 'x86_64'",
+    "torchvision==0.29.1; platform_machine == 'x86_64'",
+    "tensorrt-cu13==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    "tensorrt-cu13-bindings==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    "tensorrt-cu13-libs==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    # TensorRT 11 needs ModelOpt to export FP16/INT8 engines
+    "nvidia-modelopt[onnx]==0.48.0; sys_platform != 'darwin' and platform_machine == 'x86_64'",
     "ultralytics==8.4.208; platform_machine == 'x86_64'",
 ]
 [project.urls]
@@ -110,26 +112,26 @@ module = "OTVision.transform.*"
 ignore_errors = true
 
 [[tool.uv.dependency-metadata]]
-name = "tensorrt-cu12"
-requires-dist = ["tensorrt-cu12-bindings", "tensorrt-cu12-libs"]
+name = "tensorrt-cu13"
+requires-dist = ["tensorrt-cu13-bindings", "tensorrt-cu13-libs"]
 
 [[tool.uv.dependency-metadata]]
-name = "tensorrt-cu12-libs"
-requires-dist = ["nvidia-cuda-runtime-cu12"]
+name = "tensorrt-cu13-libs"
+requires-dist = ["nvidia-cuda-runtime==13.0.*"]
 
 [[tool.uv.dependency-metadata]]
-name = "nvidia-cuda-runtime-cu12"
+name = "nvidia-cuda-runtime"
 
 [[tool.uv.dependency-metadata]]
-name = "tensorrt-cu12-bindings"
+name = "tensorrt-cu13-bindings"
 
 [[tool.uv.dependency-metadata]]
-name = "tensorrt-cu12-libs"
+name = "tensorrt-cu13-libs"
 
 [tool.uv]
 exclude-newer = "3 days"
 # certifi = false: eMudhra CA compromise (Oct 2026) — certifi ≥ 2026.10.19 required, remove once release clears the 3-day cutoff
-exclude-newer-package = { certifi = false, tensorrt-cu12 = false, tensorrt-cu12-bindings = false, tensorrt-cu12-libs = false }
+exclude-newer-package = { certifi = false, tensorrt-cu13 = false, tensorrt-cu13-bindings = false, tensorrt-cu13-libs = false }
 environments = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
@@ -145,20 +147,20 @@ conflicts = [
 
 [tool.uv.sources]
 torch = [
-    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "inference_cuda" },
+    { index = "pytorch-cu130", marker = "sys_platform != 'darwin'" , extra = "inference_cuda" },
     { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
     { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="inference_cpu" },
     { index = "pytorch-cpu", marker = "sys_platform == 'win32'", extra="inference_cpu" }
 ]
 torchvision = [
-    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" , extra = "inference_cuda" },
+    { index = "pytorch-cu130", marker = "sys_platform != 'darwin'" , extra = "inference_cuda" },
     { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
     { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="inference_cpu" },
     { index = "pytorch-cpu", marker = "sys_platform == 'win32'", extra="inference_cpu" }
 ]
-tensorrt-cu12 = { index = "tensorrt", extra = "inference_cuda" }
-tensorrt-cu12-bindings = { index = "tensorrt", extra = "inference_cuda" }
-tensorrt-cu12-libs = { index = "tensorrt", extra = "inference_cuda" }
+tensorrt-cu13 = { index = "tensorrt", extra = "inference_cuda" }
+tensorrt-cu13-bindings = { index = "tensorrt", extra = "inference_cuda" }
+tensorrt-cu13-libs = { index = "tensorrt", extra = "inference_cuda" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -166,8 +168,8 @@ url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [[tool.uv.index]]
