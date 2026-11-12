@@ -59,7 +59,9 @@ class TestYoloDetector:
     @patch("OTVision.detect.yolo.torch")
     async def test_detect(self, mock_torch: Mock) -> None:
         mock_torch.cuda.is_available.return_value = False
-        expected_model_predictions: list[Results] = create_mocks(2)
+        expected_model_predictions: list[Results] = [
+            Mock(spec=Results, boxes=Mock()) for _ in range(2)
+        ]
         expected_detections: list[Detection] = create_mocks(2)
         expected_detected_frames: list[DetectedFrame] = create_mocks(4)
 
