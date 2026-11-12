@@ -60,16 +60,16 @@ dev = [
 
 [project.optional-dependencies]
 inference_cpu = [
-    "torch==2.7.1",
-    "torchvision==0.22.1",
+    "torch==2.11.0",
+    "torchvision==0.26.0",
     "ultralytics==8.4.208",
 ]
 inference_cuda = [
-    "torch==2.7.1; platform_machine == 'x86_64'",
-    "torchvision==0.22.1; platform_machine == 'x86_64'",
-    "tensorrt==10.12.0.36; sys_platform != 'darwin' and platform_machine == 'x86_64'",
-    "tensorrt-cu12-bindings==10.12.0.36; sys_platform != 'darwin' and platform_machine == 'x86_64'",
-    "tensorrt-cu12-libs==10.12.0.36; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    "torch==2.11.0; platform_machine == 'x86_64'",
+    "torchvision==0.26.0; platform_machine == 'x86_64'",
+    "tensorrt-cu12==10.16.1.11; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    "tensorrt-cu12-bindings==10.16.1.11; sys_platform != 'darwin' and platform_machine == 'x86_64'",
+    "tensorrt-cu12-libs==10.16.1.11; sys_platform != 'darwin' and platform_machine == 'x86_64'",
     "ultralytics==8.4.208; platform_machine == 'x86_64'",
 ]
 [project.urls]
@@ -129,7 +129,7 @@ name = "tensorrt-cu12-libs"
 [tool.uv]
 exclude-newer = "3 days"
 # certifi = false: eMudhra CA compromise (Oct 2026) — certifi ≥ 2026.10.19 required, remove once release clears the 3-day cutoff
-exclude-newer-package = { certifi = false, tensorrt = false, tensorrt-cu12-bindings = false, tensorrt-cu12-libs = false }
+exclude-newer-package = { certifi = false, tensorrt-cu12 = false, tensorrt-cu12-bindings = false, tensorrt-cu12-libs = false }
 environments = [
     "sys_platform == 'win32'",
     "sys_platform == 'darwin'",
@@ -156,7 +156,7 @@ torchvision = [
     { index = "pytorch-cpu", marker = "sys_platform == 'linux'", extra="inference_cpu" },
     { index = "pytorch-cpu", marker = "sys_platform == 'win32'", extra="inference_cpu" }
 ]
-tensorrt = { index = "tensorrt", extra = "inference_cuda" }
+tensorrt-cu12 = { index = "tensorrt", extra = "inference_cuda" }
 tensorrt-cu12-bindings = { index = "tensorrt", extra = "inference_cuda" }
 tensorrt-cu12-libs = { index = "tensorrt", extra = "inference_cuda" }
 
