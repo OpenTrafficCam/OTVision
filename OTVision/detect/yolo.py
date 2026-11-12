@@ -27,7 +27,7 @@ from typing import AsyncIterator
 import torch
 from tqdm.asyncio import tqdm
 from ultralytics import YOLO
-from ultralytics.engine.results import Boxes
+from ultralytics.engine.results import Boxes, Results
 
 from OTVision.abstraction.pipes_and_filter import Filter
 from OTVision.application.config import DetectConfig
@@ -173,7 +173,8 @@ class YoloDetector(ObjectDetector, Filter[Frame, DetectedFrame]):
         )
 
         for prediction in model_predictions:
-            return self._create_detection_from_boxes(frame, prediction.boxes)
+            if isinstance(prediction, Results) and prediction.boxes is not None:
+                return self._create_detection_from_boxes(frame, prediction.boxes)
 
         # Return empty detection if no predictions
         return self._create_empty_detection(frame)
