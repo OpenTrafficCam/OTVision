@@ -6,7 +6,6 @@ from OTVision.domain.frame import DetectedFrame
 
 
 class SimpleDetectedFrameProducer(DetectedFrameProducer):
-
     def __init__(self, producer_factory: DetectedFrameProducerFactory) -> None:
         self._producer_factory = producer_factory
 

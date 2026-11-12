@@ -186,7 +186,6 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         # TODO template method to obtain containers?
 
         async for container in containers:
-
             # if track is observed in current iteration, update its last observed frame
             new_last_track_frames = self._get_last_track_frames(container)
             self._merged_last_track_frame.update(new_last_track_frames)

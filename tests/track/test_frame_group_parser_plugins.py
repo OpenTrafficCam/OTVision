@@ -47,7 +47,6 @@ EXPECTED_TRACK_METADATA = create_tracker_metadata(
 
 
 class TestTimeThresholdFrameGroupParser:
-
     def test_convert(self) -> None:
         given = create_given()
         parser = create_target(given)

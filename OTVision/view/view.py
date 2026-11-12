@@ -19,7 +19,6 @@ OTVision main gui module
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import tkinter as tk
 
 from OTVision.config import CONFIG, PAD

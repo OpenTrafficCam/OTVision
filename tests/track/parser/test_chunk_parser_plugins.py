@@ -11,7 +11,6 @@ from tests.track.helper.data_builder import (
 
 
 class TestDetectionParser:
-
     def test_convert(self) -> None:
         data_builder = DataBuilder().append_classified_frame(
             number_of_classifications=10
@@ -26,7 +25,6 @@ class TestDetectionParser:
 
 
 class TestJsonChunkParser:
-
     def input_data_builder(self) -> DataBuilder:
         data_builder = DataBuilder()
         data_builder.append_classified_frame()

@@ -19,7 +19,6 @@ OTVision helpers to change formats and retrieve information
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 import datetime as dt
 import re
 

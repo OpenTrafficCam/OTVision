@@ -1,44 +1,39 @@
 ---
 name: super-linter
-#
-# Documentation:
-# https://help.github.com/en/articles/workflow-syntax-for-github-actions
-#
 
 on: pull_request
 
-permissions:
-  contents: read
-  packages: read
-  # To report GitHub Actions status checks
-  statuses: write
+permissions: {}
 
 jobs:
-  lint:
+  build:
     name: Lint many languages with super-linter
     runs-on: ubuntu-latest
+
+    permissions:
+      # contents permission to clone the repository
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           # super-linter needs the full git history to get the
           # list of files that changed across commits
           fetch-depth: 0
-      - name: Lint Code Base
-        uses: github/super-linter/slim@v7
-        env:
-          VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_EDITORCONFIG: false
-          VALIDATE_GO_RELEASER: false
-          VALIDATE_PYTHON_PYLINT: false
-          VALIDATE_PYTHON_MYPY: false
-          VALIDATE_JSCPD: false
-          VALIDATE_PYTHON_BLACK: false
-          VALIDATE_PYTHON_PYINK: false
+          persist-credentials: false
 
-          LINTER_RULES_PATH: /
-          PYTHON_FLAKE8_CONFIG_FILE: .flake8
-          PYTHON_ISORT_CONFIG_FILE: pyproject.toml
-          YAML_CONFIG_FILE: .yamllint.yaml
+      - name: Load super-linter configuration
+        # Use grep inverse matching to exclude eventual comments in the .env file
+        # because the GitHub Actions command to set environment variables doesn't
+        # support comments.
+        # Ref: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-environment-variable
+        run: grep -v '^#' .github/super-linter.env >> "$GITHUB_ENV"
+
+      - name: Super-linter
+        uses: super-linter/super-linter/slim@4ce20838b8ab83717e78138c5b3a1407148e0918 # v8.7.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

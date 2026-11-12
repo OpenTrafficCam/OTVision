@@ -138,7 +138,7 @@ class OttrkBuilder:
 
     def __sort_detections(self) -> None:
         for detections in self._tracked_detections.values():
-            detections.sort(key=lambda detection: (detection[dataformat.OCCURRENCE]))
+            detections.sort(key=lambda detection: detection[dataformat.OCCURRENCE])
 
     def reset(self) -> Self:
         self._config = None

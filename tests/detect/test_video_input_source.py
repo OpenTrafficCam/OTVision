@@ -247,7 +247,7 @@ class TestVideoSource:
         actual = await get_elements_of(target.produce())
         assert actual == []
         mock_log.warning.assert_called_once_with(
-            f"{cyclist_mp4.with_suffix(".otdet")} already exists. "
+            f"{cyclist_mp4.with_suffix('.otdet')} already exists. "
             "To overwrite, set overwrite to True"
         )
         assert_get_files_called(given)
@@ -351,8 +351,7 @@ class TestVideoSource:
 
         assert result == {}
         mock_log.warning.assert_called_once_with(
-            "No side_data found in video stream. "
-            "Existing rotation will not be applied."
+            "No side_data found in video stream. Existing rotation will not be applied."
         )
 
 

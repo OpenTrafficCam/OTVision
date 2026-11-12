@@ -13,7 +13,6 @@ from tests.track.helper.data_builder import (
 
 
 class TestFrameGroup:
-
     def test_start_date(self) -> None:
         start_date = datetime(2022, 5, 4, 12, 0, 0)
         group = self._create_frame_group(start_date=start_date)
