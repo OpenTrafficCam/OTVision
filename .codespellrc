@@ -1,0 +1,3 @@
+[codespell]
+# lief is a package name in uv.lock (dependency of nvidia-modelopt)
+ignore-words-list = lief
