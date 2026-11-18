@@ -23,16 +23,16 @@ classifiers = [
 ]
 keywords = ["OpenTrafficCam", "Traffic Analysis", "Traffic Counting", "Trajectories"]
 dependencies = [
-    "av==13.0.0",
+    "av==19.0.2",
     "coremltools==9.0; sys_platform == 'darwin'",
     "ffmpeg-python==0.2.0",
     "fire==0.7.1",
     "geopandas==1.2.0",
     "ijson==3.6.0",
     "more-itertools==11.2.1",
-    "moviepy==1.0.3",
+    "moviepy==2.2.1",
     "numpy==2.3.5",
-    "opencv-python-headless==4.10.0.84",
+    "opencv-python-headless==5.0.0.93",
     "pandas==3.1.1",
     "PyYAML==6.0.3",
     "tqdm==4.70.1",
@@ -129,6 +129,9 @@ name = "tensorrt-cu13-libs"
 
 [tool.uv]
 exclude-newer = "3 days"
+# ultralytics depends on opencv-python, which installs the same cv2 module as
+# opencv-python-headless. Keep both on the same version.
+constraint-dependencies = ["opencv-python==5.0.0.93"]
 # certifi = false: eMudhra CA compromise (Oct 2026) — certifi ≥ 2026.10.19 required, remove once release clears the 3-day cutoff
 exclude-newer-package = { certifi = false, tensorrt-cu13 = false, tensorrt-cu13-bindings = false, tensorrt-cu13-libs = false }
 environments = [

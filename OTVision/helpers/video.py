@@ -51,7 +51,7 @@ def get_number_of_frames(video_file: Path) -> int:
         timedelta: number of frames of the video
     """
     with VideoFileClip(str(video_file.absolute())) as clip:
-        return clip.reader.nframes
+        return clip.reader.n_frames
 
 
 def convert_seconds_to_frames(seconds: int | None, fps: float) -> int | None:
