@@ -130,7 +130,7 @@ name = "tensorrt-cu13-libs"
 exclude-newer = "3 days"
 # ultralytics depends on opencv-python, which installs the same cv2 module as
 # opencv-python-headless. Keep both on the same version.
-constraint-dependencies = ["opencv-python==5.0.0.93"]
+constraint-dependencies = ["opencv-python==5.0.0.93", "pygments>=2.20.0", "setuptools>=84.1.0"]
 # certifi = false: eMudhra CA compromise (Oct 2026) — certifi ≥ 2026.10.19 required, remove once release clears the 3-day cutoff
 exclude-newer-package = { certifi = false, tensorrt-cu13 = false, tensorrt-cu13-bindings = false, tensorrt-cu13-libs = false }
 environments = [
