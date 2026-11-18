@@ -47,13 +47,13 @@ dev = [
     "pandas-stubs==3.1.0.261029",
     "pre-commit==4.7.0",
     "pytest==9.2.0",
-    "pytest-asyncio==1.4.1.post1",
+    "pytest-asyncio==1.5.0",
     "pytest-cov==7.1.0",
-    "ruff==0.17.4",
+    "ruff==0.17.5",
     "twine==7.0.0",
     "types-geopandas==1.2.0.20261107",
     "types-jsonschema==4.26.0.20261006",
-    "types-pyyaml==6.0.12.20260906",
+    "types-pyyaml==6.0.12.20261113",
     "types-tqdm==4.70.0.20261106",
 ]
 
@@ -61,7 +61,7 @@ dev = [
 inference_cpu = [
     "torch==2.14.1",
     "torchvision==0.29.1",
-    "ultralytics==8.4.208",
+    "ultralytics==8.4.213",
 ]
 inference_cuda = [
     "torch==2.14.1; platform_machine == 'x86_64'",
@@ -71,7 +71,7 @@ inference_cuda = [
     "tensorrt-cu13-libs==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
     # TensorRT 11 needs ModelOpt to export FP16/INT8 engines
     "nvidia-modelopt[onnx]==0.48.0; sys_platform != 'darwin' and platform_machine == 'x86_64'",
-    "ultralytics==8.4.208; platform_machine == 'x86_64'",
+    "ultralytics==8.4.213; platform_machine == 'x86_64'",
 ]
 [project.urls]
 Homepage = "https://opentrafficcam.org/"
