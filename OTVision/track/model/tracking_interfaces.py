@@ -88,6 +88,12 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
         self._discarded_tracks: set[TrackId] = set()
 
+    def _reset(self) -> None:
+        """Forget all track state. Track IDs can be reused by the next group."""
+        self._unfinished_containers = list()
+        self._merged_last_track_frame = dict()
+        self._discarded_tracks = set()
+
     @abstractmethod
     def _get_last_track_frames(self, container: C) -> dict[TrackId, FrameNo]:
         """Mapping from TrackId to frame no of last detection occurrence.
@@ -184,6 +190,8 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
 
     async def track_and_finish(self, containers: AsyncIterator[C]) -> AsyncIterator[F]:
         # TODO template method to obtain containers?
+        # A group that was aborted must not leak its state into this one.
+        self._reset()
 
         async for container in containers:
             # if track is observed in current iteration, update its last observed frame
@@ -222,9 +230,7 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         self._unfinished_containers = list()
 
         finished_containers = self._finish_containers(remaining_containers)
-        # Track IDs can be reused by the next group.
-        self._merged_last_track_frame = dict()
-        self._discarded_tracks = set()
+        self._reset()
         for finished_container in finished_containers:
             yield finished_container
 

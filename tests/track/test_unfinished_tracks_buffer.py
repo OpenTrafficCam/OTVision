@@ -155,3 +155,29 @@ async def test_discarded_track_id_can_be_reused_in_next_group(
     ]
     assert not discarded_after_first_group
     assert not buffer._discarded_tracks
+
+
+@pytest.mark.asyncio
+async def test_aborted_group_does_not_leak_state_into_next_group() -> None:
+    buffer = UnfinishedChunksBuffer(Mock(spec=GroupedFilesTracker), False)
+    # Track 2 keeps the chunk pending while track 1 is marked as discarded.
+    pending = _tracked_frame(1, (2, True), discarded=(1,))
+
+    async def aborted_group() -> AsyncIterator[TrackedChunk]:
+        yield _tracked_chunk(pending, is_last_chunk=False)
+        raise RuntimeError("reading the next file failed")
+
+    with pytest.raises(RuntimeError):
+        _ = [chunk async for chunk in buffer.track_and_finish(aborted_group())]
+
+    restarted = _tracked_frame(1, (1, True))
+    next_group = [
+        chunk
+        async for chunk in buffer.track_and_finish(
+            _stream(_tracked_chunk(restarted, is_last_chunk=True, frame_group_id=2))
+        )
+    ]
+    assert [chunk.frames[0].no for chunk in next_group] == [1]
+    assert next_group[0].frames[0].detections == [
+        restarted.detections[0].as_last_detection(is_discarded=False)
+    ]
