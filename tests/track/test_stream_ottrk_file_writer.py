@@ -6,10 +6,14 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from OTVision.application.buffer import Buffer
-from OTVision.application.config import Config, TrackConfig
+from OTVision.application.config import Config, TrackConfig, _TrackIouConfig
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.application.otvision_save_path_provider import OtvisionSavePathProvider
-from OTVision.application.track.ottrk import OttrkBuilder, OttrkBuilderConfig
+from OTVision.application.track.ottrk import (
+    OttrkBuilder,
+    OttrkBuilderConfig,
+    TrackerMetadata,
+)
 from OTVision.application.track.tracking_run_id import GetCurrentTrackingRunId
 from OTVision.detect.otdet import OtdetBuilderConfig
 from OTVision.detect.otdet_file_writer import OtdetFileWrittenEvent
@@ -32,6 +36,14 @@ TRACK_ID_1 = TrackId(1)
 TRACK_ID_2 = TrackId(2)
 TRACK_ID_3 = TrackId(3)
 TRACK_ID_4 = TrackId(4)
+EXPECTED_TRACKER_METADATA: TrackerMetadata = {
+    "name": "IOU",
+    "sigma_l": 0.3,
+    "sigma_h": 0.7,
+    "sigma_iou": 0.5,
+    "t_min": 5,
+    "t_miss_max": 10,
+}
 
 
 class TestStreamOttrkFileWriter:
@@ -246,7 +258,6 @@ class TestStreamOttrkFileWriter:
         )
         given.builder.set_config.assert_called_once_with(
             create_expected_builder_config(
-                track_config=given.config.track,
                 otdet_builder_config=event.otdet_builder_config,
                 number_of_frames=event.number_of_frames,
                 tracking_run_id=TEST_TRACKING_RUN_ID,
@@ -274,11 +285,9 @@ class TestStreamOttrkFileWriter:
         assert isinstance(call_args, OttrkBuilderConfig)
         assert call_args.otdet_builder_config == event.otdet_builder_config
         assert call_args.number_of_frames == event.number_of_frames
-        assert call_args.sigma_l == given.config.track.sigma_l
-        assert call_args.sigma_h == given.config.track.sigma_h
-        assert call_args.sigma_iou == given.config.track.sigma_iou
-        assert call_args.t_min == given.config.track.t_min
-        assert call_args.t_miss_max == given.config.track.t_miss_max
+        assert list(call_args.tracker_metadata.items()) == list(
+            EXPECTED_TRACKER_METADATA.items()
+        )
         assert call_args.tracking_run_id == TEST_TRACKING_RUN_ID
         assert call_args.frame_group == STREAMING_FRAME_GROUP_ID
 
@@ -333,7 +342,7 @@ class Given:
     get_current_config: Mock
     get_current_tracking_run_id: Mock
     save_path_provider: Mock
-    config: Mock
+    config: Config
     subject: AsyncMock
 
 
@@ -348,16 +357,13 @@ def create_given() -> Given:
     get_current_tracking_run_id = Mock(spec=GetCurrentTrackingRunId)
     save_path_provider = Mock(spec=OtvisionSavePathProvider)
 
-    # Mock configuration
-    config = Mock(spec=Config)
-    track_config = Mock(spec=TrackConfig)
-    track_config.sigma_l = 0.3
-    track_config.sigma_h = 0.7
-    track_config.sigma_iou = 0.5
-    track_config.t_min = 5
-    track_config.t_miss_max = 10
-    config.track = track_config
-    config.filetypes.track = "ottrk"
+    config = Config(
+        track=TrackConfig(
+            iou=_TrackIouConfig(
+                sigma_l=0.3, sigma_h=0.7, sigma_iou=0.5, t_min=5, t_miss_max=10
+            )
+        )
+    )
 
     # Configure mocks
     get_current_config.get.return_value = config
@@ -410,7 +416,6 @@ def create_otdet_file_written_event() -> Mock:
 
 
 def create_expected_builder_config(
-    track_config: TrackConfig,
     otdet_builder_config: OtdetBuilderConfig,
     number_of_frames: int,
     tracking_run_id: str,
@@ -418,11 +423,7 @@ def create_expected_builder_config(
     return OttrkBuilderConfig(
         otdet_builder_config=otdet_builder_config,
         number_of_frames=number_of_frames,
-        sigma_l=track_config.sigma_l,
-        sigma_h=track_config.sigma_h,
-        sigma_iou=track_config.sigma_iou,
-        t_min=track_config.t_min,
-        t_miss_max=track_config.t_miss_max,
+        tracker_metadata=EXPECTED_TRACKER_METADATA,
         tracking_run_id=tracking_run_id,
         frame_group=STREAMING_FRAME_GROUP_ID,
     )

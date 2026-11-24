@@ -6,10 +6,12 @@ from unittest.mock import Mock
 import pytest
 
 from OTVision import dataformat, version
+from OTVision.application.config import TrackConfig, _TrackIouConfig
 from OTVision.application.track.ottrk import (
     OttrkBuilder,
     OttrkBuilderConfig,
     OttrkBuilderError,
+    TrackerMetadata,
     create_tracker_metadata,
 )
 from OTVision.detect.otdet import (
@@ -31,6 +33,24 @@ FRAME_1_OCCURRENCE = RECORDED_START_DATE
 FRAME_2_OCCURRENCE = FRAME_1_OCCURRENCE + timedelta(seconds=1)
 SOURCE = "test_video.mp4"
 OUTPUT = "my_output"
+TRACKER_METADATA: TrackerMetadata = {"name": "Example", "threshold": 0.3}
+
+
+def test_create_tracker_metadata_preserves_iou_block() -> None:
+    config = TrackConfig(
+        iou=_TrackIouConfig(
+            sigma_l=0.3, sigma_h=0.7, sigma_iou=0.5, t_min=5, t_miss_max=10
+        )
+    )
+
+    assert list(create_tracker_metadata(config).items()) == [
+        ("name", "IOU"),
+        ("sigma_l", 0.3),
+        ("sigma_h", 0.7),
+        ("sigma_iou", 0.5),
+        ("t_min", 5),
+        ("t_miss_max", 10),
+    ]
 
 
 class TestOttrkBuilder:
@@ -274,11 +294,7 @@ def create_ottrk_builder_config(
     return OttrkBuilderConfig(
         otdet_builder_config=otdet_builder_config,
         number_of_frames=100,
-        sigma_l=0.3,
-        sigma_h=0.7,
-        sigma_iou=0.5,
-        t_min=5,
-        t_miss_max=10,
+        tracker_metadata=TRACKER_METADATA,
         tracking_run_id="test_run_001",
         frame_group=1,
     )
@@ -341,13 +357,7 @@ def create_expected_track_metadata(
             dataformat.OTVISION_VERSION: version.otvision_version(),
             dataformat.FIRST_TRACKED_VIDEO_START: start_date.timestamp(),
             dataformat.LAST_TRACKED_VIDEO_END: end_date.timestamp(),
-            dataformat.TRACKER: create_tracker_metadata(
-                config.sigma_l,
-                config.sigma_h,
-                config.sigma_iou,
-                config.t_min,
-                config.t_miss_max,
-            ),
+            dataformat.TRACKER: TRACKER_METADATA,
             dataformat.TRACKING_RUN_ID: config.tracking_run_id,
             dataformat.FRAME_GROUP: config.frame_group,
         },
