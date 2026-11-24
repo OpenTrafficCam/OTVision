@@ -164,6 +164,23 @@ class TestTrackCLI:
         assert updated.track.tracker_type == "iou"
         assert updated.track.bot_sort.t_min == 12
 
+    def test_configured_tracker_is_kept_and_checked_without_cli_selection(
+        self, tmp_path: Path
+    ) -> None:
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text("TRACK:\n  TRACKER_TYPE: iou\n")
+        builder = TrackBuilder(argv=["--config", str(config_file)])
+        cli_args = builder.get_track_cli_args.get()
+        config = builder.get_config.get(cli_args)
+        # Valid YAML can only contain iou, so a different in-memory value shows
+        # that the configured value survives the override step.
+        config = replace(config, track=replace(config.track, tracker_type="unknown"))
+
+        with pytest.raises(
+            InvalidOtvisionConfigError, match=r"'unknown'.*options: iou"
+        ):
+            builder.update_track_config_with_cli_args.update(config)
+
     def test_reject_invalid_tracker_cli_selection(
         self, track_cli: Callable, tmp_path: Path
     ) -> None:
