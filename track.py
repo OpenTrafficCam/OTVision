@@ -30,7 +30,6 @@ def main(argv: list[str] | None = None) -> None:
     config = builder.update_track_config_with_cli_args.update(
         config=builder.get_config.get(cli_args)
     )
-    builder.config_parser.validate_track_bot_sort_config(config.track.bot_sort)
     log = builder.configure_logger.configure(
         config=config,
         log_file=cli_args.logfile,

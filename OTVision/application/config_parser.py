@@ -276,6 +276,8 @@ class ConfigParser:
         )
 
     def _parse_track_bot_sort_config(self, data: object) -> _TrackBotSortConfig:
+        if data is None:
+            data = {}
         if not isinstance(data, Mapping):
             raise InvalidOtvisionConfigError("TRACK.BOT_SORT must be a mapping.")
 

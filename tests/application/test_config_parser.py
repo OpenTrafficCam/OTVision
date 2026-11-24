@@ -97,7 +97,9 @@ class TestConfigParser:
 
 
 class TestBotSortConfig:
-    @pytest.mark.parametrize("track", [{}, {"BOT_SORT": {}}, {"IOU": {"T_MIN": 2}}])
+    @pytest.mark.parametrize(
+        "track", [{}, {"BOT_SORT": {}}, {"BOT_SORT": None}, {"IOU": {"T_MIN": 2}}]
+    )
     def test_missing_block_or_keys_use_defaults(self, track: dict) -> None:
         parser = ConfigParser(YamlDeserializer())
 
@@ -148,7 +150,7 @@ class TestBotSortConfig:
         with pytest.raises(InvalidOtvisionConfigError, match=key):
             parser.parse_from_dict({"TRACK": {"BOT_SORT": {key: False}}})
 
-    @pytest.mark.parametrize("block", [None, False, [], "settings"])
+    @pytest.mark.parametrize("block", [False, [], "settings"])
     def test_reject_bot_sort_block_that_is_not_a_mapping(self, block: object) -> None:
         parser = ConfigParser(YamlDeserializer())
 
