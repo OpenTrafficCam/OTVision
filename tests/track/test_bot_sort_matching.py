@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from OTVision.track.tracker.botsort.matching import (
+from OTVision.track.tracker.bot_sort.matching import (
     fuse_score,
     iou_distance,
     linear_assignment,

@@ -74,8 +74,12 @@ def linear_assignment(
     """Return matched (track, detection) pairs and unmatched indices for each side.
 
     Rows index tracks and columns index detections. Each unmatched item costs
-    half the threshold, so a pair at exactly the threshold ties with leaving
-    both items unmatched.
+    half the threshold, so a pair is only matched if that is cheaper than
+    leaving both of its items unmatched.
+
+    A pair whose cost equals the threshold exactly costs the same either way.
+    Which of the two the solver returns is not defined, as with the `lap`
+    solver the reference implementations use.
     """
     track_count, detection_count = costs.shape
     if costs.size == 0:
