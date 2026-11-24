@@ -233,6 +233,8 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
 
         finished_containers = self._finish_containers(remaining_containers)
         self._merged_last_track_frame = dict()
+        # Track ids restart with the next stream, so no discarded id may remain.
+        self._discarded_tracks = set()
         for finished_container in finished_containers:
             yield finished_container
 
