@@ -222,7 +222,9 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         self._unfinished_containers = list()
 
         finished_containers = self._finish_containers(remaining_containers)
+        # Track IDs can be reused by the next group.
         self._merged_last_track_frame = dict()
+        self._discarded_tracks = set()
         for finished_container in finished_containers:
             yield finished_container
 
@@ -240,9 +242,14 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             self._finish(c, is_last, discarded, keep) for c in containers
         ]
 
-        # todo check if there are edge cases where track ids in merged_last_track_frame
-        # have frame no below containers last frame,
-        # but might appear in following containers
+        # Track IDs are unique within a group. Callers remove this batch from the
+        # buffer first, so any remaining observation needs to keep its metadata,
+        # even if the track already finished or was discarded.
+        buffered_track_ids = {
+            track_id
+            for container, _ in self._unfinished_containers
+            for track_id in self._get_observed_tracks(container)
+        }
         last_frame_of_container = max(
             self._get_last_frame_of_container(c) for c in containers
         )
@@ -250,15 +257,12 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             track_id
             for track_id, frame_no in self._merged_last_track_frame.items()
             if frame_no <= last_frame_of_container
+            and track_id not in buffered_track_ids
         ]
 
-        self._merged_last_track_frame = {
-            track_id: frame_no
-            for track_id, frame_no in self._merged_last_track_frame.items()
-            if track_id not in ids_to_delete
-        }
+        for track_id in ids_to_delete:
+            del self._merged_last_track_frame[track_id]
         self._discarded_tracks.difference_update(ids_to_delete)
-        # self._finished_tracks.difference_update(ids_to_delete)
 
         return finished_containers
 
