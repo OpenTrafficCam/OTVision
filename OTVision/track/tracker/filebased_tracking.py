@@ -39,6 +39,9 @@ class ChunkBasedTracker(Tracker):
     ) -> TrackedFrame:
         return self._tracker.track_frame(frames, id_generator)
 
+    def reset(self) -> None:
+        self._tracker.reset()
+
     async def track_chunk(
         self,
         chunk: FrameChunk,
@@ -98,6 +101,7 @@ class GroupedFilesTracker(ChunkBasedTracker):
 
         frame_offset = 0  # frame no starts a 0 for each frame group
         id_generator = self._id_generator_of(group)  # new id generator per group
+        self.reset()  # tracks must not continue from the previous group
         file_stream = peekable(
             tqdm(
                 group.files,

@@ -169,6 +169,9 @@ class IouTracker(Tracker):
     def t_miss_max(self) -> int:
         return self.config.iou.t_miss_max
 
+    def reset(self) -> None:
+        self.active_tracks = []
+
     def track_frame(
         self, frame: DetectedFrame, id_generator: IdGenerator
     ) -> TrackedFrame:

@@ -1,5 +1,6 @@
 import os
 import shutil
+from collections import Counter
 from functools import cached_property
 from pathlib import Path
 from unittest.mock import Mock
@@ -174,6 +175,36 @@ async def test_track_pass(
         assert json_b == json_a
     assert not different_files
     assert not irregular_files
+
+
+@pytest.mark.asyncio
+async def test_track_starts_fresh_tracks_in_each_frame_group(
+    test_track_tmp_dir: Path,
+) -> None:
+    """Tracks must not leak from one frame group into the next.
+
+    The two .otdet files of the `default` case form two separate frame groups.
+    Every detection in the first frame of a group must start a new track, and no
+    track id may occur twice in that frame.
+    """
+    case_dir = test_track_tmp_dir.relative_to(os.getcwd()) / "default"
+    otvision_track = create_otvision_track(paths=[case_dir], overwrite=True)
+    await otvision_track.start()
+
+    extension = CONFIG["DEFAULT_FILETYPE"]["TRACK"]
+    tracks_files = sorted(case_dir.glob(f"*{extension}"))
+    assert len(tracks_files) == 2
+
+    for tracks_file in tracks_files:
+        detections = read_json(tracks_file)["data"]["detections"]
+        first_frame_no = min(d["frame"] for d in detections)
+        first_frame = [d for d in detections if d["frame"] == first_frame_no]
+
+        carried_over = sorted(d["track-id"] for d in first_frame if not d["first"])
+        id_counts = Counter(d["track-id"] for d in first_frame)
+        duplicate_ids = sorted(tid for tid, n in id_counts.items() if n > 1)
+        assert carried_over == [], f"{tracks_file.name}: tracks from earlier group"
+        assert duplicate_ids == [], f"{tracks_file.name}: duplicate track ids"
 
 
 @pytest.mark.parametrize("overwrite", [(True), (False)])
