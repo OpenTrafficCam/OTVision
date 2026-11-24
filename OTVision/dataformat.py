@@ -61,6 +61,11 @@ SIGMA_H: str = "sigma_h"
 SIGMA_IOU: str = "sigma_iou"
 T_MIN: str = "t_min"
 T_MISS_MAX: str = "t_miss_max"
+TRACK_HIGH_THRESH: str = "track_high_thresh"
+TRACK_LOW_THRESH: str = "track_low_thresh"
+NEW_TRACK_THRESH: str = "new_track_thresh"
+MATCH_THRESH: str = "match_thresh"
+FUSE_SCORE: str = "fuse_score"
 
 # iou
 BBOXES: str = "bboxes"

@@ -41,7 +41,8 @@ class ArgparseTrackCliParser(TrackCliParser):
         )
         self._parser.add_argument(
             "--tracker",
-            help=f"Select the tracker ({', '.join(TRACKER_TYPES)}).",
+            choices=TRACKER_TYPES,
+            help="Select the tracker.",
         )
         self._parser.add_argument(
             "--sigma-l",

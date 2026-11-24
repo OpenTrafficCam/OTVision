@@ -188,15 +188,18 @@ class TestTrackCLI:
             builder.update_track_config_with_cli_args.update(config)
 
     def test_reject_invalid_tracker_cli_selection(
-        self, track_cli: Callable, tmp_path: Path
+        self, track_cli: Callable, tmp_path: Path, capsys: pytest.CaptureFixture
     ) -> None:
         config_file = tmp_path / "user_config.otvision.yaml"
         config_file.write_text("TRACK:\n  TRACKER_TYPE: iou\n")
 
-        with pytest.raises(
-            InvalidOtvisionConfigError, match=r"'unknown'.*options: iou, botsort"
-        ):
+        with pytest.raises(SystemExit) as error:
             track_cli(argv=["--config", str(config_file), "--tracker", "unknown"])
+
+        assert error.value.code == 2
+        message = capsys.readouterr().err
+        assert "argument --tracker: invalid choice: 'unknown'" in message
+        assert "iou" in message and "botsort" in message
 
     @pytest.mark.parametrize("from_cli", [True, False], ids=["cli", "yaml"])
     @pytest.mark.parametrize(
