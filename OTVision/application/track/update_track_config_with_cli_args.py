@@ -39,6 +39,7 @@ class UpdateTrackConfigWithCliArgs:
             run_chained=track_config.run_chained,
             iou=iou_config,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
+            bot_sort=track_config.bot_sort,
         )
 
     def _update_log_config(self, config: Config, cli_args: TrackCliArgs) -> _LogConfig:

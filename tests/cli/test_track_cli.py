@@ -18,7 +18,7 @@ from OTVision.application.config import (
     TrackConfig,
     _TrackIouConfig,
 )
-from OTVision.application.config_parser import ConfigParser
+from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
 from OTVision.domain.cli import CliParseError
 from OTVision.plugin.yaml_serialization import YamlDeserializer
 
@@ -143,6 +143,37 @@ def track_cli() -> Callable:
 
 
 class TestTrackCLI:
+    @patch("track.TrackBuilder.update_current_config")
+    @patch("track.TrackBuilder.build")
+    def test_iou_cli_override_preserves_yaml_bot_sort_config(
+        self,
+        mock_build: Mock,
+        mock_update_current_config: Mock,
+        track_cli: Callable,
+        tmp_path: Path,
+    ) -> None:
+        mock_build.return_value.start = AsyncMock()
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text("TRACK:\n  BOT_SORT:\n    T_MIN: 12\n")
+
+        track_cli(
+            argv=["--config", str(config_file), "--t-min", "3", LOGFILE_OVERWRITE_CMD]
+        )
+
+        config = mock_update_current_config.update.call_args.kwargs["config"]
+        assert config.track.t_min == 3
+        assert config.track.bot_sort.t_min == 12
+        assert config.track.bot_sort.t_miss_max == 60
+
+    def test_reject_invalid_yaml_bot_sort_config(
+        self, track_cli: Callable, tmp_path: Path
+    ) -> None:
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text("TRACK:\n  BOT_SORT:\n    MATCH_THRESH: 1.1\n")
+
+        with pytest.raises(InvalidOtvisionConfigError, match="MATCH_THRESH"):
+            track_cli(argv=["--config", str(config_file), LOGFILE_OVERWRITE_CMD])
+
     @pytest.mark.parametrize(
         argnames="test_data",
         argvalues=[
