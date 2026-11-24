@@ -184,7 +184,7 @@ def test_update_bot_sort_parity(case: str, test_data_dir: Path) -> None:
     )
     tracker = BOTSORT(args=args, frame_rate=30)
 
-    rows = []
+    rows: list[list[int | None]] = []
     for frame in _frames(case, test_data_dir):
         detections = frame.detections
         # Return the input index in the class column even when confidence
@@ -201,10 +201,18 @@ def test_update_bot_sort_parity(case: str, test_data_dir: Path) -> None:
             track_id, index = int(track[4]), int(track[6])
             assert assignments[index] is None
             assignments[index] = track_id
-        rows.append(json.dumps(assignments, separators=(",", ":")))
+        rows.append(assignments)
 
     directory = test_data_dir / "bot_sort_parity"
     directory.mkdir(exist_ok=True)
-    (directory / f"{case}.json").write_text(
-        "[\n  " + ",\n  ".join(rows) + "\n]\n", encoding="utf-8"
-    )
+    (directory / f"{case}.json").write_text(_format(rows), encoding="utf-8")
+
+
+def _format(rows: list[list[int | None]]) -> str:
+    """Write the rows the way the repository's JSON formatter (prettier) does."""
+    lines = [json.dumps(row) for row in rows]
+    one_line = "[" + ", ".join(lines) + "]"
+    always_broken = len(rows) > 1 and all(len(row) > 1 for row in rows)
+    if not always_broken and len(one_line) <= 80:
+        return one_line + "\n"
+    return "[\n    " + ",\n    ".join(lines) + "\n]\n"
