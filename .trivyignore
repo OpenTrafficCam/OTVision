@@ -7,3 +7,5 @@ CVE-2025-2999 exp:2026-12-31
 CVE-2025-3730 exp:2026-12-31
 CVE-2025-3000 exp:2026-12-31
 CVE-2025-3001 exp:2026-12-31
+# torch 2.7.1: fixed only in torch 2.10, same upgrade path as above
+CVE-2026-24747 exp:2026-12-31
