@@ -216,7 +216,7 @@ def test_reads_current_config_while_tracking() -> None:
     assert expired.finished_tracks == set()
 
 
-def test_reports_a_new_track_ended_by_duplicate_removal() -> None:
+def test_new_track_ended_by_duplicate_removal_is_never_reported() -> None:
     settings = replace(TrackConfig.bot_sort, match_thresh=0.05, fuse_score=False)
     tracker = BotSortTracker(
         GetCurrentConfig(CurrentConfig(Config(track=TrackConfig(bot_sort=settings))))
@@ -230,7 +230,6 @@ def test_reports_a_new_track_ended_by_duplicate_removal() -> None:
     revived = tracker.track_frame(detected_frame(3, car), ids)
 
     assert list(duplicate.detections) == []
-    assert duplicate.discarded_tracks == {102}
-    assert duplicate.finished_tracks == set()
+    assert duplicate.finished_tracks == duplicate.discarded_tracks == set()
     assert list(revived.detections) == [car.of_track(101, False)]
     assert revived.finished_tracks == revived.discarded_tracks == set()

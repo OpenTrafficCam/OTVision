@@ -210,7 +210,11 @@ class BotSortTracker(Tracker):
             track for track in self._unconfirmed if track.id not in duplicates
         ]
         self._lost = [track for track in self._lost if track.id not in duplicates]
-        ended = expired + list(duplicates.values())
+        # A track born in this frame has only its suppressed first detection, so
+        # its ID was never emitted and must not be reported.
+        ended = expired + [
+            track for track in duplicates.values() if track.first_frame != self._frame
+        ]
         finished = {track.id for track in ended if track.span >= config.t_min}
         discarded_ids = {track.id for track in ended if track.id not in finished}
         discarded_ids.update(track.id for track in discarded)

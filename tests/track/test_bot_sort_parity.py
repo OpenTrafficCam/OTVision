@@ -172,6 +172,9 @@ def test_update_bot_sort_parity(case: str, test_data_dir: Path) -> None:
         fuse_score=settings.fuse_score,
         # At 30 fps, an isolated object revived after 60 empty frames with
         # buffer 59 and started a different ID after 61. Buffer 60 revived at 61.
+        # Known difference, not covered by fixtures: a track the oracle revives
+        # after exactly T_MISS_MAX missed frames gets a new ID from the oracle
+        # the next time it is lost, even for one frame. OTVision keeps the ID.
         track_buffer=settings.t_miss_max - 1,
         gmc_method="none",
         proximity_thresh=0.5,
