@@ -4,10 +4,12 @@ from OTVision.application.config_parser import validate_tracker_type
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.domain.frame import DetectedFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
+from OTVision.track.tracker.bot_sort.tracker import BotSortTracker
 from OTVision.track.tracker.tracker_plugin_iou import IouTracker
 
 _TRACKER_FACTORIES: dict[str, Callable[[GetCurrentConfig], Tracker]] = {
     "iou": IouTracker,
+    "botsort": BotSortTracker,
 }
 
 

@@ -38,6 +38,43 @@ def test_create_tracker_resolves_type_on_first_use(
     assert tracked.observed_tracks == {1}
 
 
+def test_create_tracker_selects_bot_sort_on_first_use(
+    detected_frame: DetectedFrame,
+) -> None:
+    current = CurrentConfig(Config(track=TrackConfig(tracker_type="botsort")))
+    tracker = create_tracker(GetCurrentConfig(current))
+    frame = replace(
+        detected_frame, detections=[replace(detected_frame.detections[0], conf=0.25)]
+    )
+
+    assert tracker.track_frame(frame, count(1)).observed_tracks == {1}
+
+
+def test_tracker_switches_type_and_starts_fresh_on_reset(
+    detected_frame: DetectedFrame,
+) -> None:
+    current = CurrentConfig(Config())
+    tracker = create_tracker(GetCurrentConfig(current))
+    ids = count(1)
+    tracker.reset()
+    assert tracker.track_frame(detected_frame, ids).observed_tracks == {1}
+
+    current.update(Config(track=TrackConfig(tracker_type="botsort")))
+    assert tracker.track_frame(replace(detected_frame, no=2), ids).observed_tracks == {
+        1
+    }
+
+    tracker.reset()
+    frame = replace(
+        detected_frame, detections=[replace(detected_frame.detections[0], conf=0.25)]
+    )
+    assert tracker.track_frame(frame, ids).observed_tracks == {2}
+
+    current.update(Config())
+    tracker.reset()
+    assert tracker.track_frame(detected_frame, ids).observed_tracks == {3}
+
+
 def test_reset_resolves_current_type_and_resets_the_tracker(
     detected_frame: DetectedFrame,
 ) -> None:
@@ -47,7 +84,9 @@ def test_reset_resolves_current_type_and_resets_the_tracker(
     first = tracker.track_frame(detected_frame, ids)
     current.update(Config(track=TrackConfig(tracker_type="unknown")))
 
-    with pytest.raises(InvalidOtvisionConfigError, match=r"'unknown'.*options: iou"):
+    with pytest.raises(
+        InvalidOtvisionConfigError, match=r"'unknown'.*options: iou, botsort"
+    ):
         tracker.reset()
 
     current.update(Config())

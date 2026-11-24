@@ -55,7 +55,7 @@ TRACK_HIGH_THRESH = "TRACK_HIGH_THRESH"
 TRACK_LOW_THRESH = "TRACK_LOW_THRESH"
 TRACK = "TRACK"
 TRACKER_TYPE = "TRACKER_TYPE"
-TRACKER_TYPES = ("iou",)
+TRACKER_TYPES = ("iou", "botsort")
 TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
@@ -391,11 +391,15 @@ class TrackConfig:
 
     @property
     def t_min(self) -> int:
-        return self.iou.t_min
+        return self.bot_sort.t_min if self.tracker_type == "botsort" else self.iou.t_min
 
     @property
     def t_miss_max(self) -> int:
-        return self.iou.t_miss_max
+        return (
+            self.bot_sort.t_miss_max
+            if self.tracker_type == "botsort"
+            else self.iou.t_miss_max
+        )
 
     paths: list[str] = field(default_factory=list)
     run_chained: bool = True

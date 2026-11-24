@@ -181,6 +181,12 @@ def create_ottrk_metadata_entry(
 
 
 def create_tracker_metadata(config: TrackConfig) -> TrackerMetadata:
+    if config.tracker_type == "botsort":
+        return {
+            dataformat.NAME: "BoT-SORT",
+            **{key.lower(): value for key, value in config.bot_sort.to_dict().items()},
+        }
+
     iou = config.iou
     return {
         dataformat.NAME: "IOU",

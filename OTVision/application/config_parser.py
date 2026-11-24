@@ -400,7 +400,8 @@ class ConfigParser:
     def validate_config(self, config: Config) -> None:
         self.validate_flush_buffer_support_track_lifecycle(config)
 
-    def validate_flush_buffer_support_track_lifecycle(self, config: Config) -> None:
+    @staticmethod
+    def validate_flush_buffer_support_track_lifecycle(config: Config) -> None:
         """Validate that the flush buffer size supports complete track lifecycle.
 
         In streaming mode, the flush buffer size must be larger than the tracking

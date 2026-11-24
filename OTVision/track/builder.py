@@ -99,7 +99,12 @@ class TrackBuilder:
 
     @cached_property
     def unfinished_chunks_buffer(self) -> UnfinishedChunksBuffer:
-        return UnfinishedChunksBuffer(tracker=self.tracker, keep_discarded=True)
+        return UnfinishedChunksBuffer(
+            tracker=self.tracker,
+            keep_discarded=lambda: (
+                self.get_current_config.get().track.tracker_type == "iou"
+            ),
+        )
 
     @cached_property
     def track_exporter(self) -> FinishedTracksExporter:

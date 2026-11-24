@@ -8,11 +8,15 @@ from unittest.mock import Mock
 import pytest
 
 from OTVision import version
-from OTVision.application.config import TrackConfig, _TrackIouConfig
+from OTVision.application.config import (
+    TrackConfig,
+    _TrackBotSortConfig,
+    _TrackIouConfig,
+)
 from OTVision.application.config_parser import InvalidOtvisionConfigError
 from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.config import CONFIG
-from OTVision.helpers.files import read_json
+from OTVision.helpers.files import read_json, write_json
 from OTVision.track.builder import TrackBuilder
 from OTVision.track.track import OtvisionTrack
 from tests.conftest import YieldFixture
@@ -25,6 +29,7 @@ SIGMA_IOU = CONFIG["TRACK"]["IOU"]["SIGMA_IOU"]
 T_MIN = CONFIG["TRACK"]["IOU"]["T_MIN"]
 T_MISS_MAX = CONFIG["TRACK"]["IOU"]["T_MISS_MAX"]
 
+ottrack_version = version.ottrack_version
 version.otvision_version = Mock(return_value="ignored")
 version.ottrack_version = Mock(return_value="ignored")
 version.otdet_version = Mock(return_value="ignored")
@@ -208,6 +213,117 @@ async def test_track_starts_fresh_tracks_in_each_frame_group(
         assert duplicate_ids == [], f"{tracks_file.name}: duplicate track ids"
 
 
+@pytest.fixture
+def bot_sort_config(
+    test_track_tmp_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> TrackConfig:
+    monkeypatch.setattr(version, "ottrack_version", ottrack_version)
+    input_dir = test_track_tmp_dir.relative_to(os.getcwd()) / "default"
+    return TrackConfig(
+        paths=[str(input_dir)],
+        tracker_type="botsort",
+        bot_sort=_TrackBotSortConfig(
+            t_min=7,
+            t_miss_max=20,
+            track_high_thresh=0.3,
+            track_low_thresh=0.15,
+            new_track_thresh=0.35,
+            match_thresh=0.85,
+            fuse_score=False,
+        ),
+    )
+
+
+@pytest.mark.skipif(
+    os.environ.get("UPDATE_BOT_SORT_FIXTURES") != "1",
+    reason="Set UPDATE_BOT_SORT_FIXTURES=1 to update the BoT-SORT reference files",
+)
+@pytest.mark.asyncio
+async def test_update_bot_sort_test_data(
+    test_track_dir: Path, bot_sort_config: TrackConfig
+) -> None:
+    builder = MockTrackBuilder()
+    builder.update_current_track_config.update(bot_sort_config)
+    await builder.build().start()
+
+    reference_dir = test_track_dir / "botsort"
+    reference_dir.mkdir(exist_ok=True)
+    for track_file in Path(bot_sort_config.paths[0]).glob("*.ottrk"):
+        shutil.copyfile(track_file, reference_dir / track_file.name)
+
+
+@pytest.mark.asyncio
+async def test_track_bot_sort_matches_reference_across_frame_groups(
+    test_track_dir: Path, bot_sort_config: TrackConfig
+) -> None:
+    builder = MockTrackBuilder()
+    builder.update_current_track_config.update(bot_sort_config)
+    await builder.build().start()
+
+    track_files = sorted(Path(bot_sort_config.paths[0]).glob("*.ottrk"))
+    assert len(track_files) == 2
+    expected_tracker = {
+        "name": "BoT-SORT",
+        "t_min": 7,
+        "t_miss_max": 20,
+        "track_high_thresh": 0.3,
+        "track_low_thresh": 0.15,
+        "new_track_thresh": 0.35,
+        "match_thresh": 0.85,
+        "fuse_score": False,
+    }
+    for group, track_file in enumerate(track_files):
+        result = read_json(track_file)
+        metadata = result["metadata"]
+        assert metadata["ottrk_version"] == "1.1"
+        assert metadata["tracking"]["tracker"] == expected_tracker
+        assert metadata["tracking"]["frame_group"] == group
+
+        first_frame = [d for d in result["data"]["detections"] if d["frame"] == 1]
+        assert first_frame
+        assert all(d["first"] for d in first_frame)
+        assert len({d["track-id"] for d in first_frame}) == len(first_frame)
+        assert result == read_json(test_track_dir / "botsort" / track_file.name)
+
+
+@pytest.mark.asyncio
+async def test_discarded_tracks_follow_current_tracker_on_reused_builder(
+    test_track_dir: Path, tmp_path: Path
+) -> None:
+    original = sorted((test_track_dir / "default").glob("*.otdet"))[0]
+    detections_file = tmp_path / original.name
+    detections = read_json(original)
+    frames = detections["data"]
+    car = dict(frames["1"]["detections"][0], x=100)
+    false_positive = dict(car, x=300)
+    detections["data"] = {
+        "1": dict(frames["1"], detections=[car]),
+        "2": dict(frames["2"], detections=[car, false_positive]),
+        "3": dict(frames["3"], detections=[car]),
+    }
+    write_json(detections, detections_file, filetype=".otdet")
+
+    builder = MockTrackBuilder()
+    tracking = builder.build()
+    for tracker_type, tracker_name, expected in [
+        ("iou", "IOU", [(1, 100), (2, 100), (2, 300), (3, 100)]),
+        ("botsort", "BoT-SORT", [(1, 100), (2, 100), (3, 100)]),
+        ("iou", "IOU", [(1, 100), (2, 100), (2, 300), (3, 100)]),
+    ]:
+        builder.update_current_track_config.update(
+            TrackConfig(
+                paths=[str(detections_file)],
+                iou=_TrackIouConfig(t_miss_max=0),
+                tracker_type=tracker_type,
+            )
+        )
+        await tracking.start()
+
+        result = read_json(detections_file.with_suffix(".ottrk"))
+        assert [(d["frame"], d["x"]) for d in result["data"]["detections"]] == expected
+        assert result["metadata"]["tracking"]["tracker"]["name"] == tracker_name
+
+
 @pytest.mark.asyncio
 async def test_track_builder_resolves_tracker_type_when_tracking_starts(
     test_track_tmp_dir: Path,
@@ -218,7 +334,9 @@ async def test_track_builder_resolves_tracker_type_when_tracking_starts(
         TrackConfig(paths=[str(test_track_tmp_dir / "default")], tracker_type="unknown")
     )
 
-    with pytest.raises(InvalidOtvisionConfigError, match=r"'unknown'.*options: iou"):
+    with pytest.raises(
+        InvalidOtvisionConfigError, match=r"'unknown'.*options: iou, botsort"
+    ):
         await tracker.start()
 
 

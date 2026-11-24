@@ -152,7 +152,7 @@ class UnfinishedChunksBuffer(UnfinishedTracksBuffer[TrackedChunk, FinishedChunk]
     def __init__(
         self,
         tracker: GroupedFilesTracker,
-        keep_discarded: bool = False,
+        keep_discarded: bool | Callable[[], bool] = False,
     ) -> None:
         super().__init__(keep_discarded)
         self.tracker = tracker
