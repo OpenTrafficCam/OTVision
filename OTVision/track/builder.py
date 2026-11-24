@@ -30,11 +30,11 @@ from OTVision.track.parser.frame_group_parser_plugins import (
     TimeThresholdFrameGroupParser,
 )
 from OTVision.track.track import OtvisionTrack
+from OTVision.track.tracker.configured_tracker import create_tracker
 from OTVision.track.tracker.filebased_tracking import (
     GroupedFilesTracker,
     UnfinishedChunksBuffer,
 )
-from OTVision.track.tracker.tracker_plugin_iou import IouTracker
 
 
 class TrackBuilder:
@@ -90,9 +90,8 @@ class TrackBuilder:
 
     @cached_property
     def tracker(self) -> GroupedFilesTracker:
-        tracker = IouTracker(get_current_config=self.get_current_config)
         return GroupedFilesTracker(
-            tracker=tracker,
+            tracker=create_tracker(self.get_current_config),
             chunk_parser=self.chunk_parser,
             frame_group_parser=self.frame_group_parser,
             id_generator_factory=lambda _: track_id_generator(),

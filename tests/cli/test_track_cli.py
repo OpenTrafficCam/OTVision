@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 from unittest.mock import AsyncMock, Mock, patch
@@ -21,6 +22,7 @@ from OTVision.application.config import (
 from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
 from OTVision.domain.cli import CliParseError
 from OTVision.plugin.yaml_serialization import YamlDeserializer
+from OTVision.track.builder import TrackBuilder
 
 YAML_DESERIALIZER = YamlDeserializer()
 CONFIG_PARSER = ConfigParser(YAML_DESERIALIZER)
@@ -143,6 +145,36 @@ def track_cli() -> Callable:
 
 
 class TestTrackCLI:
+    def test_tracker_cli_selection_overrides_existing_config(
+        self, tmp_path: Path
+    ) -> None:
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text(
+            "TRACK:\n  TRACKER_TYPE: iou\n  BOT_SORT:\n    T_MIN: 12\n"
+        )
+        builder = TrackBuilder(argv=["--config", str(config_file), "--tracker", "iou"])
+        cli_args = builder.get_track_cli_args.get()
+        config = builder.get_config.get(cli_args)
+        # Exercise precedence with a different in-memory value, since valid YAML
+        # can only contain iou.
+        config = replace(config, track=replace(config.track, tracker_type="unknown"))
+
+        updated = builder.update_track_config_with_cli_args.update(config)
+
+        assert updated.track.tracker_type == "iou"
+        assert updated.track.bot_sort.t_min == 12
+
+    def test_reject_invalid_tracker_cli_selection(
+        self, track_cli: Callable, tmp_path: Path
+    ) -> None:
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text("TRACK:\n  TRACKER_TYPE: iou\n")
+
+        with pytest.raises(
+            InvalidOtvisionConfigError, match=r"'botsort'.*options: iou"
+        ):
+            track_cli(argv=["--config", str(config_file), "--tracker", "botsort"])
+
     @patch("track.TrackBuilder.update_current_config")
     @patch("track.TrackBuilder.build")
     def test_iou_cli_override_preserves_yaml_bot_sort_config(

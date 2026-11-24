@@ -23,6 +23,15 @@ def default_config() -> dict:
 
 
 class TestConfig:
+    def test_legacy_and_example_configs_include_tracker_type(self) -> None:
+        example_path = Path(__file__).resolve().parents[1] / "user_config.otvision.yaml"
+        example = YamlDeserializer().deserialize(example_path)
+
+        for track in (config.CONFIG["TRACK"], example["TRACK"]):
+            assert track["TRACKER_TYPE"] == "iou"
+            keys = list(track)
+            assert keys.index("TRACKER_TYPE") < keys.index("IOU")
+
     def test_legacy_and_example_configs_include_bot_sort_defaults(
         self, default_config: dict
     ) -> None:

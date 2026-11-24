@@ -96,6 +96,46 @@ class TestConfigParser:
         assert result == expected
 
 
+class TestTrackerTypeConfig:
+    @pytest.mark.parametrize("track", [{}, {"TRACKER_TYPE": "iou"}])
+    def test_parse_default_and_explicit_iou(self, track: dict) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        config = parser.parse_from_dict({"TRACK": track})
+
+        assert config.track.tracker_type == "iou"
+
+    @pytest.mark.parametrize("value", ["botsort", "IOU", "", None, ["iou"]])
+    def test_reject_invalid_tracker_type(self, value: object) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError) as error:
+            parser.parse_from_dict({"TRACK": {"TRACKER_TYPE": value}})
+
+        assert "TRACK.TRACKER_TYPE" in str(error.value)
+        assert repr(value) in str(error.value)
+        assert "Valid options: iou." in str(error.value)
+
+    def test_round_trip_serializes_selector_before_iou(self) -> None:
+        parser = ConfigParser(YamlDeserializer())
+        config = parser.parse_from_dict(
+            {
+                "TRACK": {
+                    "TRACKER_TYPE": "iou",
+                    "IOU": {"T_MIN": 3},
+                    "BOT_SORT": {"T_MIN": 12},
+                }
+            }
+        )
+
+        serialized = config.to_dict()
+
+        track_keys = list(serialized["TRACK"])
+        assert serialized["TRACK"]["TRACKER_TYPE"] == "iou"
+        assert track_keys.index("TRACKER_TYPE") < track_keys.index("IOU")
+        assert parser.parse_from_dict(serialized) == config
+
+
 class TestBotSortConfig:
     @pytest.mark.parametrize(
         "track", [{}, {"BOT_SORT": {}}, {"BOT_SORT": None}, {"IOU": {"T_MIN": 2}}]

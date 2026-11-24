@@ -54,6 +54,8 @@ T_MISS_MAX = "T_MISS_MAX"
 TRACK_HIGH_THRESH = "TRACK_HIGH_THRESH"
 TRACK_LOW_THRESH = "TRACK_LOW_THRESH"
 TRACK = "TRACK"
+TRACKER_TYPE = "TRACKER_TYPE"
+TRACKER_TYPES = ("iou",)
 TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
@@ -400,11 +402,13 @@ class TrackConfig:
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
     bot_sort: _TrackBotSortConfig = _TrackBotSortConfig()
+    tracker_type: str = "iou"
 
     def to_dict(self) -> dict:
         return {
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
+            TRACKER_TYPE: self.tracker_type,
             IOU: self.iou.to_dict(),
             BOT_SORT: self.bot_sort.to_dict(),
             OVERWRITE: self.overwrite,
