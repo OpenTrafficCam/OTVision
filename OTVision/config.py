@@ -24,6 +24,7 @@ from pathlib import Path
 
 from OTVision.application.config import (
     AVAILABLE_WEIGHTS,
+    BOT_SORT,
     CALIBRATIONS,
     COL_WIDTH,
     CONF,
@@ -188,6 +189,7 @@ CONFIG[TRACK][IOU][SIGMA_H] = 0.42  # 0.420
 CONFIG[TRACK][IOU][SIGMA_IOU] = 0.38  # 0.381
 CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
+CONFIG[TRACK][BOT_SORT] = Config.track.bot_sort.to_dict()
 CONFIG[TRACK][OVERWRITE] = True
 
 # UNDISTORT

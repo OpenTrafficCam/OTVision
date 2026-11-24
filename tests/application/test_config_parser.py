@@ -10,6 +10,7 @@ from OTVision.application.config import (
     StreamConfig,
     TrackConfig,
     YoloConfig,
+    _TrackBotSortConfig,
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
@@ -18,6 +19,7 @@ from OTVision.plugin.ffmpeg_video_writer import (
     EncodingSpeed,
     VideoCodec,
 )
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 # Ensure paths are translated to the respective platform (unix, windows)
 VIDEO_1 = str(Path("tests/data/video1.mp4"))
@@ -92,6 +94,114 @@ class TestConfigParser:
 
         expected = DetectConfig()
         assert result == expected
+
+
+class TestBotSortConfig:
+    @pytest.mark.parametrize("track", [{}, {"BOT_SORT": {}}, {"IOU": {"T_MIN": 2}}])
+    def test_missing_block_or_keys_use_defaults(self, track: dict) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        config = parser.parse_from_dict({"TRACK": track})
+
+        assert config.track.to_dict()["BOT_SORT"] == {
+            "T_MIN": 5,
+            "T_MISS_MAX": 60,
+            "TRACK_HIGH_THRESH": 0.2,
+            "TRACK_LOW_THRESH": 0.1,
+            "NEW_TRACK_THRESH": 0.2,
+            "MATCH_THRESH": 0.9,
+            "FUSE_SCORE": True,
+        }
+
+    def test_parse_yaml_and_round_trip_config(self, tmp_path: Path) -> None:
+        parser = ConfigParser(YamlDeserializer())
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text(
+            "TRACK:\n"
+            "  BOT_SORT:\n"
+            "    T_MIN: 0\n"
+            "    T_MISS_MAX: 20\n"
+            "    TRACK_HIGH_THRESH: 1\n"
+            "    TRACK_LOW_THRESH: 0\n"
+            "    NEW_TRACK_THRESH: 0.4\n"
+            "    MATCH_THRESH: 0.7\n"
+            "    FUSE_SCORE: false\n"
+        )
+
+        config = parser.parse(config_file)
+
+        assert config.track.bot_sort == _TrackBotSortConfig(
+            t_min=0,
+            t_miss_max=20,
+            track_high_thresh=1,
+            track_low_thresh=0,
+            new_track_thresh=0.4,
+            match_thresh=0.7,
+            fuse_score=False,
+        )
+        assert parser.parse_from_dict(config.to_dict()) == config
+
+    @pytest.mark.parametrize("key", ["TRACK_BUFFER", "WITH_REID", "GMC_METHOD"])
+    def test_reject_unknown_bot_sort_key(self, key: str) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match=key):
+            parser.parse_from_dict({"TRACK": {"BOT_SORT": {key: False}}})
+
+    @pytest.mark.parametrize("block", [None, False, [], "settings"])
+    def test_reject_bot_sort_block_that_is_not_a_mapping(self, block: object) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="BOT_SORT"):
+            parser.parse_from_dict({"TRACK": {"BOT_SORT": block}})
+
+    def test_ignore_unknown_config_keys_outside_bot_sort(self) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        config = parser.parse_from_dict(
+            {"UNKNOWN": 1, "TRACK": {"UNKNOWN": 2, "IOU": {"UNKNOWN": 3}}}
+        )
+
+        assert config == Config()
+
+    @pytest.mark.parametrize(
+        "key",
+        ["TRACK_HIGH_THRESH", "TRACK_LOW_THRESH", "NEW_TRACK_THRESH", "MATCH_THRESH"],
+    )
+    @pytest.mark.parametrize("value", [-0.1, 1.1, float("nan"), "0.5", True])
+    def test_reject_invalid_bot_sort_threshold(self, key: str, value: object) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match=key):
+            parser.parse_from_dict({"TRACK": {"BOT_SORT": {key: value}}})
+
+    @pytest.mark.parametrize("low_threshold", [0.2, 0.3])
+    def test_reject_bot_sort_low_threshold_at_or_above_high(
+        self, low_threshold: float
+    ) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(
+            InvalidOtvisionConfigError, match="TRACK_LOW_THRESH.*TRACK_HIGH_THRESH"
+        ):
+            parser.parse_from_dict(
+                {"TRACK": {"BOT_SORT": {"TRACK_LOW_THRESH": low_threshold}}}
+            )
+
+    @pytest.mark.parametrize("key", ["T_MIN", "T_MISS_MAX"])
+    @pytest.mark.parametrize("value", [-1, 0.5, 1.0, "3", True])
+    def test_reject_invalid_bot_sort_frame_count(self, key: str, value: object) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match=key):
+            parser.parse_from_dict({"TRACK": {"BOT_SORT": {key: value}}})
+
+    @pytest.mark.parametrize("value", [0, "false", None])
+    def test_reject_non_boolean_bot_sort_fuse_score(self, value: object) -> None:
+        parser = ConfigParser(YamlDeserializer())
+
+        with pytest.raises(InvalidOtvisionConfigError, match="FUSE_SCORE"):
+            parser.parse_from_dict({"TRACK": {"BOT_SORT": {"FUSE_SCORE": value}}})
 
 
 class TestConfigParserValidateFlushBufferSupportTrackLifecycle:

@@ -28,6 +28,15 @@ TRACK:
     SIGMA_L: 0.27
     T_MIN: 5
     T_MISS_MAX: 51
+  # Reserved for BoT-SORT tracking.
+  BOT_SORT:
+    T_MIN: 5
+    T_MISS_MAX: 60
+    TRACK_HIGH_THRESH: 0.2
+    TRACK_LOW_THRESH: 0.1
+    NEW_TRACK_THRESH: 0.2
+    MATCH_THRESH: 0.9
+    FUSE_SCORE: true
   OVERWRITE: true
 
 LOG:
