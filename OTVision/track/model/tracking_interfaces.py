@@ -59,6 +59,15 @@ class Tracker(ABC):
         """
         pass
 
+    @abstractmethod
+    def reset(self) -> None:
+        """Forget all tracking state, so that the next frame starts fresh.
+
+        Called at the start of each frame group. Tracks of one group must not
+        continue into the next one.
+        """
+        pass
+
 
 C = TypeVar("C")  # Detection container: e.g. TrackedFrame or TrackedChunk
 F = TypeVar("F")  # Finished container: e.g. FinishedFrame or FinishedChunk
