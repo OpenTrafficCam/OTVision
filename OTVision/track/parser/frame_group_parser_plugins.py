@@ -3,7 +3,10 @@ from pathlib import Path
 
 from OTVision.application.config import TrackConfig
 from OTVision.application.get_current_config import GetCurrentConfig
-from OTVision.application.track.ottrk import create_ottrk_metadata_entry
+from OTVision.application.track.ottrk import (
+    create_ottrk_metadata_entry,
+    create_tracker_metadata,
+)
 from OTVision.detect.otdet import (
     extract_expected_duration_from_otdet,
     extract_hostname_from_otdet,
@@ -68,11 +71,7 @@ class TimeThresholdFrameGroupParser(FrameGroupParser):
             ottrk_metadata = create_ottrk_metadata_entry(
                 start_date=frame_group.start_date,
                 end_date=frame_group.end_date,
-                sigma_l=self.config.sigma_l,
-                sigma_h=self.config.sigma_h,
-                sigma_iou=self.config.sigma_iou,
-                t_min=self.config.t_min,
-                t_miss_max=self.config.t_miss_max,
+                tracker_metadata=create_tracker_metadata(self.config),
             )
             metadata.update(ottrk_metadata)
 

@@ -8,7 +8,6 @@ import pytest
 
 from OTVision import version
 from OTVision.application.config import Config
-from OTVision.application.track.ottrk import create_tracker_metadata
 from OTVision.dataformat import (
     EXPECTED_DURATION,
     FILENAME,
@@ -37,13 +36,14 @@ from tests.track.helper.data_builder import (
 
 DEFAULT_CONFIG = Config()
 THRESHOLD = timedelta(minutes=1)
-EXPECTED_TRACK_METADATA = create_tracker_metadata(
-    sigma_l=DEFAULT_CONFIG.track.sigma_l,
-    sigma_h=DEFAULT_CONFIG.track.sigma_h,
-    sigma_iou=DEFAULT_CONFIG.track.sigma_iou,
-    t_min=DEFAULT_CONFIG.track.t_min,
-    t_miss_max=DEFAULT_CONFIG.track.t_miss_max,
-)
+EXPECTED_TRACK_METADATA = {
+    "name": "IOU",
+    "sigma_l": 0.27,
+    "sigma_h": 0.42,
+    "sigma_iou": 0.38,
+    "t_min": 5,
+    "t_miss_max": 51,
+}
 
 
 class TestTimeThresholdFrameGroupParser:
