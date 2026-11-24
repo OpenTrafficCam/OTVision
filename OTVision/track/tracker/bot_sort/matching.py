@@ -30,6 +30,11 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import linear_sum_assignment
 
+BOX_CENTER = slice(0, 2)
+"""Columns (center_x, center_y) of a box."""
+BOX_SIZE = slice(2, 4)
+"""Columns (width, height) of a box."""
+
 
 def iou_distance(
     track_boxes: NDArray[np.integer | np.floating],
@@ -38,19 +43,19 @@ def iou_distance(
     """Return pairwise 1 - IoU for (center_x, center_y, width, height) boxes."""
     tracks = track_boxes.astype(np.float64, copy=False)
     detections = detection_boxes.astype(np.float64, copy=False)
-    track_half_size = tracks[:, 2:] / 2
-    detection_half_size = detections[:, 2:] / 2
+    track_half_size = tracks[:, BOX_SIZE] / 2
+    detection_half_size = detections[:, BOX_SIZE] / 2
     left_top = np.maximum(
-        (tracks[:, :2] - track_half_size)[:, None, :],
-        detections[:, :2] - detection_half_size,
+        (tracks[:, BOX_CENTER] - track_half_size)[:, None, :],
+        detections[:, BOX_CENTER] - detection_half_size,
     )
     right_bottom = np.minimum(
-        (tracks[:, :2] + track_half_size)[:, None, :],
-        detections[:, :2] + detection_half_size,
+        (tracks[:, BOX_CENTER] + track_half_size)[:, None, :],
+        detections[:, BOX_CENTER] + detection_half_size,
     )
     intersection = np.maximum(right_bottom - left_top, 0).prod(axis=2)
-    track_area = tracks[:, 2:].prod(axis=1)
-    detection_area = detections[:, 2:].prod(axis=1)
+    track_area = tracks[:, BOX_SIZE].prod(axis=1)
+    detection_area = detections[:, BOX_SIZE].prod(axis=1)
     union = track_area[:, None] + detection_area - intersection
     iou = np.divide(
         intersection, union, out=np.zeros_like(intersection), where=union > 0
@@ -89,6 +94,9 @@ def linear_assignment(
             np.arange(detection_count, dtype=np.intp),
         )
 
+    # Same padding as lap.lapjv(extend_cost=True, cost_limit=threshold), which the
+    # reference implementations use: dummy rows and columns cost threshold / 2,
+    # and the dummy-to-dummy block costs 0.
     size = track_count + detection_count
     extended_costs = np.full((size, size), threshold / 2, dtype=np.float64)
     extended_costs[:track_count, :detection_count] = costs
