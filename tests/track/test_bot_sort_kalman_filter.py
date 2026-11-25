@@ -23,21 +23,6 @@ BOX = np.array([100.0, 50.0, 40.0, 20.0])
 """Center (100, 50), 40 wide and 20 high."""
 BOX_VELOCITY = np.array([3.0, -2.0, 1.0, -1.0])
 
-
-def _covariance(
-    box_variance: NDArray[np.float64],
-    velocity_variance: NDArray[np.float64],
-    box_velocity_covariance: NDArray[np.float64] | None = None,
-) -> NDArray[np.float64]:
-    """Build an 8x8 covariance where each box coordinate correlates only with its
-    own velocity."""
-    covariance = np.diag(np.concatenate((box_variance, velocity_variance)))
-    if box_velocity_covariance is not None:
-        covariance[STATE_BOX, STATE_VELOCITY] = np.diag(box_velocity_covariance)
-        covariance[STATE_VELOCITY, STATE_BOX] = np.diag(box_velocity_covariance)
-    return covariance
-
-
 # Variances for BOX (width 40, height 20), from the std fractions in the module
 # docstring.
 INITIAL_BOX_VARIANCE = np.square([4.0, 2.0, 4.0, 2.0])
@@ -52,6 +37,24 @@ PREDICTED_BOX_VARIANCE = (
 )
 PREDICTED_VELOCITY_VARIANCE = INITIAL_VELOCITY_VARIANCE + MOTION_VELOCITY_VARIANCE
 PREDICTED_BOX_VELOCITY_COVARIANCE = INITIAL_VELOCITY_VARIANCE
+
+
+MEASURED_FRAMES = 5
+"""Frames measured before the final prediction in the multi-frame test."""
+
+
+def _covariance(
+    box_variance: NDArray[np.float64],
+    velocity_variance: NDArray[np.float64],
+    box_velocity_covariance: NDArray[np.float64] | None = None,
+) -> NDArray[np.float64]:
+    """Build an 8x8 covariance where each box coordinate correlates only with its
+    own velocity."""
+    covariance = np.diag(np.concatenate((box_variance, velocity_variance)))
+    if box_velocity_covariance is not None:
+        covariance[STATE_BOX, STATE_VELOCITY] = np.diag(box_velocity_covariance)
+        covariance[STATE_VELOCITY, STATE_BOX] = np.diag(box_velocity_covariance)
+    return covariance
 
 
 def test_initiate_starts_at_measured_box_with_zero_velocity() -> None:
@@ -168,9 +171,6 @@ def test_update_corrects_position_velocity_and_uncertainty() -> None:
         ),
         rtol=1e-12,
     )
-
-
-MEASURED_FRAMES = 5
 
 
 @pytest.mark.parametrize(

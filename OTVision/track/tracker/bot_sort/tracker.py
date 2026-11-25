@@ -36,16 +36,34 @@ from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.domain.detection import Detection, TrackedDetection, TrackId
 from OTVision.domain.frame import DetectedFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
-from OTVision.track.tracker.bot_sort.kalman_filter import KalmanFilter
+from OTVision.track.tracker.bot_sort.kalman_filter import (
+    BOX_DIMENSIONS,
+    STATE_BOX,
+    STATE_VELOCITY,
+    KalmanFilter,
+)
 from OTVision.track.tracker.bot_sort.matching import (
+    BOX_SIZE,
     fuse_score,
     iou_distance,
     linear_assignment,
 )
 
+# Fixed matching costs (1 - IoU) from ByteTrack and BoT-SORT. Unlike
+# TRACK.BOT_SORT.MATCH_THRESH, the reference implementations do not expose them.
 _LOW_MATCH_THRESHOLD = 0.5
+"""Highest cost for matching a low-confidence detection to a track that the
+first pass left unmatched: the boxes need an IoU above 0.5."""
 _UNCONFIRMED_MATCH_THRESHOLD = 0.7
+"""Highest cost for matching a track that was born in the previous frame: the
+boxes need an IoU above 0.3."""
 _DUPLICATE_DISTANCE = 0.15
+"""A tracked and a lost track closer than this cost (IoU above 0.85) follow the
+same object, and the one with the shorter span is ended."""
+
+_FIRST_FRAME = 1
+"""Frame number after a reset. Tracks born in it are confirmed at once, because
+no earlier frame could have confirmed them."""
 
 
 @dataclass
@@ -66,7 +84,14 @@ def _box(detection: Detection) -> tuple[float, float, float, float]:
 
 
 def _track_boxes(tracks: list[_Track]) -> NDArray[np.float64]:
-    return np.array([track.mean[:4] for track in tracks]).reshape(-1, 4)
+    boxes = np.array([track.mean[STATE_BOX] for track in tracks])
+    return boxes.reshape(-1, BOX_DIMENSIONS)
+
+
+def _missed_frames(track: _Track, through_frame: int) -> int:
+    """Return how many frames after its last match, up to and including
+    `through_frame`, the track went without a detection."""
+    return through_frame - track.last_frame
 
 
 def _duplicates(tracked: list[_Track], lost: list[_Track]) -> dict[TrackId, _Track]:
@@ -104,7 +129,7 @@ class BotSortTracker(Tracker):
         use_score: bool,
         emitted: list[TrackedDetection],
     ) -> tuple[list[_Track], list[Detection]]:
-        boxes = np.array([_box(d) for d in detections]).reshape(-1, 4)
+        boxes = np.array([_box(d) for d in detections]).reshape(-1, BOX_DIMENSIONS)
         costs = iou_distance(_track_boxes(tracks), boxes)
         if use_score:
             costs = fuse_score(costs, np.array([d.conf for d in detections]))
@@ -118,7 +143,7 @@ class BotSortTracker(Tracker):
                 track.mean, track.covariance, _box(detection)
             )
             track.last_frame = self._frame
-            emitted.append(detection.of_track(track.id, False))
+            emitted.append(detection.of_track(track.id, is_first=False))
         return (
             [tracks[i] for i in unmatched_tracks],
             [detections[i] for i in unmatched_detections],
@@ -128,6 +153,7 @@ class BotSortTracker(Tracker):
         self, frame: DetectedFrame, id_generator: IdGenerator
     ) -> TrackedFrame:
         self._frame += 1
+        previous_frame = self._frame - 1
         config = self._get_current_config.get().track.bot_sort
         high = [d for d in frame.detections if d.conf >= config.track_high_thresh]
         low = [
@@ -140,19 +166,21 @@ class BotSortTracker(Tracker):
         expired = [
             track
             for track in self._lost
-            if self._frame - track.last_frame - 1 > config.t_miss_max
+            if _missed_frames(track, previous_frame) > config.t_miss_max
         ]
         self._lost = [
             track
             for track in self._lost
-            if self._frame - track.last_frame - 1 <= config.t_miss_max
+            if _missed_frames(track, previous_frame) <= config.t_miss_max
         ]
 
         pool = self._tracked + self._lost
         if pool:
             means = np.stack([track.mean for track in pool])
             covariances = np.stack([track.covariance for track in pool])
-            means[len(self._tracked) :, 6:8] = 0
+            # Lost tracks keep moving, but stop growing or shrinking, as in BoT-SORT.
+            lost_velocities = means[len(self._tracked) :, STATE_VELOCITY]
+            lost_velocities[:, BOX_SIZE] = 0
             means, covariances = self._kalman.multi_predict(means, covariances)
             for track, mean, covariance in zip(pool, means, covariances):
                 track.mean, track.covariance = mean, covariance
@@ -161,10 +189,10 @@ class BotSortTracker(Tracker):
             pool, high, config.match_thresh, config.fuse_score, emitted
         )
         still_tracked = [
-            track for track in unmatched if track.last_frame == self._frame - 1
+            track for track in unmatched if track.last_frame == previous_frame
         ]
         newly_lost, _ = self._associate(
-            still_tracked, low, _LOW_MATCH_THRESHOLD, False, emitted
+            still_tracked, low, _LOW_MATCH_THRESHOLD, use_score=False, emitted=emitted
         )
 
         refound = [track for track in self._lost if track.last_frame == self._frame]
@@ -186,7 +214,7 @@ class BotSortTracker(Tracker):
         )
         self._unconfirmed = []
 
-        new_tracks = self._tracked if self._frame == 1 else self._unconfirmed
+        new_tracks = self._tracked if self._frame == _FIRST_FRAME else self._unconfirmed
         for detection in high:
             if detection.conf >= config.new_track_thresh:
                 track_id = next(id_generator)
@@ -194,13 +222,13 @@ class BotSortTracker(Tracker):
                 new_tracks.append(
                     _Track(track_id, mean, covariance, self._frame, self._frame)
                 )
-                emitted.append(detection.of_track(track_id, True))
+                emitted.append(detection.of_track(track_id, is_first=True))
         self._tracked.extend(refound)
 
         expired.extend(
             track
             for track in self._lost
-            if self._frame - track.last_frame > config.t_miss_max
+            if _missed_frames(track, self._frame) > config.t_miss_max
         )
         ended_ids = {track.id for track in expired}
         self._lost = [track for track in self._lost if track.id not in ended_ids]
