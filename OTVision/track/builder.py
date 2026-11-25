@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from functools import cached_property
 
-from OTVision.application.config import Config
+from OTVision.application.config import TRACKER_TYPE_IOU, Config
 from OTVision.application.config_parser import ConfigParser
 from OTVision.application.configure_logger import ConfigureLogger
 from OTVision.application.get_config import GetConfig
@@ -102,7 +102,7 @@ class TrackBuilder:
         return UnfinishedChunksBuffer(
             tracker=self.tracker,
             keep_discarded=lambda: (
-                self.get_current_config.get().track.tracker_type == "iou"
+                self.get_current_config.get().track.tracker_type == TRACKER_TYPE_IOU
             ),
         )
 

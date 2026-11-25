@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Self
 
 from OTVision import dataformat, version
-from OTVision.application.config import TrackConfig
+from OTVision.application.config import TRACKER_TYPE_BOT_SORT, TrackConfig
 from OTVision.detect.otdet import (
     OtdetBuilderConfig,
     OtdetMetadataBuilder,
@@ -181,7 +181,7 @@ def create_ottrk_metadata_entry(
 
 
 def create_tracker_metadata(config: TrackConfig) -> TrackerMetadata:
-    if config.tracker_type == "botsort":
+    if config.tracker_type == TRACKER_TYPE_BOT_SORT:
         bot_sort = config.bot_sort
         return {
             dataformat.NAME: "BoT-SORT",

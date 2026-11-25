@@ -1,6 +1,7 @@
 import os
 import shutil
 from collections import Counter
+from dataclasses import asdict
 from functools import cached_property
 from pathlib import Path
 from unittest.mock import Mock
@@ -219,6 +220,9 @@ def bot_sort_config(
 ) -> TrackConfig:
     monkeypatch.setattr(version, "ottrack_version", ottrack_version)
     input_dir = test_track_tmp_dir.relative_to(os.getcwd()) / "default"
+    # Every value differs from its default, so the metadata shows that the
+    # configured values are used. Changing them requires updating the reference
+    # files with UPDATE_BOT_SORT_FIXTURES=1.
     return TrackConfig(
         paths=[str(input_dir)],
         tracker_type="botsort",
@@ -262,16 +266,7 @@ async def test_track_bot_sort_matches_reference_across_frame_groups(
 
     track_files = sorted(Path(bot_sort_config.paths[0]).glob("*.ottrk"))
     assert len(track_files) == 2
-    expected_tracker = {
-        "name": "BoT-SORT",
-        "t_min": 7,
-        "t_miss_max": 20,
-        "track_high_thresh": 0.3,
-        "track_low_thresh": 0.15,
-        "new_track_thresh": 0.35,
-        "match_thresh": 0.85,
-        "fuse_score": False,
-    }
+    expected_tracker = {"name": "BoT-SORT", **asdict(bot_sort_config.bot_sort)}
     for group, track_file in enumerate(track_files):
         result = read_json(track_file)
         metadata = result["metadata"]
@@ -294,8 +289,11 @@ async def test_discarded_tracks_follow_current_tracker_on_reused_builder(
     detections_file = tmp_path / original.name
     detections = read_json(original)
     frames = detections["data"]
-    car = dict(frames["1"]["detections"][0], x=100)
-    false_positive = dict(car, x=300)
+    # The false positive appears in one frame only, so both trackers discard its
+    # track. Only IOU keeps the detections of discarded tracks.
+    car_x, false_positive_x = 100, 300
+    car = dict(frames["1"]["detections"][0], x=car_x)
+    false_positive = dict(car, x=false_positive_x)
     detections["data"] = {
         "1": dict(frames["1"], detections=[car]),
         "2": dict(frames["2"], detections=[car, false_positive]),
@@ -305,10 +303,12 @@ async def test_discarded_tracks_follow_current_tracker_on_reused_builder(
 
     builder = MockTrackBuilder()
     tracking = builder.build()
+    with_false_positive = [(1, car_x), (2, car_x), (2, false_positive_x), (3, car_x)]
+    without_false_positive = [(1, car_x), (2, car_x), (3, car_x)]
     for tracker_type, tracker_name, expected in [
-        ("iou", "IOU", [(1, 100), (2, 100), (2, 300), (3, 100)]),
-        ("botsort", "BoT-SORT", [(1, 100), (2, 100), (3, 100)]),
-        ("iou", "IOU", [(1, 100), (2, 100), (2, 300), (3, 100)]),
+        ("iou", "IOU", with_false_positive),
+        ("botsort", "BoT-SORT", without_false_positive),
+        ("iou", "IOU", with_false_positive),
     ]:
         builder.update_current_track_config.update(
             TrackConfig(

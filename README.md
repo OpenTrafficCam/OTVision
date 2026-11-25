@@ -120,7 +120,8 @@ Set BoT-SORT parameters under `TRACK.BOT_SORT` in YAML.
 - `TRACK_HIGH_THRESH` (`0.2`), minimum confidence for first-stage matching.
 - `TRACK_LOW_THRESH` (`0.1`), lower confidence bound for second-stage matching.
 - `NEW_TRACK_THRESH` (`0.2`), minimum confidence to start a track.
-- `MATCH_THRESH` (`0.9`), maximum cost for first-stage matching.
+- `MATCH_THRESH` (`0.9`), maximum cost (1 - IoU) for first-stage matching, so
+  `0.9` matches boxes with an IoU above 0.1.
 - `FUSE_SCORE` (`true`), weight first-stage IoU by detection confidence.
 
 The IOU flags `--sigma-l`, `--sigma-h`, `--sigma-iou`, `--t-min`, and

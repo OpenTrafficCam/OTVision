@@ -4,7 +4,13 @@ from itertools import count
 
 import pytest
 
-from OTVision.application.config import TRACKER_TYPES, Config, TrackConfig
+from OTVision.application.config import (
+    TRACKER_TYPES,
+    Config,
+    TrackConfig,
+    _TrackBotSortConfig,
+    _TrackIouConfig,
+)
 from OTVision.application.config_parser import InvalidOtvisionConfigError
 from OTVision.application.get_current_config import GetCurrentConfig
 from OTVision.domain.current_config import CurrentConfig
@@ -13,6 +19,16 @@ from OTVision.domain.frame import DetectedFrame, TrackedFrame
 from OTVision.track.model.tracking_interfaces import IdGenerator, Tracker
 from OTVision.track.tracker import configured_tracker
 from OTVision.track.tracker.configured_tracker import create_tracker
+
+BOT_SORT_ONLY_CONFIDENCE = 0.25
+"""Below the IOU tracker's SIGMA_L, which drops the detection, and at or above
+BoT-SORT's TRACK_HIGH_THRESH, which tracks it. A track at this confidence shows
+that BoT-SORT is running."""
+assert (
+    _TrackBotSortConfig.track_high_thresh
+    <= BOT_SORT_ONLY_CONFIDENCE
+    < _TrackIouConfig.sigma_l
+)
 
 
 @pytest.fixture
@@ -44,7 +60,10 @@ def test_create_tracker_selects_bot_sort_on_first_use(
     current = CurrentConfig(Config(track=TrackConfig(tracker_type="botsort")))
     tracker = create_tracker(GetCurrentConfig(current))
     frame = replace(
-        detected_frame, detections=[replace(detected_frame.detections[0], conf=0.25)]
+        detected_frame,
+        detections=[
+            replace(detected_frame.detections[0], conf=BOT_SORT_ONLY_CONFIDENCE)
+        ],
     )
 
     assert tracker.track_frame(frame, count(1)).observed_tracks == {1}
@@ -66,7 +85,10 @@ def test_tracker_switches_type_and_starts_fresh_on_reset(
 
     tracker.reset()
     frame = replace(
-        detected_frame, detections=[replace(detected_frame.detections[0], conf=0.25)]
+        detected_frame,
+        detections=[
+            replace(detected_frame.detections[0], conf=BOT_SORT_ONLY_CONFIDENCE)
+        ],
     )
     assert tracker.track_frame(frame, ids).observed_tracks == {2}
 

@@ -37,6 +37,8 @@ cwd_config = YAML_DESERIALIZER.deserialize(Path(CWD_CONFIG_FILE))
 LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
+ARGPARSE_USAGE_ERROR = 2
+"""Exit code of argparse for invalid arguments."""
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
@@ -152,11 +154,15 @@ class TestTrackCLI:
     def test_tracker_cli_selection_overrides_existing_config(
         self, tmp_path: Path, configured: str, selected: str
     ) -> None:
+        # Different values per tracker show which one the lifecycle comes from.
+        iou_t_min, iou_t_miss_max = 3, 25
+        bot_sort_t_min, bot_sort_t_miss_max = 12, 40
         config_file = tmp_path / "user_config.otvision.yaml"
         config_file.write_text(
             f"TRACK:\n  TRACKER_TYPE: {configured}\n"
-            "  IOU:\n    T_MIN: 3\n    T_MISS_MAX: 25\n"
-            "  BOT_SORT:\n    T_MIN: 12\n    T_MISS_MAX: 40\n"
+            f"  IOU:\n    T_MIN: {iou_t_min}\n    T_MISS_MAX: {iou_t_miss_max}\n"
+            f"  BOT_SORT:\n    T_MIN: {bot_sort_t_min}\n"
+            f"    T_MISS_MAX: {bot_sort_t_miss_max}\n"
         )
         builder = TrackBuilder(
             argv=["--config", str(config_file), "--tracker", selected]
@@ -169,7 +175,11 @@ class TestTrackCLI:
         assert updated.track.tracker_type == selected
         assert updated.track.iou == config.track.iou
         assert updated.track.bot_sort == config.track.bot_sort
-        expected_lifecycle = (12, 40) if selected == "botsort" else (3, 25)
+        expected_lifecycle = (
+            (bot_sort_t_min, bot_sort_t_miss_max)
+            if selected == "botsort"
+            else (iou_t_min, iou_t_miss_max)
+        )
         assert (updated.track.t_min, updated.track.t_miss_max) == expected_lifecycle
 
     def test_configured_tracker_is_kept_and_checked_without_cli_selection(
@@ -197,7 +207,7 @@ class TestTrackCLI:
         with pytest.raises(SystemExit) as error:
             track_cli(argv=["--config", str(config_file), "--tracker", "unknown"])
 
-        assert error.value.code == 2
+        assert error.value.code == ARGPARSE_USAGE_ERROR
         message = capsys.readouterr().err
         assert "argument --tracker: invalid choice: 'unknown'" in message
         assert "iou" in message and "botsort" in message
@@ -213,6 +223,8 @@ class TestTrackCLI:
         configured = "iou" if from_cli else "botsort"
         config_file.write_text(f"TRACK:\n  TRACKER_TYPE: {configured}\n")
         selector_args = ["--tracker", "botsort"] if from_cli else []
+        # Any value is rejected: only whether the option is given matters.
+        option_value = "0"
 
         with pytest.raises(InvalidOtvisionConfigError, match=rf"{option}.*BoT-SORT"):
             track_cli(
@@ -221,7 +233,7 @@ class TestTrackCLI:
                     str(config_file),
                     *selector_args,
                     option,
-                    "0",
+                    option_value,
                     LOGFILE_OVERWRITE_CMD,
                 ]
             )
@@ -229,6 +241,10 @@ class TestTrackCLI:
     def test_cli_tracker_selection_revalidates_stream_flush_buffer(
         self, track_cli: Callable, tmp_path: Path
     ) -> None:
+        # A buffer as large as BoT-SORT's default T_MISS_MAX fits the IOU default,
+        # so only selecting BoT-SORT on the command line makes it too small.
+        flush_buffer_size = _TrackBotSortConfig.t_miss_max
+        assert _TrackIouConfig.t_miss_max < flush_buffer_size
         config_file = tmp_path / "user_config.otvision.yaml"
         config_file.write_text(
             "TRACK:\n  TRACKER_TYPE: iou\n"
@@ -236,10 +252,12 @@ class TestTrackCLI:
             "  NAME: camera\n"
             "  SOURCE: rtsp://camera\n"
             "  SAVE_DIR: .\n"
-            "  FLUSH_BUFFER_SIZE: 60\n"
+            f"  FLUSH_BUFFER_SIZE: {flush_buffer_size}\n"
         )
 
-        with pytest.raises(InvalidOtvisionConfigError, match=r"t_miss_max \(60\)"):
+        with pytest.raises(
+            InvalidOtvisionConfigError, match=rf"t_miss_max \({flush_buffer_size}\)"
+        ):
             track_cli(
                 argv=[
                     "--config",

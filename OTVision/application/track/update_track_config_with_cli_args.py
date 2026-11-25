@@ -1,5 +1,11 @@
 from OTVision.abstraction.defaults import value_or_default
-from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
+from OTVision.application.config import (
+    TRACKER_TYPE_BOT_SORT,
+    Config,
+    TrackConfig,
+    _LogConfig,
+    _TrackIouConfig,
+)
 from OTVision.application.config_parser import (
     ConfigParser,
     InvalidOtvisionConfigError,
@@ -38,7 +44,7 @@ class UpdateTrackConfigWithCliArgs:
             cli_args.tracker_type, track_config.tracker_type
         )
         validate_tracker_type(tracker_type)
-        if tracker_type == "botsort":
+        if tracker_type == TRACKER_TYPE_BOT_SORT:
             iou_options = (
                 ("--sigma-l", cli_args.sigma_l),
                 ("--sigma-h", cli_args.sigma_h),

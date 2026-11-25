@@ -186,22 +186,27 @@ class TestBotSortConfig:
     ) -> None:
         parser = ConfigParser(YamlDeserializer())
         config_file = tmp_path / "user_config.otvision.yaml"
+        # The flush buffer must be larger than T_MIN and T_MISS_MAX of the selected
+        # tracker. The IOU values fit into it, the BoT-SORT value equals it.
+        flush_buffer_size = 90
         fields = (
             "  IOU:\n"
             "    T_MIN: 5\n"
             "    T_MISS_MAX: 60\n"
-            f"  BOT_SORT:\n    {key}: 90\n"
+            f"  BOT_SORT:\n    {key}: {flush_buffer_size}\n"
             "STREAM:\n"
             "  NAME: camera\n"
             "  SOURCE: rtsp://camera\n"
             "  SAVE_DIR: .\n"
-            "  FLUSH_BUFFER_SIZE: 90\n"
+            f"  FLUSH_BUFFER_SIZE: {flush_buffer_size}\n"
         )
         config_file.write_text("TRACK:\n  TRACKER_TYPE: iou\n" + fields)
         parser.parse(config_file)
 
         config_file.write_text("TRACK:\n  TRACKER_TYPE: botsort\n" + fields)
-        with pytest.raises(InvalidOtvisionConfigError, match=rf"{key.lower()} \(90\)"):
+        with pytest.raises(
+            InvalidOtvisionConfigError, match=rf"{key.lower()} \({flush_buffer_size}\)"
+        ):
             parser.parse(config_file)
 
     @pytest.mark.parametrize("key", ["TRACK_BUFFER", "WITH_REID", "GMC_METHOD"])
