@@ -17,6 +17,7 @@ from OTVision.application.config import (
     TRACK,
     Config,
     TrackConfig,
+    _TrackBotSortConfig,
     _TrackIouConfig,
 )
 from OTVision.application.config_parser import ConfigParser, InvalidOtvisionConfigError
@@ -202,17 +203,27 @@ class TestTrackCLI:
         tmp_path: Path,
     ) -> None:
         mock_build.return_value.start = AsyncMock()
+        yaml_bot_sort_t_min = 12
+        cli_iou_t_min = 3
         config_file = tmp_path / "user_config.otvision.yaml"
-        config_file.write_text("TRACK:\n  BOT_SORT:\n    T_MIN: 12\n")
+        config_file.write_text(
+            f"TRACK:\n  BOT_SORT:\n    T_MIN: {yaml_bot_sort_t_min}\n"
+        )
 
         track_cli(
-            argv=["--config", str(config_file), "--t-min", "3", LOGFILE_OVERWRITE_CMD]
+            argv=[
+                "--config",
+                str(config_file),
+                "--t-min",
+                str(cli_iou_t_min),
+                LOGFILE_OVERWRITE_CMD,
+            ]
         )
 
         config = mock_update_current_config.update.call_args.kwargs["config"]
-        assert config.track.t_min == 3
-        assert config.track.bot_sort.t_min == 12
-        assert config.track.bot_sort.t_miss_max == 60
+        assert config.track.t_min == cli_iou_t_min
+        assert config.track.bot_sort.t_min == yaml_bot_sort_t_min
+        assert config.track.bot_sort.t_miss_max == _TrackBotSortConfig.t_miss_max
 
     def test_reject_invalid_yaml_bot_sort_config(
         self, track_cli: Callable, tmp_path: Path
