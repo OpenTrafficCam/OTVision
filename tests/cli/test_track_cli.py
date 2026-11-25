@@ -37,6 +37,8 @@ cwd_config = YAML_DESERIALIZER.deserialize(Path(CWD_CONFIG_FILE))
 LOGFILE_OVERWRITE_CMD = "--logfile-overwrite"
 PASSED: str = "passed"
 EXPECTED: str = "expected"
+ARGPARSE_USAGE_ERROR = 2
+"""Exit code of argparse for invalid arguments."""
 
 TEST_DATA_ALL_PARAMS_FROM_CLI_1 = {
     "paths": {
@@ -146,24 +148,39 @@ def track_cli() -> Callable:
 
 
 class TestTrackCLI:
+    @pytest.mark.parametrize(
+        "configured, selected", [("iou", "botsort"), ("botsort", "iou")]
+    )
     def test_tracker_cli_selection_overrides_existing_config(
-        self, tmp_path: Path
+        self, tmp_path: Path, configured: str, selected: str
     ) -> None:
+        # Different values per tracker show which one the lifecycle comes from.
+        iou_t_min, iou_t_miss_max = 3, 25
+        bot_sort_t_min, bot_sort_t_miss_max = 12, 40
         config_file = tmp_path / "user_config.otvision.yaml"
         config_file.write_text(
-            "TRACK:\n  TRACKER_TYPE: iou\n  BOT_SORT:\n    T_MIN: 12\n"
+            f"TRACK:\n  TRACKER_TYPE: {configured}\n"
+            f"  IOU:\n    T_MIN: {iou_t_min}\n    T_MISS_MAX: {iou_t_miss_max}\n"
+            f"  BOT_SORT:\n    T_MIN: {bot_sort_t_min}\n"
+            f"    T_MISS_MAX: {bot_sort_t_miss_max}\n"
         )
-        builder = TrackBuilder(argv=["--config", str(config_file), "--tracker", "iou"])
+        builder = TrackBuilder(
+            argv=["--config", str(config_file), "--tracker", selected]
+        )
         cli_args = builder.get_track_cli_args.get()
         config = builder.get_config.get(cli_args)
-        # Exercise precedence with a different in-memory value, since valid YAML
-        # can only contain iou.
-        config = replace(config, track=replace(config.track, tracker_type="unknown"))
 
         updated = builder.update_track_config_with_cli_args.update(config)
 
-        assert updated.track.tracker_type == "iou"
-        assert updated.track.bot_sort.t_min == 12
+        assert updated.track.tracker_type == selected
+        assert updated.track.iou == config.track.iou
+        assert updated.track.bot_sort == config.track.bot_sort
+        expected_lifecycle = (
+            (bot_sort_t_min, bot_sort_t_miss_max)
+            if selected == "botsort"
+            else (iou_t_min, iou_t_miss_max)
+        )
+        assert (updated.track.t_min, updated.track.t_miss_max) == expected_lifecycle
 
     def test_configured_tracker_is_kept_and_checked_without_cli_selection(
         self, tmp_path: Path
@@ -173,25 +190,83 @@ class TestTrackCLI:
         builder = TrackBuilder(argv=["--config", str(config_file)])
         cli_args = builder.get_track_cli_args.get()
         config = builder.get_config.get(cli_args)
-        # Valid YAML can only contain iou, so a different in-memory value shows
-        # that the configured value survives the override step.
+        # The parser rejects an unknown type before it can reach the override step.
         config = replace(config, track=replace(config.track, tracker_type="unknown"))
 
         with pytest.raises(
-            InvalidOtvisionConfigError, match=r"'unknown'.*options: iou"
+            InvalidOtvisionConfigError, match=r"'unknown'.*options: iou, botsort"
         ):
             builder.update_track_config_with_cli_args.update(config)
 
     def test_reject_invalid_tracker_cli_selection(
-        self, track_cli: Callable, tmp_path: Path
+        self, track_cli: Callable, tmp_path: Path, capsys: pytest.CaptureFixture
     ) -> None:
         config_file = tmp_path / "user_config.otvision.yaml"
         config_file.write_text("TRACK:\n  TRACKER_TYPE: iou\n")
 
+        with pytest.raises(SystemExit) as error:
+            track_cli(argv=["--config", str(config_file), "--tracker", "unknown"])
+
+        assert error.value.code == ARGPARSE_USAGE_ERROR
+        message = capsys.readouterr().err
+        assert "argument --tracker: invalid choice: 'unknown'" in message
+        assert "iou" in message and "botsort" in message
+
+    @pytest.mark.parametrize("from_cli", [True, False], ids=["cli", "yaml"])
+    @pytest.mark.parametrize(
+        "option", ["--sigma-l", "--sigma-h", "--sigma-iou", "--t-min", "--t-miss-max"]
+    )
+    def test_reject_iou_options_with_bot_sort(
+        self, track_cli: Callable, tmp_path: Path, from_cli: bool, option: str
+    ) -> None:
+        config_file = tmp_path / "user_config.otvision.yaml"
+        configured = "iou" if from_cli else "botsort"
+        config_file.write_text(f"TRACK:\n  TRACKER_TYPE: {configured}\n")
+        selector_args = ["--tracker", "botsort"] if from_cli else []
+        # Any value is rejected: only whether the option is given matters.
+        option_value = "0"
+
+        with pytest.raises(InvalidOtvisionConfigError, match=rf"{option}.*BoT-SORT"):
+            track_cli(
+                argv=[
+                    "--config",
+                    str(config_file),
+                    *selector_args,
+                    option,
+                    option_value,
+                    LOGFILE_OVERWRITE_CMD,
+                ]
+            )
+
+    def test_cli_tracker_selection_revalidates_stream_flush_buffer(
+        self, track_cli: Callable, tmp_path: Path
+    ) -> None:
+        # A buffer as large as BoT-SORT's default T_MISS_MAX fits the IOU default,
+        # so only selecting BoT-SORT on the command line makes it too small.
+        flush_buffer_size = _TrackBotSortConfig.t_miss_max
+        assert _TrackIouConfig.t_miss_max < flush_buffer_size
+        config_file = tmp_path / "user_config.otvision.yaml"
+        config_file.write_text(
+            "TRACK:\n  TRACKER_TYPE: iou\n"
+            "STREAM:\n"
+            "  NAME: camera\n"
+            "  SOURCE: rtsp://camera\n"
+            "  SAVE_DIR: .\n"
+            f"  FLUSH_BUFFER_SIZE: {flush_buffer_size}\n"
+        )
+
         with pytest.raises(
-            InvalidOtvisionConfigError, match=r"'botsort'.*options: iou"
+            InvalidOtvisionConfigError, match=rf"t_miss_max \({flush_buffer_size}\)"
         ):
-            track_cli(argv=["--config", str(config_file), "--tracker", "botsort"])
+            track_cli(
+                argv=[
+                    "--config",
+                    str(config_file),
+                    "--tracker",
+                    "botsort",
+                    LOGFILE_OVERWRITE_CMD,
+                ]
+            )
 
     @patch("track.TrackBuilder.update_current_config")
     @patch("track.TrackBuilder.build")

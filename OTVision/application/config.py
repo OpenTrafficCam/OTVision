@@ -55,7 +55,9 @@ TRACK_HIGH_THRESH = "TRACK_HIGH_THRESH"
 TRACK_LOW_THRESH = "TRACK_LOW_THRESH"
 TRACK = "TRACK"
 TRACKER_TYPE = "TRACKER_TYPE"
-TRACKER_TYPES = ("iou",)
+TRACKER_TYPE_IOU = "iou"
+TRACKER_TYPE_BOT_SORT = "botsort"
+TRACKER_TYPES = (TRACKER_TYPE_IOU, TRACKER_TYPE_BOT_SORT)
 TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
 UNDISTORT = "UNDISTORT"
@@ -375,11 +377,14 @@ class _TrackBotSortConfig:
     """Unmatched high-confidence detections need at least this confidence to start
     a new track."""
     match_thresh: float = 0.9
-    """Highest matching cost (1 - IoU) for the first matching pass. 0.9 matches
-    any pair whose boxes overlap with an IoU above 0.1."""
+    """Highest matching cost for the first matching pass. With `fuse_score` the
+    cost is 1 - IoU * confidence, so 0.9 needs IoU * confidence above 0.1: an IoU
+    above 0.2 at confidence 0.5. Without it the cost is 1 - IoU, so 0.9 needs an
+    IoU above 0.1."""
     fuse_score: bool = True
     """Multiply the IoU by the detection confidence before matching, so that
-    low-confidence detections need more overlap."""
+    low-confidence detections need more overlap. Applies to the first matching
+    pass and to tracks born in the previous frame."""
 
     def to_dict(self) -> dict:
         return {
@@ -409,10 +414,14 @@ class TrackConfig:
 
     @property
     def t_min(self) -> int:
+        if self.tracker_type == TRACKER_TYPE_BOT_SORT:
+            return self.bot_sort.t_min
         return self.iou.t_min
 
     @property
     def t_miss_max(self) -> int:
+        if self.tracker_type == TRACKER_TYPE_BOT_SORT:
+            return self.bot_sort.t_miss_max
         return self.iou.t_miss_max
 
     paths: list[str] = field(default_factory=list)
@@ -420,7 +429,7 @@ class TrackConfig:
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
     bot_sort: _TrackBotSortConfig = _TrackBotSortConfig()
-    tracker_type: str = "iou"
+    tracker_type: str = TRACKER_TYPE_IOU
 
     def to_dict(self) -> dict:
         return {

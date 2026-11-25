@@ -49,17 +49,18 @@ from OTVision.track.tracker.bot_sort.matching import (
     linear_assignment,
 )
 
-# Fixed matching costs (1 - IoU) from ByteTrack and BoT-SORT. Unlike
+# Fixed matching costs from ByteTrack and BoT-SORT. Unlike
 # TRACK.BOT_SORT.MATCH_THRESH, the reference implementations do not expose them.
 _LOW_MATCH_THRESHOLD = 0.5
-"""Highest cost for matching a low-confidence detection to a track that the
-first pass left unmatched: the boxes need an IoU above 0.5."""
+"""Highest cost (1 - IoU) for matching a low-confidence detection to a track
+that the first pass left unmatched: the boxes need an IoU above 0.5."""
 _UNCONFIRMED_MATCH_THRESHOLD = 0.7
-"""Highest cost for matching a track that was born in the previous frame: the
-boxes need an IoU above 0.3."""
+"""Highest cost for matching a track that was born in the previous frame. With
+TRACK.BOT_SORT.FUSE_SCORE the cost is 1 - IoU * confidence, so the pair needs
+IoU * confidence above 0.3. Without it the boxes need an IoU above 0.3."""
 _DUPLICATE_DISTANCE = 0.15
-"""A tracked and a lost track closer than this cost (IoU above 0.85) follow the
-same object, and the one with the shorter span is ended."""
+"""A tracked and a lost track closer than this cost (1 - IoU, so an IoU above
+0.85) follow the same object, and the one with the shorter span is ended."""
 
 _FIRST_FRAME = 1
 """Frame number after a reset. Tracks born in it are confirmed at once, because

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Self
 
 from OTVision import dataformat, version
-from OTVision.application.config import TrackConfig
+from OTVision.application.config import TRACKER_TYPE_BOT_SORT, TrackConfig
 from OTVision.detect.otdet import (
     OtdetBuilderConfig,
     OtdetMetadataBuilder,
@@ -181,6 +181,19 @@ def create_ottrk_metadata_entry(
 
 
 def create_tracker_metadata(config: TrackConfig) -> TrackerMetadata:
+    if config.tracker_type == TRACKER_TYPE_BOT_SORT:
+        bot_sort = config.bot_sort
+        return {
+            dataformat.NAME: "BoT-SORT",
+            dataformat.T_MIN: bot_sort.t_min,
+            dataformat.T_MISS_MAX: bot_sort.t_miss_max,
+            dataformat.TRACK_HIGH_THRESH: bot_sort.track_high_thresh,
+            dataformat.TRACK_LOW_THRESH: bot_sort.track_low_thresh,
+            dataformat.NEW_TRACK_THRESH: bot_sort.new_track_thresh,
+            dataformat.MATCH_THRESH: bot_sort.match_thresh,
+            dataformat.FUSE_SCORE: bot_sort.fuse_score,
+        }
+
     iou = config.iou
     return {
         dataformat.NAME: "IOU",

@@ -1,6 +1,16 @@
 from OTVision.abstraction.defaults import value_or_default
-from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
-from OTVision.application.config_parser import validate_tracker_type
+from OTVision.application.config import (
+    TRACKER_TYPE_BOT_SORT,
+    Config,
+    TrackConfig,
+    _LogConfig,
+    _TrackIouConfig,
+)
+from OTVision.application.config_parser import (
+    ConfigParser,
+    InvalidOtvisionConfigError,
+    validate_tracker_type,
+)
 from OTVision.application.track.get_track_cli_args import GetTrackCliArgs
 from OTVision.domain.cli import TrackCliArgs
 
@@ -11,7 +21,7 @@ class UpdateTrackConfigWithCliArgs:
 
     def update(self, config: Config) -> Config:
         cli_args = self._get_track_cli_args.get()
-        return Config(
+        updated = Config(
             log=self._update_log_config(config, cli_args),
             search_subdirs=config.search_subdirs,
             default_filetype=config.default_filetype,
@@ -24,6 +34,8 @@ class UpdateTrackConfigWithCliArgs:
             gui=config.gui,
             stream=config.stream,
         )
+        ConfigParser.validate_flush_buffer_support_track_lifecycle(updated)
+        return updated
 
     def _update_track_config(
         self, track_config: TrackConfig, cli_args: TrackCliArgs
@@ -32,13 +44,28 @@ class UpdateTrackConfigWithCliArgs:
             cli_args.tracker_type, track_config.tracker_type
         )
         validate_tracker_type(tracker_type)
+        if tracker_type == TRACKER_TYPE_BOT_SORT:
+            iou_options = (
+                ("--sigma-l", cli_args.sigma_l),
+                ("--sigma-h", cli_args.sigma_h),
+                ("--sigma-iou", cli_args.sigma_iou),
+                ("--t-min", cli_args.t_min),
+                ("--t-miss-max", cli_args.t_miss_max),
+            )
+            for option, value in iou_options:
+                if value is not None:
+                    raise InvalidOtvisionConfigError(
+                        f"{option} is an IOU option and cannot be used with BoT-SORT."
+                    )
+            ConfigParser.validate_track_bot_sort_config(track_config.bot_sort)
 
+        iou = track_config.iou
         iou_config = _TrackIouConfig(
-            sigma_l=value_or_default(cli_args.sigma_l, track_config.sigma_l),
-            sigma_h=value_or_default(cli_args.sigma_h, track_config.sigma_h),
-            sigma_iou=value_or_default(cli_args.sigma_iou, track_config.sigma_iou),
-            t_min=value_or_default(cli_args.t_min, track_config.t_min),
-            t_miss_max=value_or_default(cli_args.t_miss_max, track_config.t_miss_max),
+            sigma_l=value_or_default(cli_args.sigma_l, iou.sigma_l),
+            sigma_h=value_or_default(cli_args.sigma_h, iou.sigma_h),
+            sigma_iou=value_or_default(cli_args.sigma_iou, iou.sigma_iou),
+            t_min=value_or_default(cli_args.t_min, iou.t_min),
+            t_miss_max=value_or_default(cli_args.t_miss_max, iou.t_miss_max),
         )
         return TrackConfig(
             paths=value_or_default(cli_args.paths, track_config.paths),

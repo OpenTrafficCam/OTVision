@@ -109,6 +109,27 @@ Track detected objects:
 uv run track.py --paths /path/to/detections/*.otdet
 ```
 
+IOU is the default. To select BoT-SORT, set `TRACKER_TYPE` to `botsort` under
+`TRACK` in your YAML config or pass `--tracker botsort` on the command line.
+The command-line selection takes precedence.
+
+Set BoT-SORT parameters under `TRACK.BOT_SORT` in YAML.
+
+- `T_MIN` (`5`), minimum track span in frames.
+- `T_MISS_MAX` (`60`), maximum consecutive missed frames before a track expires.
+- `TRACK_HIGH_THRESH` (`0.2`), minimum confidence for first-stage matching.
+- `TRACK_LOW_THRESH` (`0.1`), lower confidence bound for second-stage matching.
+- `NEW_TRACK_THRESH` (`0.2`), minimum confidence to start a track.
+- `MATCH_THRESH` (`0.9`), maximum cost for first-stage matching. With
+  `FUSE_SCORE` the cost is 1 - IoU × confidence, so `0.9` needs
+  IoU × confidence above 0.1: an IoU above 0.2 at confidence 0.5. Without
+  `FUSE_SCORE` the cost is 1 - IoU, so `0.9` needs an IoU above 0.1.
+- `FUSE_SCORE` (`true`), multiply the IoU by the detection confidence before
+  matching, so that low-confidence detections need more overlap.
+
+The IOU flags `--sigma-l`, `--sigma-h`, `--sigma-iou`, `--t-min`, and
+`--t-miss-max` cannot be combined with BoT-SORT.
+
 ### Coordinate Transformation
 
 Transform pixel coordinates to UTM coordinates:

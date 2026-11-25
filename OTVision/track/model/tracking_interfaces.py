@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import AsyncIterator, Generic, Iterator, TypeVar
 
 from OTVision.domain.detection import TrackId
@@ -87,11 +88,11 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
             (e.g. TrackedFrame or TrackedChunk)
         Generic (F): generic type of FinishedDetection container
             (e.g. FinishedFrame or FinishedChunk)
-        keep_discarded (bool): whether detections marked as discarded should
-            be kept of filtered when finishing them. Defaults to False.
+        keep_discarded: whether to keep discarded detections, or a function that
+            returns the policy when the buffer finishes containers.
     """
 
-    def __init__(self, keep_discarded: bool = False) -> None:
+    def __init__(self, keep_discarded: bool | Callable[[], bool] = False) -> None:
         self._keep_discarded = keep_discarded
         self._unfinished_containers: list[tuple[C, set[TrackId]]] = list()
         self._merged_last_track_frame: dict[TrackId, FrameNo] = dict()
@@ -232,6 +233,8 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
 
         finished_containers = self._finish_containers(remaining_containers)
         self._merged_last_track_frame = dict()
+        # Track ids restart with the next stream, so no discarded id may remain.
+        self._discarded_tracks = set()
         for finished_container in finished_containers:
             yield finished_container
 
@@ -242,7 +245,11 @@ class UnfinishedTracksBuffer(ABC, Generic[C, F]):
         def is_last(frame_no: FrameNo, track_id: TrackId) -> bool:
             return frame_no == self._merged_last_track_frame[track_id]
 
-        keep = self._keep_discarded
+        keep = (
+            self._keep_discarded()
+            if callable(self._keep_discarded)
+            else self._keep_discarded
+        )
         discarded = self._discarded_tracks
 
         finished_containers: list[F] = [

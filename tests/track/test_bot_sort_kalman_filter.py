@@ -19,6 +19,10 @@ from OTVision.track.tracker.bot_sort.kalman_filter import (
     KalmanFilter,
 )
 
+# The filter must run without numpy warnings. On Apple Silicon, the @ operator
+# reports spurious ones for the stacked products where np.dot does not.
+pytestmark = pytest.mark.filterwarnings("error::RuntimeWarning")
+
 BOX = np.array([100.0, 50.0, 40.0, 20.0])
 """Center (100, 50), 40 wide and 20 high."""
 BOX_VELOCITY = np.array([3.0, -2.0, 1.0, -1.0])

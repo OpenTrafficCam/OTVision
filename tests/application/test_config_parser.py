@@ -105,7 +105,7 @@ class TestTrackerTypeConfig:
 
         assert config.track.tracker_type == "iou"
 
-    @pytest.mark.parametrize("value", ["botsort", "IOU", "", None, ["iou"]])
+    @pytest.mark.parametrize("value", ["unknown", "IOU", "", None, ["iou"]])
     def test_reject_invalid_tracker_type(self, value: object) -> None:
         parser = ConfigParser(YamlDeserializer())
 
@@ -114,7 +114,7 @@ class TestTrackerTypeConfig:
 
         assert "TRACK.TRACKER_TYPE" in str(error.value)
         assert repr(value) in str(error.value)
-        assert "Valid options: iou." in str(error.value)
+        assert "Valid options: iou, botsort." in str(error.value)
 
     def test_round_trip_serializes_selector_before_iou(self) -> None:
         parser = ConfigParser(YamlDeserializer())
@@ -154,6 +154,7 @@ class TestBotSortConfig:
         # thresholds sit at the edges of their valid ranges.
         config_file.write_text(
             "TRACK:\n"
+            "  TRACKER_TYPE: botsort\n"
             "  BOT_SORT:\n"
             "    T_MIN: 0\n"
             "    T_MISS_MAX: 20\n"
@@ -166,6 +167,8 @@ class TestBotSortConfig:
 
         config = parser.parse(config_file)
 
+        assert config.track.tracker_type == "botsort"
+        assert (config.track.t_min, config.track.t_miss_max) == (0, 20)
         assert config.track.bot_sort == _TrackBotSortConfig(
             t_min=0,
             t_miss_max=20,
@@ -176,6 +179,35 @@ class TestBotSortConfig:
             fuse_score=False,
         )
         assert parser.parse_from_dict(config.to_dict()) == config
+
+    @pytest.mark.parametrize("key", ["T_MIN", "T_MISS_MAX"])
+    def test_stream_flush_buffer_validates_selected_bot_sort_lifecycle(
+        self, tmp_path: Path, key: str
+    ) -> None:
+        parser = ConfigParser(YamlDeserializer())
+        config_file = tmp_path / "user_config.otvision.yaml"
+        # The flush buffer must be larger than T_MIN and T_MISS_MAX of the selected
+        # tracker. The IOU values fit into it, the BoT-SORT value equals it.
+        flush_buffer_size = 90
+        fields = (
+            "  IOU:\n"
+            "    T_MIN: 5\n"
+            "    T_MISS_MAX: 60\n"
+            f"  BOT_SORT:\n    {key}: {flush_buffer_size}\n"
+            "STREAM:\n"
+            "  NAME: camera\n"
+            "  SOURCE: rtsp://camera\n"
+            "  SAVE_DIR: .\n"
+            f"  FLUSH_BUFFER_SIZE: {flush_buffer_size}\n"
+        )
+        config_file.write_text("TRACK:\n  TRACKER_TYPE: iou\n" + fields)
+        parser.parse(config_file)
+
+        config_file.write_text("TRACK:\n  TRACKER_TYPE: botsort\n" + fields)
+        with pytest.raises(
+            InvalidOtvisionConfigError, match=rf"{key.lower()} \({flush_buffer_size}\)"
+        ):
+            parser.parse(config_file)
 
     @pytest.mark.parametrize("key", ["TRACK_BUFFER", "WITH_REID", "GMC_METHOD"])
     def test_reject_unknown_bot_sort_key(self, key: str) -> None:
