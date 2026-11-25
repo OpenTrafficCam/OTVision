@@ -355,13 +355,31 @@ class _TrackIouConfig:
 
 @dataclass(frozen=True)
 class _TrackBotSortConfig:
+    """Settings for the BoT-SORT tracker.
+
+    Detections are split by confidence. High-confidence detections are matched
+    first and may start new tracks. Low-confidence detections can only continue
+    tracks that the high-confidence pass left unmatched.
+    """
+
     t_min: int = 5
+    """Tracks spanning fewer frames than this are discarded when they end."""
     t_miss_max: int = 60
+    """Frames a track may go without a matched detection before it ends."""
     track_high_thresh: float = 0.2
+    """Detections with at least this confidence are matched first."""
     track_low_thresh: float = 0.1
+    """Detections with a confidence above this, but below `track_high_thresh`,
+    are matched second. Detections at or below it are ignored."""
     new_track_thresh: float = 0.2
+    """Unmatched high-confidence detections need at least this confidence to start
+    a new track."""
     match_thresh: float = 0.9
+    """Highest matching cost (1 - IoU) for the first matching pass. 0.9 matches
+    any pair whose boxes overlap with an IoU above 0.1."""
     fuse_score: bool = True
+    """Multiply the IoU by the detection confidence before matching, so that
+    low-confidence detections need more overlap."""
 
     def to_dict(self) -> dict:
         return {
