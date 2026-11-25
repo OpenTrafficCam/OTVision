@@ -1,5 +1,6 @@
 import json
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from itertools import count
 from pathlib import Path
@@ -17,8 +18,13 @@ from OTVision.domain.detection import Detection
 from OTVision.domain.frame import DetectedFrame
 from OTVision.helpers.files import denormalize_bbox, read_json
 from OTVision.track.parser.chunk_parser_plugins import DetectionParser
+from OTVision.track.tracker.bot_sort.matching import BOX_CENTER, BOX_SIZE
 from OTVision.track.tracker.bot_sort.tracker import BotSortTracker
-from tests.track.test_bot_sort_tracker import detected_frame, detection
+from tests.track.test_bot_sort_tracker import (
+    LOW_CONFIDENCE,
+    detected_frame,
+    detection,
+)
 
 _RECORDINGS = {
     f"{kind}-{scene.lower()}": directory
@@ -31,46 +37,63 @@ _RECORDINGS = {
     for scene in ("Cyclist", "Truck")
 }
 # The other IOU parameter directories contain byte-identical copies of track/default.
-_MISS_LIMIT = 60
+_MISS_LIMIT = TrackConfig.bot_sort.t_miss_max
 _CAR = detection()
 
+# Changing any scripted input below requires regenerating the oracle fixtures.
+_CROSSING_FRAMES = 10
+_CROSSING_STEP = 4
+"""Pixels each car moves per frame."""
 
-def _crossing() -> list[tuple[Detection, ...]]:
-    frames: list[tuple[Detection, ...]] = []
-    for i in range(10):
-        east = detection(32 + 4 * i)
-        west = replace(detection(68 - 4 * i), y=54)
+_ScriptedFrames = list[tuple[Detection, ...]]
+# Each scenario is built on use, because its builders are defined further down.
+_SCRIPTED: dict[str, Callable[[], _ScriptedFrames]] = {
+    "crossing": lambda: _crossing(),
+    "gap-under": lambda: _occlusion(_MISS_LIMIT - 1),
+    "gap-exact": lambda: _occlusion(_MISS_LIMIT),
+    "gap-over": lambda: _occlusion(_MISS_LIMIT + 1),
+    # A low-confidence detection away from the car and one on top of it.
+    "low-confidence": lambda: [
+        (_CAR,),
+        (detection(90, confidence=0.14), detection(52, confidence=LOW_CONFIDENCE)),
+        (_CAR,),
+    ],
+    # A high-confidence detection away from the car for a single frame.
+    "false-positive": lambda: [(_CAR,), (detection(90), _CAR), (_CAR,), (_CAR,)],
+}
+_CASES = [*_RECORDINGS, *_SCRIPTED]
+
+_ORACLE_UNSCALED_FRAME_RATE = 30
+# Columns of a BOTSORT.update row: x1, y1, x2, y2, track id, score, class, index.
+_ORACLE_TRACK_ID_COLUMN = 4
+_ORACLE_CLASS_COLUMN = 6
+_PRETTIER_PRINT_WIDTH = 80
+
+
+def _crossing() -> _ScriptedFrames:
+    """Two cars pass each other in x, 4 pixels apart in y, so their boxes overlap
+    almost fully halfway. The input order alternates so that matching cannot rely
+    on it."""
+    frames: _ScriptedFrames = []
+    for i in range(_CROSSING_FRAMES):
+        east = detection(32 + _CROSSING_STEP * i)
+        west = replace(detection(68 - _CROSSING_STEP * i), y=54)
         frames.append((east, west) if i % 2 == 0 else (west, east))
     return frames
 
 
-def _occlusion(missed_frames: int) -> list[tuple[Detection, ...]]:
-    frames: list[tuple[Detection, ...]] = [(_CAR,)]
+def _occlusion(missed_frames: int) -> _ScriptedFrames:
+    frames: _ScriptedFrames = [(_CAR,)]
     frames.extend([()] * missed_frames)
     frames.extend([(_CAR,), (_CAR,)])
     return frames
-
-
-_SCRIPTED: dict[str, list[tuple[Detection, ...]]] = {
-    "crossing": _crossing(),
-    "gap-under": _occlusion(_MISS_LIMIT - 1),
-    "gap-exact": _occlusion(_MISS_LIMIT),
-    "gap-over": _occlusion(_MISS_LIMIT + 1),
-    "low-confidence": [
-        (_CAR,),
-        (detection(90, confidence=0.14), detection(52, confidence=0.15)),
-        (_CAR,),
-    ],
-    "false-positive": [(_CAR,), (detection(90), _CAR), (_CAR,), (_CAR,)],
-}
-_CASES = [*_RECORDINGS, *_SCRIPTED]
 
 
 def _frames(case: str, data_dir: Path) -> list[DetectedFrame]:
     if case in _SCRIPTED:
         return [
             detected_frame(no, *detections)
-            for no, detections in enumerate(_SCRIPTED[case])
+            for no, detections in enumerate(_SCRIPTED[case]())
         ]
 
     path = data_dir / _RECORDINGS[case]
@@ -146,8 +169,8 @@ class _OracleDetections:
 
     @property
     def xyxy(self) -> NDArray[np.float32]:
-        centers = self.xywh[:, :2]
-        half_sizes = self.xywh[:, 2:] / 2
+        centers = self.xywh[:, BOX_CENTER]
+        half_sizes = self.xywh[:, BOX_SIZE] / 2
         return np.concatenate((centers - half_sizes, centers + half_sizes), axis=1)
 
 
@@ -177,12 +200,14 @@ def test_update_bot_sort_parity(case: str, test_data_dir: Path) -> None:
         # the next time it is lost, even for one frame. OTVision keeps the ID.
         track_buffer=settings.t_miss_max - 1,
         gmc_method="none",
+        # BOTSORT requires these, but only uses them with ReID.
         proximity_thresh=0.5,
         appearance_thresh=0.25,
         with_reid=False,
         model="auto",
     )
-    tracker = BOTSORT(args=args, frame_rate=30)
+    # BOTSORT scales track_buffer by frame_rate / 30, so 30 keeps it unchanged.
+    tracker = BOTSORT(args=args, frame_rate=_ORACLE_UNSCALED_FRAME_RATE)
 
     rows: list[list[int | None]] = []
     for frame in _frames(case, test_data_dir):
@@ -198,7 +223,8 @@ def test_update_bot_sort_parity(case: str, test_data_dir: Path) -> None:
         )
         assignments: list[int | None] = [None] * len(detections)
         for track in tracker.update(results):
-            track_id, index = int(track[4]), int(track[6])
+            track_id = int(track[_ORACLE_TRACK_ID_COLUMN])
+            index = int(track[_ORACLE_CLASS_COLUMN])
             assert assignments[index] is None
             assignments[index] = track_id
         rows.append(assignments)
@@ -213,6 +239,6 @@ def _format(rows: list[list[int | None]]) -> str:
     lines = [json.dumps(row) for row in rows]
     one_line = "[" + ", ".join(lines) + "]"
     always_broken = len(rows) > 1 and all(len(row) > 1 for row in rows)
-    if not always_broken and len(one_line) <= 80:
+    if not always_broken and len(one_line) <= _PRETTIER_PRINT_WIDTH:
         return one_line + "\n"
     return "[\n    " + ",\n    ".join(lines) + "\n]\n"

@@ -41,7 +41,6 @@ from OTVision.application.config import (
     FONT_SIZE,
     FPS_FROM_FILENAME,
     FRAME_WIDTH,
-    FUSE_SCORE,
     GUI,
     HALF_PRECISION,
     IMG,
@@ -54,8 +53,6 @@ from OTVision.application.config import (
     LOG,
     LOG_LEVEL_CONSOLE,
     LOG_LEVEL_FILE,
-    MATCH_THRESH,
-    NEW_TRACK_THRESH,
     NORMALIZED,
     OTC_ICON,
     OUTPUT_FILETYPE,
@@ -72,8 +69,6 @@ from OTVision.application.config import (
     T_MIN,
     T_MISS_MAX,
     TRACK,
-    TRACK_HIGH_THRESH,
-    TRACK_LOW_THRESH,
     TRACKER_TYPE,
     TRACKS,
     TRANSFORM,
@@ -86,6 +81,7 @@ from OTVision.application.config import (
     WRITE_VIDEO,
     YOLO,
     Config,
+    _TrackBotSortConfig,
 )
 from OTVision.application.config_parser import ConfigParser
 from OTVision.helpers.log import LOGGER_NAME
@@ -196,14 +192,7 @@ CONFIG[TRACK][IOU][SIGMA_H] = 0.42  # 0.420
 CONFIG[TRACK][IOU][SIGMA_IOU] = 0.38  # 0.381
 CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
-CONFIG[TRACK][BOT_SORT] = {}
-CONFIG[TRACK][BOT_SORT][T_MIN] = 5
-CONFIG[TRACK][BOT_SORT][T_MISS_MAX] = 60
-CONFIG[TRACK][BOT_SORT][TRACK_HIGH_THRESH] = 0.2
-CONFIG[TRACK][BOT_SORT][TRACK_LOW_THRESH] = 0.1
-CONFIG[TRACK][BOT_SORT][NEW_TRACK_THRESH] = 0.2
-CONFIG[TRACK][BOT_SORT][MATCH_THRESH] = 0.9
-CONFIG[TRACK][BOT_SORT][FUSE_SCORE] = True
+CONFIG[TRACK][BOT_SORT] = _TrackBotSortConfig().to_dict()
 CONFIG[TRACK][OVERWRITE] = True
 
 # UNDISTORT

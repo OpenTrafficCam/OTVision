@@ -270,6 +270,8 @@ class ConfigParser:
             if iou_config_dict
             else TrackConfig.iou
         )
+        bot_sort_config_dict = data.get(BOT_SORT)
+        bot_sort_config = self._parse_track_bot_sort_config(bot_sort_config_dict)
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
@@ -277,7 +279,7 @@ class ConfigParser:
             run_chained=data.get(RUN_CHAINED, TrackConfig.run_chained),
             iou=iou_config,
             overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
-            bot_sort=self._parse_track_bot_sort_config(data.get(BOT_SORT, {})),
+            bot_sort=bot_sort_config,
             tracker_type=tracker_type,
         )
 

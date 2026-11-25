@@ -145,19 +145,13 @@ class TestBotSortConfig:
 
         config = parser.parse_from_dict({"TRACK": track})
 
-        assert config.track.to_dict()["BOT_SORT"] == {
-            "T_MIN": 5,
-            "T_MISS_MAX": 60,
-            "TRACK_HIGH_THRESH": 0.2,
-            "TRACK_LOW_THRESH": 0.1,
-            "NEW_TRACK_THRESH": 0.2,
-            "MATCH_THRESH": 0.9,
-            "FUSE_SCORE": True,
-        }
+        assert config.track.bot_sort == _TrackBotSortConfig()
 
     def test_parse_yaml_and_round_trip_config(self, tmp_path: Path) -> None:
         parser = ConfigParser(YamlDeserializer())
         config_file = tmp_path / "user_config.otvision.yaml"
+        # Every value differs from its default, and the frame counts and
+        # thresholds sit at the edges of their valid ranges.
         config_file.write_text(
             "TRACK:\n"
             "  TRACKER_TYPE: botsort\n"
@@ -237,14 +231,29 @@ class TestBotSortConfig:
         "key",
         ["TRACK_HIGH_THRESH", "TRACK_LOW_THRESH", "NEW_TRACK_THRESH", "MATCH_THRESH"],
     )
-    @pytest.mark.parametrize("value", [-0.1, 1.1, float("nan"), "0.5", True])
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(-0.1, id="below-0"),
+            pytest.param(1.1, id="above-1"),
+            pytest.param(float("nan"), id="nan"),
+            pytest.param("0.5", id="string"),
+            pytest.param(True, id="bool"),
+        ],
+    )
     def test_reject_invalid_bot_sort_threshold(self, key: str, value: object) -> None:
         parser = ConfigParser(YamlDeserializer())
 
         with pytest.raises(InvalidOtvisionConfigError, match=key):
             parser.parse_from_dict({"TRACK": {"BOT_SORT": {key: value}}})
 
-    @pytest.mark.parametrize("low_threshold", [0.2, 0.3])
+    @pytest.mark.parametrize(
+        "low_threshold",
+        [
+            pytest.param(_TrackBotSortConfig.track_high_thresh, id="equal"),
+            pytest.param(_TrackBotSortConfig.track_high_thresh + 0.1, id="above"),
+        ],
+    )
     def test_reject_bot_sort_low_threshold_at_or_above_high(
         self, low_threshold: float
     ) -> None:
@@ -258,7 +267,16 @@ class TestBotSortConfig:
             )
 
     @pytest.mark.parametrize("key", ["T_MIN", "T_MISS_MAX"])
-    @pytest.mark.parametrize("value", [-1, 0.5, 1.0, "3", True])
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(-1, id="negative"),
+            pytest.param(0.5, id="fraction"),
+            pytest.param(1.0, id="whole-float"),
+            pytest.param("3", id="string"),
+            pytest.param(True, id="bool"),
+        ],
+    )
     def test_reject_invalid_bot_sort_frame_count(self, key: str, value: object) -> None:
         parser = ConfigParser(YamlDeserializer())
 
