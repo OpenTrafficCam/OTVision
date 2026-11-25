@@ -1,7 +1,9 @@
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from OTVision.application.config import (
+    BOT_SORT,
     COL_WIDTH,
     CONF,
     CONVERT,
@@ -19,6 +21,7 @@ from OTVision.application.config import (
     FONT_SIZE,
     FPS_FROM_FILENAME,
     FRAME_WIDTH,
+    FUSE_SCORE,
     GUI,
     HALF_PRECISION,
     IMG,
@@ -30,6 +33,8 @@ from OTVision.application.config import (
     LOG,
     LOG_LEVEL_CONSOLE,
     LOG_LEVEL_FILE,
+    MATCH_THRESH,
+    NEW_TRACK_THRESH,
     NORMALIZED,
     OUTPUT_FILETYPE,
     OUTPUT_FPS,
@@ -50,6 +55,8 @@ from OTVision.application.config import (
     T_MIN,
     T_MISS_MAX,
     TRACK,
+    TRACK_HIGH_THRESH,
+    TRACK_LOW_THRESH,
     TRANSFORM,
     UNDISTORT,
     VID,
@@ -68,6 +75,7 @@ from OTVision.application.config import (
     _GuiConfig,
     _GuiWindowConfig,
     _LogConfig,
+    _TrackBotSortConfig,
     _TrackIouConfig,
     _TransformConfig,
     _UndistortConfig,
@@ -248,13 +256,16 @@ class ConfigParser:
             if iou_config_dict
             else TrackConfig.iou
         )
+        bot_sort_config_dict = data.get(BOT_SORT)
+        bot_sort_config = self._parse_track_bot_sort_config(bot_sort_config_dict)
         sources = self.parse_sources(data.get(PATHS, []))
 
         return TrackConfig(
-            sources,
-            data.get(RUN_CHAINED, TrackConfig.run_chained),
-            iou_config,
-            data.get(OVERWRITE, TrackConfig.overwrite),
+            paths=sources,
+            run_chained=data.get(RUN_CHAINED, TrackConfig.run_chained),
+            iou=iou_config,
+            overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
+            bot_sort=bot_sort_config,
         )
 
     def parse_track_iou_config(self, data: dict) -> _TrackIouConfig:
@@ -265,6 +276,66 @@ class ConfigParser:
             data.get(T_MIN, _TrackIouConfig.t_min),
             data.get(T_MISS_MAX, _TrackIouConfig.t_miss_max),
         )
+
+    def _parse_track_bot_sort_config(self, data: object) -> _TrackBotSortConfig:
+        if data is None:
+            data = {}
+        if not isinstance(data, Mapping):
+            raise InvalidOtvisionConfigError("TRACK.BOT_SORT must be a mapping.")
+
+        defaults = TrackConfig.bot_sort
+        known_keys = defaults.to_dict()
+        for key in data:
+            if key not in known_keys:
+                raise InvalidOtvisionConfigError(
+                    f"Unknown key in TRACK.BOT_SORT: {key!r}."
+                )
+
+        config = _TrackBotSortConfig(
+            t_min=data.get(T_MIN, defaults.t_min),
+            t_miss_max=data.get(T_MISS_MAX, defaults.t_miss_max),
+            track_high_thresh=data.get(TRACK_HIGH_THRESH, defaults.track_high_thresh),
+            track_low_thresh=data.get(TRACK_LOW_THRESH, defaults.track_low_thresh),
+            new_track_thresh=data.get(NEW_TRACK_THRESH, defaults.new_track_thresh),
+            match_thresh=data.get(MATCH_THRESH, defaults.match_thresh),
+            fuse_score=data.get(FUSE_SCORE, defaults.fuse_score),
+        )
+        self.validate_track_bot_sort_config(config)
+        return config
+
+    @staticmethod
+    def validate_track_bot_sort_config(config: _TrackBotSortConfig) -> None:
+        for key, value in ((T_MIN, config.t_min), (T_MISS_MAX, config.t_miss_max)):
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise InvalidOtvisionConfigError(
+                    f"TRACK.BOT_SORT.{key} must be a non-negative integer."
+                )
+
+        thresholds = (
+            (TRACK_HIGH_THRESH, config.track_high_thresh),
+            (TRACK_LOW_THRESH, config.track_low_thresh),
+            (NEW_TRACK_THRESH, config.new_track_thresh),
+            (MATCH_THRESH, config.match_thresh),
+        )
+        for key, threshold in thresholds:
+            if (
+                isinstance(threshold, bool)
+                or not isinstance(threshold, (int, float))
+                or not 0 <= threshold <= 1
+            ):
+                raise InvalidOtvisionConfigError(
+                    f"TRACK.BOT_SORT.{key} must be a number between 0 and 1."
+                )
+
+        if config.track_low_thresh >= config.track_high_thresh:
+            raise InvalidOtvisionConfigError(
+                "TRACK.BOT_SORT.TRACK_LOW_THRESH must be less than TRACK_HIGH_THRESH."
+            )
+
+        if not isinstance(config.fuse_score, bool):
+            raise InvalidOtvisionConfigError(
+                "TRACK.BOT_SORT.FUSE_SCORE must be a boolean."
+            )
 
     def parse_undistort_config(self, data: dict) -> _UndistortConfig:
         return _UndistortConfig(

@@ -24,6 +24,7 @@ from pathlib import Path
 
 from OTVision.application.config import (
     AVAILABLE_WEIGHTS,
+    BOT_SORT,
     CALIBRATIONS,
     COL_WIDTH,
     CONF,
@@ -79,6 +80,7 @@ from OTVision.application.config import (
     WRITE_VIDEO,
     YOLO,
     Config,
+    _TrackBotSortConfig,
 )
 from OTVision.application.config_parser import ConfigParser
 from OTVision.helpers.log import LOGGER_NAME
@@ -188,6 +190,7 @@ CONFIG[TRACK][IOU][SIGMA_H] = 0.42  # 0.420
 CONFIG[TRACK][IOU][SIGMA_IOU] = 0.38  # 0.381
 CONFIG[TRACK][IOU][T_MIN] = 5
 CONFIG[TRACK][IOU][T_MISS_MAX] = 51  # 51
+CONFIG[TRACK][BOT_SORT] = _TrackBotSortConfig().to_dict()
 CONFIG[TRACK][OVERWRITE] = True
 
 # UNDISTORT

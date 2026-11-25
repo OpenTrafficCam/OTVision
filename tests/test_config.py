@@ -4,6 +4,7 @@ import pytest
 
 from OTVision import config
 from OTVision.application.config import Config
+from OTVision.plugin.yaml_serialization import YamlDeserializer
 
 
 @pytest.fixture
@@ -22,6 +23,16 @@ def default_config() -> dict:
 
 
 class TestConfig:
+    def test_legacy_and_example_configs_include_bot_sort_defaults(
+        self, default_config: dict
+    ) -> None:
+        example_path = Path(__file__).resolve().parents[1] / "user_config.otvision.yaml"
+        example = YamlDeserializer().deserialize(example_path)
+        expected = Config().to_dict()["TRACK"]["BOT_SORT"]
+
+        assert default_config["TRACK"]["BOT_SORT"] == expected
+        assert example["TRACK"]["BOT_SORT"] == expected
+
     def test_default_config_from_parser_identical_to_dict(
         self, default_config: dict
     ) -> None:

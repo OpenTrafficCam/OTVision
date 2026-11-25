@@ -9,6 +9,7 @@ from OTVision.plugin.ffmpeg_video_writer import (
 )
 
 AVAILABLE_WEIGHTS = "AVAILABLEWEIGHTS"
+BOT_SORT = "BOT_SORT"
 CALIBRATIONS = "CALIBRATIONS"
 COL_WIDTH = "COLWIDTH"
 CONF = "CONF"
@@ -23,6 +24,7 @@ FONT = "FONT"
 FONT_SIZE = "FONTSIZE"
 FPS_FROM_FILENAME = "FPS_FROM_FILENAME"
 FRAME_WIDTH = "FRAMEWIDTH"
+FUSE_SCORE = "FUSE_SCORE"
 GUI = "GUI"
 HALF_PRECISION = "HALF_PRECISION"
 INPUT_FPS = "INPUT_FPS"
@@ -32,6 +34,8 @@ IOU = "IOU"
 LAST_PATHS = "LAST PATHS"
 LOCATION_X = "LOCATION_X"
 LOCATION_Y = "LOCATION_Y"
+MATCH_THRESH = "MATCH_THRESH"
+NEW_TRACK_THRESH = "NEW_TRACK_THRESH"
 NORMALIZED = "NORMALIZED"
 OTC_ICON = "OTC ICON"
 OUTPUT_FPS = "OUTPUT_FPS"
@@ -47,6 +51,8 @@ SIGMA_IOU = "SIGMA_IOU"
 SIGMA_L = "SIGMA_L"
 T_MIN = "T_MIN"
 T_MISS_MAX = "T_MISS_MAX"
+TRACK_HIGH_THRESH = "TRACK_HIGH_THRESH"
+TRACK_LOW_THRESH = "TRACK_LOW_THRESH"
 TRACK = "TRACK"
 TRACKS = "TRACKS"
 TRANSFORM = "TRANSFORM"
@@ -346,6 +352,46 @@ class _TrackIouConfig:
 
 
 @dataclass(frozen=True)
+class _TrackBotSortConfig:
+    """Settings for the BoT-SORT tracker.
+
+    Detections are split by confidence. High-confidence detections are matched
+    first and may start new tracks. Low-confidence detections can only continue
+    tracks that the high-confidence pass left unmatched.
+    """
+
+    t_min: int = 5
+    """Tracks spanning fewer frames than this are discarded when they end."""
+    t_miss_max: int = 60
+    """Frames a track may go without a matched detection before it ends."""
+    track_high_thresh: float = 0.2
+    """Detections with at least this confidence are matched first."""
+    track_low_thresh: float = 0.1
+    """Detections with a confidence above this, but below `track_high_thresh`,
+    are matched second. Detections at or below it are ignored."""
+    new_track_thresh: float = 0.2
+    """Unmatched high-confidence detections need at least this confidence to start
+    a new track."""
+    match_thresh: float = 0.9
+    """Highest matching cost (1 - IoU) for the first matching pass. 0.9 matches
+    any pair whose boxes overlap with an IoU above 0.1."""
+    fuse_score: bool = True
+    """Multiply the IoU by the detection confidence before matching, so that
+    low-confidence detections need more overlap."""
+
+    def to_dict(self) -> dict:
+        return {
+            T_MIN: self.t_min,
+            T_MISS_MAX: self.t_miss_max,
+            TRACK_HIGH_THRESH: self.track_high_thresh,
+            TRACK_LOW_THRESH: self.track_low_thresh,
+            NEW_TRACK_THRESH: self.new_track_thresh,
+            MATCH_THRESH: self.match_thresh,
+            FUSE_SCORE: self.fuse_score,
+        }
+
+
+@dataclass(frozen=True)
 class TrackConfig:
     @property
     def sigma_l(self) -> float:
@@ -371,12 +417,14 @@ class TrackConfig:
     run_chained: bool = True
     iou: _TrackIouConfig = _TrackIouConfig()
     overwrite: bool = True
+    bot_sort: _TrackBotSortConfig = _TrackBotSortConfig()
 
     def to_dict(self) -> dict:
         return {
             PATHS: [str(p) for p in self.paths],
             RUN_CHAINED: self.run_chained,
             IOU: self.iou.to_dict(),
+            BOT_SORT: self.bot_sort.to_dict(),
             OVERWRITE: self.overwrite,
         }
 
