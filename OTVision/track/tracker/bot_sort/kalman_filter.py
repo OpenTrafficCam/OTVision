@@ -92,8 +92,12 @@ class KalmanFilter:
             (_POSITION_WEIGHT * scale, _VELOCITY_WEIGHT * scale), axis=1
         )
         motion = self._motion_matrix
-        predicted_means = means @ motion.T
-        predicted_covariances = motion @ covariances @ motion.T + _diagonal_covariances(
+        # np.dot instead of @: on Apple Silicon, numpy's matmul reports spurious
+        # divide-by-zero, overflow and invalid-value warnings for these products.
+        # The values are the same either way.
+        predicted_means = np.dot(means, motion.T)
+        propagated = np.dot(motion, covariances).transpose(1, 0, 2)
+        predicted_covariances = np.dot(propagated, motion.T) + _diagonal_covariances(
             std
         )
         return predicted_means, predicted_covariances
