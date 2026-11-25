@@ -38,8 +38,10 @@ TRACK:
     TRACK_HIGH_THRESH: 0.2  # Minimum confidence for first-stage matching.
     TRACK_LOW_THRESH: 0.1  # Lower confidence bound for second-stage matching.
     NEW_TRACK_THRESH: 0.2  # Minimum confidence to start a track.
-    MATCH_THRESH: 0.9  # Max 1 - IoU in first-stage matching (IoU > 0.1).
-    FUSE_SCORE: true  # Weight first-stage IoU by detection confidence.
+    # Maximum first-stage matching cost. The cost is 1 - IoU * confidence with
+    # FUSE_SCORE and 1 - IoU without it.
+    MATCH_THRESH: 0.9
+    FUSE_SCORE: true  # Multiply the IoU by the detection confidence.
   OVERWRITE: true
 
 LOG:

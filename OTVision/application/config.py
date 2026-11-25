@@ -377,11 +377,14 @@ class _TrackBotSortConfig:
     """Unmatched high-confidence detections need at least this confidence to start
     a new track."""
     match_thresh: float = 0.9
-    """Highest matching cost (1 - IoU) for the first matching pass. 0.9 matches
-    any pair whose boxes overlap with an IoU above 0.1."""
+    """Highest matching cost for the first matching pass. With `fuse_score` the
+    cost is 1 - IoU * confidence, so 0.9 needs IoU * confidence above 0.1: an IoU
+    above 0.2 at confidence 0.5. Without it the cost is 1 - IoU, so 0.9 needs an
+    IoU above 0.1."""
     fuse_score: bool = True
     """Multiply the IoU by the detection confidence before matching, so that
-    low-confidence detections need more overlap."""
+    low-confidence detections need more overlap. Applies to the first matching
+    pass and to tracks born in the previous frame."""
 
     def to_dict(self) -> dict:
         return {
