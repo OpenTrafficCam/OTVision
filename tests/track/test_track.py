@@ -9,6 +9,7 @@ import pytest
 
 from OTVision import version
 from OTVision.application.config import TrackConfig, _TrackIouConfig
+from OTVision.application.config_parser import InvalidOtvisionConfigError
 from OTVision.application.track.tracking_run_id import StrIdGenerator
 from OTVision.config import CONFIG
 from OTVision.helpers.files import read_json
@@ -205,6 +206,20 @@ async def test_track_starts_fresh_tracks_in_each_frame_group(
         duplicate_ids = sorted(tid for tid, n in id_counts.items() if n > 1)
         assert carried_over == [], f"{tracks_file.name}: tracks from earlier group"
         assert duplicate_ids == [], f"{tracks_file.name}: duplicate track ids"
+
+
+@pytest.mark.asyncio
+async def test_track_builder_resolves_tracker_type_when_tracking_starts(
+    test_track_tmp_dir: Path,
+) -> None:
+    builder = MockTrackBuilder()
+    tracker = builder.build()
+    builder.update_current_track_config.update(
+        TrackConfig(paths=[str(test_track_tmp_dir / "default")], tracker_type="unknown")
+    )
+
+    with pytest.raises(InvalidOtvisionConfigError, match=r"'unknown'.*options: iou"):
+        await tracker.start()
 
 
 @pytest.mark.parametrize("overwrite", [(True), (False)])

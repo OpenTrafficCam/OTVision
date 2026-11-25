@@ -67,6 +67,7 @@ class TrackCliArgs(CliArgs):
     sigma_iou: float | None = None
     t_min: int | None = None
     t_miss_max: int | None = None
+    tracker_type: str | None = None
 
     def get_config_file(self) -> Path | None:
         return self.config_file

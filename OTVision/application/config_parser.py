@@ -57,6 +57,8 @@ from OTVision.application.config import (
     TRACK,
     TRACK_HIGH_THRESH,
     TRACK_LOW_THRESH,
+    TRACKER_TYPE,
+    TRACKER_TYPES,
     TRANSFORM,
     UNDISTORT,
     VID,
@@ -90,6 +92,15 @@ from OTVision.plugin.ffmpeg_video_writer import (
 
 class InvalidOtvisionConfigError(Exception):
     pass
+
+
+def validate_tracker_type(tracker_type: object) -> None:
+    if tracker_type not in TRACKER_TYPES:
+        valid_options = ", ".join(TRACKER_TYPES)
+        raise InvalidOtvisionConfigError(
+            f"Unknown TRACK.TRACKER_TYPE {tracker_type!r}. "
+            f"Valid options: {valid_options}."
+        )
 
 
 class ConfigParser:
@@ -250,6 +261,9 @@ class ConfigParser:
         return start_time
 
     def parse_track_config(self, data: dict) -> TrackConfig:
+        tracker_type = data.get(TRACKER_TYPE, TrackConfig.tracker_type)
+        validate_tracker_type(tracker_type)
+
         iou_config_dict = data.get(IOU)
         iou_config = (
             self.parse_track_iou_config(iou_config_dict)
@@ -266,6 +280,7 @@ class ConfigParser:
             iou=iou_config,
             overwrite=data.get(OVERWRITE, TrackConfig.overwrite),
             bot_sort=bot_sort_config,
+            tracker_type=tracker_type,
         )
 
     def parse_track_iou_config(self, data: dict) -> _TrackIouConfig:

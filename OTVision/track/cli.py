@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from pathlib import Path
 
+from OTVision.application.config import TRACKER_TYPES
 from OTVision.domain.cli import CliParseError, TrackCliArgs, TrackCliParser
 from OTVision.helpers.files import check_if_all_paths_exist
 from OTVision.helpers.log import DEFAULT_LOG_FILE, VALID_LOG_LEVELS
@@ -37,6 +38,10 @@ class ArgparseTrackCliParser(TrackCliParser):
             "--overwrite",
             action=BooleanOptionalAction,
             help="Overwrite existing output files",
+        )
+        self._parser.add_argument(
+            "--tracker",
+            help=f"Select the tracker ({', '.join(TRACKER_TYPES)}).",
         )
         self._parser.add_argument(
             "--sigma-l",
@@ -108,6 +113,7 @@ class ArgparseTrackCliParser(TrackCliParser):
             log_level_console=args.log_level_console,
             log_level_file=args.log_level_file,
             logfile_overwrite=args.logfile_overwrite,
+            tracker_type=args.tracker,
         )
 
     def __assert_cli_args_valid(self, args: Namespace) -> None:

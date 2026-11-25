@@ -1,5 +1,6 @@
 from OTVision.abstraction.defaults import value_or_default
 from OTVision.application.config import Config, TrackConfig, _LogConfig, _TrackIouConfig
+from OTVision.application.config_parser import validate_tracker_type
 from OTVision.application.track.get_track_cli_args import GetTrackCliArgs
 from OTVision.domain.cli import TrackCliArgs
 
@@ -27,6 +28,11 @@ class UpdateTrackConfigWithCliArgs:
     def _update_track_config(
         self, track_config: TrackConfig, cli_args: TrackCliArgs
     ) -> TrackConfig:
+        tracker_type = value_or_default(
+            cli_args.tracker_type, track_config.tracker_type
+        )
+        validate_tracker_type(tracker_type)
+
         iou_config = _TrackIouConfig(
             sigma_l=value_or_default(cli_args.sigma_l, track_config.sigma_l),
             sigma_h=value_or_default(cli_args.sigma_h, track_config.sigma_h),
@@ -40,6 +46,7 @@ class UpdateTrackConfigWithCliArgs:
             iou=iou_config,
             overwrite=value_or_default(cli_args.overwrite, track_config.overwrite),
             bot_sort=track_config.bot_sort,
+            tracker_type=tracker_type,
         )
 
     def _update_log_config(self, config: Config, cli_args: TrackCliArgs) -> _LogConfig:
