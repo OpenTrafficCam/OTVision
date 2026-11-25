@@ -26,28 +26,55 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+BOX_DIMENSIONS = 4
+"""Box coordinates (center x, center y, width, height) in the state."""
+STATE_DIMENSIONS = 2 * BOX_DIMENSIONS
+"""The box followed by the per-frame velocity of each box coordinate."""
+STATE_BOX = slice(0, BOX_DIMENSIONS)
+STATE_VELOCITY = slice(BOX_DIMENSIONS, STATE_DIMENSIONS)
+
+_SCALE_INDICES = [2, 3, 2, 3]
+"""Box size (width, height, width, height) that scales the uncertainty of each
+box coordinate: center x and width scale with the width, center y and height with
+the height. Large boxes move more pixels per frame and have larger pixel errors."""
+
 _POSITION_WEIGHT = 1 / 20
+"""Standard deviation of a box coordinate, as a fraction of the box size."""
 _VELOCITY_WEIGHT = 1 / 160
+"""Standard deviation of a box velocity per frame, as a fraction of the box size."""
+# A new track starts less certain than the noise added per frame, the velocity
+# much more so, because a single box gives no velocity estimate.
+_INITIAL_POSITION_FACTOR = 2
+_INITIAL_VELOCITY_FACTOR = 10
 
 _FloatArray = NDArray[np.float64]
+
+
+def _diagonal_covariances(std: _FloatArray) -> _FloatArray:
+    """Return covariances (..., n, n) of independent errors with std (..., n)."""
+    return std[..., :, None] ** 2 * np.eye(std.shape[-1])
 
 
 class KalmanFilter:
     """Track (center x, center y, width, height) and their per-frame velocities."""
 
     def __init__(self) -> None:
-        self._motion_matrix = np.eye(8)
-        self._motion_matrix[:4, 4:] = np.eye(4)
+        # Constant velocity: each box coordinate advances by its velocity per frame.
+        self._motion_matrix = np.eye(STATE_DIMENSIONS)
+        self._motion_matrix[STATE_BOX, STATE_VELOCITY] = np.eye(BOX_DIMENSIONS)
 
     def initiate(self, measurement: ArrayLike) -> tuple[_FloatArray, _FloatArray]:
         """Return the initial mean (8,) and covariance (8, 8) for a measured box."""
         box = np.asarray(measurement, dtype=np.float64)
         mean = np.concatenate((box, np.zeros_like(box)))
-        scale = box[[2, 3, 2, 3]]
+        scale = box[_SCALE_INDICES]
         std = np.concatenate(
-            (2 * _POSITION_WEIGHT * scale, 10 * _VELOCITY_WEIGHT * scale)
+            (
+                _INITIAL_POSITION_FACTOR * _POSITION_WEIGHT * scale,
+                _INITIAL_VELOCITY_FACTOR * _VELOCITY_WEIGHT * scale,
+            )
         )
-        return mean, np.diag(std**2)
+        return mean, _diagonal_covariances(std)
 
     def predict(
         self, mean: _FloatArray, covariance: _FloatArray
@@ -60,15 +87,14 @@ class KalmanFilter:
         self, means: _FloatArray, covariances: _FloatArray
     ) -> tuple[_FloatArray, _FloatArray]:
         """Predict one frame ahead for means (N, 8) and covariances (N, 8, 8)."""
-        scale = means[:, [2, 3, 2, 3]]
+        scale = means[:, _SCALE_INDICES]
         std = np.concatenate(
             (_POSITION_WEIGHT * scale, _VELOCITY_WEIGHT * scale), axis=1
         )
-        motion_covariances = np.eye(8) * std[:, :, None] ** 2
-        predicted_means = np.dot(means, self._motion_matrix.T)
-        propagated = np.dot(self._motion_matrix, covariances).transpose(1, 0, 2)
-        predicted_covariances = (
-            np.dot(propagated, self._motion_matrix.T) + motion_covariances
+        motion = self._motion_matrix
+        predicted_means = means @ motion.T
+        predicted_covariances = motion @ covariances @ motion.T + _diagonal_covariances(
+            std
         )
         return predicted_means, predicted_covariances
 
@@ -76,12 +102,14 @@ class KalmanFilter:
         self, mean: _FloatArray, covariance: _FloatArray, measurement: ArrayLike
     ) -> tuple[_FloatArray, _FloatArray]:
         """Correct a predicted state using a measured (center x, center y, w, h)."""
-        measurement_std = _POSITION_WEIGHT * mean[[2, 3, 2, 3]]
-        projected_covariance = covariance[:4, :4] + np.diag(measurement_std**2)
-        cross_covariance = covariance[:, :4]
+        measurement_std = _POSITION_WEIGHT * mean[_SCALE_INDICES]
+        projected_covariance = covariance[STATE_BOX, STATE_BOX] + _diagonal_covariances(
+            measurement_std
+        )
+        cross_covariance = covariance[:, STATE_BOX]
         gain = np.linalg.solve(projected_covariance, cross_covariance.T).T
 
-        innovation = np.asarray(measurement, dtype=np.float64) - mean[:4]
-        updated_mean = mean + gain.dot(innovation)
-        updated_covariance = covariance - gain.dot(projected_covariance).dot(gain.T)
+        innovation = np.asarray(measurement, dtype=np.float64) - mean[STATE_BOX]
+        updated_mean = mean + gain @ innovation
+        updated_covariance = covariance - gain @ projected_covariance @ gain.T
         return updated_mean, updated_covariance
