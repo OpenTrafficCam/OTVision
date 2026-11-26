@@ -18,7 +18,6 @@ from tests.utils.mocking import create_mocks
 FPS = 20
 WIDTH = 800
 HEIGHT = 600
-SIDE_DATA = Mock()
 
 
 @pytest.fixture
@@ -89,9 +88,8 @@ class TestVideoSource:
 
         assert given.frame_rotator.rotate.call_count == amount_of_frames
         for call_args in given.frame_rotator.rotate.call_args_list:
-            actual_video_frame, actual_side_data = call_args.args
+            (actual_video_frame,) = call_args.args
             assert isinstance(actual_video_frame, VideoFrame)
-            assert actual_side_data == {}
 
         assert given.timestampers[0].stamp.call_args_list == [
             call(
@@ -301,7 +299,7 @@ class TestVideoSource:
         assert_get_fps_called(given)
         assert_timestamper_factory_called(given)
         assert given.frame_rotator.rotate.call_args_list == [
-            call(frame, SIDE_DATA)
+            call(frame)
             for frame in given.all_video_frames[
                 expected_detect_start_in_frames - 1 : expected_detect_end_in_frames - 1
             ]
@@ -330,28 +328,6 @@ class TestVideoSource:
         mock_get_video_dimensions.assert_called_once_with(input_file)
         given.subject_new_video_start.notify.assert_called_once_with(
             create_new_video_start_event(input_file)
-        )
-
-    @patch("OTVision.detect.video_input_source.log")
-    def test_extract_side_data_attribute_error(self, mock_log: Mock) -> None:
-        container = MagicMock()
-        video_stream = MagicMock()
-        del video_stream.side_data
-        container.streams.video.__getitem__.return_value = video_stream
-
-        target = VideoSource(
-            subject_flush=Mock(),
-            subject_new_video_start=Mock(),
-            get_current_config=Mock(),
-            frame_rotator=Mock(),
-            timestamper_factory=Mock(),
-            save_path_provider=Mock(),
-        )
-        result = target._extract_side_data(container)
-
-        assert result == {}
-        mock_log.warning.assert_called_once_with(
-            "No side_data found in video stream. Existing rotation will not be applied."
         )
 
 
@@ -391,7 +367,7 @@ def assert_timestamper_factory_called(given: Given) -> None:
 
 
 def assert_frame_rotator_called(given: Given) -> None:
-    expected = [call(frame, SIDE_DATA) for frame in given.all_video_frames]
+    expected = [call(frame) for frame in given.all_video_frames]
     assert given.frame_rotator.rotate.call_args_list == expected
 
 
@@ -518,7 +494,6 @@ def configure_mock_av(mock_av: Mock, video_frames_per_video: list[list[Mock]]) -
     context_manager_container = MagicMock()
     mock_av.open.return_value = container
     container.__enter__.return_value = context_manager_container
-    context_manager_container.streams.video[0].side_data = SIDE_DATA
     context_manager_container.decode.side_effect = [
         iter(video_frames) for video_frames in video_frames_per_video
     ]

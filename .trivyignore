@@ -2,8 +2,11 @@
 # Every entry expires on 2026-12-31 so that it gets reviewed again.
 # Remove an entry as soon as the dependency is upgraded.
 
-# torch 2.7.1: fixed only in torch 2.8 or later, which needs matching torchvision and ultralytics releases, not yet adopted
-CVE-2025-2999 exp:2026-12-31
-CVE-2025-3730 exp:2026-12-31
-CVE-2025-3000 exp:2026-12-31
-CVE-2025-3001 exp:2026-12-31
+# onnx 1.21.0 (Linux): nvidia-modelopt 0.48.0 pins onnx~=1.21.0 on non-Windows platforms.
+# Fixed in onnx 1.22.0. OTVision only loads ONNX models it exported itself.
+CVE-2026-115919 exp:2026-12-31
+CVE-2026-115920 exp:2026-12-31
+CVE-2026-115921 exp:2026-12-31
+CVE-2026-115922 exp:2026-12-31
+CVE-2026-44512 exp:2026-12-31
+CVE-2026-63632 exp:2026-12-31
