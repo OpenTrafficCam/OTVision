@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import AsyncIterator, Iterable
 
 import av
-from av.container.input import InputContainer
 from tqdm.asyncio import tqdm
 
 from OTVision.abstraction.observer import AsyncSubject, Subject
@@ -111,14 +110,13 @@ class VideoSource(InputSourceDetect):
             try:
                 with av.open(str(video_file.absolute())) as container:
                     container.streams.video[0].thread_type = "AUTO"
-                    side_data = self._extract_side_data(container)
                     for frame_number, frame in enumerate(
                         container.decode(video=0), start=1
                     ):
                         if detect_start <= frame_number and (
                             detect_end is None or frame_number < detect_end
                         ):
-                            rotated_image = self._frame_rotator.rotate(frame, side_data)
+                            rotated_image = self._frame_rotator.rotate(frame)
                             yield timestamper.stamp(
                                 {
                                     FrameKeys.data: rotated_image,
@@ -149,16 +147,6 @@ class VideoSource(InputSourceDetect):
     def _on_video_finished(self, video_file: Path) -> None:
         """Hook for handling video processing completion."""
         pass
-
-    def _extract_side_data(self, container: InputContainer) -> dict:
-        try:
-            return container.streams.video[0].side_data
-        except AttributeError:
-            log.warning(
-                "No side_data found in video stream. "
-                "Existing rotation will not be applied."
-            )
-            return {}
 
     async def _collect_files_to_detect(self) -> Iterable[Path]:
         filetypes = self._current_config.filetypes.video_filetypes.to_list()
