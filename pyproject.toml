@@ -23,21 +23,19 @@ classifiers = [
 ]
 keywords = ["OpenTrafficCam", "Traffic Analysis", "Traffic Counting", "Trajectories"]
 dependencies = [
-    "av==13.0.0",
+    "av==19.0.2",
     "coremltools==9.0; sys_platform == 'darwin'",
     "ffmpeg-python==0.2.0",
     "fire==0.7.1",
-    "geopandas==1.1.2",
+    "geopandas==1.2.0",
     "ijson==3.6.0",
-    "more-itertools==10.7.0",
-    "moviepy==1.0.3",
-    "numpy==2.3.5; sys_platform != 'win32'",
-    "numpy==1.26.4; sys_platform == 'win32'",
-    "opencv-python-headless==4.10.0.84",
-    "pandas==2.3.3",
+    "more-itertools==11.2.1",
+    "numpy==2.3.5",
+    "opencv-python-headless==5.0.0.93",
+    "pandas==3.1.1",
     "PyYAML==6.0.3",
     "tqdm==4.70.1",
-    "ujson==5.13.0",
+    "ujson==6.1.0",
 ]
 
 [dependency-groups]
@@ -45,16 +43,16 @@ dev = [
     "interrogate==1.7.0",
     "jsonschema==4.26.0",
     "mypy==2.4.1",
-    "pandas-stubs==2.3.2.250926",
+    "pandas-stubs==3.1.0.261029",
     "pre-commit==4.7.0",
     "pytest==9.2.0",
-    "pytest-asyncio==1.4.1.post1",
+    "pytest-asyncio==1.5.0",
     "pytest-cov==7.1.0",
-    "ruff==0.17.4",
+    "ruff==0.17.5",
     "twine==7.0.0",
-    "types-geopandas==1.1.4.20261006",
+    "types-geopandas==1.2.0.20261107",
     "types-jsonschema==4.26.0.20261006",
-    "types-pyyaml==6.0.12.20260906",
+    "types-pyyaml==6.0.12.20261113",
     "types-tqdm==4.70.0.20261106",
 ]
 
@@ -62,7 +60,7 @@ dev = [
 inference_cpu = [
     "torch==2.14.1",
     "torchvision==0.29.1",
-    "ultralytics==8.4.208",
+    "ultralytics==8.4.213",
 ]
 inference_cuda = [
     "torch==2.14.1; platform_machine == 'x86_64'",
@@ -72,7 +70,7 @@ inference_cuda = [
     "tensorrt-cu13-libs==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
     # TensorRT 11 needs ModelOpt to export FP16/INT8 engines
     "nvidia-modelopt[onnx]==0.48.0; sys_platform != 'darwin' and platform_machine == 'x86_64'",
-    "ultralytics==8.4.208; platform_machine == 'x86_64'",
+    "ultralytics==8.4.213; platform_machine == 'x86_64'",
 ]
 [project.urls]
 Homepage = "https://opentrafficcam.org/"
@@ -130,6 +128,9 @@ name = "tensorrt-cu13-libs"
 
 [tool.uv]
 exclude-newer = "3 days"
+# ultralytics depends on opencv-python, which installs the same cv2 module as
+# opencv-python-headless. Keep both on the same version.
+constraint-dependencies = ["opencv-python==5.0.0.93", "pygments>=2.20.0", "setuptools>=84.1.0"]
 # certifi = false: eMudhra CA compromise (Oct 2026) — certifi ≥ 2026.10.19 required, remove once release clears the 3-day cutoff
 exclude-newer-package = { certifi = false, tensorrt-cu13 = false, tensorrt-cu13-bindings = false, tensorrt-cu13-libs = false }
 environments = [
