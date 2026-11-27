@@ -59,12 +59,12 @@ dev = [
 [project.optional-dependencies]
 inference_cpu = [
     "torch==2.14.1",
-    "torchvision==0.29.1",
+    "torchvision==0.29.2",
     "ultralytics==8.4.213",
 ]
 inference_cuda = [
     "torch==2.14.1; platform_machine == 'x86_64'",
-    "torchvision==0.29.1; platform_machine == 'x86_64'",
+    "torchvision==0.29.2; platform_machine == 'x86_64'",
     "tensorrt-cu13==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
     "tensorrt-cu13-bindings==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
     "tensorrt-cu13-libs==11.4.0.106; sys_platform != 'darwin' and platform_machine == 'x86_64'",
